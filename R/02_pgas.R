@@ -1,5 +1,5 @@
 pgas <- function(MM, N, KK, TT,
-                 y, yz, Za, Zb, Zp, Zq,
+                 y, yz, Za1, Za2, Za3, Za4,
                  priors,
                  par_init,
                  par_true,
@@ -33,18 +33,18 @@ pgas <- function(MM, N, KK, TT,
   phi_xa4    <- numeric(MM)
   bet_xa4    <- matrix(0, nrow = dim_bq, ncol = MM)
 
-  regs_a       <- matrix(0, nrow = TT - 1, ncol = ncol(Za) + 1)
-  Za           <- as.matrix(Za)
-  regs_a[, -1] <- Za[2:TT, ]
-  regs_b       <- matrix(0, nrow = TT - 1, ncol = ncol(Zb) + 1)
-  Zb           <- as.matrix(Zb)
-  regs_b[, -1] <- Zb[2:TT, ]
-  regs_p       <- matrix(0, nrow = TT - 1, ncol = ncol(Zp) + 1)
-  Zp           <- as.matrix(Zp)
-  regs_p[, -1] <- Zp[2:TT, ]
-  regs_q       <- matrix(0, nrow = TT - 1, ncol = ncol(Zq) + 1)
-  Zq           <- as.matrix(Zq)
-  regs_q[, -1] <- Zq[2:TT, ]
+  regs_a       <- matrix(0, nrow = TT - 1, ncol = ncol(Za1) + 1)
+  Za1           <- as.matrix(Za1)
+  regs_a[, -1] <- Za1[2:TT, ]
+  regs_b       <- matrix(0, nrow = TT - 1, ncol = ncol(Za2) + 1)
+  Za2           <- as.matrix(Za2)
+  regs_b[, -1] <- Za2[2:TT, ]
+  regs_p       <- matrix(0, nrow = TT - 1, ncol = ncol(Za3) + 1)
+  Za3           <- as.matrix(Za3)
+  regs_p[, -1] <- Za3[2:TT, ]
+  regs_q       <- matrix(0, nrow = TT - 1, ncol = ncol(Za4) + 1)
+  Za4           <- as.matrix(Za4)
+  regs_q[, -1] <- Za4[2:TT, ]
   # Initialize priors:
   prior_a      <- priors[1]
   prior_b      <- priors[2]
@@ -77,7 +77,7 @@ pgas <- function(MM, N, KK, TT,
   #                                          exp(Xp[1, ]), exp(Xq[1, ])),
   #                     states_true  = cbind(xa1_t, xa2_t, xa3_t, xa4_t),
   #                     current = 1, total = 1, num_prints = 1)
-  out_cPF <- cBPF_as(y = y, yz = yz, Za = Za, Zb = Zb, Zp = Zp, Zq = Zq,
+  out_cPF <- cBPF_as(y = y, yz = yz, Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4,
                     N = N, TT = TT, KK = KK,
                     sig_sq_xa1 = sig_sq_xa1[1],
                     phi_xa1 = phi_xa1[1],
@@ -111,7 +111,7 @@ pgas <- function(MM, N, KK, TT,
     # I. Run GIBBS part
     # 1. pars for xa1_t process --------------------------------------------
     err_sig_sq_x <- Xa[m - 1, 2:TT] - f(x_tt = Xa[m - 1, 1:(TT - 1)],
-                                      z = Za[2:TT, , drop = F],
+                                      z = Za1[2:TT, , drop = F],
                                       phi_x = phi_xa1[m - 1],
                                       bet_x = bet_xa1[, m - 1])
     sig_sq_xa1[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
@@ -130,7 +130,7 @@ pgas <- function(MM, N, KK, TT,
     }
     # 2. pars for xa2_t process --------------------------------------------
     err_sig_sq_x <- Xb[m - 1, 2:TT] - f(x_tt =  Xb[m - 1, 1:(TT - 1)],
-                                      z = Zb[2:TT, , drop = F],
+                                      z = Za2[2:TT, , drop = F],
                                       phi_x = phi_xa2[m - 1],
                                       bet_x = bet_xa2[, m - 1])
     sig_sq_xa2[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
@@ -149,7 +149,7 @@ pgas <- function(MM, N, KK, TT,
     }
     # 3. pars for xa1_t process --------------------------------------------
     err_sig_sq_x <- Xp[m - 1, 2:TT] - f(x_tt =  Xp[m - 1, 1:(TT - 1)],
-                                        z = Zp[2:TT, , drop = F],
+                                        z = Za3[2:TT, , drop = F],
                                         phi_x = phi_xa3[m - 1],
                                         bet_x = bet_xa3[, m - 1])
     sig_sq_xa3[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
@@ -168,7 +168,7 @@ pgas <- function(MM, N, KK, TT,
     }
     # 4. pars for xa4_t process --------------------------------------------
     err_sig_sq_x <- Xq[m - 1, 2:TT] - f(x_tt = Xq[m - 1, 1:(TT - 1)],
-                                        z = Zq[2:TT, , drop = F],
+                                        z = Za4[2:TT, , drop = F],
                                         phi_x = phi_xa4[m - 1],
                                         bet_x = bet_xa4[, m - 1])
     sig_sq_xa4[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
@@ -186,7 +186,7 @@ pgas <- function(MM, N, KK, TT,
       bet_xa4[, m]  <- beta_xa4[-1]
     }
     # II. Run cBPF-AS part
-    out_cPF <- cBPF_as(y = y, yz = yz, Za = Za, Zb = Zb, Zp = Zp, Zq = Zq,
+    out_cPF <- cBPF_as(y = y, yz = yz, Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4,
                       N = N, TT = TT, KK = KK,
                       sig_sq_xa1 = sig_sq_xa1[m],
                       phi_xa1 = phi_xa1[m],

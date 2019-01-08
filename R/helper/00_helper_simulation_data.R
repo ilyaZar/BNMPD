@@ -32,7 +32,7 @@ generate_data <- function(T, K, num_incs,
                         T = T,
                         old_regs = old_regs)
   xa1    <- res_a[[1]]
-  za    <- res_a[[2]]
+  za1    <- res_a[[2]]
   res_b <- generate_x_z(phi_x = phi_xa2, sig_sq_x = sig_sq_xa2, bet_x = bet_xa2,
                         x_level     = x_levels[2],
                         x_sd = 0.1,
@@ -42,7 +42,7 @@ generate_data <- function(T, K, num_incs,
                         T = T,
                         old_regs = old_regs)
   xa2    <- res_b[[1]]
-  zb    <- res_b[[2]]
+  za2    <- res_b[[2]]
   res_p <- generate_x_z(phi_x = phi_xa3, sig_sq_x = sig_sq_xa3, bet_x = bet_xa3,
                         x_level = x_levels[3],
                         x_sd = 0.025,
@@ -52,7 +52,7 @@ generate_data <- function(T, K, num_incs,
                         T = T,
                         old_regs = old_regs)
   xa3    <- res_p[[1]]
-  zp    <- res_p[[2]]
+  za3    <- res_p[[2]]
   res_q <- generate_x_z(phi_x = phi_xa4, sig_sq_x = sig_sq_xa4, bet_x = bet_xa4,
                         x_level     = x_levels[4],
                         x_sd = 0.1,
@@ -62,7 +62,7 @@ generate_data <- function(T, K, num_incs,
                         T = T,
                         old_regs = old_regs)
   xa4 <- res_q[[1]]
-  zq <- res_q[[2]]
+  za4 <- res_q[[2]]
 
   seq_prob <- rep(seq(from = 0, to = 1 - (1/K), length.out = K), each = T)
   yz <- matrix(qgb2(prob = seq_prob,
@@ -92,7 +92,7 @@ generate_data <- function(T, K, num_incs,
             ylab = names_ylab
             )
   }
-  return(list(yraw, yz, list(xa1, xa2, xa3, xa4), list(za, zb, zp, zq)))
+  return(list(yraw, yz, list(xa1, xa2, xa3, xa4), list(za1, za2, za3, za4)))
 }
 parameter_fct_log_norm <- function(exp_mu, exp_sd) {
   log_mu  <- log(exp_mu/sqrt( 1 + (exp_sd^2/exp_mu^2) ))
