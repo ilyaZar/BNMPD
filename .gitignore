@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+*.eps
+*.pdf
+*.Rmd
+/analysis/2018-11-30/doc/*
