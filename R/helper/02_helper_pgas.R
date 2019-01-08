@@ -47,8 +47,8 @@ monitor_pgas_states <- function(states_drawn, states_true, freeze = 1.5,
   } else {
     num_trajs <- dim(states_true)[2]
     names_title <- paste(c("True (black) and filtered (red) states for"),
-                         c("xa_t", "xb_t", "xp_t", "xq_t"))
-    names_ylab  <- paste(c("xa_t", "xb_t", "xp_t", "xq_t"), "states")
+                         c("xa1_t", "xa2_t", "xa3_t", "xa4_t"))
+    names_ylab  <- paste(c("xa1_t", "xa2_t", "xa3_t", "xa4_t"), "states")
     par(mfrow = c(num_trajs, 1))
     for (i in 1:num_trajs) {
       matplot(cbind(states_true[, i], states_drawn[, i]),
