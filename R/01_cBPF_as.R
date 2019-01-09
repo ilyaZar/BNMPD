@@ -1,5 +1,5 @@
 cBPF_as <- function(y, yz, Za1, Za2, Za3, Za4,
-                    KK, N, TT,
+                    N, TT,
                     sig_sq_xa1, phi_xa1, bet_xa1, xa1_r,
                     sig_sq_xa2, phi_xa2, bet_xa2, xa2_r,
                     sig_sq_xa3, phi_xa3, bet_xa3, xa3_r,
@@ -10,6 +10,10 @@ cBPF_as <- function(y, yz, Za1, Za2, Za3, Za4,
     xa2 <- matrix(rep(log(xa2_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
     xa3 <- matrix(rep(log(xa3_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
     xa4 <- matrix(rep(log(xa4_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
+    # xa1 <- matrix(rep(xa1_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+    # xa2 <- matrix(rep(xa2_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+    # xa3 <- matrix(rep(xa3_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+    # xa4 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
     w  <- matrix(1/N, nrow = N, ncol = TT)
     return(list(w, xa1, xa2, xa3, xa4))
   }
@@ -19,6 +23,10 @@ cBPF_as <- function(y, yz, Za1, Za2, Za3, Za4,
   xa2 <- matrix(0, nrow = N, ncol = TT)
   xa3 <- matrix(0, nrow = N, ncol = TT)
   xa4 <- matrix(0, nrow = N, ncol = TT)
+  # xa1 <- matrix(rep(xa1_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  # xa2 <- matrix(rep(xa2_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  # xa3 <- matrix(rep(xa3_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  # xa4 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
   # xa1 <- matrix(rep(log(xa1_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
   # xa2 <- matrix(rep(log(xa2_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
   # xa3 <- matrix(rep(log(xa3_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
@@ -43,25 +51,26 @@ cBPF_as <- function(y, yz, Za1, Za2, Za3, Za4,
   # resampling
   a[, 1]  <- sample.int(n = N, replace = TRUE, prob = w[, 1])
   # propagation
-  eval_fa <- f(x_tt = xa1[, 1], z = Za1[1, , drop = F],
+  eval_fa1 <- f(x_tt = xa1[, 1], z = Za1[1, , drop = F],
                phi_x = phi_xa1, bet_x = bet_xa1)
-  xa1[, 1] <- eval_fa[a[, 1]] + sqrt(sig_sq_xa1)*rnorm(N)
-  eval_fb <- f(x_tt = xa2[, 1], z = Za2[1, , drop = F],
+  xa1[, 1] <- eval_fa1[a[, 1]] + sqrt(sig_sq_xa1)*rnorm(N)
+  eval_fa2 <- f(x_tt = xa2[, 1], z = Za2[1, , drop = F],
                phi_x = phi_xa2, bet_x = bet_xa2)
-  xa2[, 1] <- eval_fb[a[, 1]] + sqrt(sig_sq_xa2)*rnorm(N)
-  eval_fp <- f(x_tt = xa3[, 1], z = Za3[1, , drop = F],
+  xa2[, 1] <- eval_fa2[a[, 1]] + sqrt(sig_sq_xa2)*rnorm(N)
+  eval_fa3 <- f(x_tt = xa3[, 1], z = Za3[1, , drop = F],
                phi_x = phi_xa3, bet_x = bet_xa3)
-  xa3[, 1] <- eval_fp[a[, 1]] + sqrt(sig_sq_xa3)*rnorm(N)
-  eval_fq <- f(x_tt = xa4[, 1], z = Za4[1, , drop = F],
+  xa3[, 1] <- eval_fa3[a[, 1]] + sqrt(sig_sq_xa3)*rnorm(N)
+  eval_fa4 <- f(x_tt = xa4[, 1], z = Za4[1, , drop = F],
                phi_x = phi_xa4, bet_x = bet_xa4)
-  xa4[, 1] <- eval_fq[a[, 1]] + sqrt(sig_sq_xa4)*rnorm(N)
+  xa4[, 1] <- eval_fa4[a[, 1]] + sqrt(sig_sq_xa4)*rnorm(N)
   # conditioning
   xa1[N, 1] <- xa1_r[1]
   xa2[N, 1] <- xa2_r[1]
   xa3[N, 1] <- xa3_r[1]
   xa4[N, 1] <- xa4_r[1]
   # weighting
-  w_log   <- w_BPF(y = y[1, ], yz = yz[1, ], KK = KK,
+  w_log   <- w_BPF(y = y[1, , drop = FALSE],
+                   N = N,
                    xa1 = xa1[, 1],
                    xa2 = xa2[, 1],
                    xa3 = xa3[, 1],
@@ -76,30 +85,30 @@ cBPF_as <- function(y, yz, Za1, Za2, Za3, Za4,
     # resampling
     a[, t]     <- sample.int(n = N, replace = TRUE, prob = w[, t - 1])
     # propagation
-    eval_fa    <- f(x_tt = xa1[, t - 1], z = Za1[t, , drop = F],
+    eval_fa1    <- f(x_tt = xa1[, t - 1], z = Za1[t, , drop = F],
                     phi_x = phi_xa1, bet_x = bet_xa1)
-    xa1[, t]    <- eval_fa[a[, t]] + sqrt(sig_sq_xa1)*rnorm(N)
-    eval_fb    <- f(x_tt = xa2[, t - 1], z = Za2[t, , drop = F],
+    xa1[, t]    <- eval_fa1[a[, t]] + sqrt(sig_sq_xa1)*rnorm(N)
+    eval_fa2    <- f(x_tt = xa2[, t - 1], z = Za2[t, , drop = F],
                     phi_x = phi_xa2, bet_x = bet_xa2)
-    xa2[, t]    <- eval_fb[a[, t]] + sqrt(sig_sq_xa2)*rnorm(N)
-    eval_fp    <- f(x_tt = xa3[, t - 1], z = Za3[t, , drop = F],
+    xa2[, t]    <- eval_fa2[a[, t]] + sqrt(sig_sq_xa2)*rnorm(N)
+    eval_fa3    <- f(x_tt = xa3[, t - 1], z = Za3[t, , drop = F],
                     phi_x = phi_xa3, bet_x = bet_xa3)
-    xa3[, t]    <- eval_fp[a[, t]] + sqrt(sig_sq_xa3)*rnorm(N)
-    eval_fq    <- f(x_tt = xa4[, t - 1], z = Za4[t, , drop = F],
+    xa3[, t]    <- eval_fa3[a[, t]] + sqrt(sig_sq_xa3)*rnorm(N)
+    eval_fa4    <- f(x_tt = xa4[, t - 1], z = Za4[t, , drop = F],
                     phi_x = phi_xa4, bet_x = bet_xa4)
-    xa4[, t]    <- eval_fq[a[, t]] + sqrt(sig_sq_xa4)*rnorm(N)
+    xa4[, t]    <- eval_fa4[a[, t]] + sqrt(sig_sq_xa4)*rnorm(N)
     # conditioning
     xa1[N, t]   <- xa1_r[t]
     xa2[N, t]   <- xa2_r[t]
     xa3[N, t]   <- xa3_r[t]
     xa4[N, t]   <- xa4_r[t]
     # ancestor sampling
-    m1 <- matrix(c(eval_fa - xa1_r[t],
-                   eval_fb - xa2_r[t],
-                   eval_fp - xa3_r[t],
-                   eval_fq - xa4_r[t]
+    m1 <- matrix(c(eval_fa1 - xa1_r[t],
+                   eval_fa2 - xa2_r[t],
+                   eval_fa3 - xa3_r[t],
+                   eval_fa4 - xa4_r[t]
                   ),
-                nrow = N, ncol = 4)
+                nrow = N, ncol = 4) # 2, 3
     m2 <- diag(c(sig_sq_xa1^{-1},
                  sig_sq_xa2^{-1},
                  sig_sq_xa3^{-1},
@@ -113,7 +122,8 @@ cBPF_as <- function(y, yz, Za1, Za2, Za3, Za4,
     w_as       <- w_tilde_as/sum(w_tilde_as)
     a[N, t]    <- sample.int(n = N, size = 1, replace = TRUE, prob = w_as)
     # weighting
-    w_log   <- w_BPF(y = y[t, ], yz = yz[t, ], KK = KK,
+    w_log   <- w_BPF(y = y[t, , drop = FALSE],
+                     N = N,
                      xa1 = xa1[, t],
                      xa2 = xa2[, t],
                      xa3 = xa3[, t],

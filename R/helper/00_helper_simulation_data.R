@@ -1,10 +1,11 @@
-generate_data <- function(T, K, num_incs,
+generate_data <- function(T, D,
                           par_true,
                           x_levels,
                           seq_logs,
                           seq_cept,
                           old_regs = FALSE,
-                          plot_states) {
+                          plot_states,
+                          plot_measurements) {
   xa1 <- rep(0, T)
   xa2 <- rep(0, T)
   xa3 <- rep(0, T)
@@ -64,21 +65,10 @@ generate_data <- function(T, K, num_incs,
   xa4 <- res_q[[1]]
   za4 <- res_q[[2]]
 
-  seq_prob <- rep(seq(from = 0, to = 1 - (1/K), length.out = K), each = T)
-  yz <- matrix(qgb2(prob = seq_prob,
-                    shape1 = xa1,
-                    scale  = xa2,
-                    shape2 = xa3,
-                    shape3 = xa4),
-               nrow = T, ncol = K)
-  yz   <- cbind(yz, rep(Inf, times = T))
-  yraw <- matrix(rgb2(n = num_incs*T,
-                      shape1 = xa1,
-                      scale  = xa2,
-                      shape2 = xa3,
-                      shape3 = xa4),
-                 nrow = T, ncol = num_incs)
-  if (plot_states) {
+  xalphas <- cbind(xa1, xa2, xa3, xa4)
+  yraw <- my_rdirichlet(n = TT, alpha = xalphas)
+
+    if (plot_states) {
     names_title <- paste("True states for ",
                          "xa1_t (black),", " xa2_t (red),",
                          " xa3_t (green),", " and", " xa4_t (blue)")
@@ -91,8 +81,22 @@ generate_data <- function(T, K, num_incs,
             main = names_title,
             ylab = names_ylab
             )
+    }
+  if (plot_measurements) {
+    names_title <- paste("Multivariate measurements for components of d=1,..D",
+                         "ya1_t (black),", " ya2_t (red),",
+                         " ya3_t (green),", " and", " ya4_t (blue)")
+    names_ylab  <- paste(" ya1_t,", " ya2_t,", " ya3_t,",
+                         " and", " ya4_t", " states")
+
+    par(mfrow = c(1,1))
+    matplot(cbind(yraw[, 1], yraw[, 2], yraw[, 3], yraw[, 4]),
+            type = "l",
+            main = names_title,
+            ylab = names_ylab
+    )
   }
-  return(list(yraw, yz, list(xa1, xa2, xa3, xa4), list(za1, za2, za3, za4)))
+  return(list(yraw, list(xa1, xa2, xa3, xa4), list(za1, za2, za3, za4)))
 }
 parameter_fct_log_norm <- function(exp_mu, exp_sd) {
   log_mu  <- log(exp_mu/sqrt( 1 + (exp_sd^2/exp_mu^2) ))
@@ -201,3 +205,19 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
   }
   return(list(x, z))
 }
+my_rdirichlet <- function(n, alpha) {
+  l <- dim(alpha)[2]
+  n <- n*l
+  x <- matrix(rgamma(n = n, shape = t(alpha)), ncol = l, byrow = TRUE)
+  x_colsums <- as.vector(x %*% rep(1, l))
+  x/x_colsums
+}
+# Testing my dirichelet vs dirichelt from gtools-package
+# a1 <- 1:5
+# a2 <- 21:25
+# a_all <- matrix(c(a1, a2), nrow = 2, byrow = T)
+# set.seed(123)
+# rdirichlet(1, a1)
+# rdirichlet(1, a2)
+# set.seed(123)
+# my_rdirichlet(2, a_all)
