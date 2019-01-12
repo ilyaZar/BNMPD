@@ -96,7 +96,7 @@ exp(s3 - logD3)
 
 
 sort(w[, 1], decreasing = TRUE)[1:20]
-
+hist(sort(w[, 1], decreasing = TRUE)[1:20])
 
 
 

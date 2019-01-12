@@ -48,10 +48,10 @@ pgas <- function(MM, TT, N,
   # Initialize priors:
   prior_a      <- priors[1]
   prior_b      <- priors[2]
-  prior_VCM_xa1 <- diag(dim_ba + 1)/1000
-  prior_VCM_xa2 <- diag(dim_bb + 1)/1000
-  prior_VCM_xa3 <- diag(dim_bp + 1)/1000
-  prior_VCM_xa4 <- diag(dim_bq + 1)/1000
+  prior_V_xa1 <- diag(dim_ba + 1)/1000
+  prior_V_xa2 <- diag(dim_bb + 1)/1000
+  prior_V_xa3 <- diag(dim_bp + 1)/1000
+  prior_V_xa4 <- diag(dim_bq + 1)/1000
   # Initialize parameters
   sig_sq_xa1[1] <- par_init[[1]][[1]]
   phi_xa1[1]    <- par_init[[1]][[2]]
@@ -77,25 +77,26 @@ pgas <- function(MM, TT, N,
   #                                          exp(Xp[1, ]), exp(Xq[1, ])),
   #                     states_true  = cbind(xa1_t, xa2_t, xa3_t, xa4_t),
   #                     current = 1, total = 1, num_prints = 1)
-  out_cPF <- cBPF_as(y = y, yz = yz, Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4,
-                    N = N, TT = TT,
-                    sig_sq_xa1 = sig_sq_xa1[1],
-                    phi_xa1 = phi_xa1[1],
-                    bet_xa1 = bet_xa1[, 1, drop = F],
-                    xa1_r = Xa[1, ],
-                    sig_sq_xa2 = sig_sq_xa2[1],
-                    phi_xa2 = phi_xa2[1],
-                    bet_xa2 = bet_xa2[, 1, drop = F],
-                    xa2_r = Xb[1, ],
-                    sig_sq_xa3 = sig_sq_xa3[1],
-                    phi_xa3 = phi_xa3[1],
-                    bet_xa3 = bet_xa3[, 1, drop = F],
-                    xa3_r = Xp[1, ],
-                    sig_sq_xa4 = sig_sq_xa4[1],
-                    phi_xa4 = phi_xa4[1],
-                    bet_xa4 = bet_xa4[, 1, drop = F],
-                    xa4_r = Xq[1, ],
-                    filtering = filtering)
+  out_cPF <- cBPF_as(y = y, yz = yz,
+                     Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4,
+                     N = N, TT = TT,
+                     sig_sq_xa1 = sig_sq_xa1[1],
+                     phi_xa1 = phi_xa1[1],
+                     bet_xa1 = bet_xa1[, 1, drop = F],
+                     xa1_r = Xa[1, ],
+                     sig_sq_xa2 = sig_sq_xa2[1],
+                     phi_xa2 = phi_xa2[1],
+                     bet_xa2 = bet_xa2[, 1, drop = F],
+                     xa2_r = Xb[1, ],
+                     sig_sq_xa3 = sig_sq_xa3[1],
+                     phi_xa3 = phi_xa3[1],
+                     bet_xa3 = bet_xa3[, 1, drop = F],
+                     xa3_r = Xp[1, ],
+                     sig_sq_xa4 = sig_sq_xa4[1],
+                     phi_xa4 = phi_xa4[1],
+                     bet_xa4 = bet_xa4[, 1, drop = F],
+                     xa4_r = Xq[1, ],
+                     filtering = filtering)
   w       <- out_cPF[[1]][, TT]
   b       <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
   Xa[1, ] <- out_cPF[[2]][b, ]
@@ -118,15 +119,15 @@ pgas <- function(MM, TT, N,
                              prior_b + crossprod(err_sig_sq_x)/2)
     regs_a[, 1]  <- Xa[m - 1, 1:(TT - 1)]
     x_lhs        <- Xa[m - 1, 2:TT]
-    Omega_xa1     <- solve(crossprod(regs_a, regs_a)/sig_sq_xa1[m] + prior_VCM_xa1)
-    mu_xa1        <- Omega_xa1 %*% (crossprod(regs_a, x_lhs)/sig_sq_xa1[m])
-    beta_xa1      <- rmvnorm(n = 1, mean = mu_xa1, sigma = Omega_xa1)
-    phi_xa1[m]    <- beta_xa1[1]
-    bet_xa1[, m]  <- beta_xa1[-1]
+    Omega_xa1    <- solve(crossprod(regs_a, regs_a)/sig_sq_xa1[m] + prior_V_xa1)
+    mu_xa1       <- Omega_xa1 %*% (crossprod(regs_a, x_lhs)/sig_sq_xa1[m])
+    beta_xa1     <- rmvnorm(n = 1, mean = mu_xa1, sigma = Omega_xa1)
+    phi_xa1[m]   <- beta_xa1[1]
+    bet_xa1[, m] <- beta_xa1[-1]
     while (near(abs(phi_xa1[m]), 1, tol = 0.01) | abs(phi_xa1[m]) > 1) {
-    beta_xa1      <- rmvnorm(n = 1, mean = mu_xa1, sigma = Omega_xa1)
-    phi_xa1[m]    <- beta_xa1[1]
-    bet_xa1[, m]  <- beta_xa1[-1]
+    beta_xa1     <- rmvnorm(n = 1, mean = mu_xa1, sigma = Omega_xa1)
+    phi_xa1[m]   <- beta_xa1[1]
+    bet_xa1[, m] <- beta_xa1[-1]
     }
     # 2. pars for xa2_t process --------------------------------------------
     err_sig_sq_x <- Xb[m - 1, 2:TT] - f(x_tt =  Xb[m - 1, 1:(TT - 1)],
@@ -137,15 +138,15 @@ pgas <- function(MM, TT, N,
                               prior_b + crossprod(err_sig_sq_x)/2)
     regs_b[, 1]  <- Xb[m - 1, 1:(TT - 1)]
     x_lhs        <- Xb[m - 1, 2:TT]
-    Omega_xa2     <- solve(crossprod(regs_b, regs_b)/sig_sq_xa2[m] + prior_VCM_xa2)
-    mu_xa2        <- Omega_xa2 %*% (crossprod(regs_b, x_lhs)/sig_sq_xa2[m])
-    beta_xa2      <- rmvnorm(n = 1, mean = mu_xa2, sigma = Omega_xa2)
-    phi_xa2[m]    <- beta_xa2[1]
-    bet_xa2[, m]  <- beta_xa2[-1]
+    Omega_xa2    <- solve(crossprod(regs_b, regs_b)/sig_sq_xa2[m] + prior_V_xa2)
+    mu_xa2       <- Omega_xa2 %*% (crossprod(regs_b, x_lhs)/sig_sq_xa2[m])
+    beta_xa2     <- rmvnorm(n = 1, mean = mu_xa2, sigma = Omega_xa2)
+    phi_xa2[m]   <- beta_xa2[1]
+    bet_xa2[, m] <- beta_xa2[-1]
     while (near(abs(phi_xa2[m]), 1, tol = 0.01) | abs(phi_xa2[m]) > 1) {
-      beta_xa2      <- rmvnorm(n = 1, mean = mu_xa2, sigma = Omega_xa2)
-      phi_xa2[m]    <- beta_xa2[1]
-      bet_xa2[, m]  <- beta_xa2[-1]
+      beta_xa2     <- rmvnorm(n = 1, mean = mu_xa2, sigma = Omega_xa2)
+      phi_xa2[m]   <- beta_xa2[1]
+      bet_xa2[, m] <- beta_xa2[-1]
     }
     # 3. pars for xa1_t process --------------------------------------------
     err_sig_sq_x <- Xp[m - 1, 2:TT] - f(x_tt =  Xp[m - 1, 1:(TT - 1)],
@@ -156,15 +157,15 @@ pgas <- function(MM, TT, N,
                               prior_b + crossprod(err_sig_sq_x)/2)
     regs_p[, 1]  <- Xp[m - 1, 1:(TT - 1)]
     x_lhs        <- Xp[m - 1, 2:TT]
-    Omega_xa3     <- solve(crossprod(regs_p, regs_p)/sig_sq_xa3[m] + prior_VCM_xa3)
-    mu_xa3        <- Omega_xa3 %*% (crossprod(regs_p, x_lhs)/sig_sq_xa3[m])
-    beta_xa3      <- rmvnorm(n = 1, mean = mu_xa3, sigma = Omega_xa3)
-    phi_xa3[m]    <- beta_xa3[1]
-    bet_xa3[, m]  <- beta_xa3[-1]
+    Omega_xa3    <- solve(crossprod(regs_p, regs_p)/sig_sq_xa3[m] + prior_V_xa3)
+    mu_xa3       <- Omega_xa3 %*% (crossprod(regs_p, x_lhs)/sig_sq_xa3[m])
+    beta_xa3     <- rmvnorm(n = 1, mean = mu_xa3, sigma = Omega_xa3)
+    phi_xa3[m]   <- beta_xa3[1]
+    bet_xa3[, m] <- beta_xa3[-1]
     while (near(abs(phi_xa3[m]), 1, tol = 0.01) | abs(phi_xa3[m]) > 1) {
-      beta_xa3      <- rmvnorm(n = 1, mean = mu_xa3, sigma = Omega_xa3)
-      phi_xa3[m]    <- beta_xa3[1]
-      bet_xa3[, m]  <- beta_xa3[-1]
+      beta_xa3     <- rmvnorm(n = 1, mean = mu_xa3, sigma = Omega_xa3)
+      phi_xa3[m]   <- beta_xa3[1]
+      bet_xa3[, m] <- beta_xa3[-1]
     }
     # 4. pars for xa4_t process --------------------------------------------
     err_sig_sq_x <- Xq[m - 1, 2:TT] - f(x_tt = Xq[m - 1, 1:(TT - 1)],
@@ -175,36 +176,37 @@ pgas <- function(MM, TT, N,
                               prior_b + crossprod(err_sig_sq_x)/2)
     regs_q[, 1]  <- Xq[m - 1, 1:(TT - 1)]
     x_lhs        <- Xq[m - 1, 2:TT]
-    Omega_xa4     <- solve(crossprod(regs_q, regs_q)/sig_sq_xa4[m] + prior_VCM_xa4)
-    mu_xa4        <- Omega_xa4 %*% (crossprod(regs_q, x_lhs)/sig_sq_xa4[m])
-    beta_xa4      <- rmvnorm(n = 1, mean = mu_xa4, sigma = Omega_xa4)
-    phi_xa4[m]    <- beta_xa4[1]
-    bet_xa4[, m]  <- beta_xa4[-1]
+    Omega_xa4    <- solve(crossprod(regs_q, regs_q)/sig_sq_xa4[m] + prior_V_xa4)
+    mu_xa4       <- Omega_xa4 %*% (crossprod(regs_q, x_lhs)/sig_sq_xa4[m])
+    beta_xa4     <- rmvnorm(n = 1, mean = mu_xa4, sigma = Omega_xa4)
+    phi_xa4[m]   <- beta_xa4[1]
+    bet_xa4[, m] <- beta_xa4[-1]
     while (near(abs(phi_xa4[m]), 1, tol = 0.01) | abs(phi_xa4[m]) > 1) {
-      beta_xa4      <- rmvnorm(n = 1, mean = mu_xa4, sigma = Omega_xa4)
-      phi_xa4[m]    <- beta_xa4[1]
-      bet_xa4[, m]  <- beta_xa4[-1]
+      beta_xa4     <- rmvnorm(n = 1, mean = mu_xa4, sigma = Omega_xa4)
+      phi_xa4[m]   <- beta_xa4[1]
+      bet_xa4[, m] <- beta_xa4[-1]
     }
     # II. Run cBPF-AS part
-    out_cPF <- cBPF_as(y = y, yz = yz, Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4,
-                      N = N, TT = TT,
-                      sig_sq_xa1 = sig_sq_xa1[m],
-                      phi_xa1 = phi_xa1[m],
-                      bet_xa1 = bet_xa1[, m, drop = F],
-                      xa1_r = Xa[m - 1,],
-                      sig_sq_xa2 = sig_sq_xa2[m],
-                      phi_xa2 = phi_xa2[m],
-                      bet_xa2 = bet_xa2[, m, drop = F],
-                      xa2_r = Xb[m - 1,],
-                      sig_sq_xa3 = sig_sq_xa3[m],
-                      phi_xa3 = phi_xa3[m],
-                      bet_xa3 = bet_xa3[, m, drop = F],
-                      xa3_r = Xp[m - 1,],
-                      sig_sq_xa4 = sig_sq_xa4[m],
-                      phi_xa4 = phi_xa4[m],
-                      bet_xa4 = bet_xa4[, m, drop = F],
-                      xa4_r = Xq[m - 1, ],
-                      filtering = filtering)
+    out_cPF <- cBPF_as(y = y, yz = yz,
+                       Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4,
+                       N = N, TT = TT,
+                       sig_sq_xa1 = sig_sq_xa1[m],
+                       phi_xa1 = phi_xa1[m],
+                       bet_xa1 = bet_xa1[, m, drop = F],
+                       xa1_r = Xa[m - 1,],
+                       sig_sq_xa2 = sig_sq_xa2[m],
+                       phi_xa2 = phi_xa2[m],
+                       bet_xa2 = bet_xa2[, m, drop = F],
+                       xa2_r = Xb[m - 1,],
+                       sig_sq_xa3 = sig_sq_xa3[m],
+                       phi_xa3 = phi_xa3[m],
+                       bet_xa3 = bet_xa3[, m, drop = F],
+                       xa3_r = Xp[m - 1,],
+                       sig_sq_xa4 = sig_sq_xa4[m],
+                       phi_xa4 = phi_xa4[m],
+                       bet_xa4 = bet_xa4[, m, drop = F],
+                       xa4_r = Xq[m - 1, ],
+                       filtering = filtering)
     w      <- out_cPF[[1]][, TT]
     b <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
     Xa[m, ] <- out_cPF[[2]][b, ]
@@ -214,7 +216,8 @@ pgas <- function(MM, TT, N,
     # monitor_pgas_states(states_drawn = cbind(exp(Xa[m, ]), exp(Xb[m, ]),
     #                                          exp(Xp[m, ]), exp(Xq[m, ])),
     #                     states_true  = cbind(xa1_t, xa2_t, xa3_t, xa4_t),
-    #                     current = m, total = MM, num_prints = num_plots_states)
+    #                     current = m, total = MM,
+    #                     num_prints = num_plots_states)
     monitor_pgas_time(m, MM, len = MM)
     monitor_pgas_mcmc(m, MM, len = MM,
                       val_true = par_true,
