@@ -14,10 +14,10 @@ pgas <- function(MM, TT, N,
   Xa3 <- matrix(0, nrow = MM, ncol = TT)
   Xa4 <- matrix(0, nrow = MM, ncol = TT)
 
-  dim_ba1  <- length(par_init[[1]][[3]])
-  dim_ba2  <- length(par_init[[2]][[3]])
-  dim_ba3  <- length(par_init[[3]][[3]])
-  dim_ba4  <- length(par_init[[4]][[3]])
+  dim_ba1 <- length(par_init[[1]][[3]])
+  dim_ba2 <- length(par_init[[2]][[3]])
+  dim_ba3 <- length(par_init[[3]][[3]])
+  dim_ba4 <- length(par_init[[4]][[3]])
   dim_all <- dim_ba1 + dim_ba2 + dim_ba3 + dim_ba4 + 4*2
 
   sig_sq_xa1 <- numeric(MM)
@@ -46,8 +46,8 @@ pgas <- function(MM, TT, N,
   Za4           <- as.matrix(Za4)
   regs_a4[, -1] <- Za4[2:TT, ]
   # Initialize priors:
-  prior_a      <- priors[1]
-  prior_b      <- priors[2]
+  prior_a     <- priors[1]
+  prior_b     <- priors[2]
   prior_V_xa1 <- diag(dim_ba1 + 1)/1000
   prior_V_xa2 <- diag(dim_ba2 + 1)/1000
   prior_V_xa3 <- diag(dim_ba3 + 1)/1000
@@ -65,7 +65,7 @@ pgas <- function(MM, TT, N,
   sig_sq_xa4[1] <- par_init[[4]][[1]]
   phi_xa4[1]    <- par_init[[4]][[2]]
   bet_xa4[, 1]  <- par_init[[4]][[3]]
-  par_init     <- unlist(par_init)
+  par_init      <- unlist(par_init)
   # Initialize states
   ## I. Set states to deterministic starting values
   Xa1[1, ] <- traj_init[1]
@@ -97,8 +97,8 @@ pgas <- function(MM, TT, N,
                      bet_xa4 = bet_xa4[, 1, drop = F],
                      xa4_r = Xa4[1, ],
                      filtering = filtering)
-  w       <- out_cPF[[1]][, TT]
-  b       <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
+  w        <- out_cPF[[1]][, TT]
+  b        <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
   Xa1[1, ] <- out_cPF[[2]][b, ]
   Xa2[1, ] <- out_cPF[[3]][b, ]
   Xa3[1, ] <- out_cPF[[4]][b, ]
@@ -136,7 +136,7 @@ pgas <- function(MM, TT, N,
                                       bet_x = bet_xa2[, m - 1])
     sig_sq_xa2[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
                               prior_b + crossprod(err_sig_sq_x)/2)
-    regs_a2[, 1]  <- Xa2[m - 1, 1:(TT - 1)]
+    regs_a2[, 1] <- Xa2[m - 1, 1:(TT - 1)]
     x_lhs        <- Xa2[m - 1, 2:TT]
     Omega_xa2    <- solve(crossprod(regs_a2, regs_a2)/sig_sq_xa2[m] + prior_V_xa2)
     mu_xa2       <- Omega_xa2 %*% (crossprod(regs_a2, x_lhs)/sig_sq_xa2[m])
@@ -155,7 +155,7 @@ pgas <- function(MM, TT, N,
                                         bet_x = bet_xa3[, m - 1])
     sig_sq_xa3[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
                               prior_b + crossprod(err_sig_sq_x)/2)
-    regs_a3[, 1]  <- Xa3[m - 1, 1:(TT - 1)]
+    regs_a3[, 1] <- Xa3[m - 1, 1:(TT - 1)]
     x_lhs        <- Xa3[m - 1, 2:TT]
     Omega_xa3    <- solve(crossprod(regs_a3, regs_a3)/sig_sq_xa3[m] + prior_V_xa3)
     mu_xa3       <- Omega_xa3 %*% (crossprod(regs_a3, x_lhs)/sig_sq_xa3[m])
@@ -174,7 +174,7 @@ pgas <- function(MM, TT, N,
                                         bet_x = bet_xa4[, m - 1])
     sig_sq_xa4[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
                               prior_b + crossprod(err_sig_sq_x)/2)
-    regs_a4[, 1]  <- Xa4[m - 1, 1:(TT - 1)]
+    regs_a4[, 1] <- Xa4[m - 1, 1:(TT - 1)]
     x_lhs        <- Xa4[m - 1, 2:TT]
     Omega_xa4    <- solve(crossprod(regs_a4, regs_a4)/sig_sq_xa4[m] + prior_V_xa4)
     mu_xa4       <- Omega_xa4 %*% (crossprod(regs_a4, x_lhs)/sig_sq_xa4[m])
@@ -207,8 +207,8 @@ pgas <- function(MM, TT, N,
                        bet_xa4 = bet_xa4[, m, drop = F],
                        xa4_r = Xa4[m - 1, ],
                        filtering = filtering)
-    w      <- out_cPF[[1]][, TT]
-    b <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
+    w        <- out_cPF[[1]][, TT]
+    b        <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
     Xa1[m, ] <- out_cPF[[2]][b, ]
     Xa2[m, ] <- out_cPF[[3]][b, ]
     Xa3[m, ] <- out_cPF[[4]][b, ]
