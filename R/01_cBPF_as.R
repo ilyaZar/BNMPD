@@ -23,14 +23,6 @@ cBPF_as <- function(y, yz, Za1, Za2, Za3, Za4,
   xa2 <- matrix(0, nrow = N, ncol = TT)
   xa3 <- matrix(0, nrow = N, ncol = TT)
   xa4 <- matrix(0, nrow = N, ncol = TT)
-  # xa1 <- matrix(rep(xa1_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-  # xa2 <- matrix(rep(xa2_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-  # xa3 <- matrix(rep(xa3_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-  # xa4 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-  # xa1 <- matrix(rep(log(xa1_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-  # xa2 <- matrix(rep(log(xa2_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-  # xa3 <- matrix(rep(log(xa3_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-  # xa4 <- matrix(rep(log(xa4_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
   # ancestors
   a  <- matrix(0, nrow = N, ncol = TT)
   # weights

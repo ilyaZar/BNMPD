@@ -96,6 +96,9 @@ generate_data <- function(T, D,
             ylab = names_ylab
     )
   }
+  if (sum(rowSums(yraw)) != TT) {
+    stop("Something is wrong with the Dirichelet: y-fractions don't sum up to 1!")
+  }
   return(list(yraw, list(xa1, xa2, xa3, xa4), list(za1, za2, za3, za4)))
 }
 parameter_fct_log_norm <- function(exp_mu, exp_sd) {
