@@ -82,6 +82,14 @@ s <- ifelse(alpha == 1 & x == 0, -Inf, s)
 #
 #
 #
+# FOR CUBIC SPLINES ORDER = 4!!!
+splines::splineDesign(knots = 1:15, x = 4:7, outer.ok = TRUE)
+
+
+#
+#
+#
+#
 #
 
 

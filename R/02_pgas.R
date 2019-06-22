@@ -1,5 +1,5 @@
 pgas <- function(MM, TT, N,
-                 y, Za1, Za2, Za3, Za4,
+                 y, Za1, Za2, Za3, Za4, Za5,
                  priors,
                  par_init,
                  par_true,
@@ -13,12 +13,14 @@ pgas <- function(MM, TT, N,
   Xa2 <- matrix(0, nrow = MM, ncol = TT)
   Xa3 <- matrix(0, nrow = MM, ncol = TT)
   Xa4 <- matrix(0, nrow = MM, ncol = TT)
+  Xa5 <- matrix(0, nrow = MM, ncol = TT)
 
   dim_ba1 <- length(par_init[[1]][[3]])
   dim_ba2 <- length(par_init[[2]][[3]])
   dim_ba3 <- length(par_init[[3]][[3]])
   dim_ba4 <- length(par_init[[4]][[3]])
-  dim_all <- dim_ba1 + dim_ba2 + dim_ba3 + dim_ba4 + 4*2
+  dim_ba5 <- length(par_init[[5]][[3]])
+  dim_all <- dim_ba1 + dim_ba2 + dim_ba3 + dim_ba4 + dim_ba5 + 5*2
 
   sig_sq_xa1 <- numeric(MM)
   phi_xa1    <- numeric(MM)
@@ -32,6 +34,9 @@ pgas <- function(MM, TT, N,
   sig_sq_xa4 <- numeric(MM)
   phi_xa4    <- numeric(MM)
   bet_xa4    <- matrix(0, nrow = dim_ba4, ncol = MM)
+  sig_sq_xa5 <- numeric(MM)
+  phi_xa5    <- numeric(MM)
+  bet_xa5    <- matrix(0, nrow = dim_ba5, ncol = MM)
 
   regs_a1       <- matrix(0, nrow = TT - 1, ncol = ncol(Za1) + 1)
   Za1           <- as.matrix(Za1)
@@ -45,6 +50,9 @@ pgas <- function(MM, TT, N,
   regs_a4       <- matrix(0, nrow = TT - 1, ncol = ncol(Za4) + 1)
   Za4           <- as.matrix(Za4)
   regs_a4[, -1] <- Za4[2:TT, ]
+  regs_a5       <- matrix(0, nrow = TT - 1, ncol = ncol(Za5) + 1)
+  Za5           <- as.matrix(Za5)
+  regs_a5[, -1] <- Za5[2:TT, ]
   # Initialize priors:
   prior_a     <- priors[1]
   prior_b     <- priors[2]
@@ -52,6 +60,7 @@ pgas <- function(MM, TT, N,
   prior_V_xa2 <- diag(dim_ba2 + 1)/1000
   prior_V_xa3 <- diag(dim_ba3 + 1)/1000
   prior_V_xa4 <- diag(dim_ba4 + 1)/1000
+  prior_V_xa5 <- diag(dim_ba5 + 1)/1000
   # Initialize parameters
   sig_sq_xa1[1] <- par_init[[1]][[1]]
   phi_xa1[1]    <- par_init[[1]][[2]]
@@ -65,6 +74,9 @@ pgas <- function(MM, TT, N,
   sig_sq_xa4[1] <- par_init[[4]][[1]]
   phi_xa4[1]    <- par_init[[4]][[2]]
   bet_xa4[, 1]  <- par_init[[4]][[3]]
+  sig_sq_xa5[1] <- par_init[[5]][[1]]
+  phi_xa5[1]    <- par_init[[5]][[2]]
+  bet_xa5[, 1]  <- par_init[[5]][[3]]
   par_init      <- unlist(par_init)
   # Initialize states
   ## I. Set states to deterministic starting values
@@ -72,13 +84,14 @@ pgas <- function(MM, TT, N,
   Xa2[1, ] <- traj_init[2]
   Xa3[1, ] <- traj_init[3]
   Xa4[1, ] <- traj_init[4]
+  Xa5[1, ] <- traj_init[5]
   ## II. run cBPF and use output as first conditioning trajectory
   # monitor_pgas_states(states_drawn = cbind(exp(Xa1[1, ]), exp(Xa2[1, ]),
   #                                          exp(Xa3[1, ]), exp(Xa4[1, ])),
   #                     states_true  = cbind(xa1_t, xa2_t, xa3_t, xa4_t),
   #                     current = 1, total = 1, num_prints = 1)
-  out_cPF <- cBPF_as(y = y, yz = yz,
-                     Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4,
+  out_cPF <- cBPF_as(y = y,
+                     Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4, Za5 = Za5,
                      N = N, TT = TT,
                      sig_sq_xa1 = sig_sq_xa1[1],
                      phi_xa1 = phi_xa1[1],
@@ -96,6 +109,10 @@ pgas <- function(MM, TT, N,
                      phi_xa4 = phi_xa4[1],
                      bet_xa4 = bet_xa4[, 1, drop = F],
                      xa4_r = Xa4[1, ],
+                     sig_sq_xa5 = sig_sq_xa5[1],
+                     phi_xa5 = phi_xa5[1],
+                     bet_xa5 = bet_xa5[, 1, drop = F],
+                     xa5_r = Xa5[1, ],
                      filtering = filtering)
   w        <- out_cPF[[1]][, TT]
   b        <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
@@ -103,6 +120,7 @@ pgas <- function(MM, TT, N,
   Xa2[1, ] <- out_cPF[[3]][b, ]
   Xa3[1, ] <- out_cPF[[4]][b, ]
   Xa4[1, ] <- out_cPF[[5]][b, ]
+  Xa5[1, ] <- out_cPF[[6]][b, ]
   # monitor_pgas_states(states_drawn = cbind(exp(Xa1[1, ]), exp(Xa2[1, ]),
   #                                          exp(Xa3[1, ]), exp(Xa4[1, ])),
   #                     states_true  = cbind(xa1_t, xa2_t, xa3_t, xa4_t),
@@ -186,9 +204,28 @@ pgas <- function(MM, TT, N,
       phi_xa4[m]   <- beta_xa4[1]
       bet_xa4[, m] <- beta_xa4[-1]
     }
+    # 5. pars for xa4_t process --------------------------------------------
+    err_sig_sq_x <- Xa5[m - 1, 2:TT] - f(x_tt = Xa5[m - 1, 1:(TT - 1)],
+                                         z = Za5[2:TT, , drop = F],
+                                         phi_x = phi_xa5[m - 1],
+                                         bet_x = bet_xa5[, m - 1])
+    sig_sq_xa5[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
+                               prior_b + crossprod(err_sig_sq_x)/2)
+    regs_a5[, 1] <- Xa5[m - 1, 1:(TT - 1)]
+    x_lhs        <- Xa5[m - 1, 2:TT]
+    Omega_xa5    <- solve(crossprod(regs_a5, regs_a5)/sig_sq_xa5[m] + prior_V_xa5)
+    mu_xa5       <- Omega_xa5 %*% (crossprod(regs_a5, x_lhs)/sig_sq_xa5[m])
+    beta_xa5     <- rmvnorm(n = 1, mean = mu_xa5, sigma = Omega_xa5)
+    phi_xa5[m]   <- beta_xa5[1]
+    bet_xa5[, m] <- beta_xa5[-1]
+    while (near(abs(phi_xa5[m]), 1, tol = 0.01) | abs(phi_xa5[m]) > 1) {
+      beta_xa5     <- rmvnorm(n = 1, mean = mu_xa5, sigma = Omega_xa5)
+      phi_xa5[m]   <- beta_xa5[1]
+      bet_xa5[, m] <- beta_xa5[-1]
+    }
     # II. Run cBPF-AS part
-    out_cPF <- cBPF_as(y = y, yz = yz,
-                       Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4,
+    out_cPF <- cBPF_as(y = y,
+                       Za1 = Za1, Za2 = Za2, Za3 = Za3, Za4 = Za4, Za5 = Za5,
                        N = N, TT = TT,
                        sig_sq_xa1 = sig_sq_xa1[m],
                        phi_xa1 = phi_xa1[m],
@@ -206,6 +243,10 @@ pgas <- function(MM, TT, N,
                        phi_xa4 = phi_xa4[m],
                        bet_xa4 = bet_xa4[, m, drop = F],
                        xa4_r = Xa4[m - 1, ],
+                       sig_sq_xa5 = sig_sq_xa5[m],
+                       phi_xa5 = phi_xa5[m],
+                       bet_xa5 = bet_xa5[, m, drop = F],
+                       xa5_r = Xa5[m - 1, ],
                        filtering = filtering)
     w        <- out_cPF[[1]][, TT]
     b        <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
@@ -213,24 +254,40 @@ pgas <- function(MM, TT, N,
     Xa2[m, ] <- out_cPF[[3]][b, ]
     Xa3[m, ] <- out_cPF[[4]][b, ]
     Xa4[m, ] <- out_cPF[[5]][b, ]
+    Xa5[m, ] <- out_cPF[[6]][b, ]
     # monitor_pgas_states(states_drawn = cbind(exp(Xa1[m, ]), exp(Xa2[m, ]),
     #                                          exp(Xa3[m, ]), exp(Xa4[m, ])),
     #                     states_true  = cbind(xa1_t, xa2_t, xa3_t, xa4_t),
     #                     current = m, total = MM,
     #                     num_prints = num_plots_states)
     monitor_pgas_time(m, MM, len = MM)
-    monitor_pgas_mcmc(m, MM, len = MM,
-                      val_true = par_true,
-                      val_init = par_init,
-                      current_pars = cbind(sig_sq_xa1[1:m], phi_xa1[1:m],
-                                           t(bet_xa1)[1:m,],
-                                           sig_sq_xa2[1:m], phi_xa2[1:m],
-                                           t(bet_xa2)[1:m,],
-                                           sig_sq_xa3[1:m], phi_xa3[1:m],
-                                           t(bet_xa3)[1:m,],
-                                           sig_sq_xa4[1:m], phi_xa4[1:m],
-                                           t(bet_xa4)[1:m,]),
-                      dim_all = dim_all)
+    monitor_pgas_mcmc2(m, MM, len = MM,
+                       val_init = par_init,
+                       current_pars = cbind(sig_sq_xa1[1:m], phi_xa1[1:m],
+                                            t(bet_xa1)[1:m,],
+                                            sig_sq_xa2[1:m], phi_xa2[1:m],
+                                            t(bet_xa2)[1:m,],
+                                            sig_sq_xa3[1:m], phi_xa3[1:m],
+                                            t(bet_xa3)[1:m,],
+                                            sig_sq_xa4[1:m], phi_xa4[1:m],
+                                            t(bet_xa4)[1:m,],
+                                            sig_sq_xa5[1:m], phi_xa5[1:m],
+                                            t(bet_xa5)[1:m,]),
+                       dim_all = dim_all)
+    # monitor_pgas_mcmc2(m, MM, len = MM,
+    #                    val_true = par_true,
+    #                    val_init = par_init,
+    #                    current_pars = cbind(sig_sq_xa1[1:m], phi_xa1[1:m],
+    #                                         t(bet_xa1)[1:m,],
+    #                                         sig_sq_xa2[1:m], phi_xa2[1:m],
+    #                                         t(bet_xa2)[1:m,],
+    #                                         sig_sq_xa3[1:m], phi_xa3[1:m],
+    #                                         t(bet_xa3)[1:m,],
+    #                                         sig_sq_xa4[1:m], phi_xa4[1:m],
+    #                                         t(bet_xa4)[1:m,],
+    #                                         sig_sq_xa5[1:m], phi_xa5[1:m],
+    #                                         t(bet_xa5)[1:m,]),
+    #                    dim_all = dim_all)
   }
   return(list(sigma_sq_xa1 = sig_sq_xa1,
               phi_xa1 = phi_xa1,
@@ -244,5 +301,8 @@ pgas <- function(MM, TT, N,
               sigma_sq_xa4 = sig_sq_xa4,
               phi_xa4 = phi_xa4,
               bet_xa4 = bet_xa4,
-              xtraj  = list(Xa1, Xa2, Xa3, Xa4)))
+              sigma_sq_xa5 = sig_sq_xa5,
+              phi_xa5 = phi_xa5,
+              bet_xa5 = bet_xa5,
+              xtraj  = list(Xa1, Xa2, Xa3, Xa4, Xa5)))
 }

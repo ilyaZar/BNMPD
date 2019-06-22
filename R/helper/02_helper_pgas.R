@@ -36,6 +36,28 @@ monitor_pgas_mcmc <- function(current, total, len,
     cat(do.call(sprintf, args = args_print3))
   }
 }
+monitor_pgas_mcmc2 <- function(current, total, len,
+                               val_init,
+                               current_pars,
+                               dim_all) {
+  print_iter <- total/len
+  if ((current %% print_iter) == 0) {
+    # cat(sprintf("Iteration %d out of %d: %.2f%% completed.\n",
+    #             current, total, current*100/total))
+    val_mean <- .colMeans(current_pars, m = current, n = dim_all)
+
+    string_format <- paste0(rep("%.3f", times = dim_all), collapse = " ")
+    string_print1 <- paste0("init values:     ", string_format, "\n")
+    string_print2 <- paste0("mean values:     ", string_format, "\n")
+
+    args_print1 <- c(list(fmt = string_print1), val_init)
+    args_print2 <- c(list(fmt = string_print2), val_mean)
+
+    cat(sprintf("##########################################################\n"))
+    cat(do.call(sprintf, args = args_print1))
+    cat(do.call(sprintf, args = args_print2))
+  }
+}
 monitor_pgas_states <- function(states_drawn, states_true, freeze = 1.5,
                                 current, total, num_prints) {
   # if (num_trajs != dim(states_drawn)[2]) {
