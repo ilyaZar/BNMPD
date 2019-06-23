@@ -5,6 +5,7 @@
 *.eps
 *.pdf
 *.Rmd
-/analysis/2018-11-30/doc/*
-/analysis/2019-01-09/doc/*
+*.RData
 /doc/*
+/results/*
+/data/*

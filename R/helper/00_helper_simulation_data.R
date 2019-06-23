@@ -1,11 +1,12 @@
-generate_data <- function(T, D,
+generate_data <- function(data_type = "dirichlet",
+                          T, D,
                           par_true,
                           x_levels,
                           seq_logs,
                           seq_cept,
-                          old_regs = FALSE,
                           plot_states,
                           plot_measurements) {
+
   xa1 <- rep(0, T)
   xa2 <- rep(0, T)
   xa3 <- rep(0, T)
@@ -28,14 +29,17 @@ generate_data <- function(T, D,
   phi_xa5    <- par_true[[5]][[2]]
   bet_xa5    <- par_true[[5]][[3]]
 
+  if (data_type == "multinomial") {
+    num_counts <- sample(x = 80000:120000, size = T)
+  }
+
   res_a1 <- generate_x_z(phi_x = phi_xa1, sig_sq_x = sig_sq_xa1, bet_x = bet_xa1,
                          x_level     = x_levels[1],
                          x_sd = 0.0125,
                          process_exp = seq_logs[1],
                          intercept   = seq_cept[1],
                          x_init = TRUE,
-                         T = T,
-                         old_regs = old_regs)
+                         T = T)
   xa1    <- res_a1[[1]]
   za1    <- res_a1[[2]]
   res_a2 <- generate_x_z(phi_x = phi_xa2, sig_sq_x = sig_sq_xa2, bet_x = bet_xa2,
@@ -44,8 +48,7 @@ generate_data <- function(T, D,
                          process_exp = seq_logs[2],
                          intercept   = seq_cept[2],
                          x_init = TRUE,
-                         T = T,
-                         old_regs = old_regs)
+                         T = T)
   xa2    <- res_a2[[1]]
   za2    <- res_a2[[2]]
   res_a3 <- generate_x_z(phi_x = phi_xa3, sig_sq_x = sig_sq_xa3, bet_x = bet_xa3,
@@ -54,8 +57,7 @@ generate_data <- function(T, D,
                          process_exp = seq_logs[3],
                          intercept   = seq_cept[3],
                          x_init = TRUE,
-                         T = T,
-                         old_regs = old_regs)
+                         T = T)
   xa3    <- res_a3[[1]]
   za3    <- res_a3[[2]]
   res_a4 <- generate_x_z(phi_x = phi_xa4, sig_sq_x = sig_sq_xa4, bet_x = bet_xa4,
@@ -64,8 +66,7 @@ generate_data <- function(T, D,
                          process_exp = seq_logs[4],
                          intercept   = seq_cept[4],
                          x_init = TRUE,
-                         T = T,
-                         old_regs = old_regs)
+                         T = T)
   xa4 <- res_a4[[1]]
   za4 <- res_a4[[2]]
   res_a5 <- generate_x_z(phi_x = phi_xa5, sig_sq_x = sig_sq_xa5, bet_x = bet_xa5,
@@ -74,15 +75,21 @@ generate_data <- function(T, D,
                          process_exp = seq_logs[5],
                          intercept   = seq_cept[5],
                          x_init = TRUE,
-                         T = T,
-                         old_regs = old_regs)
+                         T = T)
   xa5 <- res_a5[[1]]
   za5 <- res_a5[[2]]
 
   xalphas <- cbind(xa1, xa2, xa3, xa4, xa5)
-  yraw <- my_rdirichlet(n = TT, alpha = xalphas)
 
-    if (plot_states) {
+  if (data_type == "dirichlet") {
+    yraw <- my_rdirichlet(n = TT, alpha = xalphas)
+  }
+  if (data_type == "multinomial") {
+    xalphas <- xalphas/rowSums(xalphas)
+    yraw <- my_rmultinomial(n = TT, probs = xalphas, num_counts = num_counts)
+  }
+
+  if (plot_states) {
     names_title <- paste("True states for ",
                          "xa1_t (black),", " xa2_t (red),",
                          " xa3_t (green),",  "xa4_t (blue)", " and", " xa5_t (blue)")
@@ -94,8 +101,8 @@ generate_data <- function(T, D,
             type = "l",
             main = names_title,
             ylab = names_ylab
-            )
-    }
+    )
+  }
   if (plot_measurements) {
     names_title <- paste("Multivariate measurements for components of d=1,..D",
                          "ya1_t (black),", " ya2_t (red),",
@@ -110,10 +117,21 @@ generate_data <- function(T, D,
             ylab = names_ylab
     )
   }
-  if (sum(rowSums(yraw)) != TT) {
-    stop("Something is wrong with the Dirichelet: y-fractions don't sum up to 1!")
+  if (data_type == "dirichlet") {
+    if (sum(rowSums(yraw)) != TT) {
+      stop("Something is wrong with the Dirichelet: y-fractions don't sum up to 1!")
+    }
+    return(list(yraw,
+                list(xa1, xa2, xa3, xa4, xa5),
+                list(za1, za2, za3, za4, za5)))
   }
-  return(list(yraw, list(xa1, xa2, xa3, xa4, xa5), list(za1, za2, za3, za4, za5)))
+  if (data_type == "multinomial") {
+    return(list(yraw,
+                list(xa1, xa2, xa3, xa4, xa5),
+                list(za1, za2, za3, za4, za5),
+                num_counts = num_counts))
+  }
+
 }
 generate_x_z <- function(phi_x, sig_sq_x, bet_x,
                          x_level,
@@ -121,24 +139,13 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
                          process_exp,
                          intercept,
                          x_init,
-                         T,
-                         old_regs = old_regs) {
+                         T) {
   if (process_exp) {
     x_level <- log(x_level)
   }
   dim_reg <- length(bet_x)
   x <- rep(0, T)
 # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
-  # if (old_regs) {
-  #   z <- matrix(rnorm(T*dim_reg), nrow = T, ncol = dim_reg)
-  #   if (intercept) {
-  #     z[, 1] <- 1
-  #   }
-  #   par_level_adjust <- z[, -dim_reg, drop = FALSE] %*% bet_x[-dim_reg]
-  #   par_level_adjust <- x_level * (1 - phi_x) - par_level_adjust
-  #   par_level_adjust <- par_level_adjust/bet_x[dim_reg]
-  #   z[, dim_reg]     <- par_level_adjust
-  # } else {}
   if (dim_reg == 1) {
     if (intercept) {
       const_level <- x_level * (1 - phi_x)/bet_x
@@ -213,11 +220,19 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
   return(list(x, z))
 }
 my_rdirichlet <- function(n, alpha) {
-  l <- dim(alpha)[2]
+  l <- ncol(alpha)
   n <- n*l
   x <- matrix(rgamma(n = n, shape = t(alpha)), ncol = l, byrow = TRUE)
   x_colsums <- as.vector(x %*% rep(1, l))
   x/x_colsums
+}
+my_rmultinomial <- function(n, probs, num_counts = num_counts) {
+  l <- ncol(probs)
+  x <- matrix(0, ncol = l, nrow = n)
+  for (t in 1:n) {
+    x[t, ] <- rmultinom(n = 1, size = num_counts[t], prob = probs[t, ])
+  }
+  x
 }
 # Testing my dirichelet vs dirichelt from gtools-package
 # a1 <- 1:5
