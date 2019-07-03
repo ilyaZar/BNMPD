@@ -29,7 +29,7 @@ generate_data <- function(data_type = "dirichlet",
   phi_xa5    <- par_true[[5]][[2]]
   bet_xa5    <- par_true[[5]][[3]]
 
-  if (data_type == "multinomial") {
+  if (data_type %in% c("multinomial", "mult-diri", "mult-gen-diri")) {
     num_counts <- sample(x = 80000:120000, size = T)
   }
 
@@ -88,6 +88,9 @@ generate_data <- function(data_type = "dirichlet",
     xalphas <- xalphas/rowSums(xalphas)
     yraw <- my_rmultinomial(n = TT, probs = xalphas, num_counts = num_counts)
   }
+  if (data_type == "mult-diri") {
+    yraw <- my_rmult_diri(n = TT, alpha = xalphas, num_counts = num_counts)
+  }
 
   if (plot_states) {
     names_title <- paste("True states for ",
@@ -126,6 +129,12 @@ generate_data <- function(data_type = "dirichlet",
                 list(za1, za2, za3, za4, za5)))
   }
   if (data_type == "multinomial") {
+    return(list(yraw,
+                list(xa1, xa2, xa3, xa4, xa5),
+                list(za1, za2, za3, za4, za5),
+                num_counts = num_counts))
+  }
+  if (data_type == "mult-diri") {
     return(list(yraw,
                 list(xa1, xa2, xa3, xa4, xa5),
                 list(za1, za2, za3, za4, za5),
@@ -226,8 +235,21 @@ my_rdirichlet <- function(n, alpha) {
   x_colsums <- as.vector(x %*% rep(1, l))
   x/x_colsums
 }
-my_rmultinomial <- function(n, probs, num_counts = num_counts) {
+my_rmultinomial <- function(n, probs, num_counts) {
   l <- ncol(probs)
+  x <- matrix(0, ncol = l, nrow = n)
+  for (t in 1:n) {
+    x[t, ] <- rmultinom(n = 1, size = num_counts[t], prob = probs[t, ])
+  }
+  x
+}
+my_rmult_diri <- function(n, alpha, num_counts) {
+  l <- ncol(alpha)
+  num_probs <- n*l
+  probs <- matrix(rgamma(n = num_probs, shape = t(alpha)), ncol = l, byrow = TRUE)
+  probs_colsums <- as.vector(probs %*% rep(1, l))
+  probs <- probs/probs_colsums
+
   x <- matrix(0, ncol = l, nrow = n)
   for (t in 1:n) {
     x[t, ] <- rmultinom(n = 1, size = num_counts[t], prob = probs[t, ])

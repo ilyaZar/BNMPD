@@ -77,7 +77,9 @@ cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5,
                    xa2 = xa2[, 1],
                    xa3 = xa3[, 1],
                    xa4 = xa4[, 1],
-                   xa5 = xa5[, 1])
+                   xa5 = xa5[, 1],
+                   num_counts = num_counts[1])
+  # browser()
   w_max   <- max(w_log)
   w_tilde <- exp(w_log - w_max)
   w[, 1]  <- w_tilde/sum(w_tilde)
@@ -137,7 +139,9 @@ cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5,
                      xa2 = xa2[, t],
                      xa3 = xa3[, t],
                      xa4 = xa4[, t],
-                     xa5 = xa5[, t])
+                     xa5 = xa5[, t],
+                     num_counts = num_counts[t])
+    # browser()
     w_max   <- max(w_log)
     w_tilde <- exp(w_log - w_max)
     w[, t]  <- w_tilde/sum(w_tilde)

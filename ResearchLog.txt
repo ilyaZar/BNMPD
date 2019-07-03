@@ -1,151 +1,49 @@
-# @Data:
-# 1. Copy of conversation with contributers
+TO-DO @NADJA:
 
------Ursprüngliche Nachricht-----
-Von: nadja.klein@hu-berlin.de [mailto:nadja.klein@hu-berlin.de]
-Gesendet: Mittwoch, 22. Mai 2019 18:48
-An: paul.thurner@gsi.uni-muenchen.de; zsuzsanna.csereklyei@rmit.edu.au
-Betreff: Dirichletregression fuer Energieprofile
+* Von der Anwendung her ergibt es Sinn (meine und Nadjas Meinung), dass man die Generalized Dirichlet ausprobiert
+	- Dabei zu beachten ob seperates Papier (falls viel Arbeit), oder ins bisherige Papier (falls wenig Arbeit) -> Ausprobieren und klären
 
-Lieber Herr Thurner, liebe Frau Csereklyei,
+* 2.te Modellvariante, Multinomial Dirichlet, mal als Simulation, die den echten Daten recht nahe kommt (siehe Datenverlauf Kalifornien und entsprechendes Bild)
 
-Ich bin nicht sicher, ob Sie sich an mich erinnern. Ich war damals
-Doktorandin bei
-Herrn Kneib und wir hatten eine gemeinsame Masterarbeit in Goettingen zu
-einer Anwendung von dirichletregression zu Energieprofilen.
-Wenn ich das richtig mitbekommen habe, dann hatten Sie auch mal angefangen
-was mit Julien Hambuckers im Bereich von Panelmodellen und Zeitreihen zu
-machen.
-Genau in diese Richtung geht ein Projekt, welches ich gerade mit einem
-Doktoranden in Koeln zusammen habe.
-Die Idee ist aehnlich wie in einem state space model, dass die Parameter
-der
-Dirichletverteilung einem latenten autoregressivem Prozess folgen und
-damit
-man die Zeitreihenstruktur viel besser abbilden kann. Weiterhin kann man
-Kovariableneffekte (wie die von gdp) weiterhin flexibel modellieren und um
-die
-Vorteile des Modells rauszustellen braeuchten wir zum einen Persistenz in
-den
-shares (was zu erwarten ist), aber gleichzeitig auf Signifikanz von
-Regressoren.
+* Pdf mit Doku zur 2ten Modellvatiante als proof of concept/supplement:
+	+ Modell steht
+	- es fehlen Simulation und Ergebnisse
 
-Ich wollte gerne fragen, ob Sie generell Interesse haetten, das Modell
-nochmal
-auf Ihre Daten in Form einer Kollaboration anzuwenden.
+* Code beschleunigen:
+	- erst parallelisiert 
+	- dann CPP
 
-Wichtig waere, dass von der Datenseite insofern Input kommt, als dass das
-Auffinden von Regressoren, eventuelle Bereinigungen des Datensatzes, und
-anschließende Dokumentation des ganzen Prozesses mit zu Ihrer
-Unterstuetzung
-passieren kann.
 
-Mir wäre es wichtig über die shares hinaus auch noch gute Regressoren zu
-haben, also am besten solche die auch typischerweie in Ihrem Paper hier:
+TO-DO @THURNER:
 
-"Energy paths in the European Union: A model-based clustering approach"
-Zsuzsanna Csereklyei a , Paul W. Thurner b , Johannes Langer c , Helmut
-Küchenhoff
+Summary of comments from hist last Email, 2019-07-01:
 
-Benutzt wurden. Auch sollte die Dokumentation, woher die Daten kommen bzw
-wie sie bereinigt wurden gut sein, damit, falls es bei der Anwendung
-Schwierigkeiten gibt, man genau schauen kann, ob es am Modell liegt, oder
-man
-an den Daten noch was schrauben könnte. (insbesondere bei Energiepreisen
-gibt
-es viel zu beachten, wenn diese bspw. in Euro sind aber die
-kaufkraftbereinigung
-des GDP in dollar berichtet erfasst wird)
+* different types of zeros:
+	- With regard to the different types of zeros: one thing is a policy framework
+	  decision (here Zsuzsanna has deep knowledge), closer to production are the
+	  starting of production facilities (e.g., the first-time connection of a
+	  nuclear to the grid), or the cancelling of a plant. Both are endogenous to
+	  policy decisions.
+	  -> verstehe ich leider garnicht was damit gemeint ist
+	 - Wrt 'sudden intermediate zeros': in my view this should mirror a minor
+	   economic relevance - small asset-specific investments such that there are no
+       lock-in effects at all. 
 
-Falls Sie Interesse haben, dann koennten wir gerne ein wenig zum Modell
-auffschreiben und Ihnen das mal zukommen lassen.
 
-Ich werde im November auch in Melbourne sein, ich war dort von 2016-2018
-als
-postdoc und habe aus dieser Zeit einige Kollaborationen noch.
+* regarding regressors:
+	- With regard to regressors, we have more generally to separate the
+	  availability of necessary ingredients (sun, water, coal, wind)  from
+	  policies and plant constructions. In sum, we have a serious problem of
+	  endogeneity. @ Zsuzsanna: any idea how to deal with these endogeneities in
+	  the supply chain such that we can disentangle the causal impact of policies.
+	  I guess its difficult to imagine counterfactuals for most energy carriers
+	  except nuclear energy, wind, and sun.
+	  -> what exactly is the serious problem of endogeneity? 
+	  in a region: effects between energy type produced and availability of its ingredient?
+	  -> see what Zsussanna has to say about this: she will probably provide a reasonable regressor set to deal with endogeneity
+	  -> we may have to deal with this in the construction of the model as well, but how?
+	  -> counterfactuals, instruments etc as possible solutions applicable to our model???
 
-Ich wuerde mich freuen von Ihnen zu hoeren.
+TO-DO @ZSUZSANNA:
 
-Beste Gruesse,
-Nadja Klein
------------------------------------------------------------------------------
-
------Original Message-----
-From: Zsuzsanna Csereklyei <zsuzsanna.csereklyei@rmit.edu.au>
-Sent: Friday, 24 May 2019 4:44 PM
-To: nadja.klein@hu-berlin.de; paul.thurner@gsi.uni-muenchen.de
-Subject: Re: Dirichletregression fuer Energieprofile
-
-Dear Nadja,
-
-Thank you very much for your letter and the interest in taking up the work
-again.
-
-The project has been abandoned last year (after 4 years), as we got the
-ultimate information that Dr. Hambuckers cannot work on it any more.
-The short story of this long project  is that using the model on a large set of
-countries proved difficult/unpractical (especially because these countries
-were so very heterogenous).
-Then we switched the dataset to the USA (I had lots of collected data on
-state level), and a complete dataset was assembled. We never got results
-however.
-
-If you'd like, I can put everything we had online again into a Dropbox  folder
-(my US dataset ends in 2014, but that should not be a problem, I do not have
-the time/resources to update it currently).
-All data and descriptions are present as I put together this data for another
-publication (now published).
-
-I am happy to put online the data from the 2017 project as well, although
-since that data ends in 2010, that should be updated.
-
-If that suits you and you'd like to look what you can do with that, let me know
-and I will make a folder with it.
-I am happy to meet you in Melbourne if you come, maybe we can organise a
-talk for you (even though I am in Europe now).
-Zsuzsanna
-
--------------------------------------------------------------------------------------
-Dear Zsuzsanna,
-
-Thanks so much for your fast reply. First I would like to put Ilya Zarubin my collaborator and PhD student from Cologne into cc just so that he is also informed.
-
-Can you say why you never got results from the US? Was it because of similar trouble as with Europe?
-
-In any case it would be  a great chance for us if you shared the data via dropbox and we could try with the US data. Helpful would be a description of the data, where the data are coming from and how they have been cleaned so that we can adapt and load the data properly. 
-
-Do you know whether there are many zeros in the data? This may currently be a problem in our data and Ilya and me have to think how to work around these. Probably a good starting point would be to have a category "other" and to focus on the main energy forms where all states have non-zeros.
-I do not fully remember how we did it in the master thesis of Anastasia... but I can check.
-
-Best wishes, Nadja.
-
---------------------------------------------------------------------------------------------
-> -----Original Message-----
-> From: Zsuzsanna Csereklyei <zsuzsanna.csereklyei@rmit.edu.au>
-> Sent: Saturday, 25 May 2019 5:48 PM
-> To: nadja.klein@hu-berlin.de
-> Cc: Paul Thurner <paul.thurner@gsi.uni-muenchen.de>
-> Subject: Re: Dirichletregression fuer Energieprofile
-> 
-> Dear Nadja,
-> 
-> Thank you for your letter. I also absolutely agree with Paul. Both he and I spent
-> a lot of time giving data, explanations, (and new data when requested) and
-> writing up/explaining things.
-> We never saw any actual results. I even worked with an assistant who collected
-> rainfall and heating degree days etc.
-> 
-> The dataset I have put online is called usa_energy. This includes very detailed
-> state level data for the  USA between 1970 -2014.
-> 
-> The dataset is unique. I have spent months assembling expected prices (from
-> scanned old documents - this data is not otherwise downloadable), prices, and
-> US GDP (there was a major method break adjustment).
-> 
-> Most data etc are described in the attached publication (also in the Dropbox).
-> What is new is the actual energy usage data, which is from the EIA. Folder:
-> Energy consumption and Production EIA. I Please carefully check the data, and
-> let me know if something is not clear. I have my notes in Melbourne, but there
-> should be enough description. Otherwise I will look for some old emails.
-> 
-> Zsuzsanna
+EXPECTED ON FRIDAY 07-05
