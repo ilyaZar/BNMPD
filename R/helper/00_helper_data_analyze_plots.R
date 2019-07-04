@@ -35,7 +35,3 @@ generate_plot_ts_shares <- function(data, name_state, energy_types, names_energy
 #                                       energy_types = energy_fractions,
 #                                       names_energy_types = names_energy_fractions)
 
-# data_energy_ts
-# energy_fractions
-# names_energy_fractions
-# names_states
