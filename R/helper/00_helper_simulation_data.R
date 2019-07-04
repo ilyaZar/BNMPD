@@ -147,6 +147,8 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
                          x_sd,
                          process_exp,
                          intercept,
+                         zero_pattern = 0,
+                         drift = FALSE,
                          x_init,
                          T) {
   if (process_exp) {
