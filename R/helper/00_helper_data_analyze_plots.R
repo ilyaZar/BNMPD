@@ -1,4 +1,4 @@
-generate_ts_plot_country <- function(data, name_state, energy_types) {
+generate_plot_ts_shares <- function(data, name_state, energy_types, names_energy_types) {
   num_energy <- length(energy_types)
   data <- data %>% filter(State == name_state)
 
@@ -14,7 +14,7 @@ generate_ts_plot_country <- function(data, name_state, energy_types) {
       geom_line(aes_string(x = "Year_t",
                            y = energy_types[i]),
                 col = col_seq[i]) +
-      ggtitle(energy_types[i]) +
+      ggtitle(names_energy_types[i]) +
       labs(x = "years", y = "share")
 
   }
@@ -30,9 +30,10 @@ generate_ts_plot_country <- function(data, name_state, energy_types) {
 
   return(plot_final)
 }
-test_plot <- generate_ts_plot_country(data_energy_ts,
-                                      name_state = names_states[5],
-                                      energy_types = names_energy_fractions)
+# test_plot <- generate_ts_plot_country(data_energy_ts,
+#                                       name_state = names_states[5],
+#                                       energy_types = energy_fractions,
+#                                       names_energy_types = names_energy_fractions)
 
 # data_energy_ts
 # energy_fractions
