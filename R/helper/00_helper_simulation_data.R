@@ -2,8 +2,8 @@ generate_data <- function(data_type = "dirichlet",
                           T, D,
                           par_true,
                           x_levels,
-                          seq_logs,
-                          seq_cept,
+                          x_log_scale,
+                          intercept_include,
                           plot_states,
                           plot_measurements) {
 
@@ -33,48 +33,45 @@ generate_data <- function(data_type = "dirichlet",
     num_counts <- sample(x = 80000:120000, size = T)
   }
 
+  browser()
+
   res_a1 <- generate_x_z(phi_x = phi_xa1, sig_sq_x = sig_sq_xa1, bet_x = bet_xa1,
                          x_level     = x_levels[1],
                          x_sd = 0.0125,
-                         process_exp = seq_logs[1],
-                         intercept   = seq_cept[1],
-                         x_init = TRUE,
+                         process_log_scale = x_log_scale[1],
+                         intercept   = intercept_include[1],
                          T = T)
   xa1    <- res_a1[[1]]
   za1    <- res_a1[[2]]
   res_a2 <- generate_x_z(phi_x = phi_xa2, sig_sq_x = sig_sq_xa2, bet_x = bet_xa2,
                          x_level     = x_levels[2],
                          x_sd = 0.1,
-                         process_exp = seq_logs[2],
-                         intercept   = seq_cept[2],
-                         x_init = TRUE,
+                         process_log_scale = x_log_scale[2],
+                         intercept   = intercept_include[2],
                          T = T)
   xa2    <- res_a2[[1]]
   za2    <- res_a2[[2]]
   res_a3 <- generate_x_z(phi_x = phi_xa3, sig_sq_x = sig_sq_xa3, bet_x = bet_xa3,
                          x_level = x_levels[3],
                          x_sd = 0.025,
-                         process_exp = seq_logs[3],
-                         intercept   = seq_cept[3],
-                         x_init = TRUE,
+                         process_log_scale = x_log_scale[3],
+                         intercept   = intercept_include[3],
                          T = T)
   xa3    <- res_a3[[1]]
   za3    <- res_a3[[2]]
   res_a4 <- generate_x_z(phi_x = phi_xa4, sig_sq_x = sig_sq_xa4, bet_x = bet_xa4,
                          x_level     = x_levels[4],
                          x_sd = 0.1,
-                         process_exp = seq_logs[4],
-                         intercept   = seq_cept[4],
-                         x_init = TRUE,
+                         process_log_scale = x_log_scale[4],
+                         intercept   = intercept_include[4],
                          T = T)
   xa4 <- res_a4[[1]]
   za4 <- res_a4[[2]]
   res_a5 <- generate_x_z(phi_x = phi_xa5, sig_sq_x = sig_sq_xa5, bet_x = bet_xa5,
                          x_level     = x_levels[5],
                          x_sd = 0.1,
-                         process_exp = seq_logs[5],
-                         intercept   = seq_cept[5],
-                         x_init = TRUE,
+                         process_log_scale = x_log_scale[5],
+                         intercept   = intercept_include[5],
                          T = T)
   xa5 <- res_a5[[1]]
   za5 <- res_a5[[2]]
@@ -145,13 +142,12 @@ generate_data <- function(data_type = "dirichlet",
 generate_x_z <- function(phi_x, sig_sq_x, bet_x,
                          x_level,
                          x_sd,
-                         process_exp,
+                         process_log_scale,
                          intercept,
                          zero_pattern = 0,
                          drift = FALSE,
-                         x_init,
                          T) {
-  if (process_exp) {
+  if (process_log_scale) {
     x_level <- log(x_level)
   }
   dim_reg <- length(bet_x)
@@ -206,12 +202,8 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
     }
   }
 # END OF REGRESSOR SIMULATION: --------------------------------------------
-  if (x_init == TRUE) {
-    xinit <- x_level
-  } else {
-    xinit <- 0
-  }
-  # set.seed(123)
+  xinit <- x_level # 0
+
   x[1] <- f(x_tt = xinit, z = z[1, ], phi_x = phi_x, bet_x = bet_x)
   x[1] <- x[1] + sqrt(sig_sq_x)*rnorm(n = 1)
 
@@ -222,10 +214,10 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
       x[t + 1] <- x[t + 1] + sqrt(sig_sq_x)*rnorm(n = 1)
     }
   }
-  if (process_exp) {
+  if (process_log_scale) {
     x <- exp(x)
   }
-  if (sum(any(x <= 0)) & process_exp == FALSE) {
+  if (sum(any(x <= 0)) & process_log_scale == FALSE) {
     stop("state process (xa1_t, xa2_t, xa3_t, xa4_t or xa5_t) out of range (not positive)")
   }
   return(list(x, z))
