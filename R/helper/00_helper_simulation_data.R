@@ -164,31 +164,20 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
                            ncol = dim_reg,
                            byrow = TRUE)
     }
-  } else if (dim_reg == 2) {
-    if (intercept) {
-      last_zmean <- (x_level * (1 - phi_x) - bet_x[1])/bet_x[2]
-      zmeans     <- c(1, last_zmean)
-      z          <- matrix(rnorm(T*dim_reg, mean = zmeans, sd = x_sd),
-                           nrow = T,
-                           ncol = dim_reg,
-                           byrow = TRUE)
-      z[, 1] <- 1 # rnorm(T, mean = 1, sd = 0.0001)#
-    } else {
-      zmeans <- rnorm(dim_reg - 1, mean = 0, sd = 3)
-      last_zmean <- x_level * (1 - phi_x) - sum(zmeans * bet_x[-dim_reg])
-      last_zmean <- last_zmean/bet_x[dim_reg]
-      zmeans     <- c(zmeans, last_zmean)
-      z          <- matrix(rnorm(T*dim_reg, mean = zmeans, sd = x_sd),
-                           nrow = T,
-                           ncol = dim_reg,
-                           byrow = TRUE)
-    }
   } else {
-    if (intercept) {
-      zmeans <- rnorm(dim_reg - 2, mean = 0, sd = 3)
-      zmeans <- c(1, zmeans)
-    } else {
-      zmeans <- rnorm(dim_reg - 1, mean = 0, sd = 3)
+    if (dim_reg == 2) {
+      if (intercept) {
+        zmeans     <- 1
+      } else {
+        zmeans <- rnorm(dim_reg - 1, mean = 0, sd = 3)
+      }
+    } else if (dim_reg > 2) {
+      if (intercept) {
+        zmeans <- rnorm(dim_reg - 2, mean = 0, sd = 3)
+        zmeans <- c(1, zmeans)
+      } else {
+        zmeans <- rnorm(dim_reg - 1, mean = 0, sd = 3)
+      }
     }
     last_zmean <- x_level * (1 - phi_x) - sum(zmeans * bet_x[-dim_reg])
     last_zmean <- last_zmean/bet_x[dim_reg]
@@ -198,7 +187,7 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
                          ncol = dim_reg,
                          byrow = TRUE)
     if (intercept) {
-      z[, 1] <- 1 # rnorm(T, mean = 1, sd = 0.1)
+      z[, 1] <- 1
     }
   }
 # END OF REGRESSOR SIMULATION: --------------------------------------------
