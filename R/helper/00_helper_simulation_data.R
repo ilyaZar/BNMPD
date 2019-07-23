@@ -33,8 +33,6 @@ generate_data <- function(data_type = "dirichlet",
     num_counts <- sample(x = 80000:120000, size = T)
   }
 
-  browser()
-
   res_a1 <- generate_x_z(phi_x = phi_xa1, sig_sq_x = sig_sq_xa1, bet_x = bet_xa1,
                          x_level     = x_levels[1],
                          x_sd = 0.0125,
@@ -56,6 +54,7 @@ generate_data <- function(data_type = "dirichlet",
                          x_sd = 0.025,
                          process_log_scale = x_log_scale[3],
                          intercept   = intercept_include[3],
+                         policy_dummy = TRUE,
                          T = T)
   xa3    <- res_a3[[1]]
   za3    <- res_a3[[2]]
@@ -97,7 +96,13 @@ generate_data <- function(data_type = "dirichlet",
                          " and", " xa5_t", " states")
 
     par(mfrow = c(1,1))
-    matplot(cbind(xa1, xa2, xa3, xa4, xa5),
+    all_states <- cbind(xa1, xa2, xa3, xa4, xa5)
+    matplot(all_states,
+            type = "l",
+            main = names_title,
+            ylab = names_ylab
+    )
+    matplot(all_states/rowSums(all_states),
             type = "l",
             main = names_title,
             ylab = names_ylab
@@ -111,7 +116,13 @@ generate_data <- function(data_type = "dirichlet",
                          " and", " ya5_t", " states")
 
     par(mfrow = c(1,1))
-    matplot(cbind(yraw[, 1], yraw[, 2], yraw[, 3], yraw[, 4], yraw[, 5]),
+    all_measurms <- cbind(yraw[, 1], yraw[, 2], yraw[, 3], yraw[, 4], yraw[, 5])
+    matplot(all_measurms,
+            type = "l",
+            main = names_title,
+            ylab = names_ylab
+    )
+    matplot(all_measurms/rowSums(all_measurms),
             type = "l",
             main = names_title,
             ylab = names_ylab
@@ -144,6 +155,7 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
                          x_sd,
                          process_log_scale,
                          intercept,
+                         policy_dummy = FALSE,
                          zero_pattern = 0,
                          drift = FALSE,
                          T) {
@@ -193,6 +205,15 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
 # END OF REGRESSOR SIMULATION: --------------------------------------------
   xinit <- x_level # 0
 
+  # browser()
+  # set.seed(123)
+  if (policy_dummy == TRUE) {
+    z <- cbind(c(rep(0, times = round(0.5*T, digits = 0)),
+                 rep(1, times = T - round(0.5*T, digits = 0))),
+               z)
+    bet_x <- c(-2, bet_x)
+  }
+
   x[1] <- f(x_tt = xinit, z = z[1, ], phi_x = phi_x, bet_x = bet_x)
   x[1] <- x[1] + sqrt(sig_sq_x)*rnorm(n = 1)
 
@@ -206,6 +227,30 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
   if (process_log_scale) {
     x <- exp(x)
   }
+  # plot(x, type = "l")
+# START TEST: -------------------------------------------------------------
+  # set.seed(123)
+  # z2 <- cbind(c(rep(0, times = round(0.3*T, digits = 0)),
+  #               rep(1, times = T - round(0.3*T, digits = 0))),
+  #             z)
+  # bet2 <- c(-1, bet_x)
+  #
+  # x[1] <- f(x_tt = xinit, z = z2[1, ], phi_x = phi_x, bet_x = bet2)
+  # x[1] <- x[1] + sqrt(sig_sq_x)*rnorm(n = 1)
+  #
+  # for (t in 1:T) {
+  #   if (t < T) {
+  #     x[t + 1] <- f(x_tt = x[t], z = z2[t + 1, ],
+  #                   phi_x = phi_x, bet_x = bet2)
+  #     x[t + 1] <- x[t + 1] + sqrt(sig_sq_x)*rnorm(n = 1)
+  #   }
+  # }
+  # if (process_log_scale) {
+  #   x <- exp(x)
+  # }
+  # plot(x, type = "l")
+# END TEST ----------------------------------------------------------------
+
   if (sum(any(x <= 0)) & process_log_scale == FALSE) {
     stop("state process (xa1_t, xa2_t, xa3_t, xa4_t or xa5_t) out of range (not positive)")
   }
