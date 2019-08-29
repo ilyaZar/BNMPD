@@ -1,3 +1,11 @@
+  source_all <- function() {
+    dir <- paste0(getwd(),"/R/")
+    file_names <- paste0(dir, list.files(dir, recursive = TRUE))
+    invisible(sapply(file_names, source))
+  }
+
+
+
 
 <!--header-includes:
   - \usepackage{bbm}

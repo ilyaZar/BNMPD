@@ -54,7 +54,7 @@ generate_data <- function(data_type = "dirichlet",
                          x_sd = 0.025,
                          process_log_scale = x_log_scale[3],
                          intercept   = intercept_include[3],
-                         policy_dummy = TRUE,
+                         policy_dummy = FALSE,
                          T = T)
   xa3    <- res_a3[[1]]
   za3    <- res_a3[[2]]
