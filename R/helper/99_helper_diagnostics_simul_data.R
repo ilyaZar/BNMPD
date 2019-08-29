@@ -118,9 +118,13 @@ analyse_mcmc_convergence <- function(mcmc_sims, states,
     summary_results[i, 7] <- (KI[1] <= true_vals[i] & true_vals[i] <= KI[2])
   }
   if (table_view) {
-    View(summary_results, title = paste(table_name,
-                                        "_summary_results",
-                                        sep = ""))
+    summary_results_formatted <- summary_results
+    summary_results_formatted[, 3:6] <- round(summary_results_formatted[, 3:6],
+                                       digits = 4)
+
+    View(summary_results_formatted, title = paste(table_name,
+                                                  "_summary_results",
+                                                  sep = ""))
   }
   if (table_save) {
     write_csv(summary_results, path = file.path(table_path, table_name))
