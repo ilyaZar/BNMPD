@@ -58,26 +58,45 @@ monitor_pgas_mcmc2 <- function(current, total, len,
     cat(do.call(sprintf, args = args_print2))
   }
 }
-monitor_pgas_states <- function(states_drawn, states_true, freeze = 1.5,
+monitor_pgas_states <- function(states_drawn, states_comp, freeze = 1.5,
                                 current, total, num_prints) {
-  # if (num_trajs != dim(states_drawn)[2]) {
-  #   error("Different number of trajectories to compare!")
-  # }
-  print_iter <- total/num_prints
-  if ((current %% print_iter) != 0) {
-    return()
+  # browser()
+  if (is.null(states_comp)) {
+    print_iter <- total/num_prints
+    if ((current %% print_iter) != 0) {
+      return()
+    } else {
+      num_trajs <- dim(states_drawn)[2]
+      names_title <- paste(c("Filtered (red) states for"),
+                           c("xa1_t", "xa2_t", "xa3_t", "xa4_t"))
+      names_ylab  <- paste(c("xa1_t", "xa2_t", "xa3_t", "xa4_t"), "states")
+      par(mfrow = c(3, 1))
+      for (i in 1:num_trajs) {
+        matplot(cbind(states_drawn[, i]),
+                type = "l",
+                main = names_title[i],
+                ylab = names_ylab[i],
+                col = "red")
+        Sys.sleep(freeze)
+      }
+    }
   } else {
-    num_trajs <- dim(states_true)[2]
-    names_title <- paste(c("True (black) and filtered (red) states for"),
-                         c("xa1_t", "xa2_t", "xa3_t", "xa4_t"))
-    names_ylab  <- paste(c("xa1_t", "xa2_t", "xa3_t", "xa4_t"), "states")
-    par(mfrow = c(num_trajs, 1))
-    for (i in 1:num_trajs) {
-      matplot(cbind(states_true[, i], states_drawn[, i]),
-              type = "l",
-              main = names_title[i],
-              ylab = names_ylab[i])
-      Sys.sleep(freeze)
+    print_iter <- total/num_prints
+    if ((current %% print_iter) != 0) {
+      return()
+    } else {
+      num_trajs <- dim(states_comp)[2]
+      names_title <- paste(c("True (black) and filtered (red) states for"),
+                           c("xa1_t", "xa2_t", "xa3_t", "xa4_t"))
+      names_ylab  <- paste(c("xa1_t", "xa2_t", "xa3_t", "xa4_t"), "states")
+      par(mfrow = c(3, 1))
+      for (i in 1:num_trajs) {
+        matplot(cbind(states_comp[, i], states_drawn[, i]),
+                type = "l",
+                main = names_title[i],
+                ylab = names_ylab[i])
+        Sys.sleep(freeze)
+      }
     }
   }
 }

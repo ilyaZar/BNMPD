@@ -12,6 +12,7 @@ generate_data <- function(data_type = "dirichlet",
   xa3 <- rep(0, T)
   xa4 <- rep(0, T)
   xa5 <- rep(0, T)
+  xa6 <- rep(0, T)
 
   sig_sq_xa1 <- par_true[[1]][[1]]
   phi_xa1    <- par_true[[1]][[2]]
@@ -28,13 +29,16 @@ generate_data <- function(data_type = "dirichlet",
   sig_sq_xa5 <- par_true[[5]][[1]]
   phi_xa5    <- par_true[[5]][[2]]
   bet_xa5    <- par_true[[5]][[3]]
+  sig_sq_xa6 <- par_true[[6]][[1]]
+  phi_xa6    <- par_true[[6]][[2]]
+  bet_xa6    <- par_true[[6]][[3]]
 
   if (data_type %in% c("multinomial", "mult-diri", "mult-gen-diri")) {
     num_counts <- sample(x = 80000:120000, size = T)
   }
 
   res_a1 <- generate_x_z(phi_x = phi_xa1, sig_sq_x = sig_sq_xa1, bet_x = bet_xa1,
-                         x_level     = x_levels[1],
+                         x_level = x_levels[1],
                          x_sd = 0.0125,
                          process_log_scale = x_log_scale[1],
                          intercept   = intercept_include[1],
@@ -42,7 +46,7 @@ generate_data <- function(data_type = "dirichlet",
   xa1    <- res_a1[[1]]
   za1    <- res_a1[[2]]
   res_a2 <- generate_x_z(phi_x = phi_xa2, sig_sq_x = sig_sq_xa2, bet_x = bet_xa2,
-                         x_level     = x_levels[2],
+                         x_level = x_levels[2],
                          x_sd = 0.1,
                          process_log_scale = x_log_scale[2],
                          intercept   = intercept_include[2],
@@ -59,7 +63,7 @@ generate_data <- function(data_type = "dirichlet",
   xa3    <- res_a3[[1]]
   za3    <- res_a3[[2]]
   res_a4 <- generate_x_z(phi_x = phi_xa4, sig_sq_x = sig_sq_xa4, bet_x = bet_xa4,
-                         x_level     = x_levels[4],
+                         x_level = x_levels[4],
                          x_sd = 0.1,
                          process_log_scale = x_log_scale[4],
                          intercept   = intercept_include[4],
@@ -67,15 +71,23 @@ generate_data <- function(data_type = "dirichlet",
   xa4 <- res_a4[[1]]
   za4 <- res_a4[[2]]
   res_a5 <- generate_x_z(phi_x = phi_xa5, sig_sq_x = sig_sq_xa5, bet_x = bet_xa5,
-                         x_level     = x_levels[5],
+                         x_level = x_levels[5],
                          x_sd = 0.1,
                          process_log_scale = x_log_scale[5],
                          intercept   = intercept_include[5],
                          T = T)
   xa5 <- res_a5[[1]]
   za5 <- res_a5[[2]]
+  res_a6 <- generate_x_z(phi_x = phi_xa6, sig_sq_x = sig_sq_xa6, bet_x = bet_xa6,
+                         x_level = x_levels[6],
+                         x_sd = 0.1,
+                         process_log_scale = x_log_scale[6],
+                         intercept   = intercept_include[6],
+                         T = T)
+  xa6 <- res_a6[[1]]
+  za6 <- res_a6[[2]]
 
-  xalphas <- cbind(xa1, xa2, xa3, xa4, xa5)
+  xalphas <- cbind(xa1, xa2, xa3, xa4, xa5, xa6)
 
   if (data_type == "dirichlet") {
     yraw <- my_rdirichlet(n = TT, alpha = xalphas)
@@ -89,63 +101,70 @@ generate_data <- function(data_type = "dirichlet",
   }
 
   if (plot_states) {
-    names_title <- paste("True states for ",
-                         "xa1_t (black),", " xa2_t (red),",
-                         " xa3_t (green),",  "xa4_t (blue)", " and", " xa5_t (blue)")
-    names_ylab  <- paste(" xa1_t,", " xa2_t,", " xa3_t,", " xa4_t",
-                         " and", " xa5_t", " states")
+    names_title <- "True States"
+    names_ylab  <- "states: xt's"
+    names_xlab  <- paste0("xa1_t (black),", " xa2_t (red),",
+                          " xa3_t (green),",  "xa4_t (blue)",
+                          " xa5_t (turq.)", " and", " xa6_t (pink)")
 
     par(mfrow = c(1,1))
-    all_states <- cbind(xa1, xa2, xa3, xa4, xa5)
+    all_states <- cbind(xa1, xa2, xa3, xa4, xa5, xa6)
     matplot(all_states,
             type = "l",
             main = names_title,
-            ylab = names_ylab
+            ylab = names_ylab,
+            xlab = names_xlab
     )
     matplot(all_states/rowSums(all_states),
             type = "l",
             main = names_title,
-            ylab = names_ylab
+            ylab = names_ylab,
+            xlab = names_xlab
     )
   }
   if (plot_measurements) {
-    names_title <- paste("Multivariate measurements for components of d=1,..D",
-                         "ya1_t (black),", " ya2_t (red),",
-                         " ya3_t (green),", " ya4_t (blue)", " and", " ya5_t")
-    names_ylab  <- paste(" ya1_t,", " ya2_t,", " ya3_t,", " ya4_t",
-                         " and", " ya5_t", " states")
+    names_title <- "Measurement components"
+    names_ylab  <- "measurements: y_t's"
+    names_xlab <- paste0("ya1_t (black),", " ya2_t (red),",
+                         " ya3_t (green),", " ya4_t (blue)",
+                         " ya5_t (turq.),", " and", " ya6_t (pink)")
 
     par(mfrow = c(1,1))
-    all_measurms <- cbind(yraw[, 1], yraw[, 2], yraw[, 3], yraw[, 4], yraw[, 5])
+    all_measurms <- cbind(yraw[, 1], yraw[, 2],
+                          yraw[, 3], yraw[, 4],
+                          yraw[, 5], yraw[, 6])
     matplot(all_measurms,
             type = "l",
             main = names_title,
-            ylab = names_ylab
+            ylab = names_ylab,
+            xlab = names_xlab
     )
     matplot(all_measurms/rowSums(all_measurms),
             type = "l",
             main = names_title,
-            ylab = names_ylab
+            ylab = names_ylab,
+            xlab = names_xlab
     )
   }
   if (data_type == "dirichlet") {
     if (sum(rowSums(yraw)) != TT) {
-      stop("Something is wrong with the Dirichelet: y-fractions don't sum up to 1!")
+      stop("Something is wrong with the Dirichelet: y-fractions don't sum up to
+           1!")
     }
     return(list(yraw,
-                list(xa1, xa2, xa3, xa4, xa5),
-                list(za1, za2, za3, za4, za5)))
+                list(xa1, xa2, xa3, xa4, xa5, xa6),
+                list(za1, za2, za3, za4, za5, za6)))
   }
   if (data_type == "multinomial") {
     return(list(yraw,
-                list(xa1, xa2, xa3, xa4, xa5),
-                list(za1, za2, za3, za4, za5),
+                list(xa1, xa2, xa3, xa4, xa5, xa6),
+                list(za1, za2, za3, za4, za5, za6),
                 num_counts = num_counts))
   }
   if (data_type == "mult-diri") {
     return(list(yraw,
-                list(xa1, xa2, xa3, xa4, xa5),
-                list(za1, za2, za3, za4, za5),
+                list(xa1, xa2, xa3, xa4, xa5, xa6),
+                list(za1, za2, za3, za4, za5, za6),
                 num_counts = num_counts))
   }
 
@@ -252,7 +271,7 @@ generate_x_z <- function(phi_x, sig_sq_x, bet_x,
 # END TEST ----------------------------------------------------------------
 
   if (sum(any(x <= 0)) & process_log_scale == FALSE) {
-    stop("state process (xa1_t, xa2_t, xa3_t, xa4_t or xa5_t) out of range (not positive)")
+    stop("some state process (xa1_t, xa2_t, ... or xa6_t) not positive!")
   }
   return(list(x, z))
 }

@@ -9,6 +9,7 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
                                       table_save = FALSE,
                                       table_name = "",
                                       table_path = NULL,
+                                      table_prec = 4,
                                       ur_view = FALSE,
                                       ur_save = FALSE,
                                       ur_name = "",
@@ -108,13 +109,18 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
                    names = FALSE)
     summary_results[i, 4] <- KI[1]
     summary_results[i, 5] <- KI[2]
+
   }
+  summary_results[, 2:5] <- sapply(summary_results[, 2:5],
+                                   round,
+                                   digits = table_prec)
   if (table_view) {
     View(summary_results, title = paste(table_name,
                                         "_summary_results",
                                         sep = ""))
   }
   if (table_save) {
+    summary_results <- cbind(row.names(summary_results), summary_results)
     write_csv(summary_results, path = file.path(table_path, table_name))
   }
   #

@@ -1,17 +1,42 @@
-TO-DO @NADJA:
+TO-DO MYSELF:
 
-* Von der Anwendung her ergibt es Sinn (meine und Nadjas Meinung), dass man die Generalized Dirichlet ausprobiert
-	- Dabei zu beachten ob seperates Papier (falls viel Arbeit), oder ins bisherige Papier (falls wenig Arbeit) -> Ausprobieren und klären
+@data:
+-design availability dummy (share >=0 => energy type available == 1) with code
+manually (start with overall dataset; then CA and TX pop out automatically)
+- define an "expected signs" table (ask zsuzsanna to check on this)
 
-* 2.te Modellvariante, Multinomial Dirichlet, mal als Simulation, die den echten Daten recht nahe kommt (siehe Datenverlauf Kalifornien und entsprechendes Bild)
+@model specification
+specification remarks
+- Von der Anwendung her ergibt es Sinn (meine und Nadjas Meinung), dass man die 
+Generalized Dirichlet ausprobiert
+- Dabei zu beachten ob seperates Papier (falls viel Arbeit), oder ins 
+  bisherige Papier (falls wenig Arbeit) -> Ausprobieren und klären
+- deal with panel structure: derive gibbs blocks (see GZ project for similar-
+ities as well)
 
-* Pdf mit Doku zur 2ten Modellvatiante als proof of concept/supplement:
-	+ Modell steht
-	- es fehlen Simulation und Ergebnisse
+@descriptive_stats
+- plot share ts (as done before) plus the prices you are regressing at (provided
+by Zsuzsanna)!
 
-* Code beschleunigen:
-	- erst parallelisiert 
-	- dann CPP
+- do the spatial 
+
+@theoretical inference and simulations:
+- simulations to incorporate dummies:
+-2.te Modellvariante, Multinomial Dirichlet, mal als Simulation, die den echten
+Daten recht nahe kommt (siehe Datenverlauf Kalifornien und entsprechendes Bild)
++ ausprobiert, aber der jump in dem dummy (beta coefficient am dummy darf nicht
+zu groß werden... sonst wirds komisch)
+
+@empirical inference and diagnostics:
+- average over sampled states (10,000 mcmc iterations of t=45 long state trajs)
+and plot averaged state to see if the resulting patterns match those of the 
+measurements (shares/megawatts) for CA and TX
+- think of ideas how to generate higher update rates (besides the EIS -> see 
+schorfheide tempering paper from the journal of econemetrics etc.)
+
+@code base management
+Code beschleunigen:
+- erst parallelisiert dann CPP, oder umgekehrt?
 
 
 TO-DO @THURNER:
@@ -46,4 +71,7 @@ Summary of comments from hist last Email, 2019-07-01:
 
 TO-DO @ZSUZSANNA:
 
-EXPECTED ON FRIDAY 07-05
+interpret the signs please @Zsuszanna and @Paul
+
+forecasting way way way back, energy transitions need to be predicting: clarify
+the aim of the paper!
