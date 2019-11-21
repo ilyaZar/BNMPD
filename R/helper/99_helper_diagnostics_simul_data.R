@@ -66,10 +66,10 @@ analyse_mcmc_convergence <- function(mcmc_sims, states,
         ggsave(filename = paste(plot_name, "_", par_names[i], sep = ""),
                plot = current_plot,
                path = plot_path,
-               device = "eps"
-               # width = 12,
-               # height = 7,
-               # units = "cm"
+               device = "eps",
+               width = 8.27,
+               height = 11.69,
+               units = "in"
         )
         print(paste("Saved plots in: ", current_plot_name))
       } else {

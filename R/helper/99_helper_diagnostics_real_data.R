@@ -1,5 +1,6 @@
 analyse_mcmc_convergence2 <- function(mcmc_sims, states,
-                                      par_names, start_vals, burn,
+                                      par_names, lab_names = NULL,
+                                      start_vals, burn,
                                       plot_view = FALSE,
                                       plot_ggp2 = FALSE,
                                       plot_save = FALSE,
@@ -99,8 +100,7 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
                                 sd = numeric(num_par),
                                 KI_lower = numeric(num_par),
                                 KI_upper = numeric(num_par))
-  row.names(summary_results) <- par_names
-  for (i in 1:num_par) {
+    for (i in 1:num_par) {
     summary_results[i, 1] <- start_vals[i]
     summary_results[i, 2] <- posterior_means[i]
     summary_results[i, 3] <- sd(mcmc_sims[i, burn:num_mcmc])
@@ -115,13 +115,19 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
                                    round,
                                    digits = table_prec)
   if (table_view) {
-    View(summary_results, title = paste(table_name,
-                                        "_summary_results",
-                                        sep = ""))
+    summary_results_view <- summary_results
+    row.names(summary_results_view) <- par_names
+    View(summary_results_view, title = paste(table_name,
+                                             "_summary_results",
+                                             sep = ""))
   }
   if (table_save) {
-    summary_results <- cbind(row.names(summary_results), summary_results)
-    write_csv(summary_results, path = file.path(table_path, table_name))
+    if (is.null(lab_names)) {stop("Can't save results in table form: label names required!")}
+    summary_results_save <- summary_results
+    summary_results_save <- cbind(label = lab_names, summary_results_save)
+    # row.names(summary_results_save) <- par_names
+    summary_results_save <- cbind(par_name = par_names, summary_results_save)
+    write_csv(summary_results_save, path = file.path(table_path, table_name))
   }
   #
   #

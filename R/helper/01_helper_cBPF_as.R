@@ -18,9 +18,13 @@ w_BPF <- function(y, N, xa1, xa2, xa3, xa4, xa5, xa6, num_counts, D = 6) {
   log_rhs <- .rowSums(lgamma(alphas + ys) - lgamma(alphas),
                         m = N, n = D)
   w <- log_lhs + log_rhs
-
-  if (sum(is.nan(w) | is.na(w))) {
-    stop("NAN or NA values in weight computation!")
-  }
-  w
+  # if (sum(is.nan(w) | is.na(w))) {
+  #   stop("NAN or NA values in weight computation!")
+  # }
+  # w
+  # list(.rowSums(x = alphas, m = N, n = D))
+  # list(-lgamma(.rowSums(x = alphas, m = N, n = D) + num_counts))
+  # lgamma(.rowSums(x = alphas, m = N, n = D)),
+  # -lgamma(.rowSums(x = alphas, m = N, n = D) + num_counts),
+  # lgamma(.rowSums(x = alphas, m = N, n = D)) - lgamma(.rowSums(x = alphas, m = N, n = D) + num_counts)
 }

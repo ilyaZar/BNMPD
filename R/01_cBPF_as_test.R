@@ -1,28 +1,30 @@
-cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5, Za6,
-                    N, TT,
-                    sig_sq_xa1, phi_xa1, bet_xa1, xa1_r,
-                    sig_sq_xa2, phi_xa2, bet_xa2, xa2_r,
-                    sig_sq_xa3, phi_xa3, bet_xa3, xa3_r,
-                    sig_sq_xa4, phi_xa4, bet_xa4, xa4_r,
-                    sig_sq_xa5, phi_xa5, bet_xa5, xa5_r,
-                    sig_sq_xa6, phi_xa6, bet_xa6, xa6_r,
-                    filtering = TRUE) {
-  if (!filtering) {
-    xa1 <- matrix(rep(log(xa1_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-    xa2 <- matrix(rep(log(xa2_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-    xa3 <- matrix(rep(log(xa3_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-    xa4 <- matrix(rep(log(xa4_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-    xa5 <- matrix(rep(log(xa5_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-    xa6 <- matrix(rep(log(xa6_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
-    # xa1 <- matrix(rep(xa1_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-    # xa2 <- matrix(rep(xa2_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-    # xa3 <- matrix(rep(xa3_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-    # xa4 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-    # xa5 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-    # xa6 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
-    w  <- matrix(1/N, nrow = N, ncol = TT)
-    return(list(w, xa1, xa2, xa3, xa4, xa5, xa6))
-  }
+cBPF_as_test <- function(y, num_counts,
+                         Za1, Za2, Za3, Za4, Za5, Za6,
+                         N, TT,
+                         sig_sq_xa1, phi_xa1, bet_xa1, xa1_r,
+                         sig_sq_xa2, phi_xa2, bet_xa2, xa2_r,
+                         sig_sq_xa3, phi_xa3, bet_xa3, xa3_r,
+                         sig_sq_xa4, phi_xa4, bet_xa4, xa4_r,
+                         sig_sq_xa5, phi_xa5, bet_xa5, xa5_r,
+                         sig_sq_xa6, phi_xa6, bet_xa6, xa6_r) {
+                         # filtering = TRUE
+
+  # if (!filtering) {
+  #   xa1 <- matrix(rep(log(xa1_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   xa2 <- matrix(rep(log(xa2_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   xa3 <- matrix(rep(log(xa3_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   xa4 <- matrix(rep(log(xa4_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   xa5 <- matrix(rep(log(xa5_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   xa6 <- matrix(rep(log(xa6_t), times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   # xa1 <- matrix(rep(xa1_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   # xa2 <- matrix(rep(xa2_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   # xa3 <- matrix(rep(xa3_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   # xa4 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   # xa5 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   # xa6 <- matrix(rep(xa4_t, times = N), nrow = N, ncol = TT, byrow = TRUE)
+  #   w  <- matrix(1/N, nrow = N, ncol = TT)
+  #   return(list(w, xa1, xa2, xa3, xa4, xa5, xa6))
+  # }
   # DATA CONTAINERS
   # particles for state processes:
   xa1 <- matrix(0, nrow = N, ncol = TT)
@@ -40,7 +42,7 @@ cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5, Za6,
   xa1[, 1] <- rnorm(n = N, mean = Za1[1, , drop = F] %*% bet_xa1/(1 - phi_xa1),
                    sd = sqrt(sig_sq_xa1/(1 - phi_xa1^2)))
   xa2[, 1] <- rnorm(n = N, mean = Za2[1, , drop = F] %*% bet_xa2/(1 - phi_xa2),
-                   sd = sqrt(sig_sq_xa2/(1 - phi_xa2^2)))
+                    sd = sqrt(sig_sq_xa2/(1 - phi_xa2^2)))
   xa3[, 1] <- rnorm(n = N, mean = Za3[1, , drop = F] %*% bet_xa3/(1 - phi_xa3),
                    sd = sqrt(sig_sq_xa3/(1 - phi_xa3^2)))
   xa4[, 1] <- rnorm(n = N, mean = Za4[1, , drop = F] %*% bet_xa4/(1 - phi_xa4),
@@ -80,7 +82,7 @@ cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5, Za6,
   xa4[N, 1] <- xa4_r[1]
   xa5[N, 1] <- xa5_r[1]
   xa6[N, 1] <- xa6_r[1]
-  # weighting
+  # # weighting
   w_log   <- w_BPF(y = y[1, , drop = FALSE],
                    N = N,
                    xa1 = xa1[, 1],
@@ -93,7 +95,6 @@ cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5, Za6,
   w_max   <- max(w_log)
   w_tilde <- exp(w_log - w_max)
   w[, 1]  <- w_tilde/sum(w_tilde)
-  # browser()
   # resampling
   # a[, 1]  <- sample.int(n = N, replace = TRUE, prob = w[, 1])
   # II. FOR t = 2,..,T
@@ -175,5 +176,14 @@ cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5, Za6,
     xa6[, t] <- xa6[ind, t]
     ind      <- a[ind, t]
   }
-  return(list(w, xa1, xa2, xa3, xa4, xa5, xa6))
+  # return(list(w, xa1, xa2, xa3, xa4, xa5, xa6))
+  return(list(w,
+              xa1, xa2,
+              xa3, xa4,
+              xa5, xa6
+    # w[, 1], # a[, 1], #eval_fa1,
+    # xa1[, 1], xa2[, 1],
+    # xa3[, 1], xa4[, 1],
+    # xa5[, 1], xa6[, 1]
+  ))
 }

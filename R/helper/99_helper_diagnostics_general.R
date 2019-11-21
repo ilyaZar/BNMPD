@@ -1,4 +1,5 @@
 analyse_states_ur <- function(trajectories) {
+  # browser()
   num_trajs  <- length(trajectories)
   num_draws  <- dim(trajectories[[1]])[1]
   num_states <- dim(trajectories[[1]])[2]
@@ -8,6 +9,8 @@ analyse_states_ur <- function(trajectories) {
     num_unique_states <- unlist(lapply(num_unique_states, length))
     urs[, i] <- num_unique_states/num_draws
   }
+  # browser()
+  urs[1, ] <- min(urs[2:num_states, 1])
   # .colMeans(m = num_states, n = num_trajs)
   matplot(urs , type = "l")
 }
