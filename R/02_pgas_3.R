@@ -1,11 +1,11 @@
-pgas2 <- function(MM, TT, N, num_counts = num_counts,
-                 y, Za1, Za2, Za3, Za4, Za5, Za6,
-                 priors,
-                 par_init,
-                 par_true = NULL,
-                 traj_init,
-                 filtering = TRUE,
-                 num_plots_states) {
+pgas3 <- function(MM, TT, N, num_counts = num_counts,
+                  y, Za1, Za2, Za3, Za4, Za5, Za6,
+                  priors,
+                  par_init,
+                  par_true = NULL,
+                  traj_init,
+                  filtering = TRUE,
+                  num_plots_states) {
   # Initialize data containers
   w  <- numeric(N)
 
@@ -110,68 +110,7 @@ pgas2 <- function(MM, TT, N, num_counts = num_counts,
   #                       #                    xa3_t, xa4_t,
   #                       #                    xa5_5, xa6_t),
   #                     current = 1, total = 1, num_prints = 1)
-  # set.seed(42)
-  # out_cPF <- cBPF_as(y = y,
-  #                    Za1 = Za1, Za2 = Za2, Za3 = Za3,
-  #                    Za4 = Za4, Za5 = Za5, Za6 = Za6,
-  #                    N = N, TT = TT,
-  #                    sig_sq_xa1 = sig_sq_xa1[1],
-  #                    phi_xa1 = phi_xa1[1],
-  #                    bet_xa1 = bet_xa1[, 1, drop = F],
-  #                    xa1_r = Xa1[1, ],
-  #                    sig_sq_xa2 = sig_sq_xa2[1],
-  #                    phi_xa2 = phi_xa2[1],
-  #                    bet_xa2 = bet_xa2[, 1, drop = F],
-  #                    xa2_r = Xa2[1, ],
-  #                    sig_sq_xa3 = sig_sq_xa3[1],
-  #                    phi_xa3 = phi_xa3[1],
-  #                    bet_xa3 = bet_xa3[, 1, drop = F],
-  #                    xa3_r = Xa3[1, ],
-  #                    sig_sq_xa4 = sig_sq_xa4[1],
-  #                    phi_xa4 = phi_xa4[1],
-  #                    bet_xa4 = bet_xa4[, 1, drop = F],
-  #                    xa4_r = Xa4[1, ],
-  #                    sig_sq_xa5 = sig_sq_xa5[1],
-  #                    phi_xa5 = phi_xa5[1],
-  #                    bet_xa5 = bet_xa5[, 1, drop = F],
-  #                    xa5_r = Xa5[1, ],
-  #                    sig_sq_xa6 = sig_sq_xa6[1],
-  #                    phi_xa6 = phi_xa6[1],
-  #                    bet_xa6 = bet_xa6[, 1, drop = F],
-  #                    xa6_r = Xa6[1, ],
-  #                    filtering = filtering)
-  # set.seed(42)
-  # out_cPF2 <- cBPF_as_test(y = y, num_counts = num_counts,
-  #                          Za1 = Za1, Za2 = Za2, Za3 = Za3,
-  #                          Za4 = Za4, Za5 = Za5, Za6 = Za6,
-  #                          N = N, TT = TT,
-  #                          sig_sq_xa1 = sig_sq_xa1[1],
-  #                          phi_xa1 = phi_xa1[1],
-  #                          bet_xa1 = bet_xa1[, 1, drop = F],
-  #                          xa1_r = Xa1[1, ],
-  #                          sig_sq_xa2 = sig_sq_xa2[1],
-  #                          phi_xa2 = phi_xa2[1],
-  #                          bet_xa2 = bet_xa2[, 1, drop = F],
-  #                          xa2_r = Xa2[1, ],
-  #                          sig_sq_xa3 = sig_sq_xa3[1],
-  #                          phi_xa3 = phi_xa3[1],
-  #                          bet_xa3 = bet_xa3[, 1, drop = F],
-  #                          xa3_r = Xa3[1, ],
-  #                          sig_sq_xa4 = sig_sq_xa4[1],
-  #                          phi_xa4 = phi_xa4[1],
-  #                          bet_xa4 = bet_xa4[, 1, drop = F],
-  #                          xa4_r = Xa4[1, ],
-  #                          sig_sq_xa5 = sig_sq_xa5[1],
-  #                          phi_xa5 = phi_xa5[1],
-  #                          bet_xa5 = bet_xa5[, 1, drop = F],
-  #                          xa5_r = Xa5[1, ],
-  #                          sig_sq_xa6 = sig_sq_xa6[1],
-  #                          phi_xa6 = phi_xa6[1],
-  #                          bet_xa6 = bet_xa6[, 1, drop = F],
-  #                          xa6_r = Xa6[1, ])
-  # set.seed(42)
-  # browser()
-  out_cPF <- cbpf_as_c2(y = y, num_counts = num_counts,
+  out_cPF <- cbpf_as_c3(y = y, num_counts = num_counts,
                         Za1 = Za1, Za2 = Za2, Za3 = Za3,
                         Za4 = Za4, Za5 = Za5, Za6 = Za6,
                         N = N, TT = TT,
@@ -199,7 +138,7 @@ pgas2 <- function(MM, TT, N, num_counts = num_counts,
                         phi_xa6 = phi_xa6[1],
                         bet_xa6 = bet_xa6[, 1, drop = F],
                         xa6_r = Xa6[1, ])
-    w        <- out_cPF[[1]][, TT]
+  w        <- out_cPF[[1]][, TT]
   # browser()
   b        <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
   Xa1[1, ] <- out_cPF[[2]][b, ]
@@ -214,20 +153,20 @@ pgas2 <- function(MM, TT, N, num_counts = num_counts,
                       states_comp  = cbind(xa1_t, xa2_t,
                                            xa3_t, xa4_t,
                                            xa5_t, xa6_t),
-                        #            cbind(exp(states_init_1), exp(states_init_2),
-                        #                  exp(states_init_3), exp(states_init_4),
-                        #                  exp(states_init_5), exp(states_init_6)),
+                      #            cbind(exp(states_init_1), exp(states_init_2),
+                      #                  exp(states_init_3), exp(states_init_4),
+                      #                  exp(states_init_5), exp(states_init_6)),
                       current = 1, total = 1, num_prints = 1)
   # Run MCMC loop
   for (m in 2:MM) {
     # I. Run GIBBS part
     # 1. pars for xa1_t process --------------------------------------------
     err_sig_sq_x <- Xa1[m - 1, 2:TT] - f(x_tt = Xa1[m - 1, 1:(TT - 1)],
-                                      z = Za1[2:TT, , drop = F],
-                                      phi_x = phi_xa1[m - 1],
-                                      bet_x = bet_xa1[, m - 1])
+                                         z = Za1[2:TT, , drop = F],
+                                         phi_x = phi_xa1[m - 1],
+                                         bet_x = bet_xa1[, m - 1])
     sig_sq_xa1[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
-                             prior_b + crossprod(err_sig_sq_x)/2)
+                               prior_b + crossprod(err_sig_sq_x)/2)
     regs_a1[, 1]  <- Xa1[m - 1, 1:(TT - 1)]
     x_lhs        <- Xa1[m - 1, 2:TT]
     Omega_xa1    <- solve(crossprod(regs_a1, regs_a1)/sig_sq_xa1[m] + prior_V_xa1)
@@ -236,17 +175,17 @@ pgas2 <- function(MM, TT, N, num_counts = num_counts,
     phi_xa1[m]   <- beta_xa1[1]
     bet_xa1[, m] <- beta_xa1[-1]
     while (near(abs(phi_xa1[m]), 1, tol = 0.01) | abs(phi_xa1[m]) > 1) {
-    beta_xa1     <- rmvnorm(n = 1, mean = mu_xa1, sigma = Omega_xa1)
-    phi_xa1[m]   <- beta_xa1[1]
-    bet_xa1[, m] <- beta_xa1[-1]
+      beta_xa1     <- rmvnorm(n = 1, mean = mu_xa1, sigma = Omega_xa1)
+      phi_xa1[m]   <- beta_xa1[1]
+      bet_xa1[, m] <- beta_xa1[-1]
     }
     # 2. pars for xa2_t process --------------------------------------------
     err_sig_sq_x <- Xa2[m - 1, 2:TT] - f(x_tt =  Xa2[m - 1, 1:(TT - 1)],
-                                      z = Za2[2:TT, , drop = F],
-                                      phi_x = phi_xa2[m - 1],
-                                      bet_x = bet_xa2[, m - 1])
+                                         z = Za2[2:TT, , drop = F],
+                                         phi_x = phi_xa2[m - 1],
+                                         bet_x = bet_xa2[, m - 1])
     sig_sq_xa2[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
-                              prior_b + crossprod(err_sig_sq_x)/2)
+                               prior_b + crossprod(err_sig_sq_x)/2)
     regs_a2[, 1] <- Xa2[m - 1, 1:(TT - 1)]
     x_lhs        <- Xa2[m - 1, 2:TT]
     Omega_xa2    <- solve(crossprod(regs_a2, regs_a2)/sig_sq_xa2[m] + prior_V_xa2)
@@ -261,11 +200,11 @@ pgas2 <- function(MM, TT, N, num_counts = num_counts,
     }
     # 3. pars for xa3_t process --------------------------------------------
     err_sig_sq_x <- Xa3[m - 1, 2:TT] - f(x_tt =  Xa3[m - 1, 1:(TT - 1)],
-                                        z = Za3[2:TT, , drop = F],
-                                        phi_x = phi_xa3[m - 1],
-                                        bet_x = bet_xa3[, m - 1])
+                                         z = Za3[2:TT, , drop = F],
+                                         phi_x = phi_xa3[m - 1],
+                                         bet_x = bet_xa3[, m - 1])
     sig_sq_xa3[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
-                              prior_b + crossprod(err_sig_sq_x)/2)
+                               prior_b + crossprod(err_sig_sq_x)/2)
     regs_a3[, 1] <- Xa3[m - 1, 1:(TT - 1)]
     x_lhs        <- Xa3[m - 1, 2:TT]
     Omega_xa3    <- solve(crossprod(regs_a3, regs_a3)/sig_sq_xa3[m] + prior_V_xa3)
@@ -280,11 +219,11 @@ pgas2 <- function(MM, TT, N, num_counts = num_counts,
     }
     # 4. pars for xa4_t process --------------------------------------------
     err_sig_sq_x <- Xa4[m - 1, 2:TT] - f(x_tt = Xa4[m - 1, 1:(TT - 1)],
-                                        z = Za4[2:TT, , drop = F],
-                                        phi_x = phi_xa4[m - 1],
-                                        bet_x = bet_xa4[, m - 1])
+                                         z = Za4[2:TT, , drop = F],
+                                         phi_x = phi_xa4[m - 1],
+                                         bet_x = bet_xa4[, m - 1])
     sig_sq_xa4[m]  <- 1/rgamma(n = 1, prior_a + (TT - 1)/2,
-                              prior_b + crossprod(err_sig_sq_x)/2)
+                               prior_b + crossprod(err_sig_sq_x)/2)
     regs_a4[, 1] <- Xa4[m - 1, 1:(TT - 1)]
     x_lhs        <- Xa4[m - 1, 2:TT]
     Omega_xa4    <- solve(crossprod(regs_a4, regs_a4)/sig_sq_xa4[m] + prior_V_xa4)
@@ -338,7 +277,7 @@ pgas2 <- function(MM, TT, N, num_counts = num_counts,
     }
     ############################################################################
     # II. Run cBPF-AS part
-    out_cPF <- cbpf_as_c2(y = y, num_counts = num_counts,
+    out_cPF <- cbpf_as_c3(y = y, num_counts = num_counts,
                           Za1 = Za1, Za2 = Za2, Za3 = Za3,
                           Za4 = Za4, Za5 = Za5, Za6 = Za6,
                           N = N, TT = TT,
@@ -383,9 +322,9 @@ pgas2 <- function(MM, TT, N, num_counts = num_counts,
                         states_comp = cbind(exp(Xa1[m - 1, ]), exp(Xa2[m - 1, ]),
                                             exp(Xa3[m - 1, ]), exp(Xa4[m - 1, ]),
                                             exp(Xa5[m - 1, ]), exp(Xa6[m - 1, ])),
-                          # NULL,
-                          # cbind(xa1_t, xa2_t, xa3_t,
-                          #                    xa4_t, xa5_t, xa6_t),
+                        # NULL,
+                        # cbind(xa1_t, xa2_t, xa3_t,
+                        #                    xa4_t, xa5_t, xa6_t),
                         current = m, total = MM,
                         num_prints = num_plots_states)
     monitor_pgas_time(m, MM, len = MM)

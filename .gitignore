@@ -8,7 +8,10 @@
 *.RData
 *.html
 *.gif
-/doc/*
-/results/*
+*.Rproj
+*.sublime-project
+*.sublime-workspace
 /data/*
+/doc/*
 /literature/*
+/results/*
