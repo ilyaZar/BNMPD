@@ -116,12 +116,12 @@ List cbpf_as_c2(const int& N, const int& TT, const arma::vec& num_counts,
                 const arma::vec& bet_xa4,
                 const arma::vec& bet_xa5,
                 const arma::vec& bet_xa6,
-                const arma::vec& xa1_r,
-                const arma::vec& xa2_r,
-                const arma::vec& xa3_r,
-                const arma::vec& xa4_r,
-                const arma::vec& xa5_r,
-                const arma::vec& xa6_r) {
+                const arma::rowvec& xa1_r,
+                const arma::rowvec& xa2_r,
+                const arma::rowvec& xa3_r,
+                const arma::rowvec& xa4_r,
+                const arma::rowvec& xa5_r,
+                const arma::rowvec& xa6_r) {
   // bool filtering
   int D = y.n_cols;
   arma::uvec ind(N);

@@ -8,6 +8,7 @@ w_BPF <- function(y, N, xa1, xa2, xa3, xa4, xa5, xa6, num_counts, D = 6) {
                      exp(xa4), exp(xa5), exp(xa6)),
                    nrow = N,
                    ncol = D)
+  alphas[alphas == 0] <- 1e-300
   # log_Balpha <- rowSums(lgamma(alphas)) - lgamma(rowSums(alphas))
   # log_denom  <- (alphas - 1) %*% t(log(y))
   # w <- log_denom - log_Balpha

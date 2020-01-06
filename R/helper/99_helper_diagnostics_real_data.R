@@ -52,7 +52,7 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
         current_plot_name <- file.path(plot_path,
                                        paste(plot_name,"_",
                                              par_names[i],
-                                             ".eps",
+                                             ".pdf",
                                              sep = ""))
         current_plot <- generate_ggplot2(mcmc_sims_df = mcmc_sims_df,
                                          burn = burn,
@@ -65,7 +65,7 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
         ggsave(filename = paste(plot_name, "_", par_names[i], sep = ""),
                plot = current_plot,
                path = plot_path,
-               device = "eps"
+               device = "pdf"
                # width = 12,
                # height = 7,
                # units = "cm"
@@ -95,11 +95,11 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
   #
   #
   #
-  summary_results <- data.frame(start_value = numeric(num_par),
+  summary_results <- data.frame(start_val = numeric(num_par),
                                 mean = numeric(num_par),
                                 sd = numeric(num_par),
-                                KI_lower = numeric(num_par),
-                                KI_upper = numeric(num_par))
+                                KI_lo = numeric(num_par),
+                                KI_up = numeric(num_par))
     for (i in 1:num_par) {
     summary_results[i, 1] <- start_vals[i]
     summary_results[i, 2] <- posterior_means[i]
@@ -127,7 +127,7 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
     summary_results_save <- cbind(label = lab_names, summary_results_save)
     # row.names(summary_results_save) <- par_names
     summary_results_save <- cbind(par_name = par_names, summary_results_save)
-    write_csv(summary_results_save, path = file.path(table_path, table_name))
+    write_csv(summary_results_save, path = file.path(table_path, paste0(table_name, ".csv")))
   }
   #
   #
