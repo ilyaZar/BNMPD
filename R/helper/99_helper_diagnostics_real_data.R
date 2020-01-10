@@ -52,7 +52,7 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
         current_plot_name <- file.path(plot_path,
                                        paste(plot_name,"_",
                                              par_names[i],
-                                             ".pdf",
+                                             ".eps",
                                              sep = ""))
         current_plot <- generate_ggplot2(mcmc_sims_df = mcmc_sims_df,
                                          burn = burn,
@@ -62,13 +62,13 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
                                          plot_num = i,
                                          plot_view = FALSE,
                                          plot_save = TRUE)
-        ggsave(filename = paste(plot_name, "_", par_names[i], sep = ""),
+        ggsave(filename = paste(plot_name, "_", par_names[i], ".eps", sep = ""),
                plot = current_plot,
                path = plot_path,
-               device = "pdf"
-               # width = 12,
-               # height = 7,
-               # units = "cm"
+               device = "eps",
+               width = 18,
+               height = 10.5,
+               units = "cm"
         )
         print(paste("Saved plots in: ", current_plot_name))
       } else {
@@ -78,7 +78,7 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
                                              ".eps",
                                              sep = ""))
         setEPS()
-        postscript(current_plot_name) #  width = 12, height = 7
+        postscript(current_plot_name, width = 18, height = 10.5)
         generate_plot2(mcmc_sims = mcmc_sims,
                        burn = burn,
                        num_mcmc = num_mcmc,
@@ -221,4 +221,95 @@ generate_ggplot2 <- function(mcmc_sims_df,
                                  nrow = 2)
     return(plot_returned)
   }
+}
+analyze_marginal_effect <- function(k, dd, MM,
+                                    X, betas,
+                                    num_counts,
+                                    y_counts = NULL,
+                                    regs = NULL,
+                                    burnin,
+                                    out_pgas,
+                                    xa_t_all = NULL,
+                                    true_bet_all = NULL,
+                                    elasticity = TRUE,
+                                    simulation = FALSE,
+                                    hist_plots = FALSE,
+                                    traj_plots = FALSE) {
+  MM <- nrow(X[[1]])
+  TT <- ncol(X[[1]])
+  # browser()
+  D <- length(X)
+  for (d in 1:D) {
+    X[[d]] <- X[[d]][burnin:MM, ]
+    betas[[d]] <- betas[[d]][, burnin:MM]
+  }
+  if (simulation) {
+    true_marginal <- rep(0, times = TT)
+    for (t in 1:TT) {
+      # browser()
+      lhs <- xa_t_all[t, dd]*true_bet_all[[dd]][[k]] * sum(xa_t_all[t, , drop = TRUE])
+      rhs <- xa_t_all[t, dd]
+      temp <- 0
+      for (d in 1:D) {
+        # browser()
+        temp <- temp + sum(xa_t_all[t, d, drop = TRUE]*true_bet_all[[d]][[k]])
+      }
+      rhs <- temp*rhs
+      bottom <-  (sum(xa_t_all[t, , drop = TRUE]))^2
+
+      true_marginal[t] <- num_counts[t]*(lhs - rhs)/bottom
+      if (elasticity) {
+        # browser()
+        true_marginal[t] <- true_marginal[t] * (regs/y_counts)[t]
+      }
+    }
+  }
+
+  # browser()
+  f <- exp(X[[dd]])
+  f_prime <- exp(X[[dd]]) * betas[[dd]][k, , drop = TRUE]
+  g <- matrix(0, nrow = (MM - burnin + 1), ncol = TT)
+  for (d in 1:D) {
+    g <- g + exp(X[[d]])
+  }
+  g_squared <- g^2
+  g_prime <- matrix(0, nrow = (MM - burnin + 1), ncol = TT)
+  for (d in 1:D) {
+    g_prime <- g_prime + exp(X[[d]]) * betas[[d]][k, , drop = TRUE]
+  }
+  out <- (f_prime*g - g_prime*f)/g_squared
+  out <- t(out)*num_counts
+  means_out <- rowMeans(out)
+  if (elasticity) {
+    # browser()
+    means_out <- means_out * (regs/y_counts)
+  }
+  # browser()
+  if (hist_plots) {
+    if (simulation) {
+      for (t in 1:TT) {
+        hist(out[t, ], main = paste0("state no: ", dd, "for k = ", k, "regressor"))
+        abline(v = means_out[t], col = "red")
+        abline(v = true_marginal[t], col = "green")
+      }
+    } else {
+      for (t in 1:TT) {
+        hist(out[t, ], main = paste0("state no: ", dd, "for k = ", k, "regressor"))
+        abline(v = means_out[t], col = "red")
+      }
+    }
+  }
+  if (traj_plots) {
+    if (simulation) {
+      plot(means_out, type = "l", col = "red", main = paste0("state no: ", dd, "for k = ", k, "regressor"))
+      lines(true_marginal, type = "l", col = "green")
+    } else {
+      plot(means_out, type = "l", col = "red", main = paste0("state no: ", dd, "for k = ", k, "regressor"))
+    }
+  }
+  # return(out)
+  # out <- (f_prime*g - g_prime*f)/g_squared
+  # out <- t(out)*num_counts
+  # out <- rowMeans(out)
+  # return(out)
 }

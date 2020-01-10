@@ -19,6 +19,24 @@ arma::vec f_cpp(const arma::vec& x_tt,
 }
 
 // [[Rcpp::export]]
+arma::vec w_as_c(const arma::mat& mean_diff,
+                 const arma::rowvec& vcm_diag,
+                 const arma::vec& log_weights) {
+  int len = mean_diff.n_rows;
+  int len2 = mean_diff.n_cols;
+  double w_as_max;
+  arma::vec w_as(len);
+  arma::mat w_as2(len, len2);
+  for(int i = 0;  i<len; i++) {
+    w_as(i) =  -0.5*arma::as_scalar(dot(mean_diff.row(i), vcm_diag % mean_diff.row(i)));
+  }
+  w_as = w_as + log_weights;
+  w_as_max = w_as.max();
+  w_as =  arma::exp(w_as - w_as_max);
+  return w_as/sum(w_as);
+}
+
+// [[Rcpp::export]]
 arma::vec w_bpf_c(const int& N,
                   const int& num_counts,
                   const arma::rowvec& y,
@@ -57,28 +75,16 @@ arma::vec w_bpf_c(const int& N,
   log_rhs = arma::sum(arma::lgamma(alphas_add_y) - arma::lgamma(alphas), 1);
   w_log   = log_lhs + log_rhs;
   return w_log;
-  //   if (sum(is.nan(w) | is.na(w))) {
-  //     stop("NAN or NA values in weight computation!")
-  //   }
-  //   w
-}
-
-// [[Rcpp::export]]
-arma::vec w_as_c(const arma::mat& mean_diff,
-                 const arma::rowvec& vcm_diag,
-                 const arma::vec& log_weights) {
-  int len = mean_diff.n_rows;
-  int len2 = mean_diff.n_cols;
-  double w_as_max;
-  arma::vec w_as(len);
-  arma::mat w_as2(len, len2);
-  for(int i = 0;  i<len; i++) {
-    w_as(i) =  -0.5*arma::as_scalar(dot(mean_diff.row(i), vcm_diag % mean_diff.row(i)));
-  }
-  w_as = w_as + log_weights;
-  w_as_max = w_as.max();
-  w_as =  arma::exp(w_as - w_as_max);
-  return w_as/sum(w_as);
+  // return -arma::lgamma(rs_alphas + num_counts); //
+  // return arma::lgamma(rs_alphas);//
+  // return arma::lgamma(rs_alphas) - arma::lgamma(rs_alphas + num_counts);//
+  // return List::create(arma::lgamma(rs_alphas),
+  //                     - arma::lgamma(rs_alphas + num_counts),
+  //                     arma::lgamma(rs_alphas) - arma::lgamma(rs_alphas + num_counts));
+//   if (sum(is.nan(w) | is.na(w))) {
+//     stop("NAN or NA values in weight computation!")
+//   }
+//   w
 }
 
 // [[Rcpp::export]]

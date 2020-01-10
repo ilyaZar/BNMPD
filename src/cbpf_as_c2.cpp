@@ -87,10 +87,10 @@ arma::vec w_bpf_c(const int& N,
 //   w
 }
 
-
-
 // [[Rcpp::export]]
-List cbpf_as_c2(const int& N, const int& TT, const arma::vec& num_counts,
+List cbpf_as_c2(const int& N,
+                const int& TT,
+                const arma::vec& num_counts,
                 arma::mat y,
                 const arma::mat& Za1,
                 const arma::mat& Za2,
@@ -423,4 +423,3 @@ List cbpf_as_c2(const int& N, const int& TT, const arma::vec& num_counts,
   xa6.col(0) = xa6(ind, t_ind);
   return List::create(w,xa1, xa2, xa3, xa4, xa5, xa6);
 }
-
