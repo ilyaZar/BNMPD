@@ -1,11 +1,12 @@
 pgas1 <- function(MM, TT, N,
-                  y, Za1, Za2, Za3, Za4, Za5, Za6,
+                  y, num_counts,
+                  Za1, Za2, Za3, Za4, Za5, Za6,
                   priors,
                   par_init,
                   par_true = NULL,
                   traj_init,
-                  filtering = TRUE,
-                  num_plots_states) {
+                  filtering = TRUE) {
+  # num_plots_states
   # Initialize data containers
   # set.seed(2345)
   w  <- numeric(N)

@@ -405,7 +405,6 @@ List cbpf_as_c2(const int& N,
   arma::uvec t_ind;
   for (arma::uword t = TT-2; t >= 1; --t) {
     arma::uvec t_ind = {t};
-    // t_ind(0) = t;
     xa1.col(t) = xa1(ind, t_ind);
     xa2.col(t) = xa2(ind, t_ind);
     xa3.col(t) = xa3(ind, t_ind);

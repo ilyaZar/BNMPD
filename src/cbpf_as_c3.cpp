@@ -152,7 +152,7 @@ List cbpf_as_c3(const int& N,
   arma::mat xa6(N, TT);
   // ancestors
   arma::umat a(N, TT);
-  arma::uvec id_as_all = arma::linspace<arma::uvec>(0L, N - 1L, N);
+  arma::uvec id_as_lnspc = arma::linspace<arma::uvec>(0L, N - 1L, N);
   arma::uvec id_as(N);
   // weights
   double w_max;
@@ -202,11 +202,12 @@ List cbpf_as_c3(const int& N,
   sdd = sqrt(sig_sq_xa6/(1.0 - pow(phi_xa6, 2)));
   // xa6( _ , 0) = rnorm(N, mmu, sdd);
   xa6.col(0) = mmu + sdd * arma::randn(N, 1);
+
   // weighting (set to 1/N since there is no measurement y_t=0 at t=0)
   w.col(0) = w_norm;
   // II. FIRST PERIOD APPROXIMATION (t = 1)
   // resampling
-  id_as = Rcpp::RcppArmadillo::sample(id_as_all, N, true, w_norm);
+  id_as = Rcpp::RcppArmadillo::sample(id_as_lnspc, N, true, w_norm);
   a.col(0) = id_as;
   // propagation
   eval_f = f_cpp(xa1.col(0), phi_xa1, Za1_beta1[0]);
@@ -232,6 +233,7 @@ List cbpf_as_c3(const int& N,
   eval_f = f_cpp(xa6.col(0), phi_xa6, Za6_beta6[0]);
   eval_f = eval_f.elem(id_as);
   xa6.col(0) = eval_f + sqrt(sig_sq_xa6)*arma::randn(N, 1);
+
   // conditioning
   xa1(N - 1, 0) = xa1_r(0);
   xa2(N - 1, 0) = xa2_r(0);
@@ -241,47 +243,54 @@ List cbpf_as_c3(const int& N,
   xa6(N - 1, 0) = xa6_r(0);
   // weighting
   w_log = w_bpf_c(N, num_counts(0),
-                            y.row(0),
-                            xa1.col(0),
-                            xa2.col(0),
-                            xa3.col(0),
-                            xa4.col(0),
-                            xa5.col(0),
-                            xa6.col(0));
+                  y.row(0),
+                  xa1.col(0),
+                  xa2.col(0),
+                  xa3.col(0),
+                  xa4.col(0),
+                  xa5.col(0),
+                  xa6.col(0));
   w_max   = w_log.max();
   w_norm = arma::exp(w_log - w_max);
   w_norm = w_norm/arma::sum(w_norm);
   w.col(0) = w_norm;
-  //resampling
-  // a[, 1]  <- sample.int(n = N, replace = TRUE, prob = w[, 1])
   // II. FOR t = 2,..,T
   for (int t = 1; t < TT; ++t) {
-    id_as = Rcpp::RcppArmadillo::sample(id_as_all, N, true, w_norm);
+    //resampling
+    id_as = Rcpp::RcppArmadillo::sample(id_as_lnspc, N, true, w_norm);
     a.col(t) = id_as;
+
     // propagation
     eval_f = f_cpp(xa1.col(t - 1), phi_xa1, Za1_beta1[t]);
+    mean_diff.col(0) = eval_f - xa1_r(t);
     eval_f = eval_f.elem(id_as);
     xa1.col(t) = eval_f + sqrt(sig_sq_xa1)*arma::randn(N, 1);
 
     eval_f = f_cpp(xa2.col(t - 1), phi_xa2, Za2_beta2[t]);
+    mean_diff.col(1) = eval_f - xa2_r(t);
     eval_f = eval_f.elem(id_as);
     xa2.col(t) = eval_f + sqrt(sig_sq_xa2)*arma::randn(N, 1);
 
     eval_f = f_cpp(xa3.col(t - 1), phi_xa3, Za3_beta3[t]);
+    mean_diff.col(2) = eval_f - xa3_r(t);
     eval_f = eval_f.elem(id_as);
     xa3.col(t) = eval_f + sqrt(sig_sq_xa3)*arma::randn(N, 1);
 
     eval_f = f_cpp(xa4.col(t - 1), phi_xa4, Za4_beta4[t]);
+    mean_diff.col(3) = eval_f - xa4_r(t);
     eval_f = eval_f.elem(id_as);
     xa4.col(t) = eval_f + sqrt(sig_sq_xa4)*arma::randn(N, 1);
 
     eval_f = f_cpp(xa5.col(t - 1), phi_xa5, Za5_beta5[t]);
+    mean_diff.col(4) = eval_f - xa5_r(t);
     eval_f = eval_f.elem(id_as);
     xa5.col(t) = eval_f + sqrt(sig_sq_xa5)*arma::randn(N, 1);
 
     eval_f = f_cpp(xa6.col(t - 1), phi_xa6, Za6_beta6[t]);
+    mean_diff.col(5) = eval_f - xa6_r(t);
     eval_f = eval_f.elem(id_as);
     xa6.col(t) = eval_f + sqrt(sig_sq_xa6)*arma::randn(N, 1);
+
     // conditioning
     xa1(N - 1, t) = xa1_r(t);
     xa2(N - 1, t) = xa2_r(t);
@@ -291,7 +300,7 @@ List cbpf_as_c3(const int& N,
     xa6(N - 1, t) = xa6_r(t);
     // ancestor sampling
     as_weights = w_as_c(mean_diff, vcm_diag, w_log);
-    as_draw_vec = Rcpp::RcppArmadillo::sample(id_as_all, 1, true, as_weights);
+    as_draw_vec = Rcpp::RcppArmadillo::sample(id_as_lnspc, 1, true, as_weights);
     as_draw = as_scalar(as_draw_vec);
     a(N - 1, t) = as_draw;
     // weighting
@@ -312,7 +321,6 @@ List cbpf_as_c3(const int& N,
   arma::uvec t_ind;
   for (arma::uword t = TT-2; t >= 1; --t) {
     arma::uvec t_ind = {t};
-    // t_ind(0) = t;
     xa1.col(t) = xa1(ind, t_ind);
     xa2.col(t) = xa2(ind, t_ind);
     xa3.col(t) = xa3(ind, t_ind);

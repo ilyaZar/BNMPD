@@ -1,5 +1,6 @@
 analyse_mcmc_convergence <- function(mcmc_sims, states,
                                      par_names, true_vals, start_vals, burn,
+                                     KI_prob = 0.9,
                                      plot_view = FALSE,
                                      plot_ggp2 = FALSE,
                                      plot_save = FALSE,
@@ -9,6 +10,7 @@ analyse_mcmc_convergence <- function(mcmc_sims, states,
                                      table_save = FALSE,
                                      table_name = "",
                                      table_path = NULL,
+                                     table_prec = 4,
                                      ur_view = FALSE,
                                      ur_save = FALSE,
                                      ur_name = "",
@@ -101,27 +103,40 @@ analyse_mcmc_convergence <- function(mcmc_sims, states,
                                 start_value = numeric(num_par),
                                 mean = numeric(num_par),
                                 sd = numeric(num_par),
-                                KI_lower = numeric(num_par),
-                                KI_upper = numeric(num_par),
+                                N_eff = numeric(num_par),
+                                sd_mean = numeric(num_par),
+                                KI_lo = numeric(num_par),
+                                KI_up = numeric(num_par),
+                                HPD_lo = numeric(num_par),
+                                HPD_up = numeric(num_par),
                                 containd = logical(num_par))
   row.names(summary_results) <- par_names
+  browser()
+  mcmc_sims_coda <- coda::mcmc(t(mcmc_sims), start = burn, end = num_mcmc)
+  N_effective <- coda::effectiveSize(mcmc_sims_coda)
+  hpd_interval <- coda::HPDinterval(mcmc_sims_coda, prob = KI_prob)
   for (i in 1:num_par) {
     summary_results[i, 1] <- true_vals[i]
     summary_results[i, 2] <- start_vals[i]
     summary_results[i, 3] <- posterior_means[i]
     summary_results[i, 4] <- sd(mcmc_sims[i, burn:num_mcmc])
+    summary_results[i, 5] <- N_effective[i]
+    summary_results[i, 6] <- summary_results[i, 4]/sqrt(N_effective[i])
     KI <- quantile(mcmc_sims[i, burn:num_mcmc],
-                   probs = c(0.05, 0.95),
+                   probs = c((1 - KI_prob)/2, 1 - (1 - KI_prob)/2),
                    names = FALSE)
-    summary_results[i, 5] <- KI[1]
-    summary_results[i, 6] <- KI[2]
-    summary_results[i, 7] <- (KI[1] <= true_vals[i] & true_vals[i] <= KI[2])
+    summary_results[i, 7]  <- KI[1]
+    summary_results[i, 8]  <- KI[2]
+    summary_results[i, 9]  <- hpd_interval[i, 1]
+    summary_results[i, 10] <- hpd_interval[i, 2]
+    summary_results[i, 11]  <- ((KI[1] <= true_vals[i] & true_vals[i] <= KI[2]) &&
+                                (hpd_interval[i, 1] <= true_vals[i] & true_vals[i] <= hpd_interval[i, 2]))
   }
+  summary_results[, 3:11] <- round(summary_results[, 3:11], digits = table_prec)
   if (table_view) {
     summary_results_formatted <- summary_results
-    summary_results_formatted[, 3:6] <- round(summary_results_formatted[, 3:6],
-                                       digits = 4)
-
+    # summary_results_formatted[, 3:6] <- round(summary_results_formatted[, 3:11],
+    #                                    digits = 4)
     View(summary_results_formatted, title = paste(table_name,
                                                   "_summary_results",
                                                   sep = ""))

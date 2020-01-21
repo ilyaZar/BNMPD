@@ -1,6 +1,7 @@
 analyse_mcmc_convergence2 <- function(mcmc_sims, states,
                                       par_names, lab_names = NULL,
-                                      start_vals, burn,
+                                      start_vals, burn, thin = NULL,
+                                      KI_prob   = 0.9,
                                       plot_view = FALSE,
                                       plot_ggp2 = FALSE,
                                       plot_save = FALSE,
@@ -11,15 +12,20 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
                                       table_name = "",
                                       table_path = NULL,
                                       table_prec = 4,
+                                      compute_ess = TRUE,
+                                      compute_stan_ess = FALSE,
                                       ur_view = FALSE,
                                       ur_save = FALSE,
                                       ur_name = "",
                                       ur_path = NULL) {
-  num_par         <- dim(mcmc_sims)[1]
-  num_mcmc        <- dim(mcmc_sims)[2]
-  posterior_means <- rowMeans(mcmc_sims[, burn:num_mcmc])
-  mcmc_sims_df        <- data.frame(cbind(1:num_mcmc, t(mcmc_sims)))
+  num_mcmc        <- dim(mcmc_sims)[1]
+  num_par         <- dim(mcmc_sims)[2]
+  mcmc_sims_after <- burn_and_thin(mcmc_sims, burnin = burn, thin)
+  # browser()
+  posterior_means <- colMeans(mcmc_sims_after)
+  mcmc_sims_df        <- data.frame(cbind(1:num_mcmc, mcmc_sims))
   names(mcmc_sims_df) <- c("num_mcmc", par_names)
+  mcmc_sims_df_after  <- subset(mcmc_sims_df, num_mcmc >= burn)
   #
   #
   #
@@ -98,24 +104,79 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
   summary_results <- data.frame(start_val = numeric(num_par),
                                 mean = numeric(num_par),
                                 sd = numeric(num_par),
+                                sd_mean = numeric(num_par),
                                 KI_lo = numeric(num_par),
-                                KI_up = numeric(num_par))
-    for (i in 1:num_par) {
+                                KI_up = numeric(num_par),
+                                HPD_lo = numeric(num_par),
+                                HPD_up = numeric(num_par))
+  if (compute_ess) {
+    summary_results = cbind(summary_results, ess = numeric(num_par))
+  }
+  if (compute_stan_ess) {
+    summary_results = cbind(summary_results, ess_bulk = numeric(num_par))
+    summary_results = cbind(summary_results, ess_tail = numeric(num_par))
+    # The ess_bulk function produces an estimated Bulk Effective Sample Size
+    # (bulk-ESS) using rank normalized draws. Bulk-ESS is useful measure for
+    # sampling efficiency in the bulk of the distribution (related e.g. to
+    # efficiency of mean and median estimates), and is well defined even if the
+    # chains do not have finite mean or variance.
+    #
+    # The ess_tail function produces an estimated Tail Effective Sample Size
+    # (tail-ESS) by computing the minimum of effective sample sizes for 5% and 95%
+    # quantiles. Tail-ESS is useful measure for sampling efficiency in the tails
+    # of the distribution (related e.g. to efficiency of variance and tail
+    # quantile estimates).
+    #
+    # Both bulk-ESS and tail-ESS should be at least 100 (approximately) per Markov
+    # Chain in order to be reliable and indicate that estimates of respective
+    # posterior quantiles are reliable.
+  }
+  mcmc_sims_coda <- coda::mcmc(mcmc_sims, start = burn, end = num_mcmc)
+  hpd_interval1  <- unname(coda::HPDinterval(mcmc_sims_coda, prob = KI_prob))
+  hpd_interval2  <- t(HDInterval::hdi(mcmc_sims_after, credMass = KI_prob, allowSplit = TRUE))
+  min_hpd <- cbind(HPD1 = hpd_interval1[, 2] - hpd_interval1[, 1],
+                   HPD2 = hpd_interval2[, 2] - hpd_interval2[, 1])
+  min_hpd <- apply(min_hpd, 1, which.min)
+  ess     <- mcmcse::ess(mcmc_sims_after)
+  for (i in 1:num_par) {
     summary_results[i, 1] <- start_vals[i]
     summary_results[i, 2] <- posterior_means[i]
-    summary_results[i, 3] <- sd(mcmc_sims[i, burn:num_mcmc])
-    KI <- quantile(mcmc_sims[i, burn:num_mcmc],
-                   probs = c(0.05, 0.95),
+    summary_results[i, 3] <- sd(mcmc_sims_after[, i])
+    summary_results[i, 4] <- summary_results[i, 3]/sqrt(ess[i])
+    KI <- quantile(mcmc_sims_after[, i],
+                   probs = c((1 - KI_prob)/2, 1 - (1 - KI_prob)/2),
                    names = FALSE)
-    summary_results[i, 4] <- KI[1]
-    summary_results[i, 5] <- KI[2]
-
+    summary_results[i, 5] <- KI[1]
+    summary_results[i, 6] <- KI[2]
+    if (min_hpd[i] == 1) {
+      summary_results[i, 7] <- hpd_interval1[i, 1]
+      summary_results[i, 8] <- hpd_interval1[i, 2]
+    } else {
+      summary_results[i, 7] <- hpd_interval2[i, 1]
+      summary_results[i, 8] <- hpd_interval2[i, 2]
+    }
+    if (compute_ess) {
+      summary_results[i, 9] <- round(ess[i], digits = 0)
+    }
+    if (compute_stan_ess) {
+      summary_results[i, 10] <- round(rstan::ess_bulk(mcmc_sims_after[, i]), digits = 0)
+      summary_results[i, 11] <- round(rstan::ess_tail(mcmc_sims_after[, i]), digits = 0)
+    }
   }
-  summary_results[, 2:5] <- sapply(summary_results[, 2:5],
-                                   round,
-                                   digits = table_prec)
+  # browser()
+  verify_KIs <- cbind(KI  = summary_results[, 6] - summary_results[, 5],
+                      HPD = summary_results[, 8] - summary_results[, 7])
+  check_hpd <- unique(apply(verify_KIs, 1, which.min))
+  if (!(length(check_hpd) == 1) || !(check_hpd == 2)) {
+    cat(crayon::red("HPD interval is not always smaller than KI interval for: "),
+        crayon::green(paste0(analysis_ID,
+                             "_",
+                             state_run, "!")), "\n")
+  }
   if (table_view) {
-    summary_results_view <- summary_results
+    summary_results_view <- cbind(start_val = summary_results[, 1],
+                                  round(summary_results[, 2:ncol(summary_results)],
+                                        digits = table_prec))
     row.names(summary_results_view) <- par_names
     View(summary_results_view, title = paste(table_name,
                                              "_summary_results",
@@ -139,7 +200,12 @@ analyse_mcmc_convergence2 <- function(mcmc_sims, states,
     analyse_states_ur(trajectories = res$xtraj)
   }
   if (ur_save) {
-    # SAVE UPDATE RATE PLOTS
+    current_plot_name <- file.path(plot_path, paste0("00_UR_", ur_name, ".eps"))
+    setEPS()
+    postscript(current_plot_name, width = 18, height = 10.5)
+    analyse_states_ur(trajectories = res$xtraj)
+    dev.off()
+    print(paste("Saved update rate plot in: ", current_plot_name))
   }
 }
 generate_plot2 <- function(mcmc_sims,
@@ -149,22 +215,22 @@ generate_plot2 <- function(mcmc_sims,
                            posterior_means,
                            plot_num) {
   par(mfrow = c(2, 2))
-  hist(mcmc_sims[plot_num, burn:num_mcmc],
+  hist(mcmc_sims[burn:num_mcmc, plot_num],
        xlab = par_names[plot_num],
        main = "posterior density")
   abline(v = posterior_means[plot_num], col = "red")
 
-  plot(mcmc_sims[plot_num, burn:num_mcmc], type = "l",
+  plot(mcmc_sims[burn:num_mcmc, plot_num], type = "l",
        xlab = "mcmc iteration",
-       ylab = paste(par_names[plot_num], "value", sep = " "),
+       ylab = paste(par_names[plot_num], sep = " "),
        main = paste("trace after burnin", burn, sep = ": "))
   abline(h = posterior_means[plot_num], col = "red")
 
-  coda::autocorr.plot(mcmc_sims[plot_num, ], auto.layout = FALSE)
+  coda::autocorr.plot(mcmc_sims[burn:num_mcmc, plot_num], auto.layout = FALSE)
 
-  plot(mcmc_sims[plot_num, ], type = "l",
+  plot(mcmc_sims[, plot_num], type = "l",
        xlab = "mcmc iteration",
-       ylab = paste(par_names[plot_num], "value", sep = " "),
+       ylab = paste(par_names[plot_num], sep = " "),
        main = "complete trace (no burnin)")
   abline(h = posterior_means[plot_num], col = "red")
 }
@@ -192,14 +258,16 @@ generate_ggplot2 <- function(mcmc_sims_df,
                             mapping = aes(x = num_mcmc,
                                           y = eval(par_to_plot))) +
     geom_line() +
-    geom_hline(yintercept = posterior_means[plot_num], colour = "red")
+    geom_hline(yintercept = posterior_means[plot_num], colour = "red") +
+    ylab(par_names[plot_num])
 
   trace_plot_burn <- ggplot(data = subset(mcmc_sims_df,
                                           num_mcmc >= burn),
                             mapping = aes(x = num_mcmc,
                                           y = eval(par_to_plot))) +
     geom_line() +
-    geom_hline(yintercept = posterior_means[plot_num], colour = "red")
+    geom_hline(yintercept = posterior_means[plot_num], colour = "red") +
+    ylab(par_names[plot_num])
 
   acf_plot <- ggplot(data = acfs_df,
                      mapping = aes(x = lag, y = acf)) +
@@ -221,95 +289,4 @@ generate_ggplot2 <- function(mcmc_sims_df,
                                  nrow = 2)
     return(plot_returned)
   }
-}
-analyze_marginal_effect <- function(k, dd, MM,
-                                    X, betas,
-                                    num_counts,
-                                    y_counts = NULL,
-                                    regs = NULL,
-                                    burnin,
-                                    out_pgas,
-                                    xa_t_all = NULL,
-                                    true_bet_all = NULL,
-                                    elasticity = TRUE,
-                                    simulation = FALSE,
-                                    hist_plots = FALSE,
-                                    traj_plots = FALSE) {
-  MM <- nrow(X[[1]])
-  TT <- ncol(X[[1]])
-  # browser()
-  D <- length(X)
-  for (d in 1:D) {
-    X[[d]] <- X[[d]][burnin:MM, ]
-    betas[[d]] <- betas[[d]][, burnin:MM]
-  }
-  if (simulation) {
-    true_marginal <- rep(0, times = TT)
-    for (t in 1:TT) {
-      # browser()
-      lhs <- xa_t_all[t, dd]*true_bet_all[[dd]][[k]] * sum(xa_t_all[t, , drop = TRUE])
-      rhs <- xa_t_all[t, dd]
-      temp <- 0
-      for (d in 1:D) {
-        # browser()
-        temp <- temp + sum(xa_t_all[t, d, drop = TRUE]*true_bet_all[[d]][[k]])
-      }
-      rhs <- temp*rhs
-      bottom <-  (sum(xa_t_all[t, , drop = TRUE]))^2
-
-      true_marginal[t] <- num_counts[t]*(lhs - rhs)/bottom
-      if (elasticity) {
-        # browser()
-        true_marginal[t] <- true_marginal[t] * (regs/y_counts)[t]
-      }
-    }
-  }
-
-  # browser()
-  f <- exp(X[[dd]])
-  f_prime <- exp(X[[dd]]) * betas[[dd]][k, , drop = TRUE]
-  g <- matrix(0, nrow = (MM - burnin + 1), ncol = TT)
-  for (d in 1:D) {
-    g <- g + exp(X[[d]])
-  }
-  g_squared <- g^2
-  g_prime <- matrix(0, nrow = (MM - burnin + 1), ncol = TT)
-  for (d in 1:D) {
-    g_prime <- g_prime + exp(X[[d]]) * betas[[d]][k, , drop = TRUE]
-  }
-  out <- (f_prime*g - g_prime*f)/g_squared
-  out <- t(out)*num_counts
-  means_out <- rowMeans(out)
-  if (elasticity) {
-    # browser()
-    means_out <- means_out * (regs/y_counts)
-  }
-  # browser()
-  if (hist_plots) {
-    if (simulation) {
-      for (t in 1:TT) {
-        hist(out[t, ], main = paste0("state no: ", dd, "for k = ", k, "regressor"))
-        abline(v = means_out[t], col = "red")
-        abline(v = true_marginal[t], col = "green")
-      }
-    } else {
-      for (t in 1:TT) {
-        hist(out[t, ], main = paste0("state no: ", dd, "for k = ", k, "regressor"))
-        abline(v = means_out[t], col = "red")
-      }
-    }
-  }
-  if (traj_plots) {
-    if (simulation) {
-      plot(means_out, type = "l", col = "red", main = paste0("state no: ", dd, "for k = ", k, "regressor"))
-      lines(true_marginal, type = "l", col = "green")
-    } else {
-      plot(means_out, type = "l", col = "red", main = paste0("state no: ", dd, "for k = ", k, "regressor"))
-    }
-  }
-  # return(out)
-  # out <- (f_prime*g - g_prime*f)/g_squared
-  # out <- t(out)*num_counts
-  # out <- rowMeans(out)
-  # return(out)
 }

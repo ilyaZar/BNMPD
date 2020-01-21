@@ -1,4 +1,3 @@
-
 verify_test <- function(make_correct_test = FALSE,
                         path_test_new,
                         path_test_sol) {
