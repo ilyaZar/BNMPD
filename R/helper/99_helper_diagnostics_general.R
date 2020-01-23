@@ -51,6 +51,7 @@ analyze_marginal_effect <- function(reg_len,
                                     plot_save = FALSE,
                                     plot_path) {
   # PREPARATIONS ------------------------------------------------------------
+  # browser()
   if (reg_len <= 4) {graph_par_row <- 2; graph_par_col <- 2}
   if (5 <= reg_len && reg_len <= 6) {graph_par_row <- 3; graph_par_col <- 2}
   if (7 <= reg_len && reg_len <= 8) {graph_par_row <- 4; graph_par_col <- 2}
@@ -63,6 +64,18 @@ analyze_marginal_effect <- function(reg_len,
     effect_name <- "marginal_effects"
   }
   out_dd <- rep(list(list()), times = reg_len)
+  X1     <- lapply(X, colMeans)
+  bets1  <- lapply(bets, rowMeans)
+  f1 <- exp(mpfr(X1[[dd]], 570))
+  f2 <- exp(X[[dd]])
+  g1 <- mpfr(numeric(TT), 570)
+  g2 <- matrix(0, nrow = (MM - burnin + 1), ncol = TT)
+  for (d in 1:DD) {
+    g1 <- g1 + exp(mpfr(X1[[d]], 570))
+    g2 <- g2 + exp(X[[d]])
+  }
+  g_squared1 <- g1^2
+  g_squared2 <- g2^2
   for (kk in 1:reg_len) {
     regs_current <- regs[, kk, drop = TRUE]
     # VERSION FOR SIMULATED DATA: ---------------------------------------------
@@ -91,55 +104,42 @@ analyze_marginal_effect <- function(reg_len,
     # VERSION FOR REAL DATA: --------------------------------------------------
     if (!simulation) {
       # EVALUATE AT MEANS: ------------------------------------------------------
-      X1 <- lapply(X, colMeans)
-      bets1 <- lapply(bets, rowMeans)
-
-      f       <- exp(mpfr(X1[[dd]], 570))
-      f_prime <- f * bets1[[dd]][kk]
-      g       <- mpfr(numeric(TT), 570)
-      g_prime <- mpfr(numeric(TT), 570)
+      f_prime1 <- f1 * bets1[[dd]][kk]
+      g_prime1 <- mpfr(numeric(TT), 570)
       counter <- 1
       for (d in ID_D[[dd]][[kk]]) {
-        g <- g + exp(mpfr(X1[[d]], 570))
-        g_prime <- g_prime + exp(mpfr(X1[[d]], 570)) * bets1[[d]][ID_K[[dd]][[kk]][counter]]
+        g_prime1 <- g_prime1 + exp(mpfr(X1[[d]], 570)) * bets1[[d]][ID_K[[dd]][[kk]][counter]]
         counter <- counter + 1
       }
-      g_squared <- g^2
-      out <- num_counts*((f_prime*g - g_prime*f)/g_squared)
-      means_out1 <- out
+      out1 <- num_counts*((f_prime1*g1 - g_prime1*f1)/g_squared1)
+      means_out1 <- out1
       if (elasticity) {
         ela <- (regs_current/mpfr(y_counts, 570))
         ela <- replace(ela, ((ela == Inf) | is.nan(ela)), 0)
         means_out1 <- means_out1 * ela
       }
       # AVERAGE AFTER -----------------------------------------------------------
-      f       <- exp(X[[dd]])
-      f_prime <- exp(X[[dd]]) * bets[[dd]][kk, , drop = TRUE]
-      g       <- matrix(0, nrow = (MM - burnin + 1), ncol = TT)
-      g_prime <- matrix(0, nrow = (MM - burnin + 1), ncol = TT)
+      f_prime2 <- f2 * bets[[dd]][kk, , drop = TRUE]
+      g_prime2 <- matrix(0, nrow = (MM - burnin + 1), ncol = TT)
       counter <- 1
       for (d in ID_D[[dd]][[kk]]) {
-        g <- g + exp(X[[d]])
-        g_prime <- g_prime + exp(X[[d]]) * bets[[d]][ID_K[[dd]][[kk]][counter], , drop = TRUE]
+        g_prime2 <- g_prime2 + exp(X[[d]]) * bets[[d]][ID_K[[dd]][[kk]][counter], , drop = TRUE]
         counter <- counter + 1
       }
-      g_squared <- g^2
-      out <- (f_prime*g - g_prime*f)/g_squared
-      out <- colMeans(out)
-      means_out2 <- out*num_counts
+      out2 <- (f_prime2*g2 - g_prime2*f2)/g_squared2
+      out2 <- colMeans(out2)
+      means_out2 <- out2*num_counts
       if (elasticity) {
         ela <- (regs_current/y_counts)
         ela <- replace(ela, ela == Inf, 0)
         means_out2 <- means_out2 * ela
       }
     }
-    # PLOTTING RESULTS: -------------------------------------------------------
-    # HISTOGRAMS --------------------------------------------------------------
-
-    # TRAJECTORIES ------------------------------------------------------------
-    means_out1 <- as.numeric(means_out1)
+    means_out1   <- as.numeric(means_out1)
     out_dd[[kk]] <- matrix(c(means_out1, means_out2), ncol = 2)
   }
+  # PLOTTING RESULTS: -------------------------------------------------------
+  # HISTOGRAMS --------------------------------------------------------------
   if (hist_plots) {
     stop("Histogram plots of marginal effects and elasticities currently disabled!")
     # if (simulation) {
@@ -155,6 +155,7 @@ analyze_marginal_effect <- function(reg_len,
     #   }
     # }
   }
+  # TRAJECTORIES ------------------------------------------------------------
   if (plot_view) {
     if (traj_plots) {
       par(mfrow = c(graph_par_row, graph_par_col))
