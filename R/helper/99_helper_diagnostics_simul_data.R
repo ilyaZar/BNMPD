@@ -111,7 +111,6 @@ analyse_mcmc_convergence <- function(mcmc_sims, states,
                                 HPD_up = numeric(num_par),
                                 containd = logical(num_par))
   row.names(summary_results) <- par_names
-  browser()
   mcmc_sims_coda <- coda::mcmc(t(mcmc_sims), start = burn, end = num_mcmc)
   N_effective <- coda::effectiveSize(mcmc_sims_coda)
   hpd_interval <- coda::HPDinterval(mcmc_sims_coda, prob = KI_prob)
@@ -132,7 +131,8 @@ analyse_mcmc_convergence <- function(mcmc_sims, states,
     summary_results[i, 11]  <- ((KI[1] <= true_vals[i] & true_vals[i] <= KI[2]) &&
                                 (hpd_interval[i, 1] <= true_vals[i] & true_vals[i] <= hpd_interval[i, 2]))
   }
-  summary_results[, 3:11] <- round(summary_results[, 3:11], digits = table_prec)
+  browser()
+  summary_results[, 3:10] <- round(summary_results[, 3:10], digits = table_prec)
   if (table_view) {
     summary_results_formatted <- summary_results
     # summary_results_formatted[, 3:6] <- round(summary_results_formatted[, 3:11],
