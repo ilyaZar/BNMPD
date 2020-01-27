@@ -131,8 +131,8 @@ analyse_mcmc_convergence <- function(mcmc_sims, states,
     summary_results[i, 11]  <- ((KI[1] <= true_vals[i] & true_vals[i] <= KI[2]) &&
                                 (hpd_interval[i, 1] <= true_vals[i] & true_vals[i] <= hpd_interval[i, 2]))
   }
-  browser()
   summary_results[, 3:10] <- round(summary_results[, 3:10], digits = table_prec)
+  browser()
   if (table_view) {
     summary_results_formatted <- summary_results
     # summary_results_formatted[, 3:6] <- round(summary_results_formatted[, 3:11],
@@ -151,7 +151,7 @@ analyse_mcmc_convergence <- function(mcmc_sims, states,
   #
   if (ur_view) {
     par(mfrow = c(1, 1))
-    analyse_states_ur(trajectories = res$xtraj)
+    analyse_states_ur(trajectories = res$xtraj, states_in_cols = FALSE)
   }
   if (ur_save) {
     # SAVE UPDATE RATE PLOTS

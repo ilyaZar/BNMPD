@@ -1,8 +1,15 @@
-analyse_states_ur <- function(trajectories, return_values = FALSE) {
-  # browser()
+analyse_states_ur <- function(trajectories, states_in_cols = TRUE, return_values = FALSE) {
+  browser()
   num_trajs  <- length(trajectories)
-  num_draws  <- dim(trajectories[[1]])[1]
-  num_states <- dim(trajectories[[1]])[2]
+  if (states_in_cols) {
+    num_draws  <- nrow(trajectories[[1]])
+    num_states <- ncol(trajectories[[1]])
+  } else if (!states_in_cols) {
+    num_draws  <- ncol(trajectories[[1]])
+    num_states <- nrow(trajectories[[1]])
+    trajectories <- lapply(trajectories, t)
+  }
+
   urs <- matrix(0, ncol = num_trajs, nrow = num_states)
   for (i in 1:num_trajs) {
     num_unique_states <- apply(trajectories[[i]], MARGIN = 2, unique)
