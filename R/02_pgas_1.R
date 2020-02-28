@@ -24,7 +24,7 @@ pgas1 <- function(MM, TT, N,
   dim_ba4 <- length(par_init[[4]][[3]])
   dim_ba5 <- length(par_init[[5]][[3]])
   dim_ba6 <- length(par_init[[6]][[3]])
-  dim_all <- dim_ba1 + dim_ba2 + dim_ba3 + dim_ba4 + dim_ba5 + dim_ba6 + 6*2
+  # dim_all <- dim_ba1 + dim_ba2 + dim_ba3 + dim_ba4 + dim_ba5 + dim_ba6 + 6*2
 
   sig_sq_xa1 <- numeric(MM)
   phi_xa1    <- numeric(MM)
@@ -94,12 +94,12 @@ pgas1 <- function(MM, TT, N,
   par_init      <- unlist(par_init)
   # Initialize states
   ## I. Set states to deterministic starting values
-  Xa1[1, ] <- traj_init[[1]] # [1]
-  Xa2[1, ] <- traj_init[[2]] # [2]
-  Xa3[1, ] <- traj_init[[3]] # [3]
-  Xa4[1, ] <- traj_init[[4]] # [4]
-  Xa5[1, ] <- traj_init[[5]] # [5]
-  Xa6[1, ] <- traj_init[[6]] # [6]
+  Xa1[1, ] <- traj_init[[1]]
+  Xa2[1, ] <- traj_init[[2]]
+  Xa3[1, ] <- traj_init[[3]]
+  Xa4[1, ] <- traj_init[[4]]
+  Xa5[1, ] <- traj_init[[5]]
+  Xa6[1, ] <- traj_init[[6]]
   ## II. run cBPF and use output as first conditioning trajectory
   # monitor_pgas_states(states_drawn = cbind(exp(Xa1[1, ]), exp(Xa2[1, ]),
   #                                          exp(Xa3[1, ]), exp(Xa4[1, ]),
@@ -112,7 +112,7 @@ pgas1 <- function(MM, TT, N,
   #                       #                    xa3_t, xa4_t,
   #                       #                    xa5_5, xa6_t),
   #                     current = 1, total = 1, num_prints = 1)
-  # cbpf_as_c2
+  # cbpf_as_c2 # cBPF_as
   out_cPF <- cbpf_as_c2(y = y, num_counts = num_counts,
                         Za1 = Za1, Za2 = Za2, Za3 = Za3,
                         Za4 = Za4, Za5 = Za5, Za6 = Za6,
@@ -142,7 +142,6 @@ pgas1 <- function(MM, TT, N,
                         bet_xa6 = bet_xa6[, 1, drop = F],
                         xa6_r = Xa6[1, ])
   w        <- out_cPF[[1]][, TT]
-  # browser()
   b        <- sample.int(n = N, size = 1, replace = TRUE, prob = w)
   Xa1[1, ] <- out_cPF[[2]][b, ]
   Xa2[1, ] <- out_cPF[[3]][b, ]
@@ -280,7 +279,7 @@ pgas1 <- function(MM, TT, N,
     }
     ############################################################################
     # II. Run cBPF-AS part
-    # cbpf_as_c2
+    # cbpf_as_c2 # cBPF_as
     out_cPF <- cbpf_as_c2(y = y, num_counts = num_counts,
                           Za1 = Za1, Za2 = Za2, Za3 = Za3,
                           Za4 = Za4, Za5 = Za5, Za6 = Za6,
@@ -331,7 +330,8 @@ pgas1 <- function(MM, TT, N,
     #                     #                    xa4_t, xa5_t, xa6_t),
     #                     current = m, total = MM,
     #                     num_prints = num_plots_states)
-    monitor_pgas_time(m, MM, len = MM)
+    # monitor_pgas_time(m, MM, len = MM)
+    cat("Iteration number:", m, "\n")
     # monitor_pgas_mcmc2(m, MM, len = MM,
     #                    val_init = par_init,
     #                    current_pars = cbind(sig_sq_xa1[1:m], phi_xa1[1:m],

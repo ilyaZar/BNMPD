@@ -1,5 +1,4 @@
 analyse_states_ur <- function(trajectories, states_in_cols = TRUE, return_values = FALSE) {
-  browser()
   num_trajs  <- length(trajectories)
   if (states_in_cols) {
     num_draws  <- nrow(trajectories[[1]])
