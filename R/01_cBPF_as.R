@@ -1,5 +1,6 @@
-cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5, Za6,
-                    N, TT, num_counts,
+cBPF_as <- function(N, TT,
+                    y, num_counts,
+                    Za1, Za2, Za3, Za4, Za5, Za6,
                     sig_sq_xa1, phi_xa1, bet_xa1, xa1_r,
                     sig_sq_xa2, phi_xa2, bet_xa2, xa2_r,
                     sig_sq_xa3, phi_xa3, bet_xa3, xa3_r,
@@ -81,7 +82,6 @@ cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5, Za6,
   xa5[N, 1] <- xa5_r[1]
   xa6[N, 1] <- xa6_r[1]
   # weighting
-  # browser()
   w_log   <- w_BPF(y = y[1, , drop = FALSE],
                    N = N,
                    xa1 = xa1[, 1],
@@ -161,7 +161,6 @@ cBPF_as <- function(y, Za1, Za2, Za3, Za4, Za5, Za6,
     w_max   <- max(w_log)
     w_tilde <- exp(w_log - w_max)
     w[, t]  <- w_tilde/sum(w_tilde)
-    # browser()
   }
   # trajectories
   ind <- a[, TT]

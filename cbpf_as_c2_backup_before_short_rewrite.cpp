@@ -1,15 +1,33 @@
+//#define ARMA_NO_DEBUG
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
-// [[Rcpp::depends(RcppArmadillo)]]
+//[[Rcpp::depends(RcppArmadillo)]]
+using namespace arma;
 using namespace Rcpp;
 
 // [[Rcpp::export]]
 arma::vec f_cpp(const arma::vec& x_tt,
-                 const double& phi_x,
-                 const double& z_add) {
+                const double& phi_x,
+                const double& z_add) {
   int n = x_tt.size();
   arma::vec x_t(n);
   x_t = phi_x * x_tt + z_add;
+  // x_t <- phi_x*x_tt + z %*% bet_x
+  // xt <- phi_x*xtt
+  // xt <- phi_x*xtt + 8*cos(1.2*t)
+  // xt <- phi_x*xtt + 25*xtt/(1 + xtt^2)
+  // xt <- phi_x*xtt + 25*xtt/(1 + xtt^2) + 8*cos(1.2*t)
+  return(x_t);
+}
+
+// [[Rcpp::export]]
+arma::vec f_cpp_vech(const arma::vec& x_tt,
+                        const double& phi_x,
+                        const arma::vec& z_add) {
+  int n = x_tt.size();
+  arma::vec x_t(n);
+  x_t = phi_x * x_tt;
+  x_t +=  z_add;
   // x_t <- phi_x*x_tt + z %*% bet_x
   // xt <- phi_x*xtt
   // xt <- phi_x*xtt + 8*cos(1.2*t)
@@ -88,7 +106,32 @@ arma::vec w_bpf_c(const int& N,
 }
 
 // [[Rcpp::export]]
-List cbpf_as_c3(const int& N,
+arma::vec mvrnorm_c(const arma::vec& mu, const arma::mat& Sigma){
+
+  // Obtain environment containing function
+  // Rcpp::Environment base("package:MASS");
+  Environment pkg = Environment::namespace_env("MASS");
+  // Make function callable from C++
+  Rcpp::Function mvrnorm_c_internal = pkg["mvrnorm"];
+
+
+  Rcpp::NumericVector mu2 = as<NumericVector>(wrap(mu));
+  Rcpp::NumericMatrix Sigma2 = as<NumericMatrix>(wrap(Sigma));
+  // Call the function and receive its list output
+  Rcpp::NumericVector res;
+  res = mvrnorm_c_internal(Rcpp::_["n"]         = 1,
+                           Rcpp::_["mu"]        = mu2,
+                           Rcpp::_["Sigma"]     = Sigma2,
+                           Rcpp::_["tol"]       = 1e-06,
+                           Rcpp::_["empirical"] = false,
+                           Rcpp::_["EISPACK"]   = false);
+  arma::vec res2 = as<arma::vec>(res);
+
+  return res2;
+}
+
+// [[Rcpp::export]]
+List cbpf_as_c2(const int& N,
                 const int& TT,
                 const arma::vec& num_counts,
                 arma::mat y,
@@ -116,15 +159,19 @@ List cbpf_as_c3(const int& N,
                 const arma::vec& bet_xa4,
                 const arma::vec& bet_xa5,
                 const arma::vec& bet_xa6,
-                const arma::vec& xa1_r,
-                const arma::vec& xa2_r,
-                const arma::vec& xa3_r,
-                const arma::vec& xa4_r,
-                const arma::vec& xa5_r,
-                const arma::vec& xa6_r) {
+                const arma::rowvec& xa1_r,
+                const arma::rowvec& xa2_r,
+                const arma::rowvec& xa3_r,
+                const arma::rowvec& xa4_r,
+                const arma::rowvec& xa5_r,
+                const arma::rowvec& xa6_r) {
   // bool filtering
   int D = y.n_cols;
   arma::uvec ind(N);
+  NumericVector test_vec(N);
+  arma::vec test_vec2(N);
+  arma::uvec test_vec3(N);
+  NumericVector mmu2(N);
 
   arma::vec Za1_beta1(TT);
   Za1_beta1 = Za1 * bet_xa1;
@@ -142,8 +189,9 @@ List cbpf_as_c3(const int& N,
   double sdd = 0;
   double mmu = 0;
   arma::vec eval_f(N);
+  arma::vec eval_f2(N);
   // DATA CONTAINERS
-  // particles for state processes:
+  // particle containers for state processes:
   arma::mat xa1(N, TT);
   arma::mat xa2(N, TT);
   arma::mat xa3(N, TT);
@@ -152,18 +200,18 @@ List cbpf_as_c3(const int& N,
   arma::mat xa6(N, TT);
   // ancestors
   arma::umat a(N, TT);
-  arma::uvec id_as_lnspc = arma::linspace<arma::uvec>(0L, N - 1L, N);
-  arma::uvec id_as(N);
+  arma::uvec id_as = arma::linspace<arma::uvec>(0L, N - 1L, N);
   // weights
   double w_max;
   arma::vec w_norm(N);
   arma::vec w_log(N);
+  NumericVector w_norm2(N);
   w_norm.fill(1.0/N);
   arma::mat w(N, TT);
   // ancestor weights
-  double as_draw;
-  arma::uvec as_draw_vec(1);
   arma::vec as_weights(N);
+  NumericVector as_draw_vec(1);
+  double as_draw;
   arma::rowvec vcm_diag = {pow(sig_sq_xa1, -1),
                            pow(sig_sq_xa2, -1),
                            pow(sig_sq_xa3, -1),
@@ -176,63 +224,109 @@ List cbpf_as_c3(const int& N,
   mmu = Za1_beta1[0]/(1.0 - phi_xa1);
   sdd = sqrt(sig_sq_xa1/(1.0 - pow(phi_xa1, 2)));
   // xa1( _ , 0) = rnorm(N, mmu, sdd);
-  xa1.col(0) = mmu + sdd * arma::randn(N, 1);
+  // xa1.col(0) = mmu + sdd * arma::randn(N, 1);
+  test_vec = rnorm(N, mmu, sdd);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa1.col(0) = test_vec2;
 
   mmu = Za2_beta2[0]/(1.0 - phi_xa2);
   sdd = sqrt(sig_sq_xa2/(1.0 - pow(phi_xa2, 2)));
   // xa2( _ , 0) = rnorm(N, mmu, sdd);
-  xa2.col(0) = mmu + sdd * arma::randn(N, 1);
+  // xa2.col(0) = mmu + sdd * arma::randn(N, 1);
+  test_vec = rnorm(N, mmu, sdd);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa2.col(0) = test_vec2;
 
   mmu = Za3_beta3[0]/(1.0 - phi_xa3);
   sdd = sqrt(sig_sq_xa3/(1.0 - pow(phi_xa3, 2)));
   // xa3( _ , 0) = rnorm(N, mmu, sdd);
-  xa3.col(0) = mmu + sdd * arma::randn(N, 1);
+  // xa3.col(0) = mmu + sdd * arma::randn(N, 1);
+  test_vec = rnorm(N, mmu, sdd);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa3.col(0) = test_vec2;
 
   mmu = Za4_beta4[0]/(1.0 - phi_xa4);
   sdd = sqrt(sig_sq_xa4/(1.0 - pow(phi_xa4, 2)));
   // xa4( _ , 0) = rnorm(N, mmu, sdd);
-  xa4.col(0) = mmu + sdd * arma::randn(N, 1);
+  // xa4.col(0) = mmu + sdd * arma::randn(N, 1);
+  test_vec = rnorm(N, mmu, sdd);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa4.col(0) = test_vec2;
 
   mmu = Za5_beta5[0]/(1.0 - phi_xa5);
   sdd = sqrt(sig_sq_xa5/(1.0 - pow(phi_xa5, 2)));
   // xa5( _ , 0) = rnorm(N, mmu, sdd);
-  xa5.col(0) = mmu + sdd * arma::randn(N, 1);
+  // xa5.col(0) = mmu + sdd * arma::randn(N, 1);
+  test_vec = rnorm(N, mmu, sdd);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa5.col(0) = test_vec2;
 
   mmu = Za6_beta6[0]/(1.0 - phi_xa6);
   sdd = sqrt(sig_sq_xa6/(1.0 - pow(phi_xa6, 2)));
   // xa6( _ , 0) = rnorm(N, mmu, sdd);
-  xa6.col(0) = mmu + sdd * arma::randn(N, 1);
+  // xa6.col(0) = mmu + sdd * arma::randn(N, 1);
+  test_vec = rnorm(N, mmu, sdd);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa6.col(0) = test_vec2;
 
   // weighting (set to 1/N since there is no measurement y_t=0 at t=0)
   w.col(0) = w_norm;
+  w_norm2 = as<NumericVector>(wrap(w_norm));
   // II. FIRST PERIOD APPROXIMATION (t = 1)
   // resampling
-  id_as = Rcpp::RcppArmadillo::sample(id_as_lnspc, N, true, w_norm);
+  // id_as = Rcpp::RcppArmadillo::sample(id_as, N, true, w_norm);
+  test_vec = sample(N, N, true, w_norm2) - 1;
+  test_vec3 = as<arma::uvec>(test_vec);
+  id_as = test_vec3;
   a.col(0) = id_as;
   // propagation
-  eval_f = f_cpp(xa1.col(0), phi_xa1, Za1_beta1[0]);
-  eval_f = eval_f.elem(id_as);
-  xa1.col(0) = eval_f + sqrt(sig_sq_xa1)*arma::randn(N, 1);
+  eval_f  = f_cpp(xa1.col(0), phi_xa1, Za1_beta1[0]);
+  eval_f2 = eval_f.elem(id_as);
+  mmu2 = as<NumericVector>(wrap(eval_f2));
+  // xa1.col(0) = eval_f + sqrt(sig_sq_xa1)*arma::randn(N, 1);
+  test_vec = mmu2 + sqrt(sig_sq_xa1) * rnorm(N);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa1.col(0) = test_vec2;
 
   eval_f = f_cpp(xa2.col(0), phi_xa2, Za2_beta2[0]);
-  eval_f = eval_f.elem(id_as);
-  xa2.col(0) = eval_f + sqrt(sig_sq_xa2)*arma::randn(N, 1);
+  eval_f2 = eval_f.elem(id_as);
+  mmu2 = as<NumericVector>(wrap(eval_f2));
+  // xa2.col(0) = eval_f + sqrt(sig_sq_xa2)*arma::randn(N, 1);
+  test_vec = mmu2 + sqrt(sig_sq_xa2) * rnorm(N);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa2.col(0) = test_vec2;
 
   eval_f = f_cpp(xa3.col(0), phi_xa3, Za3_beta3[0]);
-  eval_f = eval_f.elem(id_as);
-  xa3.col(0) = eval_f + sqrt(sig_sq_xa3)*arma::randn(N, 1);
+  eval_f2 = eval_f.elem(id_as);
+  mmu2 = as<NumericVector>(wrap(eval_f2));
+  // xa3.col(0) = eval_f + sqrt(sig_sq_xa3)*arma::randn(N, 1);
+  test_vec = mmu2 + sqrt(sig_sq_xa3) * rnorm(N);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa3.col(0) = test_vec2;
 
   eval_f = f_cpp(xa4.col(0), phi_xa4, Za4_beta4[0]);
-  eval_f = eval_f.elem(id_as);
-  xa4.col(0) = eval_f + sqrt(sig_sq_xa4)*arma::randn(N, 1);
+  eval_f2 = eval_f.elem(id_as);
+  mmu2 = as<NumericVector>(wrap(eval_f2));
+  // xa4.col(0) = eval_f + sqrt(sig_sq_xa4)*arma::randn(N, 1);
+  test_vec = mmu2 + sqrt(sig_sq_xa4) * rnorm(N);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa4.col(0) = test_vec2;
 
   eval_f = f_cpp(xa5.col(0), phi_xa5, Za5_beta5[0]);
-  eval_f = eval_f.elem(id_as);
-  xa5.col(0) = eval_f + sqrt(sig_sq_xa5)*arma::randn(N, 1);
+  eval_f2 = eval_f.elem(id_as);
+  mmu2 = as<NumericVector>(wrap(eval_f2));
+  // xa5.col(0) = eval_f + sqrt(sig_sq_xa5)*arma::randn(N, 1);
+  test_vec = mmu2 + sqrt(sig_sq_xa5) * rnorm(N);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa5.col(0) = test_vec2;
 
   eval_f = f_cpp(xa6.col(0), phi_xa6, Za6_beta6[0]);
-  eval_f = eval_f.elem(id_as);
-  xa6.col(0) = eval_f + sqrt(sig_sq_xa6)*arma::randn(N, 1);
+  eval_f2 = eval_f.elem(id_as);
+  mmu2 = as<NumericVector>(wrap(eval_f2));
+  // xa6.col(0) = eval_f + sqrt(sig_sq_xa6)*arma::randn(N, 1);
+  test_vec = mmu2 + sqrt(sig_sq_xa6) * rnorm(N);
+  test_vec2 = as<arma::vec>(test_vec);
+  xa6.col(0) = test_vec2;
 
   // conditioning
   xa1(N - 1, 0) = xa1_r(0);
@@ -252,45 +346,75 @@ List cbpf_as_c3(const int& N,
                   xa6.col(0));
   w_max   = w_log.max();
   w_norm = arma::exp(w_log - w_max);
-  w_norm = w_norm/arma::sum(w_norm);
+  w_norm =  w_norm/arma::sum(w_norm);
   w.col(0) = w_norm;
+  w_norm2 = as<NumericVector>(wrap(w_norm));
+  //resampling
+  // test_vec = sample(N, N, true, w_norm2) - 1;
+  // id_as = test_vec3;
+  // a.col(0) = id_as;
+  // a[, 1]  <- sample.int(n = N, replace = TRUE, prob = w[, 1])
   // II. FOR t = 2,..,T
-  for (int t = 1; t < TT; ++t) {
+  for (int t = 1; t < TT; ++t)  {
     //resampling
-    id_as = Rcpp::RcppArmadillo::sample(id_as_lnspc, N, true, w_norm);
+    test_vec = sample(N, N, true, w_norm2) - 1;
+    test_vec3 = as<arma::uvec>(test_vec);
+    id_as = test_vec3;
     a.col(t) = id_as;
-
     // propagation
     eval_f = f_cpp(xa1.col(t - 1), phi_xa1, Za1_beta1[t]);
-    mean_diff.col(0) = eval_f - xa1_r(t);
-    eval_f = eval_f.elem(id_as);
-    xa1.col(t) = eval_f + sqrt(sig_sq_xa1)*arma::randn(N, 1);
+    mean_diff.col(0) = eval_f - xa1_r[t];
+    eval_f2 = eval_f.elem(id_as);
+    mmu2 = as<NumericVector>(wrap(eval_f2));
+    // xa1.col(t) = eval_f + sqrt(sig_sq_xa1)*arma::randn(N, 1);
+    test_vec = mmu2 + sqrt(sig_sq_xa1) * rnorm(N);
+    test_vec2 = as<arma::vec>(test_vec);
+    xa1.col(t) = test_vec2;
 
     eval_f = f_cpp(xa2.col(t - 1), phi_xa2, Za2_beta2[t]);
-    mean_diff.col(1) = eval_f - xa2_r(t);
-    eval_f = eval_f.elem(id_as);
-    xa2.col(t) = eval_f + sqrt(sig_sq_xa2)*arma::randn(N, 1);
+    mean_diff.col(1) = eval_f - xa2_r[t];
+    eval_f2 = eval_f.elem(id_as);
+    mmu2 = as<NumericVector>(wrap(eval_f2));
+    // xa2.col(t) = eval_f + sqrt(sig_sq_xa2)*arma::randn(N, 1);
+    test_vec = mmu2 + sqrt(sig_sq_xa2) * rnorm(N);
+    test_vec2 = as<arma::vec>(test_vec);
+    xa2.col(t) = test_vec2;
 
     eval_f = f_cpp(xa3.col(t - 1), phi_xa3, Za3_beta3[t]);
-    mean_diff.col(2) = eval_f - xa3_r(t);
-    eval_f = eval_f.elem(id_as);
-    xa3.col(t) = eval_f + sqrt(sig_sq_xa3)*arma::randn(N, 1);
+    mean_diff.col(2) = eval_f - xa3_r[t];
+    eval_f2 = eval_f.elem(id_as);
+    mmu2 = as<NumericVector>(wrap(eval_f2));
+    // xa3.col(t) = eval_f + sqrt(sig_sq_xa3)*arma::randn(N, 1);
+    test_vec = mmu2 + sqrt(sig_sq_xa3) * rnorm(N);
+    test_vec2 = as<arma::vec>(test_vec);
+    xa3.col(t) = test_vec2;
 
     eval_f = f_cpp(xa4.col(t - 1), phi_xa4, Za4_beta4[t]);
-    mean_diff.col(3) = eval_f - xa4_r(t);
-    eval_f = eval_f.elem(id_as);
-    xa4.col(t) = eval_f + sqrt(sig_sq_xa4)*arma::randn(N, 1);
+    mean_diff.col(3) = eval_f - xa4_r[t];
+    eval_f2 = eval_f.elem(id_as);
+    mmu2 = as<NumericVector>(wrap(eval_f2));
+    // xa4.col(t) = eval_f + sqrt(sig_sq_xa4)*arma::randn(N, 1);
+    test_vec = mmu2 + sqrt(sig_sq_xa4) * rnorm(N);
+    test_vec2 = as<arma::vec>(test_vec);
+    xa4.col(t) = test_vec2;
 
     eval_f = f_cpp(xa5.col(t - 1), phi_xa5, Za5_beta5[t]);
-    mean_diff.col(4) = eval_f - xa5_r(t);
-    eval_f = eval_f.elem(id_as);
-    xa5.col(t) = eval_f + sqrt(sig_sq_xa5)*arma::randn(N, 1);
+    mean_diff.col(4) = eval_f - xa5_r[t];
+    eval_f2 = eval_f.elem(id_as);
+    mmu2 = as<NumericVector>(wrap(eval_f2));
+    // xa5.col(t) = eval_f + sqrt(sig_sq_xa5)*arma::randn(N, 1);
+    test_vec = mmu2 + sqrt(sig_sq_xa5) * rnorm(N);
+    test_vec2 = as<arma::vec>(test_vec);
+    xa5.col(t) = test_vec2;
 
     eval_f = f_cpp(xa6.col(t - 1), phi_xa6, Za6_beta6[t]);
-    mean_diff.col(5) = eval_f - xa6_r(t);
-    eval_f = eval_f.elem(id_as);
-    xa6.col(t) = eval_f + sqrt(sig_sq_xa6)*arma::randn(N, 1);
-
+    mean_diff.col(5) = eval_f - xa6_r[t];
+    eval_f2 = eval_f.elem(id_as);
+    mmu2 = as<NumericVector>(wrap(eval_f2));
+    // xa6.col(t) = eval_f + sqrt(sig_sq_xa6)*arma::randn(N, 1);
+    test_vec = mmu2 + sqrt(sig_sq_xa6) * rnorm(N);
+    test_vec2 = as<arma::vec>(test_vec);
+    xa6.col(t) = test_vec2;
     // conditioning
     xa1(N - 1, t) = xa1_r(t);
     xa2(N - 1, t) = xa2_r(t);
@@ -300,8 +424,9 @@ List cbpf_as_c3(const int& N,
     xa6(N - 1, t) = xa6_r(t);
     // ancestor sampling
     as_weights = w_as_c(mean_diff, vcm_diag, w_log);
-    as_draw_vec = Rcpp::RcppArmadillo::sample(id_as_lnspc, 1, true, as_weights);
-    as_draw = as_scalar(as_draw_vec);
+    w_norm2 = as<NumericVector>(wrap(as_weights));
+    as_draw_vec = sample(N, 1, true, w_norm2) - 1;
+    as_draw = as_draw_vec(0);
     a(N - 1, t) = as_draw;
     // weighting
     w_log = w_bpf_c(N, num_counts(t),
@@ -314,8 +439,9 @@ List cbpf_as_c3(const int& N,
                     xa6.col(t));
     w_max   = w_log.max();
     w_norm = arma::exp(w_log - w_max);
-    w_norm = w_norm/arma::sum(w_norm);
+    w_norm =  w_norm/arma::sum(w_norm);
     w.col(t) = w_norm;
+    w_norm2 = as<NumericVector>(wrap(w_norm));
   }
   ind = a.col(TT - 1);
   arma::uvec t_ind;
@@ -336,5 +462,5 @@ List cbpf_as_c3(const int& N,
   xa4.col(0) = xa4(ind, t_ind);
   xa5.col(0) = xa5(ind, t_ind);
   xa6.col(0) = xa6(ind, t_ind);
-  return List::create(w, xa1, xa2, xa3, xa4, xa5, xa6);
+  return List::create(w,xa1, xa2, xa3, xa4, xa5, xa6);
 }

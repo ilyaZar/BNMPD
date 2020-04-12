@@ -1,6 +1,8 @@
+//#define ARMA_NO_DEBUG
 #include <RcppArmadillo.h>
 #include <RcppArmadilloExtensions/sample.h>
-// [[Rcpp::depends(RcppArmadillo)]]
+//[[Rcpp::depends(RcppArmadillo)]]
+using namespace arma;
 using namespace Rcpp;
 
 // [[Rcpp::export]]
@@ -10,6 +12,22 @@ arma::vec f_cpp(const arma::vec& x_tt,
   int n = x_tt.size();
   arma::vec x_t(n);
   x_t = phi_x * x_tt + z_add;
+  // x_t <- phi_x*x_tt + z %*% bet_x
+  // xt <- phi_x*xtt
+  // xt <- phi_x*xtt + 8*cos(1.2*t)
+  // xt <- phi_x*xtt + 25*xtt/(1 + xtt^2)
+  // xt <- phi_x*xtt + 25*xtt/(1 + xtt^2) + 8*cos(1.2*t)
+  return(x_t);
+}
+
+// [[Rcpp::export]]
+arma::vec f_cpp_vech(const arma::vec& x_tt,
+                        const double& phi_x,
+                        const arma::vec& z_add) {
+  int n = x_tt.size();
+  arma::vec x_t(n);
+  x_t = phi_x * x_tt;
+  x_t +=  z_add;
   // x_t <- phi_x*x_tt + z %*% bet_x
   // xt <- phi_x*xtt
   // xt <- phi_x*xtt + 8*cos(1.2*t)
@@ -88,7 +106,32 @@ arma::vec w_bpf_c(const int& N,
 }
 
 // [[Rcpp::export]]
-List cbpf_as_c2(const int& N,
+arma::vec mvrnorm_c(const arma::vec& mu, const arma::mat& Sigma){
+
+  // Obtain environment containing function
+  // Rcpp::Environment base("package:MASS");
+  Environment pkg = Environment::namespace_env("MASS");
+  // Make function callable from C++
+  Rcpp::Function mvrnorm_c_internal = pkg["mvrnorm"];
+
+
+  Rcpp::NumericVector mu2 = as<NumericVector>(wrap(mu));
+  Rcpp::NumericMatrix Sigma2 = as<NumericMatrix>(wrap(Sigma));
+  // Call the function and receive its list output
+  Rcpp::NumericVector res;
+  res = mvrnorm_c_internal(Rcpp::_["n"]         = 1,
+                           Rcpp::_["mu"]        = mu2,
+                           Rcpp::_["Sigma"]     = Sigma2,
+                           Rcpp::_["tol"]       = 1e-06,
+                           Rcpp::_["empirical"] = false,
+                           Rcpp::_["EISPACK"]   = false);
+  arma::vec res2 = as<arma::vec>(res);
+
+  return res2;
+}
+
+// [[Rcpp::export]]
+arma::mat cbpf_as_c2(const int& N,
                 const int& TT,
                 const arma::vec& num_counts,
                 arma::mat y,
@@ -158,16 +201,15 @@ List cbpf_as_c2(const int& N,
   // ancestors
   arma::umat a(N, TT);
   arma::uvec id_as = arma::linspace<arma::uvec>(0L, N - 1L, N);
-  arma::uvec id_as_all = arma::linspace<arma::uvec>(0L, N - 1L, N);
   // weights
   double w_max;
   arma::vec w_norm(N);
+  w_norm.fill(1.0/N);
   arma::vec w_log(N);
   NumericVector w_norm2(N);
-  w_norm.fill(1.0/N);
   arma::mat w(N, TT);
   // ancestor weights
-  arma::vec as_weights;
+  arma::vec as_weights(N);
   NumericVector as_draw_vec(1);
   double as_draw;
   arma::rowvec vcm_diag = {pow(sig_sq_xa1, -1),
@@ -177,6 +219,12 @@ List cbpf_as_c2(const int& N,
                            pow(sig_sq_xa5, -1),
                            pow(sig_sq_xa6, -1)};
   arma::mat mean_diff(N, D);
+  // draw trajectory
+  NumericVector b_draw_vec(1);
+  int b_draw;
+  // output containter
+  mat x_out(TT, D);
+  //
   // I. INITIALIZATION (t = 0)
   // Sampling initial condition from prior
   mmu = Za1_beta1[0]/(1.0 - phi_xa1);
@@ -307,11 +355,6 @@ List cbpf_as_c2(const int& N,
   w_norm =  w_norm/arma::sum(w_norm);
   w.col(0) = w_norm;
   w_norm2 = as<NumericVector>(wrap(w_norm));
-  //resampling
-  // test_vec = sample(N, N, true, w_norm2) - 1;
-  // id_as = test_vec3;
-  // a.col(0) = id_as;
-  // a[, 1]  <- sample.int(n = N, replace = TRUE, prob = w[, 1])
   // II. FOR t = 2,..,T
   for (int t = 1; t < TT; ++t)  {
     //resampling
@@ -420,5 +463,16 @@ List cbpf_as_c2(const int& N,
   xa4.col(0) = xa4(ind, t_ind);
   xa5.col(0) = xa5(ind, t_ind);
   xa6.col(0) = xa6(ind, t_ind);
-  return List::create(w,xa1, xa2, xa3, xa4, xa5, xa6);
+
+  w_norm2 = as<NumericVector>(wrap(w.col(TT - 1)));
+  b_draw_vec = sample(N, 1, true, w_norm2) - 1;
+  b_draw = b_draw_vec(0);
+
+  x_out.col(0) = xa1.row(b_draw).t();
+  x_out.col(1) = xa2.row(b_draw).t();
+  x_out.col(2) = xa3.row(b_draw).t();
+  x_out.col(3) = xa4.row(b_draw).t();
+  x_out.col(4) = xa5.row(b_draw).t();
+  x_out.col(5) = xa6.row(b_draw).t();
+  return (x_out); // eturn List::create(w,xa1, xa2, xa3, xa4, xa5, xa6);
 }
