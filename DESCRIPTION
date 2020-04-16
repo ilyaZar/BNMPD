@@ -1,0 +1,40 @@
+Package: KZpackage
+Title: Bayesian estimation of multivariate, nonlinear panel data
+    models
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Ilya",
+           family = "Zarubin",
+           role = c("aut", "cre"),
+           email = "zarubin@wiso.uni-koeln.de")
+Description: Implements estimation of Bayesian nonlinear,
+    dynamic panel data models for multivariate response/dependent variable
+    settings. Estimation is performed using Particle Gibbs with ancestor
+    sampling which is a method combining MCMC (here, Gibbs sampling) and
+    SMC methods (here, a standard bootstrap particle filter and a particle
+    EIS filter) to sample from the high dimensional and highly nonlinear
+    posterior densities of model parameters and latent state variables.
+License: GPL (>= 2)
+URL: https://github.com/useRaddictIZ/pmcmcDiagnostics
+BugReports: https://github.com/useRaddictIZ/pmcmcDiagnostics
+Depends: 
+    R (>= 3.6)
+Imports: 
+    stats,
+    HDInterval,
+    magrittr (>= 1.5),
+    gtools,
+    crayon,
+    utils,
+    devtools (>= 2.2.2.9000),
+    Rcpp
+Suggests: 
+    testthat (>= 2.3.2)
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.0
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo,
+    BH
