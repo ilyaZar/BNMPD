@@ -1,3 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^tests_own$
+^ResearchLog\.txt$
+^KZ\.sublime-project$
+^KZ\.sublime-workspace$

@@ -9,7 +9,8 @@
 #' @param phi_x autoregressive parameter phi
 #' @param bet_x regressor parameters/coefficients at z_{t} (matrix)
 #'
-#' @return \code{T}-dimensional vector of (deterministically computed) states
+#' @return
+#' @export
 f <- function(x_tt, z, phi_x, bet_x) {
   # xt <- phi_x*xtt
   x_t <- phi_x*x_tt + z %*% bet_x
