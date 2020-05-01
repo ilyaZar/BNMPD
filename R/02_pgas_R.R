@@ -136,7 +136,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
                                              z = Za[2:TT, (id_zet[d] + 1):id_zet[d + 1], drop = F],
                                              phi_x = phi_xa[d, m - 1],
                                              bet_x = bet_xa[(id_bet[d] + 1):id_bet[d + 1], m - 1])
-      sig_sq_xa[d, m]  <- 1/rgamma(n = 1, prior_a,
+      sig_sq_xa[d, m]  <- 1/stats::rgamma(n = 1, prior_a,
                                    prior_b + crossprod(err_sig_sq_x)/2)
       regs[, (id_reg[d] + 1 + 1*d) - d]  <- Xa[m - 1, 1:(TT - 1), d]
       x_lhs        <- Xa[m - 1, 2:TT, d]

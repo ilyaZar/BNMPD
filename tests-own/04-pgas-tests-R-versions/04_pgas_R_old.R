@@ -170,11 +170,11 @@ pgas_R_old <- function(MM, TT, N,
     x_lhs        <- Xa1[m - 1, 2:TT]
     Omega_xa1    <- solve(crossprod(regs_a1, regs_a1)/sig_sq_xa1[m] + prior_V_xa1)
     mu_xa1       <- Omega_xa1 %*% (crossprod(regs_a1, x_lhs)/sig_sq_xa1[m])
-    beta_xa1     <- mvrnorm(n = 1, mu = mu_xa1, Sigma = Omega_xa1)
+    beta_xa1     <- MASS::mvrnorm(n = 1, mu = mu_xa1, Sigma = Omega_xa1)
     phi_xa1[m]   <- beta_xa1[1]
     bet_xa1[, m] <- beta_xa1[-1]
-    while (near(abs(phi_xa1[m]), 1, tol = 0.01) | abs(phi_xa1[m]) > 1) {
-      beta_xa1     <- mvrnorm(n = 1, mu = mu_xa1, Sigma = Omega_xa1)
+    while (dplyr::near(abs(phi_xa1[m]), 1, tol = 0.01) | abs(phi_xa1[m]) > 1) {
+      beta_xa1     <- MASS::mvrnorm(n = 1, mu = mu_xa1, Sigma = Omega_xa1)
       phi_xa1[m]   <- beta_xa1[1]
       bet_xa1[, m] <- beta_xa1[-1]
     }
@@ -189,11 +189,11 @@ pgas_R_old <- function(MM, TT, N,
     x_lhs        <- Xa2[m - 1, 2:TT]
     Omega_xa2    <- solve(crossprod(regs_a2, regs_a2)/sig_sq_xa2[m] + prior_V_xa2)
     mu_xa2       <- Omega_xa2 %*% (crossprod(regs_a2, x_lhs)/sig_sq_xa2[m])
-    beta_xa2     <- mvrnorm(n = 1, mu = mu_xa2, Sigma = Omega_xa2)
+    beta_xa2     <- MASS::mvrnorm(n = 1, mu = mu_xa2, Sigma = Omega_xa2)
     phi_xa2[m]   <- beta_xa2[1]
     bet_xa2[, m] <- beta_xa2[-1]
-    while (near(abs(phi_xa2[m]), 1, tol = 0.01) | abs(phi_xa2[m]) > 1) {
-      beta_xa2     <- mvrnorm(n = 1, mu = mu_xa2, Sigma = Omega_xa2)
+    while (dplyr::near(abs(phi_xa2[m]), 1, tol = 0.01) | abs(phi_xa2[m]) > 1) {
+      beta_xa2     <- MASS::mvrnorm(n = 1, mu = mu_xa2, Sigma = Omega_xa2)
       phi_xa2[m]   <- beta_xa2[1]
       bet_xa2[, m] <- beta_xa2[-1]
     }
@@ -208,11 +208,11 @@ pgas_R_old <- function(MM, TT, N,
     x_lhs        <- Xa3[m - 1, 2:TT]
     Omega_xa3    <- solve(crossprod(regs_a3, regs_a3)/sig_sq_xa3[m] + prior_V_xa3)
     mu_xa3       <- Omega_xa3 %*% (crossprod(regs_a3, x_lhs)/sig_sq_xa3[m])
-    beta_xa3     <- mvrnorm(n = 1, mu = mu_xa3, Sigma = Omega_xa3)
+    beta_xa3     <- MASS::mvrnorm(n = 1, mu = mu_xa3, Sigma = Omega_xa3)
     phi_xa3[m]   <- beta_xa3[1]
     bet_xa3[, m] <- beta_xa3[-1]
-    while (near(abs(phi_xa3[m]), 1, tol = 0.01) | abs(phi_xa3[m]) > 1) {
-      beta_xa3     <- mvrnorm(n = 1, mu = mu_xa3, Sigma = Omega_xa3)
+    while (dplyr::near(abs(phi_xa3[m]), 1, tol = 0.01) | abs(phi_xa3[m]) > 1) {
+      beta_xa3     <- MASS::mvrnorm(n = 1, mu = mu_xa3, Sigma = Omega_xa3)
       phi_xa3[m]   <- beta_xa3[1]
       bet_xa3[, m] <- beta_xa3[-1]
     }
@@ -227,11 +227,11 @@ pgas_R_old <- function(MM, TT, N,
     x_lhs        <- Xa4[m - 1, 2:TT]
     Omega_xa4    <- solve(crossprod(regs_a4, regs_a4)/sig_sq_xa4[m] + prior_V_xa4)
     mu_xa4       <- Omega_xa4 %*% (crossprod(regs_a4, x_lhs)/sig_sq_xa4[m])
-    beta_xa4     <- mvrnorm(n = 1, mu = mu_xa4, Sigma = Omega_xa4)
+    beta_xa4     <- MASS::mvrnorm(n = 1, mu = mu_xa4, Sigma = Omega_xa4)
     phi_xa4[m]   <- beta_xa4[1]
     bet_xa4[, m] <- beta_xa4[-1]
-    while (near(abs(phi_xa4[m]), 1, tol = 0.01) | abs(phi_xa4[m]) > 1) {
-      beta_xa4     <- mvrnorm(n = 1, mu = mu_xa4, Sigma = Omega_xa4)
+    while (dplyr::near(abs(phi_xa4[m]), 1, tol = 0.01) | abs(phi_xa4[m]) > 1) {
+      beta_xa4     <- MASS::mvrnorm(n = 1, mu = mu_xa4, Sigma = Omega_xa4)
       phi_xa4[m]   <- beta_xa4[1]
       bet_xa4[, m] <- beta_xa4[-1]
     }
@@ -246,11 +246,11 @@ pgas_R_old <- function(MM, TT, N,
     x_lhs        <- Xa5[m - 1, 2:TT]
     Omega_xa5    <- solve(crossprod(regs_a5, regs_a5)/sig_sq_xa5[m] + prior_V_xa5)
     mu_xa5       <- Omega_xa5 %*% (crossprod(regs_a5, x_lhs)/sig_sq_xa5[m])
-    beta_xa5     <- mvrnorm(n = 1, mu = mu_xa5, Sigma = Omega_xa5)
+    beta_xa5     <- MASS::mvrnorm(n = 1, mu = mu_xa5, Sigma = Omega_xa5)
     phi_xa5[m]   <- beta_xa5[1]
     bet_xa5[, m] <- beta_xa5[-1]
-    while (near(abs(phi_xa5[m]), 1, tol = 0.01) | abs(phi_xa5[m]) > 1) {
-      beta_xa5     <- mvrnorm(n = 1, mu = mu_xa5, Sigma = Omega_xa5)
+    while (dplyr::near(abs(phi_xa5[m]), 1, tol = 0.01) | abs(phi_xa5[m]) > 1) {
+      beta_xa5     <- MASS::mvrnorm(n = 1, mu = mu_xa5, Sigma = Omega_xa5)
       phi_xa5[m]   <- beta_xa5[1]
       bet_xa5[, m] <- beta_xa5[-1]
     }
@@ -266,11 +266,11 @@ pgas_R_old <- function(MM, TT, N,
     x_lhs        <- Xa6[m - 1, 2:TT]
     Omega_xa6    <- solve(crossprod(regs_a6, regs_a6)/sig_sq_xa6[m] + prior_V_xa6)
     mu_xa6       <- Omega_xa6 %*% (crossprod(regs_a6, x_lhs)/sig_sq_xa6[m])
-    beta_xa6     <- mvrnorm(n = 1, mu = mu_xa6, Sigma = Omega_xa6)
+    beta_xa6     <- MASS::mvrnorm(n = 1, mu = mu_xa6, Sigma = Omega_xa6)
     phi_xa6[m]   <- beta_xa6[1]
     bet_xa6[, m] <- beta_xa6[-1]
-    while (near(abs(phi_xa6[m]), 1, tol = 0.01) | abs(phi_xa6[m]) > 1) {
-      beta_xa6     <- mvrnorm(n = 1, mu = mu_xa6, Sigma = Omega_xa6)
+    while (dplyr::near(abs(phi_xa6[m]), 1, tol = 0.01) | abs(phi_xa6[m]) > 1) {
+      beta_xa6     <- MASS::mvrnorm(n = 1, mu = mu_xa6, Sigma = Omega_xa6)
       phi_xa6[m]   <- beta_xa6[1]
       bet_xa6[, m] <- beta_xa6[-1]
     }
@@ -775,7 +775,7 @@ helper_as <- function(M, x) {
 #     beta_xa1     <- mvtnorm::rmvnorm(n = 1, mean = mu_xa1, sigma = Omega_xa1)
 #     phi_xa1[m]   <- beta_xa1[1]
 #     bet_xa1[, m] <- beta_xa1[-1]
-#     while (near(abs(phi_xa1[m]), 1, tol = 0.01) | abs(phi_xa1[m]) > 1) {
+#     while (dplyr::near(abs(phi_xa1[m]), 1, tol = 0.01) | abs(phi_xa1[m]) > 1) {
 #       beta_xa1     <- mvtnorm::rmvnorm(n = 1, mean = mu_xa1, sigma = Omega_xa1)
 #       phi_xa1[m]   <- beta_xa1[1]
 #       bet_xa1[, m] <- beta_xa1[-1]

@@ -42,13 +42,14 @@ for (k in 1:KK) {
                                            x_log_scale = TRUE,
                                            intercept_include = intercept_modelling)
   for (i in 1:NN) {
-    list_identical_results[[i]][1] <- identical(dataSim[[i]][[1]], dataSim2[[i]][[1]])
-    list_identical_results[[i]][2] <- identical(unname(Reduce(cbind, dataSim[[i]][[2]])), dataSim2[[i]][[2]])
-    list_identical_results[[i]][3] <- identical(unname(Reduce(cbind, dataSim[[i]][[3]])), dataSim2[[i]][[3]])
+    list_identical_results[[i]][1] <- identical(dataSim[[i]][[1]], dataSim2[[1]]$yraw[, , i])
+    list_identical_results[[i]][2] <- identical(unname(Reduce(cbind, dataSim[[i]][[2]])), dataSim2[[3]][, , i])
+    list_identical_results[[i]][3] <- identical(unname(Reduce(cbind, dataSim[[i]][[3]])), dataSim2[[2]][[i]])
     if (test_distribution %in% c("multinomial", "mult-diri", "mult-gen-diri")) {
-      list_identical_results[[i]][4] <- identical(dataSim[[i]][[4]], dataSim2[[i]][[4]])
+      list_identical_results[[i]][4] <- identical(dataSim[[i]][[4]], as.integer(dataSim2[[1]]$num_counts[, i]))
     }
   }
   list_identical_results_all[[k]] <- list_identical_results
 }
-print(list_identical_results_all)
+# print(list_identical_results_all)
+print(all(unlist(list_identical_results_all)))

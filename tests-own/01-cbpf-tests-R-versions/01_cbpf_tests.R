@@ -6,14 +6,14 @@ num_particles <- 200
 seed_nr <- 234
 set.seed(seed_nr)
 test_old <- cbpf_as_R_old(N = num_particles, TT = TT,
-                          num_counts = dataSim[[1]][[4]],
-                          y = dataSim[[1]][[1]],
-                          Za1 = dataSim[[1]][[3]][, 1:5],
-                          Za2 = dataSim[[1]][[3]][, 6:10],
-                          Za3 = dataSim[[1]][[3]][, 11:15],
-                          Za4 = dataSim[[1]][[3]][, 16:20],
-                          Za5 = dataSim[[1]][[3]][, 21:25],
-                          Za6 = dataSim[[1]][[3]][, 26:30],
+                          y = dataSim[[1]]$yraw[, , 1],
+                          num_counts = dataSim[[1]]$num_counts[, 1],
+                          Za1 = dataSim$za[[1]][, 1:5],
+                          Za2 = dataSim$za[[1]][, 6:10],
+                          Za3 = dataSim$za[[1]][, 11:15],
+                          Za4 = dataSim$za[[1]][, 16:20],
+                          Za5 = dataSim$za[[1]][, 21:25],
+                          Za6 = dataSim$za[[1]][, 26:30],
                           sig_sq_xa1 = true_sig_sq_xa[1, 1],
                           sig_sq_xa2 = true_sig_sq_xa[2, 1],
                           sig_sq_xa3 = true_sig_sq_xa[3, 1],
@@ -32,12 +32,12 @@ test_old <- cbpf_as_R_old(N = num_particles, TT = TT,
                           bet_xa4 = true_bet_xa[[1]][[4]],
                           bet_xa5 = true_bet_xa[[1]][[5]],
                           bet_xa6 = true_bet_xa[[1]][[6]],
-                          xa1_r = dataSim[[1]][[2]][, 1, drop = TRUE],
-                          xa2_r = dataSim[[1]][[2]][, 2, drop = TRUE],
-                          xa3_r = dataSim[[1]][[2]][, 3, drop = TRUE],
-                          xa4_r = dataSim[[1]][[2]][, 4, drop = TRUE],
-                          xa5_r = dataSim[[1]][[2]][, 5, drop = TRUE],
-                          xa6_r = dataSim[[1]][[2]][, 6, drop = TRUE])
+                          xa1_r = dataSim$xa[, 1, 1],
+                          xa2_r = dataSim$xa[, 2, 1],
+                          xa3_r = dataSim$xa[, 3, 1],
+                          xa4_r = dataSim$xa[, 4, 1],
+                          xa5_r = dataSim$xa[, 5, 1],
+                          xa6_r = dataSim$xa[, 6, 1])
 w        <- test_old[[1]][, TT]
 b        <- sample.int(n = num_particles, size = 1, replace = TRUE, prob = w)
 test_old <- sapply(test_old[2:7], function(x, y){return(x[y, ])}, y = b)
@@ -46,14 +46,14 @@ id_zet_up  <- cumsum(dim_bet)
 id_zet_lo  <- c(1, cumsum(dim_bet[-DD]) + 1)
 Z_bet <- matrix(0, nrow = TT, ncol = DD)
 for (d in 1:DD) {
-  Z_bet[, d] <- dataSim[[1]][[3]][, id_zet_lo[d]:id_zet_up[d]] %*% true_bet_xa[[1]][[d]]
+  Z_bet[, d] <- dataSim$za[[1]][, id_zet_lo[d]:id_zet_up[d]] %*% true_bet_xa[[1]][[d]]
 }
 set.seed(seed_nr)
 test_new <- KZ::cbpf_as_R(N = num_particles, TT = TT, DD = DD,
-                          y = dataSim[[1]][[1]],
-                          num_counts = dataSim[[1]][[4]],
+                          y = dataSim[[1]]$yraw[, , 1],
+                          num_counts = dataSim[[1]]$num_counts[, 1],
                           Z_beta = Z_bet,
                           sig_sq_x = true_sig_sq_xa[, 1, drop = TRUE],
                           phi_x = true_phi_xa[, 1, drop = TRUE],
-                          x_r = dataSim[[1]][[2]])
+                          x_r = dataSim$xa[, , 1])
 print(all.equal(test_new, test_old))

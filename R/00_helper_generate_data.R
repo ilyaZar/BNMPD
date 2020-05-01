@@ -32,16 +32,62 @@ generate_data_t_n <- function(distribution = "dirichlet",
                               x_log_scale,
                               intercept_include) {
   out_data <- list()
+  if (distribution == "dirichlet") {
+    data_part1 <- array(0, c(TT, DD, NN))
+    za <- list()
+    states <- array(0, c(TT, DD, NN))
+  }
+  if (distribution == "multinomial") {
+    data_part1 <- array(0, c(TT, DD, NN))
+    data_part2 <- matrix(0, nrow = TT, ncol = NN)
+    za <- list()
+    states <- array(0, c(TT, DD, NN))
+  }
+  if (distribution == "mult-diri") {
+    data_part1 <- array(0, c(TT, DD, NN))
+    data_part2 <- matrix(0, nrow = TT, ncol = NN)
+    za <- list()
+    states <- array(0, c(TT, DD, NN))
+  }
   for (n in 1:NN) {
     par_true_current <- list(par_true[[1]][, n],
                              par_true[[2]][, n],
                              par_true[[3]][[n]])
-    out_data[[n]] <- generate_data_t(distribution = distribution,
-                                     TT = TT, DD = DD,
-                                     par_true = par_true_current,
-                                     x_levels = x_levels[, n],
-                                     x_log_scale = x_log_scale,
-                                     intercept_include = intercept_include[, n])
+    out_data <- generate_data_t(distribution = distribution,
+                                TT = TT, DD = DD,
+                                par_true = par_true_current,
+                                x_levels = x_levels[, n],
+                                x_log_scale = x_log_scale,
+                                intercept_include = intercept_include[, n])
+    if (distribution == "dirichlet") {
+      data_part1[, , n] <- out_data[[1]]$yraw
+      za[[n]] <- out_data[[2]]
+      states[, , n] <- out_data[[3]]
+    }
+    if (distribution == "multinomial") {
+      data_part1[, , n] <- out_data[[1]]$yraw
+      data_part2[, n]   <- out_data[[1]]$num_counts
+      za[[n]] <- out_data[[2]]
+      states[, , n] <- out_data[[3]]
+    }
+    if (distribution == "mult-diri") {
+      data_part1[, , n] <- out_data[[1]]$yraw
+      data_part2[, n]   <- out_data[[1]]$num_counts
+      za[[n]] <- out_data[[2]]
+      states[, , n] <- out_data[[3]]
+    }
+  }
+  if (distribution == "dirichlet") {
+    out_data <- list(data = list(yraw = data_part1),
+                     za = za, xa = states)
+  }
+  if (distribution == "multinomial") {
+    out_data <- list(data = list(yraw = data_part1, num_counts = data_part2),
+                     za = za, xa = states)
+  }
+  if (distribution == "mult-diri") {
+    out_data <- list(data = list(yraw = data_part1, num_counts = data_part2),
+                     za = za, xa = states)
   }
   return(out_data)
 }
@@ -110,16 +156,19 @@ generate_data_t <- function(distribution = "dirichlet",
     if (sum(rowSums(yraw)) != TT) {
       stop("Something is wrong with Dirichelet: fractions don't sum up to 1!")
     }
-    return(list(yraw, xa, za))
+    return(list(data = list(yraw = yraw),
+                za = za, xa = xa))
   }
   if (distribution == "multinomial") {
     xalphas <- xalphas/rowSums(xalphas)
     yraw <- my_rmultinomial(probs = xalphas, num_counts = num_counts)
-    return(list(yraw, xa, za, num_counts = num_counts))
+    return(list(data = list(yraw = yraw, num_counts = num_counts),
+                za = za, xa = xa))
   }
   if (distribution == "mult-diri") {
     yraw <- my_rmult_diri(alpha = xalphas, num_counts = num_counts)
-    return(list(yraw, xa, za, num_counts = num_counts))
+    return(list(data = list(yraw = yraw, num_counts = num_counts),
+                za = za, xa = xa))
   }
 }
 #' Simulates regressors and latent states.

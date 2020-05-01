@@ -155,7 +155,7 @@ monitor_pgas_states <- function(states_drawn, states_comp, freeze = 1.5,
 #' @export
 pgas_out_2_list <- function(pgas_out, DD, NN, MM) {
   # len_pgas_out <- length(pgas_out)
-  browser()
+  # browser()#
   id_bet <- pgas_out[[4]] + 1
   out   <- list()
   xtraj <- list()
