@@ -5,13 +5,17 @@
 *.eps
 *.pdf
 *.Rmd
+*.Rd
 *.RData
 *.html
 *.gif
 *.Rproj
 *.sublime-project
 *.sublime-workspace
+*.o
+*.so
 /data/*
 /doc/*
 /literature/*
 /results/*
+/tests-own/*
