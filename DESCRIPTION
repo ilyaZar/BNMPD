@@ -25,6 +25,8 @@ Imports:
     magrittr (>= 1.5),
     gtools,
     crayon,
+    MASS,
+    dplyr,
     utils,
     devtools (>= 2.2.2.9000),
     Rcpp
