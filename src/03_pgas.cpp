@@ -13,9 +13,10 @@
 //' @param DD number of dirichlet fractions/shares i.e. categories
 //' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
 //'   of iterations of the SMC-part)
-//' @param y measurements: dirichlet fractions/shares
-//' @param num_counts measurements: dirichlet-multinomial total counts per time
-//'   period (\code{T}-dimensional vector)
+//' @param data a list of data objects i.e. measurements: e.g. can be dirichlet
+//'   fractions and/or number of counts per category (only the latter if
+//'   measurements are from a multinomial, and both if measurements come from a
+//'   multinomial-dirichlet)
 //' @param Z regressors contained in the latent state process part
 //' @param priors hyperpriors for inverted gamma priors of the state process
 //'   error variances
@@ -38,16 +39,18 @@ Rcpp::List pgas_cpp(const int& N,
                     const Rcpp::List& par_init,
                     const arma::vec& traj_init) {
   // Initialize data containers:
-  const arma::mat y = data(0);
-  const arma::vec num_counts = data(1);
+  // const arma::mat y = data(0);
+  // const arma::vec num_counts = data(1);
+  const arma::cube y = data(0);
+  const arma::mat num_counts = data(1);
   // Initialize result containers:
-  arma::mat Xa(TT*DD, MM, arma::fill::zeros);
+  arma::cube Xa(TT*DD, MM, NN, arma::fill::zeros);
   arma::mat phi_x(DD, MM, arma::fill::zeros);
   arma::mat sig_sq_x(DD, MM, arma::fill::zeros);
   // Initialize helper/garbage containers I.
   double err_siq_sq_x = 0;
   arma::vec temp_vec_states(TT - 1, arma::fill::zeros);
-  arma::mat out_cpf(DD, TT, arma::fill::zeros);
+  arma::cube out_cpf(DD, TT, NN, arma::fill::zeros);
   arma::mat Z_beta(TT, DD);
   // Initialize parameters and regressor container:
   arma::uvec dim_pars(DD);
@@ -85,65 +88,70 @@ Rcpp::List pgas_cpp(const int& N,
   // Initialize states to deterministic starting values
   double check_state_init_type = traj_init.n_rows;
   // A. If starting values are one (consant) value for all t=1,...,TT per state d
-  if (check_state_init_type == DD) {
-    for (int d = 1; d < DD+1; ++d) {
-      (Xa.submat(TT*(d -1), 0, TT*d - 1, 0)).fill(traj_init(d - 1));
+  for (int n = 0; n < NN; ++n) {
+    if (check_state_init_type == DD) {
+      for (int d = 1; d < DD+1; ++d) {
+        ((Xa.slice(n)).submat(TT*(d -1), 0, TT*d - 1, 0)).fill(traj_init(d - 1));
+      }
     }
-  }
-  // B. If starting values are is a full trajectory of length TT per state d
-  if (check_state_init_type == DD*TT) {
-    Xa.col(0) = traj_init;
+    // B. If starting values are is a full trajectory of length TT per state d
+    if (check_state_init_type == DD*TT) {
+      (Xa.slice(n)).col(0) = traj_init;
+    }
   }
   // II. run cBPF and use output as first conditioning trajectory
   for (int d = 0; d < DD; ++d) {
     Z_beta.col(d) = Z.submat(0, id_bet(d), TT - 1, id_bet(d + 1) - 1) * bet.submat(id_bet(d), 0, id_bet(d + 1) - 1, 0);
   }
-  out_cpf = cbpf_as_cpp(N, TT, DD,
-                        y, num_counts,
-                        Z_beta,
-                        sig_sq_x.col(0),
-                        phi_x.col(0),
-                        Xa.col(0));
-  for(int d = 0; d < DD; ++d) {
-    Xa.submat(TT*d, 0, TT*(d + 1) - 1, 0) = out_cpf.col(d);
+  for (int n = 0; n < NN; ++n) {
+    out_cpf.slice(n) = cbpf_as_cpp(N, TT, DD,
+                  y.slice(n), num_counts.col(n),
+                  Z_beta,
+                  sig_sq_x.col(0),
+                  phi_x.col(0),
+                  (Xa.slice(n)).col(0));
+    for(int d = 0; d < DD; ++d) {
+      (Xa.slice(n)).submat(TT*d, 0, TT*(d + 1) - 1, 0) = (out_cpf.slice(n)).col(d);
+    }
   }
   // Run MCMC loop
   for (int m = 1; m < MM; ++m) {
-    // I. Run GIBBS part
-    for(int d = 0; d < DD; ++d) {
-      Z_mcmc.col(id_zet(d)) = Xa.submat(TT*d, m - 1, TT*(d + 1) - 2, m - 1);
-      temp_vec_states = Xa.submat(TT*d + 1, m - 1, TT*(d + 1) - 1, m - 1);
+    for (int n = 0; n < NN; ++n) {
+      // I. Run GIBBS part
+      for(int d = 0; d < DD; ++d) {
+        Z_mcmc.col(id_zet(d)) = (Xa.slice(n)).submat(TT*d, m - 1, TT*(d + 1) - 2, m - 1);
+        temp_vec_states = (Xa.slice(n)).submat(TT*d + 1, m - 1, TT*(d + 1) - 1, m - 1);
 
-      err_siq_sq_x = compute_err_sig_sq(Z_mcmc.col(id_zet(d)),
-                                        Z_mcmc.submat(0, id_zet(d) + 1, TT - 2, id_zet(d + 1) - 1),
-                                        temp_vec_states,
-                                        bet.submat(id_bet(d),  m - 1, id_bet(d + 1) - 1,  m - 1),
-                                        phi_x(d, m - 1),
-                                        TT);
-      sig_sq_x(d, m) = sample_sigma_single(prior_a, prior_b, err_siq_sq_x);
+        err_siq_sq_x = compute_err_sig_sq(Z_mcmc.col(id_zet(d)),
+                                          Z_mcmc.submat(0, id_zet(d) + 1, TT - 2, id_zet(d + 1) - 1),
+                                          temp_vec_states,
+                                          bet.submat(id_bet(d),  m - 1, id_bet(d + 1) - 1,  m - 1),
+                                          phi_x(d, m - 1),
+                                          TT);
+        sig_sq_x(d, m) = sample_sigma_single(prior_a, prior_b, err_siq_sq_x);
 
-      Omega_xa(d, 0)  = inv((trans(Z_mcmc.cols(id_zet(d), id_zet(d + 1) - 1)) * Z_mcmc.cols(id_zet(d), id_zet(d + 1) - 1))/sig_sq_x(d, m) + prior_V_xa(d, 0));
-      mu_xa(d, 0) = Omega_xa(d, 0) * (trans(Z_mcmc.cols(id_zet(d), id_zet(d + 1) - 1)) * temp_vec_states)/sig_sq_x(d, m);
+        Omega_xa(d, 0)  = inv((trans(Z_mcmc.cols(id_zet(d), id_zet(d + 1) - 1)) * Z_mcmc.cols(id_zet(d), id_zet(d + 1) - 1))/sig_sq_x(d, m) + prior_V_xa(d, 0));
+        mu_xa(d, 0) = Omega_xa(d, 0) * (trans(Z_mcmc.cols(id_zet(d), id_zet(d + 1) - 1)) * temp_vec_states)/sig_sq_x(d, m);
 
-      mu_xa(d, 0) = sample_beta_single(mu_xa(d, 0), Omega_xa(d, 0));
-      phi_x(d, m) = (mu_xa(d, 0))(0);
-      bet.submat(id_bet(d), m, id_bet(d + 1) - 1, m) =  (mu_xa(d, 0)).subvec(1, (dim_pars(d) - 2));
-      Z_beta.col(d) = Z.submat(0, id_bet(d), TT - 1, id_bet(d + 1) - 1) * bet.submat(id_bet(d), m, id_bet(d + 1) - 1, m);
-    }
-    out_cpf = cbpf_as_cpp(N, TT, DD,
-                          y, num_counts,
-                          Z_beta,
-                          sig_sq_x.col(m),
-                          phi_x.col(m),
-                          Xa.col(m - 1));
-    for(int d = 0; d < DD; ++d) {
-      Xa.submat(TT*d, m, TT*(d + 1) - 1, m) = out_cpf.col(d);
+        mu_xa(d, 0) = sample_beta_single(mu_xa(d, 0), Omega_xa(d, 0));
+        phi_x(d, m) = (mu_xa(d, 0))(0);
+        bet.submat(id_bet(d), m, id_bet(d + 1) - 1, m) =  (mu_xa(d, 0)).subvec(1, (dim_pars(d) - 2));
+        Z_beta.col(d) = Z.submat(0, id_bet(d), TT - 1, id_bet(d + 1) - 1) * bet.submat(id_bet(d), m, id_bet(d + 1) - 1, m);
+      }
+      out_cpf.slice(n) = cbpf_as_cpp(N, TT, DD,
+                    y.slice(n), num_counts.col(n),
+                    Z_beta,
+                    sig_sq_x.col(m),
+                    phi_x.col(m),
+                    (Xa.slice(n)).col(m - 1));
+      for(int d = 0; d < DD; ++d) {
+        (Xa.slice(n)).submat(TT*d, m, TT*(d + 1) - 1, m) = (out_cpf.slice(n)).col(d);
+      }
     }
     Rprintf("Iteration number: %u \n", m);
   }
   return(Rcpp::List::create(Rcpp::Named("sigma_sq_x") = sig_sq_x,
                             Rcpp::Named("phi_x") = phi_x,
                             Rcpp::Named("bet_x") = bet,
-                            Rcpp::Named("id_bet_x") = id_bet,
                             Rcpp::Named("states") = Xa));
 }

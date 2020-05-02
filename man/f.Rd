@@ -4,16 +4,17 @@
 \alias{f}
 \title{State transition}
 \usage{
-f(x_tt, z, phi_x, bet_x)
+f(x_tt, regs, phi_x, bet_reg)
 }
 \arguments{
 \item{x_tt}{state value in t-1 i.e. x_{t-1}}
 
-\item{z}{regressor values i.e. z_{t} (matrix)}
+\item{regs}{regressor values e.g. z_{t}, or u_{t} or both (matrix)}
 
 \item{phi_x}{autoregressive parameter phi}
 
-\item{bet_x}{regressor parameters/coefficients at z_{t} (matrix)}
+\item{bet_reg}{regressor parameters/coefficients e.g. at z_{t}, or u_{t} or
+both (matrix)}
 }
 \value{
 \code{T}-dimensional vector of (deterministically computed) state

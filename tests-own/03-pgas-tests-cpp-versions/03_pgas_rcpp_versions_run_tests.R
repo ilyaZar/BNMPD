@@ -66,15 +66,17 @@ out4 <- pgas2_short_rng_arma(num_particles,
                              par_init_cpp_version,
                              deviate_states_init)
 set.seed(seed_nr)
-out_final <- KZ::pgas_cpp(num_particles,
-                          NN, TT, DD, MM,
-                          list(dataSim[[1]]$yraw[, , 1],
-                               dataSim[[1]]$num_counts[, 1]),
-                          dataSim[[2]][[1]],
-                          c(prior_a, prior_b),
-                          par_init_cpp_version,
-                          deviate_states_init)
-out_final <- KZ::pgas_out_2_list(out_final, DD, NN, MM)
+out_final_prelim <- KZ::pgas_cpp(num_particles,
+                                 NN, TT, DD, MM,
+                                 list(dataSim[[1]]$yraw,
+                                      dataSim[[1]]$num_counts),
+                                 dataSim[[2]][[1]],
+                                 c(prior_a, prior_b),
+                                 par_init_cpp_version,
+                                 deviate_states_init)
+out_final <- KZ::pgas_out_2_list(out_final_prelim, DD, NN, MM,
+                                 dim_bet = sapply(par_init_cpp_version,
+                                                  length) - 2, cpp = TRUE)
 print(all.equal(out3, out4))
 print(all.equal(out3, out_final))
 print(all.equal(out4, out_final))

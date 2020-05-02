@@ -8,12 +8,12 @@ set.seed(seed_nr)
 test_old <- cbpf_as_R_old(N = num_particles, TT = TT,
                           y = dataSim[[1]]$yraw[, , 1],
                           num_counts = dataSim[[1]]$num_counts[, 1],
-                          Za1 = dataSim$za[[1]][, 1:5],
-                          Za2 = dataSim$za[[1]][, 6:10],
-                          Za3 = dataSim$za[[1]][, 11:15],
-                          Za4 = dataSim$za[[1]][, 16:20],
-                          Za5 = dataSim$za[[1]][, 21:25],
-                          Za6 = dataSim$za[[1]][, 26:30],
+                          Za1 = dataSim$za[, 1:5, 1],
+                          Za2 = dataSim$za[, 6:10, 1],
+                          Za3 = dataSim$za[, 11:15, 1],
+                          Za4 = dataSim$za[, 16:20, 1],
+                          Za5 = dataSim$za[, 21:25, 1],
+                          Za6 = dataSim$za[, 26:30, 1],
                           sig_sq_xa1 = true_sig_sq_xa[1, 1],
                           sig_sq_xa2 = true_sig_sq_xa[2, 1],
                           sig_sq_xa3 = true_sig_sq_xa[3, 1],
@@ -46,7 +46,7 @@ id_zet_up  <- cumsum(dim_bet)
 id_zet_lo  <- c(1, cumsum(dim_bet[-DD]) + 1)
 Z_bet <- matrix(0, nrow = TT, ncol = DD)
 for (d in 1:DD) {
-  Z_bet[, d] <- dataSim$za[[1]][, id_zet_lo[d]:id_zet_up[d]] %*% true_bet_xa[[1]][[d]]
+  Z_bet[, d] <- dataSim$za[, id_zet_lo[d]:id_zet_up[d], 1] %*% true_bet_xa[[1]][[d]]
 }
 set.seed(seed_nr)
 test_new <- KZ::cbpf_as_R(N = num_particles, TT = TT, DD = DD,

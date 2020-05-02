@@ -12,7 +12,12 @@ generate_data_t_n(
   par_true,
   x_levels,
   x_log_scale,
-  intercept_include
+  include_intercept,
+  include_policy,
+  include_zeros,
+  plot_measurements = FALSE,
+  plot_states = FALSE,
+  seed_no = NULL
 )
 }
 \arguments{
@@ -35,11 +40,38 @@ fluctuate}
 \item{x_log_scale}{logical; if \code{TRUE}, x_levels are taken as logs and
 the random number generation for the states is performed in logs}
 
-\item{intercept_include}{logical; if \code{TRUE} include an intercept at the
-cross sectional unit}
+\item{include_intercept}{logical vector of dimension \code{DD}; if \code{TRUE}
+include an intercept at the cross sectional unit for component \code{d}}
+
+\item{include_policy}{logical vector of dimension \code{DD}; if \code{TRUE}
+include a policy dummy at the cross sectional unit for component \code{d}}
+
+\item{include_zeros}{numeric vector of dimension \code{DD} with values 1,
+2, 3 or 4:
+\itemize{
+\item{1: }{A dummy pattern that starts at the beginning with zeros and
+jumps after half of the overall time period}
+\item{2: }{A dummy pattern that starts at the beginning with ones and
+plummets to zeros after half of the overall time period}
+\item{3: }{A dummy pattern that starts at the beginning with one, then
+plummets to zeros after a third of the overall time periods, and then
+reverts back to ones for the last third of the time}
+\item{4: }{A dummy pattern that starts at the beginning with zeros,
+then jumps to ones after a third of the overall time periods, and then
+reverts back to zeros for the last third of the time}
+}}
+
+\item{plot_measurements}{logical; if \code{TRUE}, measurements are plotted
+per cross sectional unit \code{n=1,...,N}}
+
+\item{plot_states}{logical; if \code{TRUE}, latent states are plotted
+per cross sectional unit \code{n=1,...,N}}
+
+\item{seed_no}{integer; random seed to set at the beginning, set \code{NULL}
+if not required}
 }
 \value{
-NN-dimensinal list of lists of two: \code{[[1]]} -> regressors and
+NN-dimensional list of lists of two: \code{[[1]]} -> regressors and
 \code{[[2]]} -> latent states
 }
 \description{

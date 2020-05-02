@@ -8,10 +8,14 @@ generate_data_t(
   distribution = "dirichlet",
   TT,
   DD,
+  n,
   par_true,
   x_levels,
   x_log_scale,
-  intercept_include
+  include_intercept,
+  include_policy,
+  include_zeros,
+  modelling_reg_types
 )
 }
 \arguments{
@@ -23,6 +27,8 @@ generate_data_t(
 \item{DD}{number of shares/fractions (for dirichlet or dirichlet-multinomial)
 or the number of categories for a multinomial distribution}
 
+\item{n}{current cross sectional unit i.e. an integer \code{n=1,...,NN}}
+
 \item{par_true}{list of true parameters that describe the latent state
 process}
 
@@ -32,8 +38,36 @@ they fluctuate}
 \item{x_log_scale}{logical; if \code{TRUE}, then \code{x_levels[i]} ist taken
 as log and the random number generation for the states is performed in logs}
 
-\item{intercept_include}{logical vector; if component is \code{TRUE},
-includes an intercept at the cross sectional unit}
+\item{include_intercept}{logical vector of dimension \code{DD}; if \code{TRUE}
+include an intercept at the cross sectional unit for component \code{d}}
+
+\item{include_policy}{logical vector of dimension \code{DD}; if \code{TRUE}
+include a policy dummy at the cross sectional unit for component \code{d}}
+
+\item{include_zeros}{numeric vector of dimension \code{DD} with values 1,
+2, 3 or 4:
+\itemize{
+\item{1: }{A dummy pattern that starts at the beginning with zeros and
+jumps after half of the overall time period}
+\item{2: }{A dummy pattern that starts at the beginning with ones and
+plummets to zeros after half of the overall time period}
+\item{3: }{A dummy pattern that starts at the beginning with one, then
+plummets to zeros after a third of the overall time periods, and then
+reverts back to ones for the last third of the time}
+\item{4: }{A dummy pattern that starts at the beginning with zeros,
+then jumps to ones after a third of the overall time periods, and then
+reverts back to zeros for the last third of the time}
+}}
+
+\item{modelling_reg_types}{logical vector of dimension 4 where each component
+indicates, if \code{TRUE}, that the corresponding regressor type is to be
+generated in the following order:
+\itemize{
+\item{modelling_reg_types, component 1: }{includes z regressors}
+\item{modelling_reg_types, component 2: }{includes u regressors}
+\item{modelling_reg_types, component 3: }{includes z spline regressors}
+\item{modelling_reg_types, component 4: }{includes u spline regressors}
+}}
 }
 \value{
 a list of two: \code{[[1]]} -> regressors and \code{[[2]]} -> latent

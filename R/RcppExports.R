@@ -239,9 +239,10 @@ cbpf_as_cpp <- function(N, TT, DD, y, num_counts, Z_beta, sig_sq_x, phi_x, x_r) 
 #' @param DD number of dirichlet fractions/shares i.e. categories
 #' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
 #'   of iterations of the SMC-part)
-#' @param y measurements: dirichlet fractions/shares
-#' @param num_counts measurements: dirichlet-multinomial total counts per time
-#'   period (\code{T}-dimensional vector)
+#' @param data a list of data objects i.e. measurements: e.g. can be dirichlet
+#'   fractions and/or number of counts per category (only the latter if
+#'   measurements are from a multinomial, and both if measurements come from a
+#'   multinomial-dirichlet)
 #' @param Z regressors contained in the latent state process part
 #' @param priors hyperpriors for inverted gamma priors of the state process
 #'   error variances

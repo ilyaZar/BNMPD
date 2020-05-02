@@ -1,6 +1,6 @@
 # 1. Data settings --------------------------------------------------------
 # Dimensions:
-NN <- 1  # Cross sectional length
+NN <- 4  # Cross sectional length
 TT <- 50 # Time series length
 DD <- 6  # Dimension of multivariate distr. (e.g. number of share for Dirichlet)
 # Target state level, intercepts, policy dummies
@@ -8,7 +8,7 @@ dirichlet_levels    <- matrix((10*1:DD)*c(log(2:7)), nrow = DD, ncol = NN)
 intercept_modelling <- matrix(rep(TRUE, times = DD), nrow = DD, ncol = NN)
 # 2. Set up parameter values ----------------------------------------------
 # True latent state process noise variance
-true_sig_sq_xa <- matrix(c(0.01, 0.01, 0.01, 0.01, 0.01, 0.01),
+true_sig_sq_xa <- matrix(c(0.1, 0.1, 0.1, 0.1, 0.1, 0.1),
                          nrow = DD, ncol = NN)
 # True autoregressive parameter for states
 true_phi_xa <- matrix(c(0.5, 0.5, 0.5, 0.5, 0.5, 0.5),

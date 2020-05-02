@@ -1,3 +1,4 @@
+rm(list = ls())
 seed_nr <- 42
 source("./tests-own/00-data-simulation-tests/101_helper_simulation_data.R")
 source("./tests-own/00-data-simulation-tests/101_helper_model_fcts.R")
@@ -28,23 +29,28 @@ for (k in 1:KK) {
                                       x_levels = dirichlet_levels,
                                       x_log_scale = rep(TRUE, times = DD),
                                       intercept_include = rep(TRUE, times = DD),
-                                      plot_states = TRUE,
-                                      plot_measurements = TRUE)
+                                      plot_states = FALSE,
+                                      plot_measurements = FALSE)
   }
   source("./tests-own/00-data-simulation-tests/00_simulation_settings_true_vals.R")
-  set.seed(seed_nr)
   dataSim2 <- KZ::generate_data_t_n(distribution = test_distribution,
-                                           par_true = par_trues,
-                                           NN = NN,
-                                           TT = TT,
-                                           DD = DD,
-                                           x_levels = dirichlet_levels,
-                                           x_log_scale = TRUE,
-                                           intercept_include = intercept_modelling)
+                                    par_true = par_trues,
+                                    NN = NN,
+                                    TT = TT,
+                                    DD = DD,
+                                    x_levels = dirichlet_levels,
+                                    x_log_scale = TRUE,
+                                    include_intercept = intercept_modelling,
+                                    include_policy = policy_modelling,
+                                    include_zeros  = zero_modelling,
+                                    plot_measurements = FALSE,
+                                    plot_states = FALSE,
+                                    seed_no = seed_nr)
+  # browser()
   for (i in 1:NN) {
     list_identical_results[[i]][1] <- identical(dataSim[[i]][[1]], dataSim2[[1]]$yraw[, , i])
     list_identical_results[[i]][2] <- identical(unname(Reduce(cbind, dataSim[[i]][[2]])), dataSim2[[3]][, , i])
-    list_identical_results[[i]][3] <- identical(unname(Reduce(cbind, dataSim[[i]][[3]])), dataSim2[[2]][[i]])
+    list_identical_results[[i]][3] <- identical(unname(Reduce(cbind, dataSim[[i]][[3]])), dataSim2[[2]]$z[, , i])
     if (test_distribution %in% c("multinomial", "mult-diri", "mult-gen-diri")) {
       list_identical_results[[i]][4] <- identical(dataSim[[i]][[4]], as.integer(dataSim2[[1]]$num_counts[, i]))
     }
@@ -53,3 +59,4 @@ for (k in 1:KK) {
 }
 # print(list_identical_results_all)
 print(all(unlist(list_identical_results_all)))
+rm(list = ls())

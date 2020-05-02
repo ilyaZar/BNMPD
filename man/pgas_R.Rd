@@ -4,7 +4,7 @@
 \alias{pgas_R}
 \title{Particle Gibbs with ancestor sampling}
 \usage{
-pgas_R(N, MM, NN, TT, DD, y, num_counts, Za, priors, par_init, traj_init)
+pgas_R(N, MM, NN, TT, DD, data, Z, priors, par_init, traj_init, true_states)
 }
 \arguments{
 \item{N}{number of particles}
@@ -18,21 +18,21 @@ pgas_R(N, MM, NN, TT, DD, y, num_counts, Za, priors, par_init, traj_init)
 \item{DD}{multivariate response/measurement dimension: e.g. number of
 shares/fractions if the measurements are from a Dirichlet}
 
-\item{y}{measurements: can be dirichlet fractions and/or number of counts per
-category (only the latter if measurements are from a multinomial, and both
-if measurements come from a multinomial-dirichlet)}
+\item{data}{a list of data objects i.e. measurements: e.g. can be dirichlet
+fractions and/or number of counts per category (only the latter if
+measurements are from a multinomial, and both if measurements come from a
+multinomial-dirichlet)}
 
-\item{num_counts}{measurements: can be dirichlet fractions and/or number of counts per
-category (only the latter if measurements are from a multinomial, and both
-if measurements come from a multinomial-dirichlet)}
-
-\item{Za}{regressor matrix of Z_{t}'s}
+\item{Z}{regressor matrix of Z_{t}'s}
 
 \item{priors}{inverteg gamma prior (hyyper-)parameters}
 
 \item{par_init}{initial values of parameters}
 
 \item{traj_init}{initial state trajectory}
+
+\item{true_states}{true laten states passed from simulated data for testing
+purposes}
 }
 \value{
 a list with components being: all MCMC parameter draws and all drawn

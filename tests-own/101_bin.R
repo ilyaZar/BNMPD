@@ -1,20 +1,54 @@
-library(Rcpp)
-library(Rmpfr)
-source("tests/99_helper_diagnostics_model_comparison.R")
-Sys.setenv("PKG_LIBS" = "-lmpfr -lgmp")
-sourceCpp("tests/99_helper_model_comparison.cpp")
-#
-#
-#
-#
-#
-load("~/Dropbox/research/usa_energy/04-results/09_CA.RData")
-DD <- 6
-test_array <-  array(Reduce(cbind, out_pgas_CA_09$xtraj), c(num_mcmc, TT, DD))
-test_array <- test_array[burnin:num_mcmc, , ]
+# Testing draws from inverted wishart:
+num_ind_effects <- 2
+ind_effects     <- 1:(num_ind_effects*DD)*c(-1, 1)
+D0u <- (Matrix::nearPD(matrix(1:4,2,2)*10))$mat
+n0u <- num_ind_effects + 10
+num_tests <- 10000
+my_wishs <- stats::rWishart(num_tests, n0u, as.matrix(D0u))
+mat1 <- matrix(0, 2, 2)
+for (n in 1:num_tests) {
+  mat1 <- mat1 + my_wishs[, , n]
+}
+mat1/num_tests
+n0u*D0u
+mat2 <- matrix(0, 2, 2)
+my_wishs2 <- array(0, c(2,2, num_tests))
+for (n in 1:num_tests) {
+  my_wishs2[, , n] <-  solve(my_wishs[, , n])
+  mat2 <- mat2 + my_wishs2[, , n]
+}
+mat2/num_tests
+solve(D0u)/(n0u - num_ind_effects - 1)
+var_IW <- function(D, nu, dim, i, j) {
+  part1 <- (nu - dim + 1) * D[i, j]^2 + (nu - dim - 1) * D[i, i] * D[j, j]
+  part2 <- (nu - dim) * (nu - dim - 1)^2 * (nu - dim - 3)
+  return(part1/part2)
+}
+for (i in 1:num_ind_effects) {
+  for (j in 1:num_ind_effects) {
+    print(paste0("i = ", i, ";", "j= ", j))
+    print(var_IW(solve(D0u), nu = n0u, num_ind_effects, i, j))
+    print(var(my_wishs2[i, j, ]))
+  }
+}
 
-pred_den(y = y_t[1, ], x = test_array[1, 1, ], num_counts = num_counts[1])
-pred_den_cpp(y = y_t[1, ], x = test_array[1, 1, ], num_counts = num_counts[1], DD, TRUE)
+# library(Rcpp)
+# library(Rmpfr)
+# source("tests/99_helper_diagnostics_model_comparison.R")
+# Sys.setenv("PKG_LIBS" = "-lmpfr -lgmp")
+# sourceCpp("tests/99_helper_model_comparison.cpp")
+# #
+# #
+# #
+# #
+# #
+# load("~/Dropbox/research/usa_energy/04-results/09_CA.RData")
+# DD <- 6
+# test_array <-  array(Reduce(cbind, out_pgas_CA_09$xtraj), c(num_mcmc, TT, DD))
+# test_array <- test_array[burnin:num_mcmc, , ]
+#
+# pred_den(y = y_t[1, ], x = test_array[1, 1, ], num_counts = num_counts[1])
+# pred_den_cpp(y = y_t[1, ], x = test_array[1, 1, ], num_counts = num_counts[1], DD, TRUE)
 # set.seed(42)
 # res2 <- cBPF_as_test(N = 5000, TT = TT,
 #                 y = y_t,

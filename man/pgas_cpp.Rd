@@ -18,6 +18,11 @@ pgas_cpp(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
 \item{MM}{PGAS iterations i.e. MCMC iterations (which is equal to the number
 of iterations of the SMC-part)}
 
+\item{data}{a list of data objects i.e. measurements: e.g. can be dirichlet
+fractions and/or number of counts per category (only the latter if
+measurements are from a multinomial, and both if measurements come from a
+multinomial-dirichlet)}
+
 \item{Z}{regressors contained in the latent state process part}
 
 \item{priors}{hyperpriors for inverted gamma priors of the state process
@@ -28,11 +33,6 @@ the overall PGAS procedure}
 
 \item{traj_init}{initial latent state values i.e. starting values for the
 SMC part of the overall PGAS procedure}
-
-\item{y}{measurements: dirichlet fractions/shares}
-
-\item{num_counts}{measurements: dirichlet-multinomial total counts per time
-period (\code{T}-dimensional vector)}
 }
 \value{
 List of parameter MCMC samples and latent state trajectory outputs

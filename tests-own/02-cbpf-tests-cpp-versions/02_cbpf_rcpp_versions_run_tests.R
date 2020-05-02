@@ -18,7 +18,7 @@ id_zet_up  <- cumsum(dim_bet)
 id_zet_lo  <- c(1, cumsum(dim_bet[-DD]) + 1)
 Z_bet <- matrix(0, nrow = TT, ncol = DD)
 for (d in 1:DD) {
-  Z_bet[, d] <- dataSim$za[[1]][, id_zet_lo[d]:id_zet_up[d]] %*% true_bet_xa[[1]][[d]]
+  Z_bet[, d] <- dataSim$za[, id_zet_lo[d]:id_zet_up[d], 1] %*% true_bet_xa[[1]][[d]]
 }
 seed_nr <- 12345
 set.seed(seed_nr)

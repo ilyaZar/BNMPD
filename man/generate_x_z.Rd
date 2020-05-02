@@ -5,26 +5,53 @@
 \title{Simulates regressors and latent states.}
 \usage{
 generate_x_z(
+  TT,
   phi_x,
   sig_sq_x,
-  bet_x,
+  bet_z = NULL,
+  bet_u = NULL,
+  bet_z_spl = NULL,
+  bet_u_spl = NULL,
+  modelling_reg_types,
   x_level,
   x_sd,
-  process_log_scale,
+  x_log_scale,
   intercept,
   policy_dummy = FALSE,
-  zero_pattern = 0,
-  drift = FALSE,
-  TT
+  zero_pattern = 1,
+  drift = FALSE
 )
 }
 \arguments{
+\item{TT}{number of time periods}
+
 \item{phi_x}{autoregressive parameter of latent states}
 
 \item{sig_sq_x}{standard deviation of error term in latent state transition
 equation}
 
-\item{bet_x}{regressor coefficients/parameters of latent state process}
+\item{bet_z}{regressor coefficients/parameters of latent state process
+referring to all cross secitonal units  and are non-linear i.e. splines}
+
+\item{bet_u}{regressor coefficients/parameters of latent state process;
+random effects that refer to each individual cross sectional unit}
+
+\item{bet_z_spl}{regressor coefficients/parameters of latent state process
+referring to all cross secitonal units}
+
+\item{bet_u_spl}{regressor coefficients/parameters of latent state process;
+random effects that refer to each individual cross sectional unit and are
+non-linear i.e. splines}
+
+\item{modelling_reg_types}{logical vector of dimension 4 where each component
+indicates, if \code{TRUE}, that the corresponding regressor type is to be
+generated in the following order:
+\itemize{
+\item{modelling_reg_types, component 1: }{includes z regressors}
+\item{modelling_reg_types, component 2: }{includes u regressors}
+\item{modelling_reg_types, component 3: }{includes z spline regressors}
+\item{modelling_reg_types, component 4: }{includes u spline regressors}
+}}
 
 \item{x_level}{target levels of latent states around which they fluctuate (a
 tuning parameter that ensures that states at each multivariate component of
@@ -34,7 +61,7 @@ the response fluctuate around a particular level)}
 parameter that ensures that deviations from the \code{x_level} target are
 not too severe)}
 
-\item{process_log_scale}{logical; if \code{TRUE} process is simulated on the
+\item{x_log_scale}{logical; if \code{TRUE} process is simulated on the
 log-scale}
 
 \item{intercept}{logical; if \code{TRUE}, includes an intercept term i.e. a
@@ -43,11 +70,21 @@ constant level regressor}
 \item{policy_dummy}{logical; if \code{TRUE} includes a dummy that jumps from
 zero to one (e.g. a policy or other jump effect to be modelled)}
 
-\item{zero_pattern}{TO-BE-EXPLAINED-LATER}
+\item{zero_pattern}{double with possible values 1, 2, 3 or 4:
+\itemize{
+\item{1: }{A dummy pattern that starts at the beginning with zeros and
+jumps after half of the overall time period}
+\item{2: }{A dummy pattern that starts at the beginning with ones and
+plummets to zeros after half of the overall time period}
+\item{3: }{A dummy pattern that starts at the beginning with one, then
+plummets to zeros after a third of the overall time periods, and then
+reverts back to ones for the last third of the time}
+\item{4: }{A dummy pattern that starts at the beginning with zeros,
+then jumps to ones after a third of the overall time periods, and then
+reverts back to zeros for the last third of the time}
+}}
 
 \item{drift}{TO-BE-EXPLAINED-LATER}
-
-\item{TT}{number of time periods}
 }
 \value{
 a \code{length(beta_x)}x\code{TT} matrix of regressors and a \code{TT}-dimensional vector of latent states
