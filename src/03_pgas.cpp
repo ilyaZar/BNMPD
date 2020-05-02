@@ -41,14 +41,13 @@ Rcpp::List pgas_cpp(const int& N,
   const arma::mat y = data(0);
   const arma::vec num_counts = data(1);
   // Initialize result containers:
-  Rcpp::List all_traj(DD);
   arma::mat Xa(TT*DD, MM, arma::fill::zeros);
   arma::mat phi_x(DD, MM, arma::fill::zeros);
   arma::mat sig_sq_x(DD, MM, arma::fill::zeros);
   // Initialize helper/garbage containers I.
   double err_siq_sq_x = 0;
   arma::vec temp_vec_states(TT - 1, arma::fill::zeros);
-  arma::mat out_cPF(DD, TT, arma::fill::zeros);
+  arma::mat out_cpf(DD, TT, arma::fill::zeros);
   arma::mat Z_beta(TT, DD);
   // Initialize parameters and regressor container:
   arma::uvec dim_pars(DD);
@@ -99,14 +98,14 @@ Rcpp::List pgas_cpp(const int& N,
   for (int d = 0; d < DD; ++d) {
     Z_beta.col(d) = Z.submat(0, id_bet(d), TT - 1, id_bet(d + 1) - 1) * bet.submat(id_bet(d), 0, id_bet(d + 1) - 1, 0);
   }
-  out_cPF = cbpf_as_cpp(N, TT, DD,
+  out_cpf = cbpf_as_cpp(N, TT, DD,
                         y, num_counts,
                         Z_beta,
                         sig_sq_x.col(0),
                         phi_x.col(0),
                         Xa.col(0));
   for(int d = 0; d < DD; ++d) {
-    Xa.submat(TT*d, 0, TT*(d + 1) - 1, 0) = out_cPF.col(d);
+    Xa.submat(TT*d, 0, TT*(d + 1) - 1, 0) = out_cpf.col(d);
   }
   // Run MCMC loop
   for (int m = 1; m < MM; ++m) {
@@ -131,14 +130,14 @@ Rcpp::List pgas_cpp(const int& N,
       bet.submat(id_bet(d), m, id_bet(d + 1) - 1, m) =  (mu_xa(d, 0)).subvec(1, (dim_pars(d) - 2));
       Z_beta.col(d) = Z.submat(0, id_bet(d), TT - 1, id_bet(d + 1) - 1) * bet.submat(id_bet(d), m, id_bet(d + 1) - 1, m);
     }
-    out_cPF = cbpf_as_cpp(N, TT, DD,
+    out_cpf = cbpf_as_cpp(N, TT, DD,
                           y, num_counts,
                           Z_beta,
                           sig_sq_x.col(m),
                           phi_x.col(m),
                           Xa.col(m - 1));
     for(int d = 0; d < DD; ++d) {
-      Xa.submat(TT*d, m, TT*(d + 1) - 1, m) = out_cPF.col(d);
+      Xa.submat(TT*d, m, TT*(d + 1) - 1, m) = out_cpf.col(d);
     }
     Rprintf("Iteration number: %u \n", m);
   }
