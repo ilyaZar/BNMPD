@@ -12,6 +12,7 @@
 *.Rproj
 *.sublime-project
 *.sublime-workspace
+*.sh
 *.o
 *.so
 /data/*

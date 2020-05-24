@@ -18,19 +18,19 @@ License: GPL (>= 2)
 URL: https://github.com/useRaddictIZ/pmcmcDiagnostics
 BugReports: https://github.com/useRaddictIZ/pmcmcDiagnostics
 Depends: 
-    R (>= 3.6)
+    R (>= 3.5)
 Imports: 
     stats,
-    HDInterval,
-    magrittr (>= 1.5),
-    gtools,
-    crayon,
     MASS,
-    dplyr,
     utils,
-    devtools (>= 2.2.2.9000),
-    Rcpp
+    Rcpp,
 Suggests: 
+    crayon,
+    HDInterval,
+    gtools,
+    magrittr (>= 1.5),
+    dplyr,
+    devtools (>= 2.2.2.9000),
     testthat (>= 2.3.2)
 Encoding: UTF-8
 LazyData: true

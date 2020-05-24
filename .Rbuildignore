@@ -4,3 +4,4 @@
 ^ResearchLog\.txt$
 ^KZ\.sublime-project$
 ^KZ\.sublime-workspace$
+^runme_bash\.sh$

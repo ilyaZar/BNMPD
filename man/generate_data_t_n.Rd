@@ -17,6 +17,7 @@ generate_data_t_n(
   include_zeros,
   plot_measurements = FALSE,
   plot_states = FALSE,
+  plot_states_each_d = FALSE,
   seed_no = NULL
 )
 }
@@ -65,7 +66,12 @@ reverts back to zeros for the last third of the time}
 per cross sectional unit \code{n=1,...,N}}
 
 \item{plot_states}{logical; if \code{TRUE}, latent states are plotted
-per cross sectional unit \code{n=1,...,N}}
+per cross sectional unit \code{n=1,...,N} with a joint plot of all
+components together}
+
+\item{plot_states_each_d}{logical; if \code{TRUE}, latent states are
+plotted per cross sectional unit \code{n=1,...,N} with a seperate plot for
+each component}
 
 \item{seed_no}{integer; random seed to set at the beginning, set \code{NULL}
 if not required}

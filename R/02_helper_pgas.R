@@ -236,7 +236,7 @@ pgas_out_2_list <- function(pgas_out, DD, NN, TT, MM, dim_bet_z, cpp = NULL) {
 pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues, TT) {
   par_names <- names(pgas_out)[-length(pgas_out)]
   num_par_names <- length(par_names) - 1
-  bet_z_dim <- sapply(par_inits[[3]][[1]], length)
+  bet_z_dim <- sapply(par_inits[[3]], length)
   DD        <- length(bet_z_dim)
   num_pars  <- 2*DD + sum(bet_z_dim)
   out        <- vector("list", 8)
@@ -260,9 +260,9 @@ pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues, TT) {
   for (d in 1:DD) {
     id_start <- 2*DD + sum(c(1, bet_z_dim)[1:d])
     id_end <- 2*DD + sum(bet_z_dim[1:d])
-    par_names_all[id_start:id_end] <- paste0("bet_x", 1:bet_z_dim[d], "_", d)
-    lab_names_all[id_start:id_end] <- paste0("bet_x", 1:bet_z_dim[d], "_", d)
-    par_names_all_plots[id_start:id_end] <- paste0("bet_x", 1:bet_z_dim[d], "_", d)
+    par_names_all[id_start:id_end] <- paste0("bet_z", 1:bet_z_dim[d], "_d=", d)
+    lab_names_all[id_start:id_end] <- paste0("bet_z", 1:bet_z_dim[d], "_d=", d)
+    par_names_all_plots[id_start:id_end] <- paste0("bet_z", 1:bet_z_dim[d], "_d=", d)
   }
   out$num_pars  <- num_pars
   out$mcmc_sims <- cbind(t(pgas_out[[1]]),

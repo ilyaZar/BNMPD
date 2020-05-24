@@ -7,11 +7,10 @@
 #'
 ## KZ namespace: start
 #' @useDynLib KZ, .registration = TRUE
-#' @importFrom Rcpp sourceCpp
 #' @importFrom stats rnorm
 #' @importFrom stats rgamma
 #' @importFrom MASS mvrnorm
-#' @importFrom dplyr near
+#' @importFrom Rcpp sourceCpp
 ## KZ namespace: end
 #' @docType package
 #' @name KZ

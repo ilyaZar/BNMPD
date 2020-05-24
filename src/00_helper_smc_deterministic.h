@@ -6,10 +6,10 @@
 
 arma::vec f_cpp(const arma::vec& x_tt,
                 const double& phi_x,
-                const double& z_add);
+                const double& regs_add);
 arma::vec f_cpp_vech(const arma::vec& x_tt,
                      const double& phi_x,
-                     const arma::vec& z_add);
+                     const arma::vec& regs_add);
 double w_as_c(const arma::mat& mean_diff,
               const arma::rowvec& vcm_diag,
               const arma::vec& log_weights,

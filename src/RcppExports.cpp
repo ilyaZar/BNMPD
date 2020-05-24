@@ -19,15 +19,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // f_cpp_vech
-arma::vec f_cpp_vech(const arma::vec& x_tt, const double& phi_x, const arma::vec& z_add);
-RcppExport SEXP _KZ_f_cpp_vech(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP z_addSEXP) {
+arma::vec f_cpp_vech(const arma::vec& x_tt, const double& phi_x, const arma::vec& regs_add);
+RcppExport SEXP _KZ_f_cpp_vech(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP regs_addSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type x_tt(x_ttSEXP);
     Rcpp::traits::input_parameter< const double& >::type phi_x(phi_xSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type z_add(z_addSEXP);
-    rcpp_result_gen = Rcpp::wrap(f_cpp_vech(x_tt, phi_x, z_add));
+    Rcpp::traits::input_parameter< const arma::vec& >::type regs_add(regs_addSEXP);
+    rcpp_result_gen = Rcpp::wrap(f_cpp_vech(x_tt, phi_x, regs_add));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -60,15 +60,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // f_cpp
-arma::vec f_cpp(const arma::vec& x_tt, const double& phi_x, const double& z_add);
-RcppExport SEXP _KZ_f_cpp(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP z_addSEXP) {
+arma::vec f_cpp(const arma::vec& x_tt, const double& phi_x, const double& regs_add);
+RcppExport SEXP _KZ_f_cpp(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP regs_addSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::vec& >::type x_tt(x_ttSEXP);
     Rcpp::traits::input_parameter< const double& >::type phi_x(phi_xSEXP);
-    Rcpp::traits::input_parameter< const double& >::type z_add(z_addSEXP);
-    rcpp_result_gen = Rcpp::wrap(f_cpp(x_tt, phi_x, z_add));
+    Rcpp::traits::input_parameter< const double& >::type regs_add(regs_addSEXP);
+    rcpp_result_gen = Rcpp::wrap(f_cpp(x_tt, phi_x, regs_add));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -156,8 +156,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // cbpf_as_cpp
-arma::mat cbpf_as_cpp(const int& N, const int& TT, const int& DD, const arma::mat& y, const arma::vec& num_counts, const arma::mat& Z_beta, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::vec& x_r);
-RcppExport SEXP _KZ_cbpf_as_cpp(SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP num_countsSEXP, SEXP Z_betaSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_rSEXP) {
+arma::mat cbpf_as_cpp(const int& N, const int& TT, const int& DD, const arma::mat& y, const arma::vec& num_counts, const arma::mat& Regs_beta, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::vec& x_r);
+RcppExport SEXP _KZ_cbpf_as_cpp(SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP num_countsSEXP, SEXP Regs_betaSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_rSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -166,11 +166,31 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type num_counts(num_countsSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type Z_beta(Z_betaSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Regs_beta(Regs_betaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type x_r(x_rSEXP);
-    rcpp_result_gen = Rcpp::wrap(cbpf_as_cpp(N, TT, DD, y, num_counts, Z_beta, sig_sq_x, phi_x, x_r));
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_cpp(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cbpf_as_cpp_par
+Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& Regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
+RcppExport SEXP _KZ_cbpf_as_cpp_par(SEXP id_par_vecSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP Regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type id_par_vec(id_par_vecSEXP);
+    Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
+    Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type y_all(y_allSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type num_counts_all(num_counts_allSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type Regs_beta_all(Regs_beta_allSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type x_r_all(x_r_allSEXP);
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_cpp_par(id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -194,6 +214,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// bet_z_components
+Rcpp::List bet_z_components(const int& dd, const int& DD, const int& N, const int& T, const int& dim_bet_z_d, const arma::cube& vcm_x_errors_lhs, const arma::mat& vcm_x_errors_rhs, const arma::mat& prior_vcm_bet_z, const arma::mat& X, const arma::cube& regsz, const arma::uvec& id_regz);
+RcppExport SEXP _KZ_bet_z_components(SEXP ddSEXP, SEXP DDSEXP, SEXP NSEXP, SEXP TSEXP, SEXP dim_bet_z_dSEXP, SEXP vcm_x_errors_lhsSEXP, SEXP vcm_x_errors_rhsSEXP, SEXP prior_vcm_bet_zSEXP, SEXP XSEXP, SEXP regszSEXP, SEXP id_regzSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int& >::type dd(ddSEXP);
+    Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const int& >::type T(TSEXP);
+    Rcpp::traits::input_parameter< const int& >::type dim_bet_z_d(dim_bet_z_dSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type vcm_x_errors_lhs(vcm_x_errors_lhsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type vcm_x_errors_rhs(vcm_x_errors_rhsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type prior_vcm_bet_z(prior_vcm_bet_zSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type regsz(regszSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type id_regz(id_regzSEXP);
+    rcpp_result_gen = Rcpp::wrap(bet_z_components(dd, DD, N, T, dim_bet_z_d, vcm_x_errors_lhs, vcm_x_errors_rhs, prior_vcm_bet_z, X, regsz, id_regz));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_KZ_test_phi_oob", (DL_FUNC) &_KZ_test_phi_oob, 2},
@@ -208,7 +249,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_KZ_sample_init_prtcls", (DL_FUNC) &_KZ_sample_init_prtcls, 3},
     {"_KZ_propagate_bpf", (DL_FUNC) &_KZ_propagate_bpf, 3},
     {"_KZ_cbpf_as_cpp", (DL_FUNC) &_KZ_cbpf_as_cpp, 9},
+    {"_KZ_cbpf_as_cpp_par", (DL_FUNC) &_KZ_cbpf_as_cpp_par, 10},
     {"_KZ_pgas_cpp", (DL_FUNC) &_KZ_pgas_cpp, 10},
+    {"_KZ_bet_z_components", (DL_FUNC) &_KZ_bet_z_components, 11},
     {NULL, NULL, 0}
 };
 

@@ -4,7 +4,7 @@
 \alias{f_cpp_vech}
 \title{State transition}
 \usage{
-f_cpp_vech(x_tt, phi_x, z_add)
+f_cpp_vech(x_tt, phi_x, regs_add)
 }
 \arguments{
 \item{x_tt}{particle value in t-1 i.e. x_{t-1}; \code{TTx1}-dimensional
@@ -12,7 +12,7 @@ vector (double)}
 
 \item{phi_x}{autoregressive parameter (double)}
 
-\item{z_add}{result of regressor values i.e. Z_{1:TT} (matrix) multiplied by
+\item{regs_add}{result of regressor values i.e. Z_{1:TT} (matrix) multiplied by
 parameters/coefficients (vector) i.e. a matrix (double)}
 }
 \value{
@@ -29,7 +29,7 @@ This function is used internally in the PGAS procedure for MCMC sampling of
 parameters when subtracting the mean from the state process: it is applied
 per state component \code{d=1,...,DD} on a \code{TTx1}-dimensional state
 vector where \code{TT} is the number of time periods of all the \code{DD}
-components. This is the reason for \code{z_add} to be a vector as it adds
+components. This is the reason for \code{regs_add} to be a vector as it adds
 regressor*beta (i.e. regressors matrix time coefficient vector) change for
 all \code{t=1,...,T}.
 }

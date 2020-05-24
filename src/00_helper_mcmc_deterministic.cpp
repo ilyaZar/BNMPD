@@ -32,14 +32,14 @@ bool test_phi_oob(const double& phi, const double& eps) {
 //' parameters when subtracting the mean from the state process: it is applied
 //' per state component \code{d=1,...,DD} on a \code{TTx1}-dimensional state
 //' vector where \code{TT} is the number of time periods of all the \code{DD}
-//' components. This is the reason for \code{z_add} to be a vector as it adds
+//' components. This is the reason for \code{regs_add} to be a vector as it adds
 //' regressor*beta (i.e. regressors matrix time coefficient vector) change for
 //' all \code{t=1,...,T}.
 //'
 //' @param x_tt particle value in t-1 i.e. x_{t-1}; \code{TTx1}-dimensional
 //'   vector (double)
 //' @param phi_x autoregressive parameter (double)
-//' @param z_add result of regressor values i.e. Z_{1:TT} (matrix) multiplied by
+//' @param regs_add result of regressor values i.e. Z_{1:TT} (matrix) multiplied by
 //'   parameters/coefficients (vector) i.e. a matrix (double)
 //' @return deterministic state transition (one-period ahead conditional mean)
 //'   as a \code{TTx1}-vector
@@ -47,11 +47,11 @@ bool test_phi_oob(const double& phi, const double& eps) {
 // [[Rcpp::export]]
 arma::vec f_cpp_vech(const arma::vec& x_tt,
                      const double& phi_x,
-                     const arma::vec& z_add) {
+                     const arma::vec& regs_add) {
   int n = x_tt.size();
   arma::vec x_t(n);
   x_t = phi_x * x_tt;
-  x_t +=  z_add;
+  x_t +=  regs_add;
 
   return(x_t);
 }
@@ -64,10 +64,10 @@ double compute_err_sig_sq(const arma::vec& Z_part1,
                           const int& TT) {
   double err_sig_sq_x;
   arma::vec temp_vec(TT - 1, arma::fill::zeros);
-  arma::vec z_add(TT - 1);
-  // z_add =  Z_mcmc.submat(0, id_zet(d) + 1, TT - 2, id_zet(d + 1) - 1) * bet.submat(id_bet(d),  m - 1, id_bet(d + 1) - 1,  m - 1);
-  z_add = Z_part2 * bet_part;
-  temp_vec = state_part - f_cpp_vech(Z_part1, phi_part, z_add);
+  arma::vec regs_add_internal(TT - 1);
+  // regs_add_internal =  Z_mcmc.submat(0, id_zet(d) + 1, TT - 2, id_zet(d + 1) - 1) * bet.submat(id_bet(d),  m - 1, id_bet(d + 1) - 1,  m - 1);
+  regs_add_internal = Z_part2 * bet_part;
+  temp_vec = state_part - f_cpp_vech(Z_part1, phi_part, regs_add_internal);
   err_sig_sq_x = arma::dot(temp_vec, temp_vec) * 0.5;
   return(err_sig_sq_x);
 }

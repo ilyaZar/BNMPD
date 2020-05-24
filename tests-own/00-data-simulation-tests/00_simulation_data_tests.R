@@ -11,7 +11,7 @@ list_identical_results <- rep(list(numeric(4)))
 dataSim  <- list()
 dataSim2 <- list()
 KK <- length(test_distribution_all)
-NN <- 2
+NN <- 1
 for (k in 1:KK) {
   test_distribution <- test_distribution_all[k]
   if (test_distribution %in% c("multinomial", "mult-diri", "mult-gen-diri")) {
@@ -59,4 +59,4 @@ for (k in 1:KK) {
 }
 # print(list_identical_results_all)
 print(all(unlist(list_identical_results_all)))
-rm(list = ls())
+# rm(list = ls())

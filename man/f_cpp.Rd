@@ -4,7 +4,7 @@
 \alias{f_cpp}
 \title{State transition}
 \usage{
-f_cpp(x_tt, phi_x, z_add)
+f_cpp(x_tt, phi_x, regs_add)
 }
 \arguments{
 \item{x_tt}{particle value in t-1 i.e. x_{t-1}; \code{Nx1}-dimensional
@@ -12,7 +12,7 @@ vector (double)}
 
 \item{phi_x}{autoregressive parameter (double)}
 
-\item{z_add}{result of regressor values i.e. z_{t} (vector) multiplied by
+\item{regs_add}{result of regressor values i.e. z_{t} (vector) multiplied by
 parameters/coefficients (vector) i.e. a scalar product (double)}
 }
 \value{
@@ -29,6 +29,6 @@ This function is used internally in the SMC procedure when propagating
 particles through time: it is applied per state component \code{d=1,...,DD}
 on a \code{Nx1}-dimensional state vector where \code{N} is the number of
 particles for a particular x_{t} at component \code{d}. This is the reason
-for \code{z_add} to be a scalar as it is the added regressor*beta change for
+for \code{regs_add} to be a scalar as it is the added regressor*beta change for
 some \code{t=1,...,T}.
 }

@@ -4,7 +4,7 @@
 \alias{cbpf_as_cpp}
 \title{Runs a conditional SMC (bootstrap particle filter)}
 \usage{
-cbpf_as_cpp(N, TT, DD, y, num_counts, Z_beta, sig_sq_x, phi_x, x_r)
+cbpf_as_cpp(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r)
 }
 \arguments{
 \item{N}{number of particles}
@@ -18,7 +18,7 @@ cbpf_as_cpp(N, TT, DD, y, num_counts, Z_beta, sig_sq_x, phi_x, x_r)
 \item{num_counts}{measurements: dirichlet-multinomial total counts per time
 period (\code{T}-dimensional vector)}
 
-\item{Z_beta}{result of regressor values i.e. z_{t} (matrix) multiplied by
+\item{Regs_beta}{result of regressor values i.e. z_{t} (matrix) multiplied by
 parameters/coefficients (vector) over ALL \code{d=1...DD} components}
 
 \item{sig_sq_x}{\code{DD}-dimensional vector of latent state error variance}

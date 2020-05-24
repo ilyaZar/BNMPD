@@ -25,20 +25,20 @@ test_phi_oob <- function(phi, eps) {
 #' parameters when subtracting the mean from the state process: it is applied
 #' per state component \code{d=1,...,DD} on a \code{TTx1}-dimensional state
 #' vector where \code{TT} is the number of time periods of all the \code{DD}
-#' components. This is the reason for \code{z_add} to be a vector as it adds
+#' components. This is the reason for \code{regs_add} to be a vector as it adds
 #' regressor*beta (i.e. regressors matrix time coefficient vector) change for
 #' all \code{t=1,...,T}.
 #'
 #' @param x_tt particle value in t-1 i.e. x_{t-1}; \code{TTx1}-dimensional
 #'   vector (double)
 #' @param phi_x autoregressive parameter (double)
-#' @param z_add result of regressor values i.e. Z_{1:TT} (matrix) multiplied by
+#' @param regs_add result of regressor values i.e. Z_{1:TT} (matrix) multiplied by
 #'   parameters/coefficients (vector) i.e. a matrix (double)
 #' @return deterministic state transition (one-period ahead conditional mean)
 #'   as a \code{TTx1}-vector
 #' @export
-f_cpp_vech <- function(x_tt, phi_x, z_add) {
-    .Call(`_KZ_f_cpp_vech`, x_tt, phi_x, z_add)
+f_cpp_vech <- function(x_tt, phi_x, regs_add) {
+    .Call(`_KZ_f_cpp_vech`, x_tt, phi_x, regs_add)
 }
 
 compute_err_sig_sq <- function(Z_part1, Z_part2, state_part, bet_part, phi_part, TT) {
@@ -73,19 +73,19 @@ mvrnorm_c <- function(mu, Sigma) {
 #' particles through time: it is applied per state component \code{d=1,...,DD}
 #' on a \code{Nx1}-dimensional state vector where \code{N} is the number of
 #' particles for a particular x_{t} at component \code{d}. This is the reason
-#' for \code{z_add} to be a scalar as it is the added regressor*beta change for
+#' for \code{regs_add} to be a scalar as it is the added regressor*beta change for
 #' some \code{t=1,...,T}.
 #'
 #' @param x_tt particle value in t-1 i.e. x_{t-1}; \code{Nx1}-dimensional
 #'   vector (double)
 #' @param phi_x autoregressive parameter (double)
-#' @param z_add result of regressor values i.e. z_{t} (vector) multiplied by
+#' @param regs_add result of regressor values i.e. z_{t} (vector) multiplied by
 #'   parameters/coefficients (vector) i.e. a scalar product (double)
 #' @return deterministic state transition (one-period ahead conditional mean)
 #'   as a \code{Nx1}-vector
 #' @export
-f_cpp <- function(x_tt, phi_x, z_add) {
-    .Call(`_KZ_f_cpp`, x_tt, phi_x, z_add)
+f_cpp <- function(x_tt, phi_x, regs_add) {
+    .Call(`_KZ_f_cpp`, x_tt, phi_x, regs_add)
 }
 
 #' Computes the ancestor sampling weights.
@@ -210,7 +210,7 @@ propagate_bpf <- function(mmu, sdd, N) {
 #' @param y measurements: dirichlet fractions/shares
 #' @param num_counts measurements: dirichlet-multinomial total counts per time
 #'   period (\code{T}-dimensional vector)
-#' @param Z_beta  result of regressor values i.e. z_{t} (matrix) multiplied by
+#' @param Regs_beta  result of regressor values i.e. z_{t} (matrix) multiplied by
 #'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
 #' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 #' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
@@ -221,8 +221,42 @@ propagate_bpf <- function(mmu, sdd, N) {
 #'   \code{NxTT}-dimensional matrices each containing the conditional BPF
 #'   output per d'th component
 #' @export
-cbpf_as_cpp <- function(N, TT, DD, y, num_counts, Z_beta, sig_sq_x, phi_x, x_r) {
-    .Call(`_KZ_cbpf_as_cpp`, N, TT, DD, y, num_counts, Z_beta, sig_sq_x, phi_x, x_r)
+cbpf_as_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r) {
+    .Call(`_KZ_cbpf_as_cpp`, N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r)
+}
+
+#' Runs a conditional SMC (bootstrap particle filter)
+#'
+#' Runs a conditional bootstrap particle filter with ancestor sampling and arma
+#' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
+#' e.g. called via \code{pgas_arma()}.
+#'
+#' @param id_par_vec parallelization ID as an \code{IntegerVector}: determines
+#'   along which cross sectional component to compute: this is passed from the
+#'   \code{x}-argument of \code{paralllel::clusterApply()}, called within the
+#'   PGAS code, to this function so it knows along for which cross sectional
+#'   unit it has to slice the data: \code{y_all, num_counts_all, Regs_beta_all,
+#'   x_r_all}; see arguments below
+#' @param N number of particles
+#' @param TT time series dimension
+#' @param DD number of dirichlet fractions/shares i.e. categories
+#' @param y_all measurements: dirichlet fractions/shares
+#' @param num_counts_all measurements: dirichlet-multinomial total counts per time
+#'   period (\code{T}-dimensional vector)
+#' @param Regs_beta_all  result of regressor values i.e. z_{t} (matrix) multiplied by
+#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
+#' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
+#' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
+#'   latent state process
+#' @param x_r_all reference/conditioning trajectory
+#'
+#' @return arma::matrix of DD components: DD columns are
+#'   \code{NxTT}-dimensional matrices each containing the conditional BPF
+#'   output per d'th component
+#' @export
+#'
+cbpf_as_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_KZ_cbpf_as_cpp_par`, id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Particle Gibbs with ancestor sampling (PGAS)
@@ -255,5 +289,25 @@ cbpf_as_cpp <- function(N, TT, DD, y, num_counts, Z_beta, sig_sq_x, phi_x, x_r) 
 #' @export
 pgas_cpp <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) {
     .Call(`_KZ_pgas_cpp`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
+}
+
+#' Computes bet_z MCMC parts
+#'
+#' @param dd bla
+#' @param DD bla
+#' @param N bla
+#' @param T bla
+#' @param dim_bet_z_d bla
+#' @param vcm_x_errors_lhs bla
+#' @param vcm_x_errors_rhs bla
+#' @param prior_vcm_bet_z bla
+#' @param X bla
+#' @param regsz bla
+#' @param id_regz bla
+#' @return some value
+#'
+#' @export
+bet_z_components <- function(dd, DD, N, T, dim_bet_z_d, vcm_x_errors_lhs, vcm_x_errors_rhs, prior_vcm_bet_z, X, regsz, id_regz) {
+    .Call(`_KZ_bet_z_components`, dd, DD, N, T, dim_bet_z_d, vcm_x_errors_lhs, vcm_x_errors_rhs, prior_vcm_bet_z, X, regsz, id_regz)
 }
 

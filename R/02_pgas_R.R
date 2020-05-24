@@ -14,140 +14,307 @@
 #'   fractions and/or number of counts per category (only the latter if
 #'   measurements are from a multinomial, and both if measurements come from a
 #'   multinomial-dirichlet)
-#' @param Z regressor matrix of Z_{t}'s
+#' @param Z regressor matrix of Z_{t}'s (standard regressor covariates)
+#' @param U regressor matrix of U_{t}'s (random/individual effects)
 #' @param priors inverteg gamma prior (hyyper-)parameters
 #' @param par_init initial values of parameters
 #' @param traj_init initial state trajectory
 #' @param true_states true laten states passed from simulated data for testing
 #'   purposes
+#' @param smc_parallel logical; if \code{TRUE}, then the SMC part is run in
+#' paralle
 #'
 #' @return a list with components being: all MCMC parameter draws and all drawn
 #'   state trajectories (smc outuput)
 #' @export
 pgas_R <- function(N, MM, NN, TT, DD,
-                   data, Z,
+                   data, Z, U,
                    priors,
                    par_init,
                    traj_init,
-                   true_states) {
+                   true_states,
+                   smc_parallel = FALSE) {
   # Initialize data containers
   y <- data[[1]]
   num_counts <- data[[2]]
-  dim_bet <- sapply(par_init[[3]][[1]],
-                    length,
-                    simplify = TRUE)
-  dim_zet <- dim_bet
+  dim_bet_z <- sapply(par_init[["init_bet_z"]],
+                      length,
+                      simplify = TRUE)
+  if (!is.null(U)) {
+    dim_bet_u <- sapply(par_init[["init_bet_u"]], nrow)
+    u_null <- FALSE
+  } else {
+    dim_bet_u <- rep(2, times = DD)
+    U <- array(0, c(TT, 2*DD, NN))
+    par_init <- c(par_init, init_bet_u = list(rep(list(matrix(0, 2, NN)), times = DD)))
+    u_null <- TRUE
+  }
 
-  id_bet  <- c(0, cumsum(dim_bet))
-  id_zet  <- c(0, cumsum(dim_zet))
-  id_reg  <- c(0, cumsum(dim_zet + 1))
+  dim_zet <- dim_bet_z
+  dim_uet <- dim_bet_u
+
+  id_bet_z  <- c(0, cumsum(dim_bet_z))
+  id_zet    <- c(0, cumsum(dim_zet))
+  id_reg_z  <- c(0, cumsum(dim_zet + 1))
+
+  id_bet_u  <- c(0, cumsum(dim_bet_u))
+  id_uet    <- c(0, cumsum(dim_uet))
+  id_reg_u  <- c(0, cumsum(dim_uet + 1))
 
   out_cpf <- matrix(0, nrow = TT, ncol = DD)
-  X      <- array(0, dim = c(TT, DD, MM, NN))
+  X       <- array(0, dim = c(TT, DD, MM, NN))
+  X2       <- array(0, dim = c(TT, DD, MM, NN))
 
   sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
   phi_x    <- matrix(0, nrow = DD, ncol = MM)
-  bet_z    <- matrix(0, nrow = sum(dim_bet), ncol = MM)
+  bet_z    <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
+  bet_u    <- array(0,  c(sum(dim_bet_u), MM, NN))
 
-  prior_vcm_x_errors  <- list()
+  prior_vcm_bet_z  <- list()
+  vcm_bet_u        <- list()
+  vcm_x_errors_rhs <- list()
+  vcm_x_errors_lhs <- list()
+  vcm_x_errors     <- matrix(0, nrow = TT - 1, ncol = TT - 1)
+  for (d in 1:DD) {
+    vcm_x_errors_rhs[[d]] <- matrix(0, nrow = TT - 1, ncol = TT - 1)
+    vcm_x_errors_lhs[[d]] <- array(0, c(TT - 1, TT - 1, NN))
+  }
 
   Z_beta <- array(0, c(TT, DD, NN))
-  regs_z    <- array(0, c(TT - 1, sum(dim_zet) + DD, NN))
+  regs_z <- array(0, c(TT - 1, sum(dim_zet) + DD, NN))
+  U_beta <- array(0, c(TT, DD, NN))
+  regs_u <- array(0, c(TT - 1, sum(dim_uet) + DD, NN))
+  Regs_beta <- array(0, c(TT, DD, NN))
   # Initialize priors:
-  prior_ig_a     <- priors[[1]] + NN*(TT - 1)/2
-  prior_ig_b     <- priors[[2]]
+  prior_ig_a     <- priors[["ig_a"]] + NN*(TT - 1)/2
+  prior_ig_b     <- priors[["ig_b"]]
   ## I. Set states to deterministic starting values, initialize parameters, regressor values, and priors
-  for (n in 1:NN) {
-    for (d in 1:DD) {
-      X[ , d, 1, n]                              <- traj_init[d, n]
-      sig_sq_x[d, 1]                             <- par_init[[1]][d, 1]
-      phi_x[d, 1]                             <- par_init[[2]][[d, 1]]
-      bet_z[(id_bet[d] + 1):id_bet[d + 1], 1] <- par_init[[3]][[1]][[d]]
+  for (d in 1:DD) {
+    sig_sq_x[d, 1]                              <- par_init[["init_sig_sq"]][d, 1]
+    phi_x[d, 1]                                 <- par_init[["init_phi"]][[d, 1]]
+    bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], 1] <- par_init[["init_bet_z"]][[d]]
+    prior_vcm_bet_z[[d]] <- diag(1/1000, dim_bet_z[d] + 1)
+    if (u_null) {
+      vcm_bet_u[[d]] <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
+    } else {
+      vcm_bet_u[[d]] <- priors[["vcm_u"]][[d]]
+    }
+    for (n in 1:NN) {
+      X[ , d, 1, n]  <- traj_init[d, n]
+      # X2[ , d, 1, n] <- traj_init[d, n]
+      bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], 1, n] <- par_init[["init_bet_u"]][[d]][, n]
+
       regs_z[, (id_zet[d] + 1 + 1*d):(id_zet[d + 1] + 1*d), n] <- Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n]
-      prior_vcm_x_errors[[d]] <- diag(dim_bet[d] + 1)/1000
-      Z_beta[, d, n] <- Z[, (id_zet[d] + 1):id_zet[d + 1], n] %*% bet_z[(id_bet[d] + 1):id_bet[d + 1], 1]
+      regs_u[, (id_uet[d] + 1 + 1*d):(id_uet[d + 1] + 1*d), n] <- U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n]
+
+      Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
+      vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]] %*% t(Umat)
+      try(isSymmetric(vcm_x_errors_lhs[[d]][, , n]))
+
+      Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
+      betz2 <- bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], 1]
+      Z_beta[, d, n] <- Zmat2 %*% betz2
+
+      Umat2 <- matrix(U[, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT)
+      betu2 <- matrix(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], 1, n, drop = FALSE])
+      U_beta[, d, n] <- Umat2 %*% betu2
+
+      Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
     }
   }
   ## II. run cBPF and use output as first conditioning trajectory
-  for (n in 1:NN) {
-    # out_cpf <- cbpf_as_R(N = N, TT = TT, DD = DD,
-    #                      y = y[, , n], num_counts = num_counts[, n],
-    #                      Z_beta = Z_beta[, , n],
-    #                      sig_sq_x = sig_sq_x[, 1],
-    #                      phi_x = phi_x[, 1],
-    #                      x_r = X[ , , 1, n])
-    # out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
-    #                        y = y[, , n], num_counts = num_counts[, n],
-    #                        Z_beta = Z_beta[, , n],
-    #                        sig_sq_x = sig_sq_x[, 1],
-    #                        phi_x = phi_x[, 1],
-    #                        x_r = X[ , , 1, n])
-    out_cpf <- true_states[ , , n]
-    for (d in 1:DD) {
-      X[ , d, 1, n] <- out_cpf[, d]
+  if (smc_parallel) {
+    envir_par <- environment()
+    num_cores <- parallel::detectCores() - 2
+
+    # seq_rs_seed_sequential <- seq(from = 1, to = NN, by = NN/num_cores)
+
+    task_indices <- parallel::splitIndices(NN, ncl = num_cores)
+    task_indices <- lapply(task_indices, function(x) {x - 1})
+
+    cl <- parallel::makeCluster(num_cores, type = "PSOCK")
+    parallel::clusterExport(cl, varlist = c("N", "TT", "DD",
+                                            "y", "num_counts"),
+                            envir = envir_par)
+    parallel::clusterExport(cl, varlist = c("Regs_beta",
+                                            "sig_sq_x",
+                                            "phi_x",
+                                            "X"),
+                            envir = envir_par)
+    # parallel::clusterEvalQ(cl, set.seed(123))
+    out_cpf <- parallel::clusterApply(cl, x = task_indices,
+                                      KZ::cbpf_as_cpp_par,
+                                      N, TT, DD, y,
+                                      num_counts, Regs_beta,
+                                      sig_sq_x[, 1],
+                                      phi_x[, 1],
+                                      X[ , , 1, ])
+    out_cpf <- unlist(out_cpf, recursive = FALSE)
+    for (n in 1:NN) {
+      X[ , , 1, n] <- out_cpf[[n]]
+    }
+    cat("Iteration number:", 1, "\n")
+  } else {
+    for (n in 1:NN) {
+      # if (n %in% seq_rs_seed_sequential) {
+      #   set.seed(123)
+      # }
+      # out_cpf <- cbpf_as_R(N = N, TT = TT, DD = DD,
+      #                      y = y[, , n], num_counts = num_counts[, n],
+      #                      Regs_beta = Regs_beta[, , n],
+      #                      sig_sq_x = sig_sq_x[, 1],
+      #                      phi_x = phi_x[, 1],
+      #                      x_r = X[ , , 1, n])
+      out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
+                             y = y[, , n], num_counts = num_counts[, n],
+                             Regs_beta = Regs_beta[, , n],
+                             sig_sq_x = sig_sq_x[, 1],
+                             phi_x = phi_x[, 1],
+                             x_r = X[ , , 1, n])
+      # out_cpf <- true_states[ , , n]
+      for (d in 1:DD) {
+        X[ , d, 1, n] <- out_cpf[, d]
+      }
+      cat("Iteration number:", n, "\n")
     }
   }
+  # print(identical(X[ , , 1, ], X2[ , , 1, ]))
   # Run MCMC loop
   for (m in 2:MM) {
     # I. Run GIBBS part
     # 1. pars for xa processes -------------------------------------------
     for (d in 1:DD) {
+      phi_x[d, m] <- phi_x[d, m - 1]
+      bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1]
       err_sig_sq_x_all <- 0
       for (n in 1:NN) {
         err_sig_sq_x <- X[2:TT, d, m - 1, n] - f(x_tt = X[1:(TT - 1), d, m - 1, n],
-                                                  regs  = Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n],
-                                                  phi_x = phi_x[d, m - 1],
-                                                  bet_reg = bet_z[(id_bet[d] + 1):id_bet[d + 1], m - 1])
+                                                 regs  = cbind(Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n],
+                                                               U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n]),
+                                                 phi_x = phi_x[d, m - 1],
+                                                 bet_reg = c(bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1],
+                                                             bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], 1, n]))
         err_sig_sq_x_all <- err_sig_sq_x_all + crossprod(err_sig_sq_x)
       }
       sig_sq_x[d, m]  <- 1/stats::rgamma(n = 1,
-                                          prior_ig_a,
-                                          prior_ig_b + err_sig_sq_x_all/2)
+                                         prior_ig_a,
+                                         prior_ig_b + err_sig_sq_x_all/2)
+    }
+    for (d in 1:DD) {
+      # sig_sq_x_current <- sig_sq_x[d, 1]
+      sig_sq_x_current <- sig_sq_x[d, m]
+      # sig_sq_x[d, m] <- sig_sq_x[d, 1]
+      # sig_sq_x[d, m] <- sig_sq_x[d, m]
+      vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x_current, times = TT - 1))
+      ##########################################################################
+      # check_list_cpp <- bet_z_components(d, DD, NN, TT, dim_bet_z[d] + 1,
+      #                                    vcm_x_errors_lhs[[d]],
+      #                                    vcm_x_errors_rhs[[d]],
+      #                                    prior_vcm_bet_z[[d]],
+      #                                    X[, d, m - 1, ],
+      #                                    regs_z, id_reg_z)
+      # mu_bet    <- check_list_cpp[[1]]
+      # Omega_bet <- check_list_cpp[[2]]
+      ##########################################################################
+      # mu_tmp_all2 <- check_list_cpp[[1]]
+      # omega_tmp_all2 <- check_list_cpp[[2]]
+      # Omega_bet2    <- solve(omega_tmp_all2 + prior_vcm_bet_z[[d]])
+      # mu_bet2       <- Omega_bet2 %*% mu_tmp_all2
+      ##########################################################################
+      #
+      #
+      #
+      #
+      #
       omega_tmp_all <- 0
       mu_tmp_all <- 0
       for (n in 1:NN) {
-        regs_z[, (id_reg[d] + 1 + 1*d) - d, n]  <- X[1:(TT - 1), d, m - 1, n]
+        regs_z[, id_reg_z[d] + 1, n]  <- X[1:(TT - 1), d, m - 1, n]
         x_lhs        <- X[2:TT, d, m - 1, n]
 
-        omega_tmp <- crossprod(regs_z[, (id_reg[d] + 1):id_reg[d + 1], n],
-                               regs_z[, (id_reg[d] + 1):id_reg[d + 1], n])/sig_sq_x[d, m]
+        # vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x[d, m], times = TT - 1))
+        vcm_x_errors          <- vcm_x_errors_lhs[[d]][, , n] + vcm_x_errors_rhs[[d]]
+        vcm_x_errors          <- solve(vcm_x_errors)
+
+        regs_tmp              <- regs_z[, (id_reg_z[d] + 1):id_reg_z[d + 1], n]
+        # omega_tmp <- crossprod(regs_tmp,
+        #                        regs_tmp)/sig_sq_x[d, m]
+        omega_tmp <- crossprod(regs_tmp,
+                               vcm_x_errors) %*% regs_tmp
         omega_tmp_all <- omega_tmp_all + omega_tmp
-        mu_tmp <- crossprod(regs_z[, (id_reg[d] + 1):id_reg[d + 1], n], x_lhs)/sig_sq_x[d, m]
+        # mu_tmp <- crossprod(regs_tmp, x_lhs)/sig_sq_x[d, m]
+        mu_tmp <- crossprod(regs_tmp, vcm_x_errors) %*% x_lhs
         mu_tmp_all <- mu_tmp_all + mu_tmp
       }
-      Omega_bet    <- solve(omega_tmp_all + prior_vcm_x_errors[[d]])
+      Omega_bet    <- solve(omega_tmp_all + prior_vcm_bet_z[[d]])
       mu_bet       <- Omega_bet %*% mu_tmp_all
-
-      beta_sampled   <- mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
-      while (near(abs(beta_sampled[1]), 1, tol = 0.01) | abs(beta_sampled[1]) > 1) {
-        beta_sampled <- mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
+      #
+      #
+      #
+      #
+      #
+      # beta_sampled   <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
+      beta_sampled <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z[d] + 1)
+      while ((abs(abs(beta_sampled[1]) - 1) < 0.01) | abs(beta_sampled[1]) > 1) {
+        # beta_sampled <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
+        beta_sampled <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z[d] + 1)
       }
       phi_x[d, m] <- beta_sampled[1]
-      bet_z[(id_bet[d] + 1):id_bet[d + 1], m] <- beta_sampled[-1]
+      bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- beta_sampled[-1]
       for (n in 1:NN) {
-        Z_beta[, d, n] <- Z[, (id_zet[d] + 1):id_zet[d + 1], n] %*% bet_z[(id_bet[d] + 1):id_bet[d + 1], m]
+        Z_beta[, d, n] <- Z[, (id_zet[d] + 1):id_zet[d + 1], n] %*% bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m]
+        Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
       }
     }
     # II. Run cBPF-AS part
-    for (n in 1:NN) {
-      # out_cpf <- cbpf_as_R(N = N, TT = TT, DD = DD,
-      #                      y = y[, , n], num_counts = num_counts[, n],
-      #                      Z_beta = Z_beta[, , n],
-      #                      sig_sq_x = sig_sq_x[, m],
-      #                      phi_x = phi_x[, m],
-      #                      x_r = X[ , , m - 1, n])
-      # out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
-      #                        y = y[, , n], num_counts = num_counts[, n],
-      #                        Z_beta = Z_beta[, , n],
-      #                        sig_sq_x = sig_sq_x[, m],
-      #                        phi_x = phi_x[, m],
-      #                        x_r = X[ , , m - 1, n])
-      out_cpf <- true_states[ , , n]
-      for (d in 1:DD) {
-        X[ , d, m, n] <- out_cpf[, d]
+    if (smc_parallel) {
+      parallel::clusterExport(cl, varlist = c("Regs_beta",
+                                              "sig_sq_x",
+                                              "phi_x",
+                                              "X"),
+                              envir = envir_par)
+      # parallel::clusterEvalQ(cl, set.seed(123))
+      out_cpf <- parallel::clusterApply(cl, x = task_indices,
+                                        KZ::cbpf_as_cpp_par,
+                                        N, TT, DD, y,
+                                        num_counts, Regs_beta,
+                                        sig_sq_x[, m],
+                                        phi_x[, m],
+                                        X[ , , m - 1, ])
+      out_cpf <- unlist(out_cpf, recursive = FALSE)
+      for (n in 1:NN) {
+        X[ , , m, n] <- out_cpf[[n]]
+      }
+      cat("Iteration number:", m, "\n")
+    } else {
+      for (n in 1:NN) {
+        # if (n %in% seq_rs_seed_sequential) {
+        #   set.seed(123)
+        # }
+        # out_cpf <- cbpf_as_R(N = N, TT = TT, DD = DD,
+        #                      y = y[, , n], num_counts = num_counts[, n],
+        #                      Regs_beta = Regs_beta[, , n],
+        #                      sig_sq_x = sig_sq_x[, m],
+        #                      phi_x = phi_x[, m],
+        #                      x_r = X[ , , m - 1, n])
+        out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
+                               y = y[, , n], num_counts = num_counts[, n],
+                               Regs_beta = Regs_beta[, , n],
+                               sig_sq_x = sig_sq_x[, m],
+                               phi_x = phi_x[, m],
+                               x_r = X[ , , m - 1, n])
+        # out_cpf <- true_states[ , , n]
+        for (d in 1:DD) {
+          X[ , d, m, n] <- out_cpf[, d]
+        }
+        cat("Iteration number:", n, "\n")
       }
     }
+    # print(identical(X[ , , m, ], X2[ , , m, ]))
     cat("Iteration number:", m, "\n")
+  }
+  if (smc_parallel) {
+    parallel::stopCluster(cl)
   }
   return(list(sig_sq_x = sig_sq_x,
               phi_x = phi_x,

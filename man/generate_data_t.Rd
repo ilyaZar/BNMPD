@@ -8,7 +8,6 @@ generate_data_t(
   distribution = "dirichlet",
   TT,
   DD,
-  n,
   par_true,
   x_levels,
   x_log_scale,
@@ -26,8 +25,6 @@ generate_data_t(
 
 \item{DD}{number of shares/fractions (for dirichlet or dirichlet-multinomial)
 or the number of categories for a multinomial distribution}
-
-\item{n}{current cross sectional unit i.e. an integer \code{n=1,...,NN}}
 
 \item{par_true}{list of true parameters that describe the latent state
 process}

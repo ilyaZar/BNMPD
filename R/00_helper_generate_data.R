@@ -40,16 +40,18 @@ get_modelling_reg_types <- function(get_modelling_reg_types) {
 generate_bet_u <- function(DD, NN, from_IW = FALSE,
                            num_re = rep(2, times = DD),
                            seed_no = 42) {
+  true_bet_u <- vector("list", DD)
   if (from_IW) {
     stopifnot(is.numeric(num_re) && (length(num_re) == DD))
     if (!is.null(seed_no))  set.seed(seed_no)
-    n0u <- num_re + 5
+    n0u <- num_re + 1
     D0u <- vector("list", DD)
-    true_bet_u <- vector("list", DD)
     for (d in 1:DD) {
-      D0u[[d]] <- solve(diag(1:num_re[d]*(10 + 1/num_re[d])))
-      D0u[[d]] <- (stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1]
+      D0u[[d]] <- solve(diag(1:num_re[d]*(10 + 1/num_re[d]), nrow = num_re[d]))
+      D0u[[d]] <- solve((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
+      # D0u[[d]] <- diag(1, num_re[d])
       true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
+      # browser()
       for (n in 1:NN) {
         true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
                                               mu = rep(0, times = num_re[d]),
@@ -59,10 +61,9 @@ generate_bet_u <- function(DD, NN, from_IW = FALSE,
     return(list(true_bet_u, D0u))
   } else {
     stopifnot(is.numeric(num_re) && (length(num_re) == 1))
-    true_bet_u <- vector("list", DD)
     vals <- matrix(1:(num_re*DD)*c(-1, 1), nrow = num_re*DD, ncol = NN)
     for (d in 1:DD) {
-      true_bet_u[[d]] <- vals[1:num_re + num_re*(d - 1), ]
+      true_bet_u[[d]] <- vals[1:num_re + num_re*(d - 1), , drop = FALSE]
     }
     return(true_bet_u)
   }
@@ -111,7 +112,11 @@ generate_bet_u <- function(DD, NN, from_IW = FALSE,
 #' @param plot_measurements logical; if \code{TRUE}, measurements are plotted
 #'   per cross sectional unit \code{n=1,...,N}
 #' @param plot_states logical; if \code{TRUE}, latent states are plotted
-#'   per cross sectional unit \code{n=1,...,N}
+#'   per cross sectional unit \code{n=1,...,N} with a joint plot of all
+#'   components together
+#' @param plot_states_each_d logical; if \code{TRUE}, latent states are
+#'   plotted per cross sectional unit \code{n=1,...,N} with a seperate plot for
+#'   each component
 #'
 #' @return NN-dimensional list of lists of two: \code{[[1]]} -> regressors and
 #'   \code{[[2]]} -> latent states
@@ -126,6 +131,7 @@ generate_data_t_n <- function(distribution = "dirichlet",
                               include_zeros,
                               plot_measurements = FALSE,
                               plot_states = FALSE,
+                              plot_states_each_d = FALSE,
                               seed_no = NULL) {
   if (x_log_scale) {
     x_levels <- log(x_levels)
@@ -147,18 +153,22 @@ generate_data_t_n <- function(distribution = "dirichlet",
     z <- array(0, c(TT, dim_bet_z, NN))
   }
   if (modelling_reg_types[2]) {
-    dim_bet_u <- sum(sapply(par_true[["bet_u"]], length))
+    if (NN == 1) {
+      dim_bet_u <- sum(sapply(par_true[["bet_u"]], length))
+    } else {
+      dim_bet_u <- sum(sapply(par_true[["bet_u"]], nrow))
+    }
     u <- array(0, c(TT, dim_bet_u, NN))
   }
   for (n in 1:NN) {
-    par_true_current <- list(par_true[[1]][, n],
-                             par_true[[2]][, n])
     # browser()
+    par_true_current <- list(sig_sq = par_true[["sig_sq"]][, n],
+                             phi = par_true[["phi"]][, n])
     if (modelling_reg_types[1]) par_true_current$bet_z <- par_true[["bet_z"]]
-    if (modelling_reg_types[2]) par_true_current$bet_u <- par_true[["bet_u"]]
+    if (modelling_reg_types[2]) par_true_current$bet_u <- lapply(par_true[["bet_u"]], `[`, i = , j = n) # par_true[["bet_u"]]
 
     out_data_tmp <- generate_data_t(distribution = distribution,
-                                    TT = TT, DD = DD, n = n,
+                                    TT = TT, DD = DD,
                                     par_true = par_true_current,
                                     x_levels = x_levels[, n],
                                     x_log_scale = x_log_scale,
@@ -178,13 +188,15 @@ generate_data_t_n <- function(distribution = "dirichlet",
       u[, , n] <- out_data_tmp$u
     }
     states[, , n] <- out_data_tmp$x
+    # browser()
     plot_data_per_n(DD,
                     yraw = data_part1[, , n],
                     x = states[, , n],
                     x_log_scale = x_log_scale,
                     x_levels = x_levels[, n],
                     plot_measurements = plot_measurements,
-                    plot_states       = plot_states)
+                    plot_states       = plot_states,
+                    plot_states_each_d  = plot_states_each_d)
   }
   out_data <- vector("list", 3)
   names(out_data) <- c("data", "regs", "states")
@@ -218,7 +230,7 @@ generate_data_t_n <- function(distribution = "dirichlet",
 #' @param TT number of time periods
 #' @param DD number of shares/fractions (for dirichlet or dirichlet-multinomial)
 #'   or the number of categories for a multinomial distribution
-#' @param n current cross sectional unit i.e. an integer \code{n=1,...,NN}
+# @param n current cross sectional unit i.e. an integer \code{n=1,...,NN}
 #' @param par_true list of true parameters that describe the latent state
 #'   process
 #' @param x_levels vector of target "means"/"levels" of the states around which
@@ -256,7 +268,7 @@ generate_data_t_n <- function(distribution = "dirichlet",
 #' @return a list of two: \code{[[1]]} -> regressors and \code{[[2]]} -> latent
 #'   states
 generate_data_t <- function(distribution = "dirichlet",
-                            TT, DD, n,
+                            TT, DD,
                             par_true,
                             x_levels,
                             x_log_scale,
@@ -265,48 +277,44 @@ generate_data_t <- function(distribution = "dirichlet",
                             include_zeros,
                             modelling_reg_types) {
   x <- matrix(nrow = TT, ncol = DD, 0)
-  sig_sq_x <- par_true[[1]]
-  phi_x <- par_true[[2]]
+  sig_sq_x <- par_true[["sig_sq"]]
+  phi_x    <- par_true[["phi"]]
   if (modelling_reg_types[1]) {
     z <- list()
-    bet_z <- list()
-    for (d in 1:DD) {
-      bet_z[[d]] <- par_true[["bet_z"]][[d]]
-    }
+    bet_z <- par_true[["bet_z"]]
   } else {
     bet_z <- NULL
   }
   if (modelling_reg_types[2]) {
     u <- list()
-    bet_u <- list()
-    for (d in 1:DD) {
-      bet_u[[d]] <- par_true[["bet_u"]][[d]]
-    }
+    bet_u <- par_true[["bet_u"]]
   } else {
     bet_u <- NULL
   }
-
 
   if (distribution %in% c("multinomial", "mult-diri", "mult-gen-diri")) {
     num_counts <- sample(x = 80000:120000, size = TT)
   }
 
-  x_sd_level <- c(0.0125, 0.1, 0.025, 0.1, 0.1, 0.1)
+  # reg_sd_levels <- c(0.0125, 0.1, 0.025, 0.1, 0.1, 0.1)
+  reg_sd_levels <- rep(0.5, times = DD)
+  bet_sd_level  <- 3
 
   for (d in 1:DD) {
     # browser()
-    res <- generate_x_z(TT = TT,
-                        phi_x = phi_x[d],
-                        sig_sq_x = sig_sq_x[d],
-                        bet_z = bet_z[[d]],
-                        bet_u = bet_u[[d]][, n],
-                        modelling_reg_types = modelling_reg_types,
-                        x_level = x_levels[d],
-                        x_sd = x_sd_level[d],
-                        x_log_scale = x_log_scale,
-                        intercept      = include_intercept[d],
-                        policy_dummy   = include_policy[d],
-                        zero_pattern   = include_zeros[d])
+    res <- generate_x_z_u(TT = TT,
+                          phi_x = phi_x[d],
+                          sig_sq_x = sig_sq_x[d],
+                          bet_z = bet_z[[d]],
+                          bet_u = bet_u[[d]],
+                          modelling_reg_types = modelling_reg_types,
+                          x_level = x_levels[d],
+                          reg_sd = reg_sd_levels[d],
+                          bet_sd = bet_sd_level,
+                          x_log_scale = x_log_scale,
+                          intercept      = include_intercept[d],
+                          policy_dummy   = include_policy[d],
+                          zero_pattern   = include_zeros[d])
     # browser()
     x[, d] <- res$x
     if (modelling_reg_types[1]) {
@@ -379,9 +387,8 @@ generate_data_t <- function(distribution = "dirichlet",
 #' @param x_level target levels of latent states around which they fluctuate (a
 #'   tuning parameter that ensures that states at each multivariate component of
 #'   the response fluctuate around a particular level)
-#' @param x_sd standard deviation allowed for \code{x_level} target (a tuning
-#'   parameter that ensures that deviations from the \code{x_level} target are
-#'   not too severe)
+#' @param reg_sd sstandard deviations for the regressor values
+#' @param bet_sd standard deviations for random coefficient value draws
 #' @param x_log_scale logical; if \code{TRUE} process is simulated on the
 #'   log-scale
 #' @param intercept logical; if \code{TRUE}, includes an intercept term i.e. a
@@ -404,21 +411,22 @@ generate_data_t <- function(distribution = "dirichlet",
 #' @param drift  TO-BE-EXPLAINED-LATER
 #'
 #' @return a \code{length(beta_x)}x\code{TT} matrix of regressors and a \code{TT}-dimensional vector of latent states
-generate_x_z <- function(TT,
-                         phi_x,
-                         sig_sq_x,
-                         bet_z = NULL,
-                         bet_u = NULL,
-                         bet_z_spl = NULL,
-                         bet_u_spl = NULL,
-                         modelling_reg_types,
-                         x_level,
-                         x_sd,
-                         x_log_scale,
-                         intercept,
-                         policy_dummy = FALSE,
-                         zero_pattern = 1,
-                         drift = FALSE) {
+generate_x_z_u <- function(TT,
+                           phi_x,
+                           sig_sq_x,
+                           bet_z = NULL,
+                           bet_u = NULL,
+                           bet_z_spl = NULL,
+                           bet_u_spl = NULL,
+                           modelling_reg_types,
+                           x_level,
+                           reg_sd,
+                           bet_sd,
+                           x_log_scale,
+                           intercept,
+                           policy_dummy = FALSE,
+                           zero_pattern = 1,
+                           drift = FALSE) {
   dim_z <- length(bet_z)
   dim_u <- length(bet_u)
   dim_reg <- dim_z + dim_u
@@ -426,12 +434,14 @@ generate_x_z <- function(TT,
   x <- rep(0, TT)
   # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
   if (modelling_reg_types[1] && !modelling_reg_types[2]) {
+    # browser()
     z <- generate_reg_vals(TT = TT,
                            bet_reg = bet_reg,
                            dim_reg = dim_reg,
                            phi_x = phi_x,
                            x_level = x_level,
-                           x_sd = x_sd,
+                           reg_sd = reg_sd,
+                           bet_sd = bet_sd,
                            intercept = intercept,
                            policy_dummy = policy_dummy,
                            zero_pattern = zero_pattern)
@@ -443,7 +453,8 @@ generate_x_z <- function(TT,
                            dim_reg = dim_reg,
                            phi_x = phi_x,
                            x_level = x_level,
-                           x_sd = x_sd,
+                           reg_sd = reg_sd,
+                           bet_sd = bet_sd,
                            intercept = intercept,
                            policy_dummy = policy_dummy,
                            zero_pattern = zero_pattern)
@@ -451,13 +462,14 @@ generate_x_z <- function(TT,
   }
   if (modelling_reg_types[1] && modelling_reg_types[2]) {
     # browser()
-    x_level_split <- x_level*c(0.5, 0.5)
+    x_level_split <- x_level*c(0.8, 0.2)
     z <- generate_reg_vals(TT = TT,
                            bet_reg = bet_z,
                            dim_reg = dim_z,
                            phi_x = phi_x,
                            x_level = x_level_split[1],
-                           x_sd = x_sd,
+                           reg_sd = reg_sd,
+                           bet_sd = bet_sd,
                            intercept = FALSE,
                            policy_dummy = FALSE,
                            zero_pattern = NULL)
@@ -466,13 +478,15 @@ generate_x_z <- function(TT,
                            dim_reg = dim_u,
                            phi_x = phi_x,
                            x_level = x_level_split[2],
-                           x_sd = x_sd,
+                           reg_sd = reg_sd,
+                           bet_sd = bet_sd,
                            intercept = intercept,
                            policy_dummy = policy_dummy,
                            zero_pattern = zero_pattern)
   }
   reg_all <- cbind(z, u)
   # END OF REGRESSOR SIMULATION: --------------------------------------------
+  # browser()
   xinit <- x_level
   x[1] <- f(x_tt = xinit, regs = reg_all[1, ], phi_x = phi_x, bet_reg = bet_reg)
   x[1] <- x[1] + sqrt(sig_sq_x)*stats::rnorm(n = 1)
@@ -484,10 +498,9 @@ generate_x_z <- function(TT,
       x[t + 1] <- x[t + 1] + sqrt(sig_sq_x)*stats::rnorm(n = 1)
     }
   }
-  # browser()
 
   if (sum(any(x <= 0)) & x_log_scale == FALSE) {
-    stop("some state process (x1_t, x2_t, ... or x6_t) not positive!")
+    stop("some state process (x1_t, x2_t, ... or xD_t) not positive!")
   }
   out <- list()
   out$x <- x
@@ -514,7 +527,9 @@ generate_x_z <- function(TT,
 #'   \code{bet_reg})
 #' @param phi_x autoregressive paramter
 #' @param x_level target level of the states to simulate
-#' @param x_sd standard deviations for the regressor values
+#' @param reg_sd standard deviations for the regressor values
+#' @param reg_sd standard deviations for the regressor values
+#' @param bet_sd standard deviations for random coefficient value draws
 #' @param intercept logical; if \code{TRUE}, then an intercept is included
 #' @param policy_dummy logical; if \code{TRUE}, then a policz dummy is included
 #' @param zero_pattern double with possible values 1, 2, 3 or 4:
@@ -533,7 +548,7 @@ generate_x_z <- function(TT,
 #'
 #' @return a matrix of regressors of dimension \code{TT} \eqn{x} \code{dim_bet}
 generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
-                              x_level, x_sd,
+                              x_level, reg_sd, bet_sd,
                               intercept,
                               policy_dummy,
                               zero_pattern = NULL) {
@@ -566,7 +581,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
       regs <- dummy_to_use
     } else {
       const_mean <- x_level * (1 - phi_x)/bet_reg
-      regs          <- matrix(stats::rnorm(T*dim_reg, mean = const_mean, sd = x_sd),
+      regs          <- matrix(stats::rnorm(TT*dim_reg, mean = const_mean, sd = reg_sd),
                               nrow = TT,
                               ncol = dim_reg,
                               byrow = TRUE)
@@ -579,27 +594,44 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                     dummy_to_use)
       return(regs)
     }
+    if (!intercept && !policy_dummy) {
+      reg_means <- stats::rnorm(dim_reg - 1, mean = 0, sd = bet_sd)
+      last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-dim_reg])
+      last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
+      reg_means     <- c(reg_means, last_reg_mean)
+      regs          <- matrix(stats::rnorm(TT*dim_reg,
+                                           mean = reg_means,
+                                           sd = reg_sd),
+                              nrow = TT,
+                              ncol = dim_reg,
+                              byrow = TRUE)
+      return(regs)
+    }
     if (intercept && !policy_dummy) {
       reg_means <- 1
     } else if (!intercept && policy_dummy) {
-      reg_means <- dummy_to_use
-    } else if (!intercept && !policy_dummy) {
-      reg_means <- stats::rnorm(dim_reg - 1, mean = 0, sd = 3)
+      reg_means <- dummy_to_use[1]
     }
     last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-dim_reg])
     last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
     reg_means     <- c(reg_means, last_reg_mean)
     regs          <- matrix(stats::rnorm(TT*dim_reg,
                                          mean = reg_means,
-                                         sd = x_sd),
+                                         sd = reg_sd),
                             nrow = TT,
                             ncol = dim_reg,
                             byrow = TRUE)
-    return(regs)
+    if (intercept && !policy_dummy) {
+      regs[, 1] <- 1
+      return(regs)
+    } else if (!intercept && policy_dummy) {
+      regs[, 1] <- dummy_to_use[1]
+      return(regs)
+    }
   }
   if (dim_reg > 2) {
     if (intercept && !policy_dummy) {
-      reg_means <- stats::rnorm(dim_reg - 2, mean = 0, sd = 3)
+      reg_means <- stats::rnorm(dim_reg - 2, mean = 0, sd = bet_sd)
       reg_means <- c(1, reg_means)
 
       last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-dim_reg])
@@ -608,26 +640,26 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
       reg_len       <- length(reg_means)
       regs          <- matrix(stats::rnorm(TT*reg_len,
                                            mean = reg_means,
-                                           sd = x_sd),
+                                           sd = reg_sd),
                               nrow = TT,
                               ncol = reg_len,
                               byrow = TRUE)
         regs[, 1] <- 1
     } else if (!intercept && policy_dummy ) {
-      reg_means <- stats::rnorm(dim_reg - 2, mean = 0, sd = 3)
+      reg_means <- stats::rnorm(dim_reg - 2, mean = 0, sd = bet_sd)
       last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-c(1, dim_reg)])
       last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
       reg_means     <- c(reg_means, last_reg_mean)
       reg_len       <- length(reg_means)
       regs          <- matrix(stats::rnorm(TT*reg_len,
                                            mean = reg_means,
-                                           sd = x_sd),
+                                           sd = reg_sd),
                               nrow = TT,
                               ncol = reg_len,
                               byrow = TRUE)
       regs <- cbind(dummy_to_use, regs)
     } else if (policy_dummy && intercept) {
-      reg_means <- stats::rnorm(dim_reg - 3, mean = 0, sd = 3)
+      reg_means <- stats::rnorm(dim_reg - 3, mean = 0, sd = bet_sd)
       reg_means <- c(1, reg_means)
 
       last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-c(2, dim_reg)])
@@ -636,20 +668,20 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
       reg_len       <- length(reg_means)
       regs          <- matrix(stats::rnorm(TT*reg_len,
                                            mean = reg_means,
-                                           sd = x_sd),
+                                           sd = reg_sd),
                               nrow = TT,
                               ncol = reg_len,
                               byrow = TRUE)
       regs <- cbind(1, dummy_to_use, regs[, -c(1)])
     } else {
-      reg_means <- stats::rnorm(dim_reg - 1, mean = 0, sd = 3)
+      reg_means <- stats::rnorm(dim_reg - 1, mean = 0, sd = bet_sd)
       last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-dim_reg])
       last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
       reg_means     <- c(reg_means, last_reg_mean)
       reg_len       <- length(reg_means)
       regs          <- matrix(stats::rnorm(TT*reg_len,
                                            mean = reg_means,
-                                           sd = x_sd),
+                                           sd = reg_sd),
                               nrow = TT,
                               ncol = reg_len,
                               byrow = TRUE)
@@ -657,15 +689,39 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
   return(regs)
   }
 }
+#' Function to plot the data
+#'
+#' @param DD number of shares/fractions (for dirichlet or dirichlet-multinomial)
+#'   or the number of categories for a multinomial distribution
+#' @param yraw a numeric matrix of dimension \code{TTxDD} giving the simulated
+#'   values (not the num_counts if a compoung distributions i.e. just the
+#'   dirichlet shares e.g.)
+#' @param x a numeric matrix of dimension \code{TTxDD}; simulated latent states
+#' @param x_log_scale logical; if \code{TRUE}, simulation of latent state
+#'   process is was perfomred on the log-scale
+#' @param x_levels a numeric vector of length \code{DD} giving the target
+#' dirichlet levels i.e. latent state levels (stationary mean of the latent
+#' state process etc.)
+#' @param plot_measurements logical; if \code{TRUE}, measurements are plotted
+#'   per cross sectional unit \code{n=1,...,N}
+#' @param plot_states logical; if \code{TRUE}, latent states are plotted
+#'   per cross sectional unit \code{n=1,...,N} with a joint plot of all
+#'   components together
+#' @param plot_states_each_d logical; if \code{TRUE}, latent states are
+#'   plotted per cross sectional unit \code{n=1,...,N} with a seperate plot for
+#'   each component
+#'
+#' @return invisible return; pure side effects function that plots the data
 plot_data_per_n <- function(DD,
                             yraw, x,
                             x_log_scale,
                             x_levels,
                             plot_measurements,
-                            plot_states) {
-  if (plot_measurements && plot_states)  graphics::par(mfrow = c(2,2))
-  if (plot_measurements && !plot_states) graphics::par(mfrow = c(2,1))
-  if (!plot_measurements && plot_states) graphics::par(mfrow = c(2,1))
+                            plot_states,
+                            plot_states_each_d) {
+  if (plot_measurements && plot_states)  graphics::par(mfrow = c(2, 1))
+  if (plot_measurements && !plot_states) graphics::par(mfrow = c(2, 1))
+  if (!plot_measurements && plot_states) graphics::par(mfrow = c(2, 1))
   if (plot_measurements) {
     names_title <- "Measurement components"
     names_ylab  <- "measurements: y_t's"
@@ -688,7 +744,7 @@ plot_data_per_n <- function(DD,
                       ylab = names_ylab,
                       xlab = names_xlab)
   }
-  if (plot_states) {
+  if (plot_states || plot_states_each_d) {
     names_title <- "True States"
     names_ylab  <- "states: xt's"
     names_xlab  <- c("x1_t (black),", "x2_t (red),",
@@ -698,6 +754,8 @@ plot_data_per_n <- function(DD,
     if (x_log_scale) {
       all_states <- log(all_states)
     }
+  }
+  if (plot_states) {
     graphics::matplot(all_states/rowSums(all_states),
                       type = "l",
                       lty = 2,
@@ -712,7 +770,9 @@ plot_data_per_n <- function(DD,
                       main = names_title,
                       ylab = names_ylab,
                       xlab = names_xlab)
-    graphics::par(mfrow = c(6,2))
+  }
+  if (plot_states_each_d) {
+    graphics::par(mfrow = c(ceiling(DD/2), 2))
     for (d in 1:DD) {
       graphics::plot(all_states[, d],
                      type = "l",
@@ -726,20 +786,21 @@ plot_data_per_n <- function(DD,
       graphics::abline(h = mean(all_states[, d, drop = TRUE]),
                        lty = 1, lwd = 1, col = d)
 
-      graphics::plot((all_states/rowSums(all_states))[, d],
-                     type = "l",
-                     lty = 2,
-                     lwd = 1,
-                     main = names_title,
-                     ylab = names_ylab,
-                     xlab = names_xlab,
-                     col = d)
-      graphics::abline(h = (x_levels/sum(x_levels))[d], lty = 1, lwd = 3)
-      graphics::abline(h = mean((all_states/rowSums(all_states))[, d, drop = TRUE]),
-                       lty = 1, lwd = 1, col = d)
+      # graphics::plot((all_states/rowSums(all_states))[, d],
+      #                type = "l",
+      #                lty = 2,
+      #                lwd = 1,
+      #                main = names_title,
+      #                ylab = names_ylab,
+      #                xlab = names_xlab,
+      #                col = d)
+      # graphics::abline(h = (x_levels/sum(x_levels))[d], lty = 1, lwd = 3)
+      # graphics::abline(h = mean((all_states/rowSums(all_states))[, d, drop = TRUE]),
+      #                  lty = 1, lwd = 1, col = d)
     }
   }
   graphics::par(mfrow = c(1, 1))
+  return(invisible(DD))
 }
 #' Generates random samples from dirichlet distribution
 #'

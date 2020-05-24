@@ -11,7 +11,7 @@
 //' @param y measurements: dirichlet fractions/shares
 //' @param num_counts measurements: dirichlet-multinomial total counts per time
 //'   period (\code{T}-dimensional vector)
-//' @param Z_beta  result of regressor values i.e. z_{t} (matrix) multiplied by
+//' @param Regs_beta  result of regressor values i.e. z_{t} (matrix) multiplied by
 //'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
 //' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 //' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
@@ -28,7 +28,7 @@ arma::mat cbpf_as_cpp(const int& N,
                       const int& DD,
                       const arma::mat& y,
                       const arma::vec& num_counts,
-                      const arma::mat& Z_beta,
+                      const arma::mat& Regs_beta,
                       const arma::vec& sig_sq_x,
                       const arma::vec& phi_x,
                       const arma::vec& x_r) {
@@ -64,7 +64,7 @@ arma::mat cbpf_as_cpp(const int& N,
   //////////////////////////////////////////////////////////////////////////////
   // Sampling initial particles from prior
   for(int d = 0; d < DD; ++d) {
-    mmu = arma::as_scalar(Z_beta.submat(0, d, 0, d))/(1.0 - phi_x(d));;
+    mmu = arma::as_scalar(Regs_beta.submat(0, d, 0, d))/(1.0 - phi_x(d));;
     sdd = sqrt(sig_sq_x(d)/(1.0 - pow(phi_x(d), 2)));
     xa.submat(id_x(d), 0, id_x(d + 1) - 1, 0) = sample_init_prtcls(mmu, sdd, N);
   }
@@ -79,7 +79,7 @@ arma::mat cbpf_as_cpp(const int& N,
   for(int d = 0; d < DD; ++d) {
     eval_f = f_cpp(xa.submat(id_x(d), 0, id_x(d + 1) - 1, 0),
                    phi_x(d),
-                   as_scalar(Z_beta.submat(0, d, 0, d)));
+                   as_scalar(Regs_beta.submat(0, d, 0, d)));
     eval_f = eval_f.elem(a.col(0));
     xa.submat(id_x(d), 0, id_x(d + 1) - 1, 0) = propagate_bpf(eval_f, sqrt(sig_sq_x(d)), N);
   }
@@ -97,7 +97,7 @@ arma::mat cbpf_as_cpp(const int& N,
     a.col(t) = resample(w.col(t - 1), N, id_as_lnspc);
     // propagation
     for(int d = 0; d < DD; ++d) {
-      eval_f = f_cpp(xa.submat(id_x(d), t - 1, id_x(d + 1) - 1, t - 1), phi_x(d), as_scalar(Z_beta.submat(t, d, t, d)));
+      eval_f = f_cpp(xa.submat(id_x(d), t - 1, id_x(d + 1) - 1, t - 1), phi_x(d), as_scalar(Regs_beta.submat(t, d, t, d)));
       mean_diff.col(d) = eval_f - x_r(TT*d + t);
       eval_f = eval_f.elem(a.col(t));
       xa.submat(id_x(d), t, id_x(d + 1) - 1, t) = propagate_bpf(eval_f, sqrt(sig_sq_x(d)), N);

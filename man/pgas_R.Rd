@@ -4,7 +4,21 @@
 \alias{pgas_R}
 \title{Particle Gibbs with ancestor sampling}
 \usage{
-pgas_R(N, MM, NN, TT, DD, data, Z, priors, par_init, traj_init, true_states)
+pgas_R(
+  N,
+  MM,
+  NN,
+  TT,
+  DD,
+  data,
+  Z,
+  U,
+  priors,
+  par_init,
+  traj_init,
+  true_states,
+  smc_parallel = FALSE
+)
 }
 \arguments{
 \item{N}{number of particles}
@@ -23,7 +37,9 @@ fractions and/or number of counts per category (only the latter if
 measurements are from a multinomial, and both if measurements come from a
 multinomial-dirichlet)}
 
-\item{Z}{regressor matrix of Z_{t}'s}
+\item{Z}{regressor matrix of Z_{t}'s (standard regressor covariates)}
+
+\item{U}{regressor matrix of U_{t}'s (random/individual effects)}
 
 \item{priors}{inverteg gamma prior (hyyper-)parameters}
 
@@ -33,6 +49,9 @@ multinomial-dirichlet)}
 
 \item{true_states}{true laten states passed from simulated data for testing
 purposes}
+
+\item{smc_parallel}{logical; if \code{TRUE}, then the SMC part is run in
+paralle}
 }
 \value{
 a list with components being: all MCMC parameter draws and all drawn

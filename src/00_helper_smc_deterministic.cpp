@@ -9,13 +9,13 @@
 //' particles through time: it is applied per state component \code{d=1,...,DD}
 //' on a \code{Nx1}-dimensional state vector where \code{N} is the number of
 //' particles for a particular x_{t} at component \code{d}. This is the reason
-//' for \code{z_add} to be a scalar as it is the added regressor*beta change for
+//' for \code{regs_add} to be a scalar as it is the added regressor*beta change for
 //' some \code{t=1,...,T}.
 //'
 //' @param x_tt particle value in t-1 i.e. x_{t-1}; \code{Nx1}-dimensional
 //'   vector (double)
 //' @param phi_x autoregressive parameter (double)
-//' @param z_add result of regressor values i.e. z_{t} (vector) multiplied by
+//' @param regs_add result of regressor values i.e. z_{t} (vector) multiplied by
 //'   parameters/coefficients (vector) i.e. a scalar product (double)
 //' @return deterministic state transition (one-period ahead conditional mean)
 //'   as a \code{Nx1}-vector
@@ -23,10 +23,10 @@
 // [[Rcpp::export]]
 arma::vec f_cpp(const arma::vec& x_tt,
                 const double& phi_x,
-                const double& z_add) {
+                const double& regs_add) {
   int n = x_tt.size();
   arma::vec x_t(n);
-  x_t = phi_x * x_tt + z_add;
+  x_t = phi_x * x_tt + regs_add;
 
   return(x_t);
 }
