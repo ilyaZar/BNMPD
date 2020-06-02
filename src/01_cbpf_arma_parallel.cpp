@@ -45,6 +45,7 @@ Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec,
   Rcpp::List x_out_list(len_id_par);
   Rcpp::List x_out_names(len_id_par);
   for (int j = 0; j<len_id_par; j++) {
+    // this comment's a test to check if cheops pulling works
     x_out_names(j) = std::to_string(id_par_vec(j));
   }
 
