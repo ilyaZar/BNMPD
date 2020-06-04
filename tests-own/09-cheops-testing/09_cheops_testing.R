@@ -58,7 +58,7 @@ for (n in 1:NN) {
 task_indices <- splitIndices(NN, ncl = num_cores)
 task_indices <- lapply(task_indices, function(x) {x - 1})
 # task_indices <- 0:(NN - 1)
-cl <- makeCluster(num_cores, type = "FORCK")
+cl <- makeCluster(num_cores, type = "FORK")
 clusterExport(cl, varlist = c("num_particles", "TT", "DD",
                               "y", "num_counts",
                               "Z_beta",
@@ -85,4 +85,4 @@ for (n in 1:NN) {
 # clusterEvalQ(cl, ls())
 #
 #
-stopCluster(cl)
+# stopCluster(cl)
