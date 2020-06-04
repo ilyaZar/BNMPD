@@ -1,13 +1,16 @@
 library(parallel)
-library(Rmpi)
+# library(Rmpi)
 library(KZ)
 seed_nr <- 42 # 538 # sample(1:1000, 1) #42# 42 #
 init_at_true <- FALSE
 simul_u_beta <- TRUE
+
+print(getwd())
+
 source("./tests-own/09-smc-parallel/99_simulation_settings_true_vals.R")
 source("./tests-own/09-smc-parallel/99_simulation_settings_init.R")
 set.seed(seed_nr)
-num_cores <- parallel::detectCores() - 2
+num_cores <- strtoi(Sys.getenv(c("SLURM_NTASKS_PER_NODE")))
 
 y <- dataSim[[1]]$yraw
 num_counts <- dataSim[[1]]$num_counts
@@ -55,7 +58,7 @@ for (n in 1:NN) {
 task_indices <- splitIndices(NN, ncl = num_cores)
 task_indices <- lapply(task_indices, function(x) {x - 1})
 # task_indices <- 0:(NN - 1)
-cl <- makeCluster(num_cores, type = "MPI")
+cl <- makeCluster(num_cores, type = "FORCK")
 clusterExport(cl, varlist = c("num_particles", "TT", "DD",
                               "y", "num_counts",
                               "Z_beta",
