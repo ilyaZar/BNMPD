@@ -138,13 +138,15 @@ Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec,
     }
     ind = a.col(TT - 1);
     for (arma::uword t = TT-2; t >= 1; --t) {
-      t_ind = {t};
+      // t_ind = {t};
+      t_ind(0) = t;
       for (int d = 0; d < DD; ++d) {
         xa.submat(id_x(d), t, id_x(d + 1) - 1, t) = xa(ind + N*d, t_ind);
       }
       ind = a(ind, t_ind);
     }
-    t_ind = {0};
+    // t_ind = {0};
+    t_ind(0) = 0;
     for (int d = 0; d < DD; ++d) {
       xa.submat(id_x(d), 0, id_x(d + 1) - 1, 0) = xa(ind + N*d, t_ind);
     }
