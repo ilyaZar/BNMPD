@@ -7,8 +7,8 @@ simul_u_beta <- TRUE
 
 print(getwd())
 
-source("./tests-own/09-smc-parallel/99_simulation_settings_true_vals.R")
-source("./tests-own/09-smc-parallel/99_simulation_settings_init.R")
+source("./tests-own/09-cheops-testing/99_simulation_settings_true_vals.R")
+source("./tests-own/09-cheops-testing/99_simulation_settings_init.R")
 set.seed(seed_nr)
 num_cores <- strtoi(Sys.getenv(c("SLURM_NTASKS_PER_NODE")))
 
