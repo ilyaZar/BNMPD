@@ -85,4 +85,4 @@ for (n in 1:NN) {
 # clusterEvalQ(cl, ls())
 #
 #
-stopCluster(cl)
+# stopCluster(cl)
