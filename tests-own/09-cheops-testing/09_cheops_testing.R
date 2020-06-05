@@ -1,5 +1,5 @@
 library(parallel)
-# library(Rmpi)
+library(Rmpi)
 library(KZ)
 seed_nr <- 42 # 538 # sample(1:1000, 1) #42# 42 #
 init_at_true <- FALSE
@@ -33,32 +33,32 @@ for (d in 1:DD) {
   }
 }
 out_cpf_sequential <- vector("list", NN)
-seq_rs_seed_sequential <- seq(from = 1, to = NN, by = NN/num_cores)
-system.time(
-for (n in 1:NN) {
-  if (n %in% seq_rs_seed_sequential) {
-    set.seed(123)
-  }
-  # out_cpf <- KZ::cbpf_as_R(N = num_particles, TT = TT, DD = DD,
-  #                          y = y[, , n], num_counts = num_counts[, n],
-  #                          Z_beta = Z_beta[, , n],
-  #                          sig_sq_x = init_sig_sq_x[, 1],
-  #                          phi_x = init_phi_x[, 1],
-  #                          x_r = true_states[ , , n, drop = TRUE])
-  out_cpf_sequential[[n]] <- KZ::cbpf_as_cpp(N = num_particles,
-                                             TT = TT, DD = DD,
-                                             y = y[, , n], num_counts = num_counts[, n],
-                                             Regs_beta = Z_beta[, , n],
-                                             sig_sq_x = init_sig_sq_x[, 1],
-                                             phi_x = init_phi_x[, 1],
-                                             x_r = true_states[ , , n, drop = TRUE])
-  cat("Iteration number:", n, "\n")
-}
-)
+# seq_rs_seed_sequential <- seq(from = 1, to = NN, by = NN/num_cores)
+# system.time(
+# for (n in 1:NN) {
+#   if (n %in% seq_rs_seed_sequential) {
+#     set.seed(123)
+#   }
+#   # out_cpf <- KZ::cbpf_as_R(N = num_particles, TT = TT, DD = DD,
+#   #                          y = y[, , n], num_counts = num_counts[, n],
+#   #                          Z_beta = Z_beta[, , n],
+#   #                          sig_sq_x = init_sig_sq_x[, 1],
+#   #                          phi_x = init_phi_x[, 1],
+#   #                          x_r = true_states[ , , n, drop = TRUE])
+#   out_cpf_sequential[[n]] <- KZ::cbpf_as_cpp(N = num_particles,
+#                                              TT = TT, DD = DD,
+#                                              y = y[, , n], num_counts = num_counts[, n],
+#                                              Regs_beta = Z_beta[, , n],
+#                                              sig_sq_x = init_sig_sq_x[, 1],
+#                                              phi_x = init_phi_x[, 1],
+#                                              x_r = true_states[ , , n, drop = TRUE])
+#   cat("Iteration number:", n, "\n")
+# }
+# )
 task_indices <- splitIndices(NN, ncl = num_cores)
 task_indices <- lapply(task_indices, function(x) {x - 1})
 # task_indices <- 0:(NN - 1)
-cl <- makeCluster(num_cores, type = "FORK")
+cl <- makeCluster(num_cores, type = "MPI")
 clusterExport(cl, varlist = c("num_particles", "TT", "DD",
                               "y", "num_counts",
                               "Z_beta",
