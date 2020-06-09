@@ -233,7 +233,7 @@ pgas_out_2_list <- function(pgas_out, DD, NN, TT, MM, dim_bet_z, cpp = NULL) {
 #'   }
 #'
 #' @export
-pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues, TT) {
+pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues = NULL, TT) {
   par_names <- names(pgas_out)[-length(pgas_out)]
   num_par_names <- length(par_names) - 1
   bet_z_dim <- sapply(par_inits[[3]], length)
@@ -273,8 +273,11 @@ pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues, TT) {
   out$par_names_plots <- par_names_all_plots
   out$lab_names <- lab_names_all
   out$start_vals <- unlist(par_inits)
-  out$true_vals  <- c(par_trues$sig_sq[, 1, drop = TRUE],
-                      par_trues$phi[, 1, drop = TRUE],
-                      unlist(par_trues$bet_z))
+  if (!is.null(par_trues)) {
+    out$true_vals  <- c(par_trues$sig_sq[, 1, drop = TRUE],
+                        par_trues$phi[, 1, drop = TRUE],
+                        unlist(par_trues$bet_z))
+  }
+
   return(out)
 }

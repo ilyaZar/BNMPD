@@ -1,5 +1,5 @@
 library(parallel)
-library(Rmpi)
+# library(Rmpi)
 library(KZ)
 seed_nr <- 42 # 538 # sample(1:1000, 1) #42# 42 #
 init_at_true <- FALSE
@@ -58,7 +58,7 @@ out_cpf_sequential <- vector("list", NN)
 task_indices <- splitIndices(NN, ncl = num_cores)
 task_indices <- lapply(task_indices, function(x) {x - 1})
 # task_indices <- 0:(NN - 1)
-cl <- makeCluster(num_cores, type = "MPI")
+cl <- makeCluster(num_cores, type = "FORK")
 clusterExport(cl, varlist = c("num_particles", "TT", "DD",
                               "y", "num_counts",
                               "Z_beta",

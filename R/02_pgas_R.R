@@ -49,7 +49,6 @@ pgas_R <- function(N, MM, NN, TT, DD,
     par_init <- c(par_init, init_bet_u = list(rep(list(matrix(0, 2, NN)), times = DD)))
     u_null <- TRUE
   }
-
   dim_zet <- dim_bet_z
   dim_uet <- dim_bet_u
 
@@ -99,8 +98,13 @@ pgas_R <- function(N, MM, NN, TT, DD,
     } else {
       vcm_bet_u[[d]] <- priors[["vcm_u"]][[d]]
     }
+    # if(d == 2) browser()
     for (n in 1:NN) {
-      X[ , d, 1, n]  <- traj_init[d, n]
+      if (all.equal(dim(traj_init), c(TT, DD, NN))) {
+        X[ , d, 1, n]  <- traj_init[, d, n]
+      } else if (all.equal(dim(traj_init), c(DD, NN))) {
+        X[ , d, 1, n]  <- traj_init[d, n]
+      }
       # X2[ , d, 1, n] <- traj_init[d, n]
       bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], 1, n] <- par_init[["init_bet_u"]][[d]][, n]
 
