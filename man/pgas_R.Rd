@@ -17,7 +17,9 @@ pgas_R(
   par_init,
   traj_init,
   true_states,
-  smc_parallel = FALSE
+  smc_parallel = FALSE,
+  cluster_type = NULL,
+  num_cores
 )
 }
 \arguments{
@@ -52,6 +54,12 @@ purposes}
 
 \item{smc_parallel}{logical; if \code{TRUE}, then the SMC part is run in
 paralle}
+
+\item{cluster_type}{character string of either "PSOCK", "FORK", or "MPI";
+do not use "FORK" or "PSOCK" with CHEOPS. Do not use MPI with desktop unless
+openMPI is actually installed and the R package Rmpi is loaded.}
+
+\item{num_cores}{integer specifying the number of cores to use}
 }
 \value{
 a list with components being: all MCMC parameter draws and all drawn

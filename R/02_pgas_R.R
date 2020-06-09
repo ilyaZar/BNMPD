@@ -23,6 +23,10 @@
 #'   purposes
 #' @param smc_parallel logical; if \code{TRUE}, then the SMC part is run in
 #' paralle
+#' @param cluster_type character string of either "PSOCK", "FORK", or "MPI";
+#'   do not use "FORK" or "PSOCK" with CHEOPS. Do not use MPI with desktop unless
+#'   openMPI is actually installed and the R package Rmpi is loaded.
+#' @param num_cores integer specifying the number of cores to use
 #'
 #' @return a list with components being: all MCMC parameter draws and all drawn
 #'   state trajectories (smc outuput)
@@ -33,7 +37,12 @@ pgas_R <- function(N, MM, NN, TT, DD,
                    par_init,
                    traj_init,
                    true_states,
-                   smc_parallel = FALSE) {
+                   smc_parallel = FALSE,
+                   cluster_type = NULL,
+                   num_cores) {
+  if (isTRUE(smc_parallel) && is.null(cluster_type)) {
+    stop("Cluster type not specified although 'smc_parallel=TRUE'.")
+  }
   # Initialize data containers
   y <- data[[1]]
   num_counts <- data[[2]]
@@ -129,14 +138,14 @@ pgas_R <- function(N, MM, NN, TT, DD,
   ## II. run cBPF and use output as first conditioning trajectory
   if (smc_parallel) {
     envir_par <- environment()
-    num_cores <- parallel::detectCores() - 2
+    # num_cores <- parallel::detectCores() - 2
 
     # seq_rs_seed_sequential <- seq(from = 1, to = NN, by = NN/num_cores)
 
     task_indices <- parallel::splitIndices(NN, ncl = num_cores)
     task_indices <- lapply(task_indices, function(x) {x - 1})
 
-    cl <- parallel::makeCluster(num_cores, type = "PSOCK")
+    cl <- parallel::makeCluster(num_cores, type = cluster_type)
     parallel::clusterExport(cl, varlist = c("N", "TT", "DD",
                                             "y", "num_counts"),
                             envir = envir_par)
