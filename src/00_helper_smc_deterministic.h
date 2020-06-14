@@ -15,10 +15,17 @@ double w_as_c(const arma::mat& mean_diff,
               const arma::vec& log_weights,
               const int& N,
               const arma::uvec& id_as_lnspc);
-arma::vec w_cbpf(const int& N,
-                 const int& DD,
-                 const int& num_counts,
-                 const arma::rowvec& y,
-                 const arma::vec& xa,
-                 const arma::uvec& id_x);
+arma::vec w_log_cbpf(const int& N,
+                     const int& DD,
+                     const int& num_counts,
+                     const arma::rowvec& y,
+                     const arma::vec& xa,
+                     const arma::uvec& id_x);
+arma::vec w_log_cbpf_bh(const int& N,
+                        const int& DD,
+                        const int& num_counts,
+                        const arma::rowvec& y,
+                        const arma::vec& xa,
+                        const arma::uvec& id_x);
+arma::vec w_normalize_cpp(const arma::vec& w);
 #endif

@@ -1,4 +1,11 @@
 #include "00_helper_smc_deterministic.h"
+// #include <boost/numeric/ublas/matrix.hpp>
+// #include <boost/multiprecision/mpfr.hpp>
+// #include <boost/math/special_functions/gamma.hpp>
+
+// namespace mp = boost::multiprecision;
+// namespace bmat = boost::numeric::ublas;
+//
 //' State transition
 //'
 //' Helper function computing the deterministic state transition, or, to put
@@ -64,9 +71,15 @@ double w_as_c(const arma::mat& mean_diff,
     w_as(i) =  -0.5*arma::as_scalar(dot(mean_diff.row(i), vcm_diag % mean_diff.row(i)));
   }
   w_as = w_as + log_weights;
+  if (w_as.has_nan() || w_as.has_inf()) {
+    Rcpp::warning("NaN or INF values in ANCESTOR SAMPLING weight computation!");
+  }
   w_as_max = w_as.max();
   w_as = exp(w_as - w_as_max);
   w_as = w_as/sum(w_as);
+  if (w_as.has_nan() || w_as.has_inf()) {
+    Rcpp::warning("NaN or INF values in ANCESTOR SAMPLING weight NORMALIZATION computation!");
+  }
 
   as_draw = Rcpp::sample(N, 1, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(w_as)))[0] - 1;
   // as_draw = arma::as_scalar(Rcpp::RcppArmadillo::sample(id_as_lnspc, 1, true, w_as));
@@ -98,17 +111,17 @@ double w_as_c(const arma::mat& mean_diff,
 //' @return particle weights
 //'
 // [[Rcpp::export]]
-arma::vec w_cbpf(const int& N,
-                 const int& DD,
-                 const int& num_counts,
-                 const arma::rowvec& y,
-                 const arma::vec& xa,
-                 const arma::uvec& id_x) {
+arma::vec w_log_cbpf(const int& N,
+                     const int& DD,
+                     const int& num_counts,
+                     const arma::rowvec& y,
+                     const arma::vec& xa,
+                     const arma::uvec& id_x) {
   arma::vec log_lhs;
   arma::vec log_rhs;
   arma::vec w_log;
   arma::vec w_tilde;
-  double w_max;
+  // double w_max;
 
   arma::mat alphas(N, DD);
   for (int d = 0; d < DD; ++d) {
@@ -127,10 +140,97 @@ arma::vec w_cbpf(const int& N,
   log_rhs = sum(lgamma(alphas_add_y) - lgamma(alphas), 1);
   w_log   = log_lhs + log_rhs;
 
+  // w_max  = w_log.max();
+  // w_log = exp(w_log - w_max);
+  // return(w_log/sum(w_log));
+  if (w_log.has_nan() || w_log.has_inf()) {
+    Rcpp::warning("NaN or INF values in weight computation!");
+  }
+  return(w_log);
+}
+//' SMC weights; the BH-version for higher numerical precision
+//'
+//' Computes normalized bootrstrap particle weights; same as \code{w_log_cbpf()}
+//' but uses higher precision containers to deal with over- and underflow
+//' issues.
+//'
+//' Can currently be used for Dirichlet-multinommial model only.
+//'
+//' @param N number of particles (int)
+//' @param DD number of state components (dirichlet fractions or number of
+//'   components in the multivariate latent state component) (int)
+//' @param num_counts number of overall counts per t=1,...,TT (part of the
+//'   measurement data) i.e. a scalar int-value for the current time period
+//' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+//'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+//' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+//'   whole state vector has \code{DD} components and \code{N} is the number of
+//'   particles)
+//' @param id_x index vector giving the location of the N-dimensional components
+//'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+//'   \code{xa}
+//' @return particle weights
+//'
+// [[Rcpp::export]]
+arma::vec w_log_cbpf_bh(const int& N,
+                        const int& DD,
+                        const int& num_counts,
+                        const arma::rowvec& y,
+                        const arma::vec& xa,
+                        const arma::uvec& id_x) {
+  arma::vec log_lhs;
+  arma::vec log_rhs;
+  arma::vec w_log;
+  arma::vec w_tilde;
+  // double w_max;
+
+  // std::ma
+  // bmat::matrix<mp::mpf_float_100> alphas2 (N, DD);
+
+  arma::mat alphas(N, DD);
+  for (int d = 0; d < DD; ++d) {
+    alphas.col(d) = xa.subvec(id_x(d), id_x(d + 1) - 1);
+  }
+  alphas = exp(alphas);
+
+  arma::vec rs_alphas(N);
+  rs_alphas = sum(alphas, 1);
+
+  arma::mat alphas_add_y;
+  alphas_add_y = alphas;
+  alphas_add_y.each_row() += y;
+
+  log_lhs = lgamma(rs_alphas) - lgamma(rs_alphas + num_counts);
+  log_rhs = sum(lgamma(alphas_add_y) - lgamma(alphas), 1);
+  w_log   = log_lhs + log_rhs;
+
+  // w_max  = w_log.max();
+  // w_log = exp(w_log - w_max);
+  // return(w_log/sum(w_log));
+  if (w_log.has_nan() || w_log.has_inf()) {
+    Rcpp::warning("NaN or INF values in weight computation!");
+  }
+  return(w_log);
+}
+//' Normalization of log-weights
+//'
+//' Both, SMC weights and ancestor sampling weights possible. The function does
+//' the 'max-exp'-trick to make computations stable and avoid under- or
+//' overflows.
+//'
+//' @param w \code{arma::vec} vector of log-weights which will be normalized
+//' @return an \code{arma::vec} vector of the same dimension as the input \code{w} that
+//'   contains the normalized weights
+//'
+// [[Rcpp::export]]
+arma::vec w_normalize_cpp(const arma::vec& w) {
+  double w_max;
+  arma::vec w_log;
+  w_log = w;
   w_max  = w_log.max();
   w_log = exp(w_log - w_max);
+  if (w_log.has_nan() || w_log.has_inf()) {
+    Rcpp::warning("NaN or INF values in weight NORMALIZATION computation!");
+  }
   return(w_log/sum(w_log));
-  //   if (sum(is.nan(w) | is.na(w))) {
-  //     stop("NAN or NA values in weight computation!")
-  //   }
 }

@@ -131,8 +131,49 @@ w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
 #'   \code{xa}
 #' @return particle weights
 #'
-w_cbpf <- function(N, DD, num_counts, y, xa, id_x) {
-    .Call(`_KZ_w_cbpf`, N, DD, num_counts, y, xa, id_x)
+w_log_cbpf <- function(N, DD, num_counts, y, xa, id_x) {
+    .Call(`_KZ_w_log_cbpf`, N, DD, num_counts, y, xa, id_x)
+}
+
+#' SMC weights; the BH-version for higher numerical precision
+#'
+#' Computes normalized bootrstrap particle weights; same as \code{w_log_cbpf()}
+#' but uses higher precision containers to deal with over- and underflow
+#' issues.
+#'
+#' Can currently be used for Dirichlet-multinommial model only.
+#'
+#' @param N number of particles (int)
+#' @param DD number of state components (dirichlet fractions or number of
+#'   components in the multivariate latent state component) (int)
+#' @param num_counts number of overall counts per t=1,...,TT (part of the
+#'   measurement data) i.e. a scalar int-value for the current time period
+#' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+#'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+#' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+#'   whole state vector has \code{DD} components and \code{N} is the number of
+#'   particles)
+#' @param id_x index vector giving the location of the N-dimensional components
+#'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+#'   \code{xa}
+#' @return particle weights
+#'
+w_log_cbpf_bh <- function(N, DD, num_counts, y, xa, id_x) {
+    .Call(`_KZ_w_log_cbpf_bh`, N, DD, num_counts, y, xa, id_x)
+}
+
+#' Normalization of log-weights
+#'
+#' Both, SMC weights and ancestor sampling weights possible. The function does
+#' the 'max-exp'-trick to make computations stable and avoid under- or
+#' overflows.
+#'
+#' @param w \code{arma::vec} vector of log-weights which will be normalized
+#' @return an \code{arma::vec} vector of the same dimension as the input \code{w} that
+#'   contains the normalized weights
+#'
+w_normalize_cpp <- function(w) {
+    .Call(`_KZ_w_normalize_cpp`, w)
 }
 
 #' Resampling function

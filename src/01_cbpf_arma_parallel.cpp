@@ -72,6 +72,7 @@ Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec,
     }
     // weights
     arma::mat w(N, TT);
+    arma::vec w_log(N);
     // ancestors
     arma::umat a(N, TT);
     arma::uvec id_as_lnspc = arma::linspace<arma::uvec>(0L, N - 1L, N);
@@ -115,7 +116,8 @@ Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec,
       xa(id_x(d + 1) - 1, 0) = x_r(0, d);//x_r(TT*d + 0);
     }
     // weighting
-    w.col(0) = w_cbpf(N, DD, num_counts(0), y.row(0), xa.col(0), id_x);
+    w_log = w_log_cbpf(N, DD, num_counts(0), y.row(0), xa.col(0), id_x);
+    w.col(0) = w_normalize_cpp(w_log);
     //////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS /////////////////////
     //////////////////////////////////////////////////////////////////////////////
@@ -134,9 +136,10 @@ Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec,
         xa(id_x(d + 1) - 1, t) = x_r(t, d);//x_r(TT*d + t);
       }
       // ancestor sampling
-      a(N - 1, t) = w_as_c(mean_diff, vcm_diag, log(w.col(t - 1)), N, id_as_lnspc);
+      a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
       // weighting
-      w.col(t) = w_cbpf(N, DD, num_counts(t), y.row(t), xa.col(t), id_x);
+      w_log = w_log_cbpf(N, DD, num_counts(t), y.row(t), xa.col(t), id_x);
+      w.col(t) = w_normalize_cpp(w_log);
     }
     ind = a.col(TT - 1);
     for (arma::uword t = TT-2; t >= 1; --t) {

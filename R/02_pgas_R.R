@@ -67,51 +67,57 @@ pgas_R <- function(N, MM, NN, TT, DD,
 
   id_bet_u  <- c(0, cumsum(dim_bet_u))
   id_uet    <- c(0, cumsum(dim_uet))
-  id_reg_u  <- c(0, cumsum(dim_uet + 1))
+  # id_reg_u  <- c(0, cumsum(dim_uet + 1))
 
   out_cpf <- matrix(0, nrow = TT, ncol = DD)
   X       <- array(0, dim = c(TT, DD, MM, NN))
-  X2       <- array(0, dim = c(TT, DD, MM, NN))
+  # X2      <- array(0, dim = c(TT, DD, MM, NN))
 
   sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
   phi_x    <- matrix(0, nrow = DD, ncol = MM)
   bet_z    <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
   bet_u    <- array(0,  c(sum(dim_bet_u), MM, NN))
 
-  prior_vcm_bet_z  <- list()
-  vcm_bet_u        <- list()
-  vcm_x_errors_rhs <- list()
-  vcm_x_errors_lhs <- list()
-  vcm_x_errors     <- matrix(0, nrow = TT - 1, ncol = TT - 1)
+  prior_vcm_bet_z   <- vector("list", DD)
+  prior_vcm_bet_u1  <- numeric(DD)
+  prior_vcm_bet_u2  <- vector("list", DD)
+  dof_vcm_bet_u     <- numeric(DD)
+  vcm_bet_u         <- vector("list", DD)
+  vcm_x_errors_rhs  <- vector("list", DD)
+  vcm_x_errors_lhs  <- vector("list", DD)
+  vcm_x_errors      <- matrix(0, nrow = TT - 1, ncol = TT - 1)
   for (d in 1:DD) {
     vcm_x_errors_rhs[[d]] <- matrix(0, nrow = TT - 1, ncol = TT - 1)
     vcm_x_errors_lhs[[d]] <- array(0, c(TT - 1, TT - 1, NN))
+    vcm_bet_u[[d]]        <- array(0, c(dim_bet_u[d], dim_bet_u[d], MM))
   }
 
-  Z_beta <- array(0, c(TT, DD, NN))
-  regs_z <- array(0, c(TT - 1, sum(dim_zet) + DD, NN))
-  U_beta <- array(0, c(TT, DD, NN))
-  regs_u <- array(0, c(TT - 1, sum(dim_uet) + DD, NN))
+  Z_beta    <- array(0, c(TT, DD, NN))
+  regs_z    <- array(0, c(TT - 1, sum(dim_zet) + DD, NN))
+  U_beta    <- array(0, c(TT, DD, NN))
+  regs_u    <- array(0, c(TT - 1, sum(dim_uet) + DD, NN))
   Regs_beta <- array(0, c(TT, DD, NN))
   # Initialize priors:
   prior_ig_a     <- priors[["ig_a"]] + NN*(TT - 1)/2
   prior_ig_b     <- priors[["ig_b"]]
-  ## I. Set states to deterministic starting values, initialize parameters, regressor values, and priors
+  ## I. Set states to deterministic starting values, initialize parameters, regressor values
   for (d in 1:DD) {
     sig_sq_x[d, 1]                              <- par_init[["init_sig_sq"]][d, 1]
     phi_x[d, 1]                                 <- par_init[["init_phi"]][[d, 1]]
     bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], 1] <- par_init[["init_bet_z"]][[d]]
-    prior_vcm_bet_z[[d]] <- diag(1/1000, dim_bet_z[d] + 1)
+    prior_vcm_bet_z[[d]]  <- diag(1/1000, dim_bet_z[d] + 1)
+    prior_vcm_bet_u2[[d]] <- diag(1/1000, dim_bet_u[d])
+    prior_vcm_bet_u1[d]   <- dim_bet_u[d] + 1
+    dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u1[d]
     if (u_null) {
-      vcm_bet_u[[d]] <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
+      vcm_bet_u[[d]][, , 1] <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
     } else {
-      vcm_bet_u[[d]] <- priors[["vcm_u"]][[d]]
+      vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_bet_u"]][[d]]
     }
-    # if(d == 2) browser()
     for (n in 1:NN) {
-      if (all.equal(dim(traj_init), c(TT, DD, NN))) {
+      if (identical(dim(traj_init), as.integer(TT, DD, NN))) {
         X[ , d, 1, n]  <- traj_init[, d, n]
-      } else if (all.equal(dim(traj_init), c(DD, NN))) {
+      } else if (identical(dim(traj_init), as.integer(c(DD, NN)))) {
         X[ , d, 1, n]  <- traj_init[d, n]
       }
       # X2[ , d, 1, n] <- traj_init[d, n]
@@ -121,7 +127,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
       regs_u[, (id_uet[d] + 1 + 1*d):(id_uet[d + 1] + 1*d), n] <- U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n]
 
       Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
-      vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]] %*% t(Umat)
+      vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]][, , 1] %*% t(Umat)
       try(isSymmetric(vcm_x_errors_lhs[[d]][, , n]))
 
       Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
@@ -138,10 +144,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
   ## II. run cBPF and use output as first conditioning trajectory
   if (smc_parallel) {
     envir_par <- environment()
-    # num_cores <- parallel::detectCores() - 2
-
-    # seq_rs_seed_sequential <- seq(from = 1, to = NN, by = NN/num_cores)
-
+    # browser()
     task_indices <- parallel::splitIndices(NN, ncl = num_cores)
     task_indices <- lapply(task_indices, function(x) {x - 1})
 
@@ -168,23 +171,18 @@ pgas_R <- function(N, MM, NN, TT, DD,
     }
     cat("Iteration number:", 1, "\n")
   } else {
+    # seq_rs_seed_sequential <- seq(from = 1, to = NN, by = NN/num_cores)
     for (n in 1:NN) {
       # if (n %in% seq_rs_seed_sequential) {
       #   set.seed(123)
       # }
-      # out_cpf <- cbpf_as_R(N = N, TT = TT, DD = DD,
-      #                      y = y[, , n], num_counts = num_counts[, n],
-      #                      Regs_beta = Regs_beta[, , n],
-      #                      sig_sq_x = sig_sq_x[, 1],
-      #                      phi_x = phi_x[, 1],
-      #                      x_r = X[ , , 1, n])
-      out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
-                             y = y[, , n], num_counts = num_counts[, n],
-                             Regs_beta = Regs_beta[, , n],
-                             sig_sq_x = sig_sq_x[, 1],
-                             phi_x = phi_x[, 1],
-                             x_r = X[ , , 1, n])
-      # out_cpf <- true_states[ , , n]
+      # out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
+      #                        y = y[, , n], num_counts = num_counts[, n],
+      #                        Regs_beta = Regs_beta[, , n],
+      #                        sig_sq_x = sig_sq_x[, 1],
+      #                        phi_x = phi_x[, 1],
+      #                        x_r = X[ , , 1, n])
+      out_cpf <- true_states[ , , n]
       for (d in 1:DD) {
         X[ , d, 1, n] <- out_cpf[, d]
       }
@@ -201,17 +199,30 @@ pgas_R <- function(N, MM, NN, TT, DD,
       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1]
       err_sig_sq_x_all <- 0
       for (n in 1:NN) {
+        bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n] <- bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m - 1, n]
         err_sig_sq_x <- X[2:TT, d, m - 1, n] - f(x_tt = X[1:(TT - 1), d, m - 1, n],
                                                  regs  = cbind(Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n],
                                                                U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n]),
                                                  phi_x = phi_x[d, m - 1],
                                                  bet_reg = c(bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1],
-                                                             bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], 1, n]))
+                                                             bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m - 1, n]))
         err_sig_sq_x_all <- err_sig_sq_x_all + crossprod(err_sig_sq_x)
       }
       sig_sq_x[d, m]  <- 1/stats::rgamma(n = 1,
                                          prior_ig_a,
                                          prior_ig_b + err_sig_sq_x_all/2)
+      #
+      #
+      #
+      #
+      #
+      tmp_scale_mat_vcm_bet_u <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
+      for (n in 1:NN) {
+        tmp_scale_mat_vcm_bet_u <- tmp_scale_mat_vcm_bet_u + tcrossprod(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n])
+      }
+      tmp_scale_mat_vcm_bet_u <- solve(tmp_scale_mat_vcm_bet_u + prior_vcm_bet_u2[[d]])
+      vcm_bet_u[[d]][, , m] <- solve(stats::rWishart(1, dof_vcm_bet_u[d], tmp_scale_mat_vcm_bet_u)[, , 1])
+      # vcm_bet_u[[d]][, , m] <- vcm_bet_u[[d]][, , m - 1]
     }
     for (d in 1:DD) {
       # sig_sq_x_current <- sig_sq_x[d, 1]
@@ -219,6 +230,26 @@ pgas_R <- function(N, MM, NN, TT, DD,
       # sig_sq_x[d, m] <- sig_sq_x[d, 1]
       # sig_sq_x[d, m] <- sig_sq_x[d, m]
       vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x_current, times = TT - 1))
+      #
+      #
+      #
+      #
+      #
+      for (n in 1:NN) {
+        Omega_bet_u <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
+        mu_bet_u    <- matrix(0, nrow = dim_bet_u[d], ncol = 1)
+        x_tilde_n   <- X[2:TT, d, m - 1, n] - f(x_tt = X[1:(TT - 1), d, m - 1, n],
+                                                regs  = Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n],
+                                                phi_x = phi_x[d, m - 1],
+                                                bet_reg = bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1])
+        Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
+        vmc_x_errors_rhs_inv <- solve(vcm_x_errors_rhs[[d]])
+        Omega_bet_u <- crossprod(Umat, vmc_x_errors_rhs_inv) %*% Umat + solve(vcm_bet_u[[d]][, , m])
+        Omega_bet_u <- solve(Omega_bet_u)
+        mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_rhs_inv) %*% x_tilde_n)
+
+        bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n] <- rnorm_fast_n1(mu = mu_bet_u, Sigma = Omega_bet_u, dim_bet_u[d])
+      }
       ##########################################################################
       # check_list_cpp <- bet_z_components(d, DD, NN, TT, dim_bet_z[d] + 1,
       #                                    vcm_x_errors_lhs[[d]],
@@ -276,6 +307,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- beta_sampled[-1]
       for (n in 1:NN) {
         Z_beta[, d, n] <- Z[, (id_zet[d] + 1):id_zet[d + 1], n] %*% bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m]
+        U_beta[, d, n] <- matrix(U[, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT) %*% matrix(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n, drop = FALSE])
         Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
       }
     }
@@ -304,19 +336,13 @@ pgas_R <- function(N, MM, NN, TT, DD,
         # if (n %in% seq_rs_seed_sequential) {
         #   set.seed(123)
         # }
-        # out_cpf <- cbpf_as_R(N = N, TT = TT, DD = DD,
-        #                      y = y[, , n], num_counts = num_counts[, n],
-        #                      Regs_beta = Regs_beta[, , n],
-        #                      sig_sq_x = sig_sq_x[, m],
-        #                      phi_x = phi_x[, m],
-        #                      x_r = X[ , , m - 1, n])
-        out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
-                               y = y[, , n], num_counts = num_counts[, n],
-                               Regs_beta = Regs_beta[, , n],
-                               sig_sq_x = sig_sq_x[, m],
-                               phi_x = phi_x[, m],
-                               x_r = X[ , , m - 1, n])
-        # out_cpf <- true_states[ , , n]
+        # out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
+        #                        y = y[, , n], num_counts = num_counts[, n],
+        #                        Regs_beta = Regs_beta[, , n],
+        #                        sig_sq_x = sig_sq_x[, m],
+        #                        phi_x = phi_x[, m],
+        #                        x_r = X[ , , m - 1, n])
+        out_cpf <- true_states[ , , n]
         for (d in 1:DD) {
           X[ , d, m, n] <- out_cpf[, d]
         }
@@ -331,7 +357,8 @@ pgas_R <- function(N, MM, NN, TT, DD,
   }
   return(list(sig_sq_x = sig_sq_x,
               phi_x = phi_x,
-              bet_x = bet_z,
+              bet_z = bet_z,
+              bet_u = bet_u,
               x = X))
 }
 # monitor_pgas_states(states_drawn = cbind(exp(X1[1, ]), exp(X2[1, ]),

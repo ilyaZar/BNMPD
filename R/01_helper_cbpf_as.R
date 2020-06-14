@@ -25,7 +25,7 @@ helper_as <- function(M, x) {
 #' @param D number of categories/classes
 #'
 #' @return \code{N}-dimensional vector of normalized weights
-w_cbpf_R <- function(y, N, xa, num_counts, D = 6) {
+w_cbpf_R <- function(y, N, xa, num_counts, D = DD) {
   alphas <- matrix(exp(xa), nrow = N, ncol = D)
   alphas[alphas == 0] <- 1e-300
   # log_Balpha <- rowSums(lgamma(alphas)) - lgamma(rowSums(alphas))
@@ -38,18 +38,29 @@ w_cbpf_R <- function(y, N, xa, num_counts, D = 6) {
   log_rhs <- .rowSums(lgamma(alphas + ys) - lgamma(alphas),
                       m = N, n = D)
   w <- log_lhs + log_rhs
-  w_max   <- max(w)
-  w_tilde <- exp(w - w_max)
-  w  <- w_tilde/sum(w_tilde)
-  # if (sum(is.nan(w) | is.na(w))) {
-  #   stop("NAN or NA values in weight computation!")
-  # }
-  # w
+  # w_max   <- max(w)
+  # w_tilde <- exp(w - w_max)
+  # w  <- w_tilde/sum(w_tilde)
+  if (any(is.nan(w)) || any(is.na(w))) {
+    browser()
+    stop("NAN or NA values in weight computation!")
+  }
+  return(w)
   # list(.rowSums(x = alphas, m = N, n = D))
   # list(-lgamma(.rowSums(x = alphas, m = N, n = D) + num_counts))
   # lgamma(.rowSums(x = alphas, m = N, n = D)),
   # -lgamma(.rowSums(x = alphas, m = N, n = D) + num_counts),
   # lgamma(.rowSums(x = alphas, m = N, n = D)) - lgamma(.rowSums(x = alphas, m = N, n = D) + num_counts)
+}
+w_normalize <- function(w) {
+  w_max   <- max(w)
+  w_tilde <- exp(w - w_max)
+  w  <- w_tilde/sum(w_tilde)
+  if (any(is.nan(w)) || any(is.na(w)) || any(w < 0)) {
+    browser()
+    stop("NAN or NA values in weight computation!")
+  }
+  return(w)
 }
 #' State transition
 #'

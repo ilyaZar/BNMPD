@@ -87,9 +87,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// w_cbpf
-arma::vec w_cbpf(const int& N, const int& DD, const int& num_counts, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
-RcppExport SEXP _KZ_w_cbpf(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+// w_log_cbpf
+arma::vec w_log_cbpf(const int& N, const int& DD, const int& num_counts, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
+RcppExport SEXP _KZ_w_log_cbpf(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -99,7 +99,34 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::rowvec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type xa(xaSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type id_x(id_xSEXP);
-    rcpp_result_gen = Rcpp::wrap(w_cbpf(N, DD, num_counts, y, xa, id_x));
+    rcpp_result_gen = Rcpp::wrap(w_log_cbpf(N, DD, num_counts, y, xa, id_x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// w_log_cbpf_bh
+arma::vec w_log_cbpf_bh(const int& N, const int& DD, const int& num_counts, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
+RcppExport SEXP _KZ_w_log_cbpf_bh(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const int& >::type num_counts(num_countsSEXP);
+    Rcpp::traits::input_parameter< const arma::rowvec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type xa(xaSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type id_x(id_xSEXP);
+    rcpp_result_gen = Rcpp::wrap(w_log_cbpf_bh(N, DD, num_counts, y, xa, id_x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// w_normalize_cpp
+arma::vec w_normalize_cpp(const arma::vec& w);
+RcppExport SEXP _KZ_w_normalize_cpp(SEXP wSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type w(wSEXP);
+    rcpp_result_gen = Rcpp::wrap(w_normalize_cpp(w));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -243,7 +270,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_KZ_mvrnorm_c", (DL_FUNC) &_KZ_mvrnorm_c, 2},
     {"_KZ_f_cpp", (DL_FUNC) &_KZ_f_cpp, 3},
     {"_KZ_w_as_c", (DL_FUNC) &_KZ_w_as_c, 5},
-    {"_KZ_w_cbpf", (DL_FUNC) &_KZ_w_cbpf, 6},
+    {"_KZ_w_log_cbpf", (DL_FUNC) &_KZ_w_log_cbpf, 6},
+    {"_KZ_w_log_cbpf_bh", (DL_FUNC) &_KZ_w_log_cbpf_bh, 6},
+    {"_KZ_w_normalize_cpp", (DL_FUNC) &_KZ_w_normalize_cpp, 1},
     {"_KZ_resample", (DL_FUNC) &_KZ_resample, 3},
     {"_KZ_sample_final_trajectory", (DL_FUNC) &_KZ_sample_final_trajectory, 3},
     {"_KZ_sample_init_prtcls", (DL_FUNC) &_KZ_sample_init_prtcls, 3},

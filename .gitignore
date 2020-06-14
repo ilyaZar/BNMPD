@@ -15,6 +15,7 @@
 *.sh
 *.o
 *.so
+*.tar.gz
 /data/*
 /doc/*
 /literature/*

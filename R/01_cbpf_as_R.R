@@ -37,6 +37,7 @@ cbpf_as_R <- function(N, TT, DD,
   a  <- matrix(0, nrow = N, ncol = TT)
   # weights
   w  <- matrix(0, nrow = N, ncol = TT)
+  w_log <- numeric(N)
   # ancestor weights
   m1 <- matrix(0, nrow = N, ncol = DD)
   # I. INITIALIZATION (t = 0)
@@ -60,10 +61,11 @@ cbpf_as_R <- function(N, TT, DD,
     xa[id_x[d + 1] - 1, 1] <- x_r[TT*(d - 1) + 1]
   }
   # weighting
-  w[, 1] <- w_cbpf_R(y = y[1, , drop = FALSE],
+  w_log <- w_cbpf_R(y = y[1, , drop = FALSE],
                      N = N,
                      xa  = xa[, 1],
                      num_counts = num_counts[1])
+  w[, 1] <- w_normalize(w_log)
   # II. FOR t = 2,..,T
   for (t in 2:TT) {
     # resampling
@@ -81,16 +83,17 @@ cbpf_as_R <- function(N, TT, DD,
     # ancestor sampling
     m2 <- diag(sig_sq_x^(-1))
     m          <- -1/2 * helper_as(M = m2, x = m1)
-    w_log_as   <- log(w[, t - 1]) + m
+    w_log_as   <- w_log + m
     w_max_as   <- max(w_log_as)
     w_tilde_as <- exp(w_log_as - w_max_as)
     w_as       <- w_tilde_as/sum(w_tilde_as)
     a[N, t]    <- sample.int(n = N, size = 1, replace = TRUE, prob = w_as)
     # weighting
-    w[, t]   <- w_cbpf_R(y = y[t, , drop = FALSE],
-                         N = N,
-                         xa  = xa[, t],
-                         num_counts = num_counts[t])
+    w_log   <- w_cbpf_R(y = y[t, , drop = FALSE],
+                        N = N,
+                        xa  = xa[, t],
+                        num_counts = num_counts[t])
+    w[, t] <- w_normalize(w_log)
   }
   # trajectories
   ind <- a[, TT]

@@ -83,6 +83,11 @@ monitor_pgas_mcmc <- function(current, total, num, burn,
 # cat(do.call(sprintf, args = args_print1))
 # cat(do.call(sprintf, args = args_print2))
 # cat(do.call(sprintf, args = args_print3))
+#
+#
+#
+#
+#
 #' PGAS state monitoring
 #'
 #' Displaying the sampled state trajectories of the current and the previoius
@@ -200,8 +205,6 @@ pgas_out_2_list <- function(pgas_out, DD, NN, TT, MM, dim_bet_z, cpp = NULL) {
                   "xtraj")
   return(out)
 }
-#'
-#'
 #' Transforms pgas output from \code{pgas_cpp()} or \code{pgas_R()} to a format
 #' suitable for the function
 #' \code{pmcmcDiagnostics::analyse_mcmc_convergence2()}
@@ -219,7 +222,9 @@ pgas_out_2_list <- function(pgas_out, DD, NN, TT, MM, dim_bet_z, cpp = NULL) {
 #'   }
 #' @param par_inits list of initializaiton values for parameter s
 #' @param par_trues list of true values for parameters
+#' @param NN number of cross sectional units
 #' @param TT number of time periods
+#' @param DD dimension of the measurements (latent states)
 #'
 #' @return a list of 6 elements:
 #' \itemize{
@@ -233,12 +238,18 @@ pgas_out_2_list <- function(pgas_out, DD, NN, TT, MM, dim_bet_z, cpp = NULL) {
 #'   }
 #'
 #' @export
-pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues = NULL, TT) {
+pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues = NULL, NN, TT, DD) {
+  # browser()
   par_names <- names(pgas_out)[-length(pgas_out)]
-  num_par_names <- length(par_names) - 1
-  bet_z_dim <- sapply(par_inits[[3]], length)
-  DD        <- length(bet_z_dim)
-  num_pars  <- 2*DD + sum(bet_z_dim)
+  num_par_names <- length(par_names)
+  bet_z_dim <- sapply(par_inits[[3]][1:DD], length)
+  if (!is.null(par_inits[[4]])) {
+    bet_u_dim <- sapply(par_inits[[4]][1:DD], nrow)
+    Unull <- FALSE
+  } else {
+    Unull <- TRUE
+  }
+  num_pars  <- 2*DD + sum(bet_z_dim) + sum(bet_u_dim) * NN
   out        <- vector("list", 8)
   names(out) <- c("mcmc_sims",
                   "states",
@@ -252,7 +263,7 @@ pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues = NULL, TT) {
   lab_names_all       <- character(num_pars)
   par_names_all_plots <- character(num_pars)
 
-  for (i in 1:num_par_names) {
+  for (i in 1:(num_par_names - 2)) {
     par_names_all[1:DD + DD*(i - 1)] <- paste0(par_names[i], "_", 1:DD)
     lab_names_all[1:DD + DD*(i - 1)] <- paste0(par_names[i], "_", 1:DD)
     par_names_all_plots[1:DD + DD*(i - 1)] <- paste0(par_names[i], ": component d = ", 1:DD)
@@ -264,20 +275,44 @@ pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues = NULL, TT) {
     lab_names_all[id_start:id_end] <- paste0("bet_z", 1:bet_z_dim[d], "_d=", d)
     par_names_all_plots[id_start:id_end] <- paste0("bet_z", 1:bet_z_dim[d], "_d=", d)
   }
+  # browser()
+  if (!Unull) {
+    for (n in 1:NN) {
+      for (d in 1:DD) {
+        id_start <- 2*DD + sum(bet_z_dim) + sum(c(1, bet_u_dim)[1:d]) + sum(bet_u_dim[1:DD])*(n - 1)
+        id_end   <- 2*DD + sum(bet_z_dim) + sum(bet_u_dim[1:d]) + sum(bet_u_dim[1:DD])*(n - 1)
+        par_names_all[id_start:id_end] <- paste0("bet_u=", 1:bet_u_dim[d], "_d=", d, "_n=", n)
+        lab_names_all[id_start:id_end] <- paste0("bet_u=", 1:bet_u_dim[d], "_d=", d, "_n=", n)
+        par_names_all_plots[id_start:id_end] <- paste0("bet_u=", 1:bet_u_dim[d], "_d=", d, "_n=", n)
+      }
+    }
+  }
   out$num_pars  <- num_pars
-  out$mcmc_sims <- cbind(t(pgas_out[[1]]),
-                         t(pgas_out[[2]]),
-                         t(pgas_out[[3]]))
-  out$states    <- pgas_out[[4]]
-  out$par_names <- par_names_all
+  mcmc_sims_tmp <- cbind(t(pgas_out[[1]]), t(pgas_out[[2]]), t(pgas_out[[3]]))
+  if (!Unull) {
+    for (n in 1:NN) {
+      mcmc_sims_tmp <- cbind(mcmc_sims_tmp, t(pgas_out[[4]][, , n]))
+    }
+    out$mcmc_sims       <- mcmc_sims_tmp
+    out$states          <- pgas_out[[5]]
+  } else {
+    out$mcmc_sims       <- mcmc_sims_tmp
+    out$states          <- pgas_out[[4]]
+  }
+  out$par_names       <- par_names_all
   out$par_names_plots <- par_names_all_plots
-  out$lab_names <- lab_names_all
-  out$start_vals <- unlist(par_inits)
+  out$lab_names       <- lab_names_all
+  if (!Unull) {
+    out$start_vals      <- unname(c(unlist(par_inits[1:3]),
+                                    as.vector(Reduce(function(x, y) {return(rbind(x,y))}, par_inits[[4]]))))
+  } else {
+    out$start_vals      <- unname(c(unlist(par_inits[1:3])))
+  }
   if (!is.null(par_trues)) {
     out$true_vals  <- c(par_trues$sig_sq[, 1, drop = TRUE],
                         par_trues$phi[, 1, drop = TRUE],
-                        unlist(par_trues$bet_z))
+                        unlist(par_trues$bet_z),
+                        as.vector(Reduce(function(x, y) {return(rbind(x,y))}, par_trues[[4]])))
   }
-
   return(out)
 }
