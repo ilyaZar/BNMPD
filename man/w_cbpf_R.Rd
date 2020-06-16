@@ -4,7 +4,7 @@
 \alias{w_cbpf_R}
 \title{Computes normalized particle weights}
 \usage{
-w_cbpf_R(y, N, xa, num_counts, D = 6)
+w_cbpf_R(y, N, xa, num_counts, D = DD)
 }
 \arguments{
 \item{y}{measurements: dirichlet-multinomial fractions/shares; matrix of

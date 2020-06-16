@@ -359,6 +359,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
               phi_x = phi_x,
               bet_z = bet_z,
               bet_u = bet_u,
+              vcm_bet_u = vcm_bet_u,
               x = X))
 }
 # monitor_pgas_states(states_drawn = cbind(exp(X1[1, ]), exp(X2[1, ]),

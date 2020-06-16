@@ -294,10 +294,10 @@ pgas_out_2_diagnostics <- function(pgas_out, par_inits, par_trues = NULL, NN, TT
       mcmc_sims_tmp <- cbind(mcmc_sims_tmp, t(pgas_out[[4]][, , n]))
     }
     out$mcmc_sims       <- mcmc_sims_tmp
-    out$states          <- pgas_out[[5]]
+    out$states          <- pgas_out[["x"]]
   } else {
     out$mcmc_sims       <- mcmc_sims_tmp
-    out$states          <- pgas_out[[4]]
+    out$states          <- pgas_out[["x"]]
   }
   out$par_names       <- par_names_all
   out$par_names_plots <- par_names_all_plots
