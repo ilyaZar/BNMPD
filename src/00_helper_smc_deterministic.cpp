@@ -1,10 +1,10 @@
 #include "00_helper_smc_deterministic.h"
-// #include <boost/numeric/ublas/matrix.hpp>
-// #include <boost/multiprecision/mpfr.hpp>
-// #include <boost/math/special_functions/gamma.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/multiprecision/mpfr.hpp>
+#include <boost/math/special_functions/gamma.hpp>
 
-// namespace mp = boost::multiprecision;
-// namespace bmat = boost::numeric::ublas;
+namespace mp = boost::multiprecision;
+namespace bmat = boost::numeric::ublas;
 //
 //' State transition
 //'
@@ -89,7 +89,7 @@ double w_as_c(const arma::mat& mean_diff,
   // return w_as/sum(w_as);
   //
 }
-//' SMC weights
+//' SMC log-weights for the Dirichlet Multinomial
 //'
 //' Computes normalized bootrstrap particle weights.
 //'
@@ -111,12 +111,12 @@ double w_as_c(const arma::mat& mean_diff,
 //' @return particle weights
 //'
 // [[Rcpp::export]]
-arma::vec w_log_cbpf(const int& N,
-                     const int& DD,
-                     const int& num_counts,
-                     const arma::rowvec& y,
-                     const arma::vec& xa,
-                     const arma::uvec& id_x) {
+arma::vec w_log_cbpf_dm(const int& N,
+                        const int& DD,
+                        const int& num_counts,
+                        const arma::rowvec& y,
+                        const arma::vec& xa,
+                        const arma::uvec& id_x) {
   arma::vec log_lhs;
   arma::vec log_rhs;
   arma::vec w_log;
@@ -148,11 +148,11 @@ arma::vec w_log_cbpf(const int& N,
   }
   return(w_log);
 }
-//' SMC weights; the BH-version for higher numerical precision
+//' SMC log-weights for the Dirichlet Multinomial; the BH-version
 //'
-//' Computes normalized bootrstrap particle weights; same as \code{w_log_cbpf()}
-//' but uses higher precision containers to deal with over- and underflow
-//' issues.
+//' Computes normalized bootrstrap particle weights; same as
+//' \code{w_log_d_cbpf()} but uses higher precision containers to deal with
+//' over- and underflow issues.
 //'
 //' Can currently be used for Dirichlet-multinommial model only.
 //'
@@ -172,12 +172,12 @@ arma::vec w_log_cbpf(const int& N,
 //' @return particle weights
 //'
 // [[Rcpp::export]]
-arma::vec w_log_cbpf_bh(const int& N,
-                        const int& DD,
-                        const int& num_counts,
-                        const arma::rowvec& y,
-                        const arma::vec& xa,
-                        const arma::uvec& id_x) {
+arma::vec w_log_cbpf_dm_bh(const int& N,
+                           const int& DD,
+                           const int& num_counts,
+                           const arma::rowvec& y,
+                           const arma::vec& xa,
+                           const arma::uvec& id_x) {
   arma::vec log_lhs;
   arma::vec log_rhs;
   arma::vec w_log;

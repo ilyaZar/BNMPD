@@ -1,4 +1,4 @@
-#' Runs a conditional SMC (bootstrap particle filter)
+#' Runs a conditional SMC (bootstrap particle filter) for the Dir. Mult. model
 #'
 #' Runs a conditional bootstrap particle filter with ancestor sampling used
 #' within a PGAS procedure e.g. called via \code{pgas_R()}.
@@ -19,7 +19,7 @@
 #' @return arma::matrix of DD components: DD columns are \code{NxTT}-dimensional
 #'   matrices each containing the conditional BPF output per d'th component
 #' @export
-cbpf_as_R <- function(N, TT, DD,
+cbpf_as_dm_R <- function(N, TT, DD,
                       y, num_counts,
                       Z_beta,
                       sig_sq_x,
@@ -61,10 +61,10 @@ cbpf_as_R <- function(N, TT, DD,
     xa[id_x[d + 1] - 1, 1] <- x_r[TT*(d - 1) + 1]
   }
   # weighting
-  w_log <- w_cbpf_R(y = y[1, , drop = FALSE],
-                     N = N,
-                     xa  = xa[, 1],
-                     num_counts = num_counts[1])
+  w_log <- w_cbpf_dm_R(y = y[1, , drop = FALSE],
+                       N = N,
+                       xa  = xa[, 1],
+                       num_counts = num_counts[1])
   w[, 1] <- w_normalize(w_log)
   # II. FOR t = 2,..,T
   for (t in 2:TT) {
@@ -89,10 +89,10 @@ cbpf_as_R <- function(N, TT, DD,
     w_as       <- w_tilde_as/sum(w_tilde_as)
     a[N, t]    <- sample.int(n = N, size = 1, replace = TRUE, prob = w_as)
     # weighting
-    w_log   <- w_cbpf_R(y = y[t, , drop = FALSE],
-                        N = N,
-                        xa  = xa[, t],
-                        num_counts = num_counts[t])
+    w_log   <- w_cbpf_dm_R(y = y[t, , drop = FALSE],
+                           N = N,
+                           xa  = xa[, t],
+                           num_counts = num_counts[t])
     w[, t] <- w_normalize(w_log)
   }
   # trajectories

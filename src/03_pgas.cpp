@@ -104,7 +104,7 @@ Rcpp::List pgas_cpp(const int& N,
     Z_beta.col(d) = Z.submat(0, id_bet(d), TT - 1, id_bet(d + 1) - 1) * bet.submat(id_bet(d), 0, id_bet(d + 1) - 1, 0);
   }
   for (int n = 0; n < NN; ++n) {
-    out_cpf.slice(n) = cbpf_as_cpp(N, TT, DD,
+    out_cpf.slice(n) = cbpf_as_dm_cpp(N, TT, DD,
                   y.slice(n), num_counts.col(n),
                   Z_beta,
                   sig_sq_x.col(0),
@@ -138,7 +138,7 @@ Rcpp::List pgas_cpp(const int& N,
         bet.submat(id_bet(d), m, id_bet(d + 1) - 1, m) =  (mu_xa(d, 0)).subvec(1, (dim_pars(d) - 2));
         Z_beta.col(d) = Z.submat(0, id_bet(d), TT - 1, id_bet(d + 1) - 1) * bet.submat(id_bet(d), m, id_bet(d + 1) - 1, m);
       }
-      out_cpf.slice(n) = cbpf_as_cpp(N, TT, DD,
+      out_cpf.slice(n) = cbpf_as_dm_cpp(N, TT, DD,
                     y.slice(n), num_counts.col(n),
                     Z_beta,
                     sig_sq_x.col(m),

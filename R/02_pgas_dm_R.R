@@ -31,15 +31,15 @@
 #' @return a list with components being: all MCMC parameter draws and all drawn
 #'   state trajectories (smc outuput)
 #' @export
-pgas_R <- function(N, MM, NN, TT, DD,
-                   data, Z, U,
-                   priors,
-                   par_init,
-                   traj_init,
-                   true_states,
-                   smc_parallel = FALSE,
-                   cluster_type = NULL,
-                   num_cores) {
+pgas_dm_R <- function(N, MM, NN, TT, DD,
+                      data, Z, U,
+                      priors,
+                      par_init,
+                      traj_init,
+                      true_states,
+                      smc_parallel = FALSE,
+                      cluster_type = NULL,
+                      num_cores) {
   if (isTRUE(smc_parallel) && is.null(cluster_type)) {
     stop("Cluster type not specified although 'smc_parallel=TRUE'.")
   }
@@ -159,7 +159,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
                             envir = envir_par)
     # parallel::clusterEvalQ(cl, set.seed(123))
     out_cpf <- parallel::clusterApply(cl, x = task_indices,
-                                      KZ::cbpf_as_cpp_par,
+                                      KZ::cbpf_as_dm_cpp_par,
                                       N, TT, DD, y,
                                       num_counts, Regs_beta,
                                       sig_sq_x[, 1],
@@ -176,7 +176,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
       # if (n %in% seq_rs_seed_sequential) {
       #   set.seed(123)
       # }
-      # out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
+      # out_cpf <- cbpf_as_dm_cpp(N = N, TT = TT, DD = DD,
       #                        y = y[, , n], num_counts = num_counts[, n],
       #                        Regs_beta = Regs_beta[, , n],
       #                        sig_sq_x = sig_sq_x[, 1],
@@ -320,7 +320,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
                               envir = envir_par)
       # parallel::clusterEvalQ(cl, set.seed(123))
       out_cpf <- parallel::clusterApply(cl, x = task_indices,
-                                        KZ::cbpf_as_cpp_par,
+                                        KZ::cbpf_as_dm_cpp_par,
                                         N, TT, DD, y,
                                         num_counts, Regs_beta,
                                         sig_sq_x[, m],
@@ -336,7 +336,7 @@ pgas_R <- function(N, MM, NN, TT, DD,
         # if (n %in% seq_rs_seed_sequential) {
         #   set.seed(123)
         # }
-        # out_cpf <- cbpf_as_cpp(N = N, TT = TT, DD = DD,
+        # out_cpf <- cbpf_as_dm_cpp(N = N, TT = TT, DD = DD,
         #                        y = y[, , n], num_counts = num_counts[, n],
         #                        Regs_beta = Regs_beta[, , n],
         #                        sig_sq_x = sig_sq_x[, m],

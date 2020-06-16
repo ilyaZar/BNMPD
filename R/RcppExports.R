@@ -110,7 +110,7 @@ w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
     .Call(`_KZ_w_as_c`, mean_diff, vcm_diag, log_weights, N, id_as_lnspc)
 }
 
-#' SMC weights
+#' SMC log-weights for the Dirichlet Multinomial
 #'
 #' Computes normalized bootrstrap particle weights.
 #'
@@ -131,15 +131,15 @@ w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
 #'   \code{xa}
 #' @return particle weights
 #'
-w_log_cbpf <- function(N, DD, num_counts, y, xa, id_x) {
-    .Call(`_KZ_w_log_cbpf`, N, DD, num_counts, y, xa, id_x)
+w_log_cbpf_dm <- function(N, DD, num_counts, y, xa, id_x) {
+    .Call(`_KZ_w_log_cbpf_dm`, N, DD, num_counts, y, xa, id_x)
 }
 
-#' SMC weights; the BH-version for higher numerical precision
+#' SMC log-weights for the Dirichlet Multinomial; the BH-version
 #'
-#' Computes normalized bootrstrap particle weights; same as \code{w_log_cbpf()}
-#' but uses higher precision containers to deal with over- and underflow
-#' issues.
+#' Computes normalized bootrstrap particle weights; same as
+#' \code{w_log_d_cbpf()} but uses higher precision containers to deal with
+#' over- and underflow issues.
 #'
 #' Can currently be used for Dirichlet-multinommial model only.
 #'
@@ -158,8 +158,8 @@ w_log_cbpf <- function(N, DD, num_counts, y, xa, id_x) {
 #'   \code{xa}
 #' @return particle weights
 #'
-w_log_cbpf_bh <- function(N, DD, num_counts, y, xa, id_x) {
-    .Call(`_KZ_w_log_cbpf_bh`, N, DD, num_counts, y, xa, id_x)
+w_log_cbpf_dm_bh <- function(N, DD, num_counts, y, xa, id_x) {
+    .Call(`_KZ_w_log_cbpf_dm_bh`, N, DD, num_counts, y, xa, id_x)
 }
 
 #' Normalization of log-weights
@@ -239,7 +239,7 @@ propagate_bpf <- function(mmu, sdd, N) {
     .Call(`_KZ_propagate_bpf`, mmu, sdd, N)
 }
 
-#' Runs a conditional SMC (bootstrap particle filter)
+#' Runs a conditional SMC (bootstrap particle filter) for the Dir. Mult. model
 #'
 #' Runs a conditional bootstrap particle filter with ancestor sampling and arma
 #' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
@@ -262,11 +262,11 @@ propagate_bpf <- function(mmu, sdd, N) {
 #'   \code{NxTT}-dimensional matrices each containing the conditional BPF
 #'   output per d'th component
 #' @export
-cbpf_as_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r) {
-    .Call(`_KZ_cbpf_as_cpp`, N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r)
+cbpf_as_dm_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r) {
+    .Call(`_KZ_cbpf_as_dm_cpp`, N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r)
 }
 
-#' Runs a conditional SMC (bootstrap particle filter)
+#' Runs a paralle version of the conditional SMC (BPF) for the Dir. Mult. model
 #'
 #' Runs a conditional bootstrap particle filter with ancestor sampling and arma
 #' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
@@ -296,8 +296,8 @@ cbpf_as_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_KZ_cbpf_as_cpp_par`, id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_dm_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_KZ_cbpf_as_dm_cpp_par`, id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Particle Gibbs with ancestor sampling (PGAS)

@@ -1,5 +1,5 @@
 #include "01_cbpf_arma.h"
-//' Runs a conditional SMC (bootstrap particle filter)
+//' Runs a conditional SMC (bootstrap particle filter) for the Dir. Mult. model
 //'
 //' Runs a conditional bootstrap particle filter with ancestor sampling and arma
 //' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
@@ -23,15 +23,15 @@
 //'   output per d'th component
 //' @export
 //[[Rcpp::export]]
-arma::mat cbpf_as_cpp(const int& N,
-                      const int& TT,
-                      const int& DD,
-                      const arma::mat& y,
-                      const arma::vec& num_counts,
-                      const arma::mat& Regs_beta,
-                      const arma::vec& sig_sq_x,
-                      const arma::vec& phi_x,
-                      const arma::vec& x_r) {
+arma::mat cbpf_as_dm_cpp(const int& N,
+                         const int& TT,
+                         const int& DD,
+                         const arma::mat& y,
+                         const arma::vec& num_counts,
+                         const arma::mat& Regs_beta,
+                         const arma::vec& sig_sq_x,
+                         const arma::vec& phi_x,
+                         const arma::vec& x_r) {
   //////////////////////////////////////////////////////////////////////////////
   ///////////////////////////// 0. DATA CONTAINERS /////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -89,7 +89,7 @@ arma::mat cbpf_as_cpp(const int& N,
     xa(id_x(d + 1) - 1, 0) = x_r(TT*d + 0);
   }
   // weighting
-  w_log = w_log_cbpf(N, DD, num_counts(0), y.row(0), xa.col(0), id_x);
+  w_log = w_log_cbpf_dm(N, DD, num_counts(0), y.row(0), xa.col(0), id_x);
   w.col(0) = w_normalize_cpp(w_log);
   //////////////////////////////////////////////////////////////////////////////
   ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS /////////////////////
@@ -111,7 +111,7 @@ arma::mat cbpf_as_cpp(const int& N,
     // ancestor sampling
     a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
     // weighting
-    w_log = w_log_cbpf(N, DD, num_counts(t), y.row(t), xa.col(t), id_x);
+    w_log = w_log_cbpf_dm(N, DD, num_counts(t), y.row(t), xa.col(t), id_x);
     w.col(t) = w_normalize_cpp(w_log);
   }
   ind = a.col(TT - 1);

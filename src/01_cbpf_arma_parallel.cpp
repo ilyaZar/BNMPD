@@ -1,5 +1,5 @@
 #include "01_cbpf_arma.h"
-//' Runs a conditional SMC (bootstrap particle filter)
+//' Runs a paralle version of the conditional SMC (BPF) for the Dir. Mult. model
 //'
 //' Runs a conditional bootstrap particle filter with ancestor sampling and arma
 //' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
@@ -30,16 +30,16 @@
 //' @export
 //'
 //[[Rcpp::export]]
-Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec,
-                           const int& N,
-                           const int& TT,
-                           const int& DD,
-                           const arma::cube& y_all,
-                           const arma::mat& num_counts_all,
-                           const arma::cube& Regs_beta_all,
-                           const arma::vec& sig_sq_x,
-                           const arma::vec& phi_x,
-                           const arma::cube& x_r_all) {
+Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_par_vec,
+                              const int& N,
+                              const int& TT,
+                              const int& DD,
+                              const arma::cube& y_all,
+                              const arma::mat& num_counts_all,
+                              const arma::cube& Regs_beta_all,
+                              const arma::vec& sig_sq_x,
+                              const arma::vec& phi_x,
+                              const arma::cube& x_r_all) {
   int len_id_par = id_par_vec.size();
   int id_par = 0;
   Rcpp::List x_out_list(len_id_par);
@@ -116,7 +116,7 @@ Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec,
       xa(id_x(d + 1) - 1, 0) = x_r(0, d);//x_r(TT*d + 0);
     }
     // weighting
-    w_log = w_log_cbpf(N, DD, num_counts(0), y.row(0), xa.col(0), id_x);
+    w_log = w_log_cbpf_dm(N, DD, num_counts(0), y.row(0), xa.col(0), id_x);
     w.col(0) = w_normalize_cpp(w_log);
     //////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS /////////////////////
@@ -138,7 +138,7 @@ Rcpp::List cbpf_as_cpp_par(const Rcpp::IntegerVector& id_par_vec,
       // ancestor sampling
       a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
       // weighting
-      w_log = w_log_cbpf(N, DD, num_counts(t), y.row(t), xa.col(t), id_x);
+      w_log = w_log_cbpf_dm(N, DD, num_counts(t), y.row(t), xa.col(t), id_x);
       w.col(t) = w_normalize_cpp(w_log);
     }
     ind = a.col(TT - 1);
