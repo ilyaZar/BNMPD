@@ -1,11 +1,5 @@
 #include "00_helper_smc_deterministic.h"
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/multiprecision/mpfr.hpp>
-#include <boost/math/special_functions/gamma.hpp>
 
-namespace mp = boost::multiprecision;
-namespace bmat = boost::numeric::ublas;
-//
 //' State transition
 //'
 //' Helper function computing the deterministic state transition, or, to put
@@ -63,16 +57,29 @@ double w_as_c(const arma::mat& mean_diff,
               const arma::uvec& id_as_lnspc) {
   int len = mean_diff.n_rows;
   int len2 = mean_diff.n_cols;
-  double w_as_max;
-  double as_draw;
+  double w_log_min = 0;
+  double w_as_max = 0;
+  double as_draw = 0;
   arma::vec w_as(len);
   arma::mat w_as2(len, len2);
   for(int i = 0;  i<len; i++) {
     w_as(i) =  -0.5*arma::as_scalar(dot(mean_diff.row(i), vcm_diag % mean_diff.row(i)));
   }
   w_as = w_as + log_weights;
-  if (w_as.has_nan() || w_as.has_inf()) {
+  if (w_as.has_inf()) {
     Rcpp::warning("NaN or INF values in ANCESTOR SAMPLING weight computation!");
+    w_log_min = w_as.min();
+    w_as.replace(arma::datum::inf, w_log_min);
+  }
+  if (!all(w_as)) {
+    Rcpp::warning("ZERO values in weight computation!");
+    w_log_min = w_as.min();
+    w_as.replace(0, w_log_min);
+  }
+  if (w_as.has_nan()) {
+    Rcpp::warning("NAN values in weight computation!");
+    w_log_min = w_as.min();
+    w_as.replace(arma::datum::nan, w_log_min);
   }
   w_as_max = w_as.max();
   w_as = exp(w_as - w_as_max);
@@ -85,9 +92,6 @@ double w_as_c(const arma::mat& mean_diff,
   // as_draw = arma::as_scalar(Rcpp::RcppArmadillo::sample(id_as_lnspc, 1, true, w_as));
 
   return(as_draw);
-
-  // return w_as/sum(w_as);
-  //
 }
 //' SMC log-weights for the Dirichlet Multinomial
 //'
@@ -122,7 +126,10 @@ arma::vec w_log_cbpf_dm(const int& N,
   arma::vec w_log;
   arma::vec w_tilde;
   // double w_max;
+  double w_log_min = 0;
 
+  arma::mat y_mat(N, DD, arma::fill::zeros);
+  y_mat.each_row() += y;
   arma::mat alphas(N, DD);
   for (int d = 0; d < DD; ++d) {
     alphas.col(d) = xa.subvec(id_x(d), id_x(d + 1) - 1);
@@ -136,16 +143,37 @@ arma::vec w_log_cbpf_dm(const int& N,
   alphas_add_y = alphas;
   alphas_add_y.each_row() += y;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // OLD PROBABLY WRONG VERSION ////////////////////////////////////////////////
   log_lhs = lgamma(rs_alphas) - lgamma(rs_alphas + num_counts);
   log_rhs = sum(lgamma(alphas_add_y) - lgamma(alphas), 1);
+  //////////////////////////////////////////////////////////////////////////////
+  // log_lhs = lgamma(num_counts + 1) + lgamma(rs_alphas) - lgamma(rs_alphas + num_counts);
+  // log_rhs = sum(lgamma(alphas_add_y) - lgamma(y_mat + 1) - lgamma(alphas), 1);
   w_log   = log_lhs + log_rhs;
+  if (w_log.has_inf()) {
+    Rcpp::warning("INF values in weight computation!");
+    w_log_min = w_log.min();
+    w_log.replace(arma::datum::inf, w_log_min);
+    // w_log = w_log_cbpf_dm_bh(N, DD, num_counts, y, xa, id_x);
+  }
+  if (!all(w_log)) {
+    Rcpp::warning("ZERO values in weight computation!");
+    w_log_min = w_log.min();
+    w_log.replace(0, w_log_min);
+  }
+  if (w_log.has_nan()) {
+    Rcpp::warning("NAN values in weight computation!");
+    w_log_min = w_log.min();
+    w_log.replace(arma::datum::nan, w_log_min);
+  }
+
+
 
   // w_max  = w_log.max();
   // w_log = exp(w_log - w_max);
   // return(w_log/sum(w_log));
-  if (w_log.has_nan() || w_log.has_inf()) {
-    Rcpp::warning("NaN or INF values in weight computation!");
-  }
+
   return(w_log);
 }
 //' SMC log-weights for the Dirichlet Multinomial; the BH-version
@@ -178,38 +206,36 @@ arma::vec w_log_cbpf_dm_bh(const int& N,
                            const arma::rowvec& y,
                            const arma::vec& xa,
                            const arma::uvec& id_x) {
-  arma::vec log_lhs;
-  arma::vec log_rhs;
-  arma::vec w_log;
-  arma::vec w_tilde;
-  // double w_max;
+  double out = 0;
 
-  // std::ma
-  // bmat::matrix<mp::mpf_float_100> alphas2 (N, DD);
+  arma::vec w_log(N);
 
-  arma::mat alphas(N, DD);
-  for (int d = 0; d < DD; ++d) {
-    alphas.col(d) = xa.subvec(id_x(d), id_x(d + 1) - 1);
+  std::vector<mp::mpf_float_50> y2(DD);
+  std::vector<mp::mpf_float_50> x2(DD);
+
+  mp::mpf_float_50 n2(num_counts);
+  mp::mpf_float_50 log_lhs(0);
+  mp::mpf_float_50 log_rhs(0);
+  mp::mpf_float_50 sum_exp_x(0);
+
+  for(int n = 0; n < N; ++n) {
+    log_rhs = 0;
+    sum_exp_x = 0;
+    for(int d = 0; d<DD; ++d) {
+      y2[d] = y(d);
+      x2[d] = exp(xa(id_x(d) + n));
+
+      sum_exp_x += x2[d];
+
+      log_rhs += mp::lgamma(y2[d] + x2[d]);
+      log_rhs -= mp::lgamma(x2[d]); //(mp::lgamma(y2[d] + 1) + mp::lgamma(x2[d]))
+    }
+    log_lhs = mp::lgamma(sum_exp_x) - mp::lgamma(n2 + sum_exp_x);
+    // log_lhs = mp::lgamma(n2 + 1) + mp::lgamma(sum_exp_x) - mp::lgamma(n2 + sum_exp_x);
+    out = (log_lhs + log_rhs).convert_to<double>();
+    w_log(n) = out;
   }
-  alphas = exp(alphas);
 
-  arma::vec rs_alphas(N);
-  rs_alphas = sum(alphas, 1);
-
-  arma::mat alphas_add_y;
-  alphas_add_y = alphas;
-  alphas_add_y.each_row() += y;
-
-  log_lhs = lgamma(rs_alphas) - lgamma(rs_alphas + num_counts);
-  log_rhs = sum(lgamma(alphas_add_y) - lgamma(alphas), 1);
-  w_log   = log_lhs + log_rhs;
-
-  // w_max  = w_log.max();
-  // w_log = exp(w_log - w_max);
-  // return(w_log/sum(w_log));
-  if (w_log.has_nan() || w_log.has_inf()) {
-    Rcpp::warning("NaN or INF values in weight computation!");
-  }
   return(w_log);
 }
 //' Normalization of log-weights

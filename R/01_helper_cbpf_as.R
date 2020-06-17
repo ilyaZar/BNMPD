@@ -57,7 +57,7 @@ w_cbpf_m_R <- function(y, N, xa, num_counts, D = DD) {
 #' @return \code{N}-dimensional vector of normalized weights
 w_cbpf_dm_R <- function(y, N, xa, num_counts, D = DD) {
   alphas <- matrix(exp(xa), nrow = N, ncol = D)
-  alphas[alphas == 0] <- 1e-300
+  # alphas[alphas == 0] <- 1e-300
   # log_Balpha <- rowSums(lgamma(alphas)) - lgamma(rowSums(alphas))
   # log_denom  <- (alphas - 1) %*% t(log(y))
   # w <- log_denom - log_Balpha
@@ -70,8 +70,8 @@ w_cbpf_dm_R <- function(y, N, xa, num_counts, D = DD) {
   w <- log_lhs + log_rhs
 
   if (any(is.nan(w)) || any(is.na(w))) {
-    browser()
-    stop("NAN or NA values in weight computation!")
+    # browser()
+    # stop("NAN or NA values in weight computation!")
   }
   return(w)
   # list(.rowSums(x = alphas, m = N, n = D))

@@ -4,6 +4,11 @@
 #include "99_config.h"
 #include <RcppArmadillo.h>
 
+#include <boost/multiprecision/mpfr.hpp>
+#include <boost/math/special_functions/gamma.hpp>
+
+namespace mp = boost::multiprecision;
+
 arma::vec f_cpp(const arma::vec& x_tt,
                 const double& phi_x,
                 const double& regs_add);

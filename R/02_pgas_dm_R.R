@@ -40,6 +40,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
                       smc_parallel = FALSE,
                       cluster_type = NULL,
                       num_cores) {
+  options(warn = 1)
   if (isTRUE(smc_parallel) && is.null(cluster_type)) {
     stop("Cluster type not specified although 'smc_parallel=TRUE'.")
   }
@@ -176,17 +177,18 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       # if (n %in% seq_rs_seed_sequential) {
       #   set.seed(123)
       # }
+      # browser()
       # out_cpf <- cbpf_as_dm_cpp(N = N, TT = TT, DD = DD,
-      #                        y = y[, , n], num_counts = num_counts[, n],
-      #                        Regs_beta = Regs_beta[, , n],
-      #                        sig_sq_x = sig_sq_x[, 1],
-      #                        phi_x = phi_x[, 1],
-      #                        x_r = X[ , , 1, n])
+      #                           y = y[, , n], num_counts = num_counts[, n],
+      #                           Regs_beta = Regs_beta[, , n],
+      #                           sig_sq_x = sig_sq_x[, 1],
+      #                           phi_x = phi_x[, 1],
+      #                           x_r = X[ , , 1, n])
       out_cpf <- true_states[ , , n]
       for (d in 1:DD) {
         X[ , d, 1, n] <- out_cpf[, d]
       }
-      cat("Iteration number:", n, "\n")
+      # cat("Iteration number:", n, "\n")
     }
   }
   # print(identical(X[ , , 1, ], X2[ , , 1, ]))
@@ -225,11 +227,9 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       # vcm_bet_u[[d]][, , m] <- vcm_bet_u[[d]][, , m - 1]
     }
     for (d in 1:DD) {
-      # sig_sq_x_current <- sig_sq_x[d, 1]
-      sig_sq_x_current <- sig_sq_x[d, m]
-      # sig_sq_x[d, m] <- sig_sq_x[d, 1]
-      # sig_sq_x[d, m] <- sig_sq_x[d, m]
-      vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x_current, times = TT - 1))
+      vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x[d, m], times = TT - 1))
+      vmc_x_errors_rhs_inv  <- solve(vcm_x_errors_rhs[[d]])
+      vcm_bet_u_inv         <- solve(vcm_bet_u[[d]][, , m])
       #
       #
       #
@@ -243,8 +243,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
                                                 phi_x = phi_x[d, m - 1],
                                                 bet_reg = bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1])
         Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
-        vmc_x_errors_rhs_inv <- solve(vcm_x_errors_rhs[[d]])
-        Omega_bet_u <- crossprod(Umat, vmc_x_errors_rhs_inv) %*% Umat + solve(vcm_bet_u[[d]][, , m])
+        Omega_bet_u <- crossprod(Umat, vmc_x_errors_rhs_inv) %*% Umat + vcm_bet_u_inv
         Omega_bet_u <- solve(Omega_bet_u)
         mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_rhs_inv) %*% x_tilde_n)
 
@@ -272,11 +271,13 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       #
       omega_tmp_all <- 0
       mu_tmp_all <- 0
+      # if (m %in% (c(2,30))) browser()
       for (n in 1:NN) {
         regs_z[, id_reg_z[d] + 1, n]  <- X[1:(TT - 1), d, m - 1, n]
         x_lhs        <- X[2:TT, d, m - 1, n]
 
-        # vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x[d, m], times = TT - 1))
+        Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
+        vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]][, , m] %*% t(Umat)
         vcm_x_errors          <- vcm_x_errors_lhs[[d]][, , n] + vcm_x_errors_rhs[[d]]
         vcm_x_errors          <- solve(vcm_x_errors)
 
@@ -336,17 +337,18 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
         # if (n %in% seq_rs_seed_sequential) {
         #   set.seed(123)
         # }
+        # browser()
         # out_cpf <- cbpf_as_dm_cpp(N = N, TT = TT, DD = DD,
-        #                        y = y[, , n], num_counts = num_counts[, n],
-        #                        Regs_beta = Regs_beta[, , n],
-        #                        sig_sq_x = sig_sq_x[, m],
-        #                        phi_x = phi_x[, m],
-        #                        x_r = X[ , , m - 1, n])
+        #                           y = y[, , n], num_counts = num_counts[, n],
+        #                           Regs_beta = Regs_beta[, , n],
+        #                           sig_sq_x = sig_sq_x[, m],
+        #                           phi_x = phi_x[, m],
+        #                           x_r = X[ , , m - 1, n])
         out_cpf <- true_states[ , , n]
         for (d in 1:DD) {
           X[ , d, m, n] <- out_cpf[, d]
         }
-        cat("Iteration number:", n, "\n")
+        # cat("Iteration number:", n, "\n")
       }
     }
     # print(identical(X[ , , m, ], X2[ , , m, ]))
@@ -355,6 +357,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
   if (smc_parallel) {
     parallel::stopCluster(cl)
   }
+  options(warn = 0)
   return(list(sig_sq_x = sig_sq_x,
               phi_x = phi_x,
               bet_z = bet_z,
