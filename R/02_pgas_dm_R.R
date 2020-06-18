@@ -320,6 +320,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
                                               "X"),
                               envir = envir_par)
       # parallel::clusterEvalQ(cl, set.seed(123))
+      # browser()
       out_cpf <- parallel::clusterApply(cl, x = task_indices,
                                         KZ::cbpf_as_dm_cpp_par,
                                         N, TT, DD, y,
@@ -328,6 +329,9 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
                                         phi_x[, m],
                                         X[ , , m - 1, ])
       out_cpf <- unlist(out_cpf, recursive = FALSE)
+      if (!all.equal(as.numeric(names(out_cpf)), 0:(NN - 1))) {
+        stop("Cluster does not compute trajectories in order!")
+      }
       for (n in 1:NN) {
         X[ , , m, n] <- out_cpf[[n]]
       }
