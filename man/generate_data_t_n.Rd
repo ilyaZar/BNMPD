@@ -5,7 +5,7 @@
 \title{Generates panel data for various models.}
 \usage{
 generate_data_t_n(
-  distribution = "dirichlet",
+  distribution,
   NN,
   TT,
   DD,

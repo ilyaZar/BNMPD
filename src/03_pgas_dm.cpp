@@ -10,12 +10,12 @@
 //' @param N number of particles
 //' @param NN cross sectional dimension
 //' @param TT time series dimension
-//' @param DD number of dirichlet fractions/shares i.e. categories
+//' @param DD multivariate dimension (number of dirichlet-multinomial categories)
 //' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
 //'   of iterations of the SMC-part)
-//' @param data a list of data objects i.e. measurements: e.g. can be dirichlet
-//'   fractions and/or number of counts per category (only the latter if
-//'   measurements are from a multinomial, and both if measurements come from a
+//' @param data a list of data objects i.e. measurements: e.g. can be total counts 
+//'   as well as dirichlet multinomial number of counts per category (only the latter 
+//'   if measurements are from a multinomial, and both if measurements come from a
 //'   multinomial-dirichlet)
 //' @param Z regressors contained in the latent state process part
 //' @param priors hyperpriors for inverted gamma priors of the state process
@@ -28,7 +28,7 @@
 //'
 //' @export
 //[[Rcpp::export]]
-Rcpp::List pgas_cpp(const int& N,
+Rcpp::List pgas_cpp_dm(const int& N,
                     const int& NN,
                     const int& TT,
                     const int& DD,

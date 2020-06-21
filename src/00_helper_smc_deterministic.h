@@ -28,9 +28,13 @@ arma::vec w_log_cbpf_dm(const int& N,
                         const arma::uvec& id_x);
 arma::vec w_log_cbpf_dm_bh(const int& N,
                            const int& DD,
-                           const int& num_counts,
                            const arma::rowvec& y,
                            const arma::vec& xa,
                            const arma::uvec& id_x);
+arma::vec w_log_cbpf_m(const int& N,
+                       const int& DD,
+                       const arma::rowvec& y,
+                       const arma::vec& xa,
+                       const arma::uvec& id_x);
 arma::vec w_normalize_cpp(const arma::vec& w);
 #endif

@@ -119,6 +119,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// w_log_cbpf_m
+arma::vec w_log_cbpf_m(const int& N, const int& DD, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
+RcppExport SEXP _KZ_w_log_cbpf_m(SEXP NSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const arma::rowvec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type xa(xaSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type id_x(id_xSEXP);
+    rcpp_result_gen = Rcpp::wrap(w_log_cbpf_m(N, DD, y, xa, id_x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // w_normalize_cpp
 arma::vec w_normalize_cpp(const arma::vec& w);
 RcppExport SEXP _KZ_w_normalize_cpp(SEXP wSEXP) {
@@ -201,6 +216,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cbpf_as_m_cpp
+arma::mat cbpf_as_m_cpp(const int& N, const int& TT, const int& DD, const arma::mat& y, const arma::mat& Regs_beta, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::vec& x_r);
+RcppExport SEXP _KZ_cbpf_as_m_cpp(SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP Regs_betaSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_rSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
+    Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Regs_beta(Regs_betaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type x_r(x_rSEXP);
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_m_cpp(N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cbpf_as_dm_cpp_par
 Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_par_vec, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& Regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
 RcppExport SEXP _KZ_cbpf_as_dm_cpp_par(SEXP id_par_vecSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP Regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
@@ -221,9 +254,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// pgas_cpp
-Rcpp::List pgas_cpp(const int& N, const int& NN, const int& TT, const int& DD, const int& MM, const Rcpp::List& data, const arma::mat& Z, const arma::vec& priors, const Rcpp::List& par_init, const arma::vec& traj_init);
-RcppExport SEXP _KZ_pgas_cpp(SEXP NSEXP, SEXP NNSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP MMSEXP, SEXP dataSEXP, SEXP ZSEXP, SEXP priorsSEXP, SEXP par_initSEXP, SEXP traj_initSEXP) {
+// cbpf_as_m_cpp_par
+Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_par_vec, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::cube& Regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
+RcppExport SEXP _KZ_cbpf_as_m_cpp_par(SEXP id_par_vecSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP Regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type id_par_vec(id_par_vecSEXP);
+    Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
+    Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type y_all(y_allSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type Regs_beta_all(Regs_beta_allSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type x_r_all(x_r_allSEXP);
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_m_cpp_par(id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all));
+    return rcpp_result_gen;
+END_RCPP
+}
+// pgas_cpp_dm
+Rcpp::List pgas_cpp_dm(const int& N, const int& NN, const int& TT, const int& DD, const int& MM, const Rcpp::List& data, const arma::mat& Z, const arma::vec& priors, const Rcpp::List& par_init, const arma::vec& traj_init);
+RcppExport SEXP _KZ_pgas_cpp_dm(SEXP NSEXP, SEXP NNSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP MMSEXP, SEXP dataSEXP, SEXP ZSEXP, SEXP priorsSEXP, SEXP par_initSEXP, SEXP traj_initSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -237,7 +289,27 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type priors(priorsSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type par_init(par_initSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type traj_init(traj_initSEXP);
-    rcpp_result_gen = Rcpp::wrap(pgas_cpp(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init));
+    rcpp_result_gen = Rcpp::wrap(pgas_cpp_dm(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init));
+    return rcpp_result_gen;
+END_RCPP
+}
+// pgas_cpp_m
+Rcpp::List pgas_cpp_m(const int& N, const int& NN, const int& TT, const int& DD, const int& MM, const Rcpp::List& data, const arma::mat& Z, const arma::vec& priors, const Rcpp::List& par_init, const arma::vec& traj_init);
+RcppExport SEXP _KZ_pgas_cpp_m(SEXP NSEXP, SEXP NNSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP MMSEXP, SEXP dataSEXP, SEXP ZSEXP, SEXP priorsSEXP, SEXP par_initSEXP, SEXP traj_initSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const int& >::type NN(NNSEXP);
+    Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
+    Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const int& >::type MM(MMSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type priors(priorsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type par_init(par_initSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type traj_init(traj_initSEXP);
+    rcpp_result_gen = Rcpp::wrap(pgas_cpp_m(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -272,14 +344,18 @@ static const R_CallMethodDef CallEntries[] = {
     {"_KZ_w_as_c", (DL_FUNC) &_KZ_w_as_c, 5},
     {"_KZ_w_log_cbpf_dm", (DL_FUNC) &_KZ_w_log_cbpf_dm, 6},
     {"_KZ_w_log_cbpf_dm_bh", (DL_FUNC) &_KZ_w_log_cbpf_dm_bh, 6},
+    {"_KZ_w_log_cbpf_m", (DL_FUNC) &_KZ_w_log_cbpf_m, 5},
     {"_KZ_w_normalize_cpp", (DL_FUNC) &_KZ_w_normalize_cpp, 1},
     {"_KZ_resample", (DL_FUNC) &_KZ_resample, 3},
     {"_KZ_sample_final_trajectory", (DL_FUNC) &_KZ_sample_final_trajectory, 3},
     {"_KZ_sample_init_prtcls", (DL_FUNC) &_KZ_sample_init_prtcls, 3},
     {"_KZ_propagate_bpf", (DL_FUNC) &_KZ_propagate_bpf, 3},
     {"_KZ_cbpf_as_dm_cpp", (DL_FUNC) &_KZ_cbpf_as_dm_cpp, 9},
+    {"_KZ_cbpf_as_m_cpp", (DL_FUNC) &_KZ_cbpf_as_m_cpp, 8},
     {"_KZ_cbpf_as_dm_cpp_par", (DL_FUNC) &_KZ_cbpf_as_dm_cpp_par, 10},
-    {"_KZ_pgas_cpp", (DL_FUNC) &_KZ_pgas_cpp, 10},
+    {"_KZ_cbpf_as_m_cpp_par", (DL_FUNC) &_KZ_cbpf_as_m_cpp_par, 9},
+    {"_KZ_pgas_cpp_dm", (DL_FUNC) &_KZ_pgas_cpp_dm, 10},
+    {"_KZ_pgas_cpp_m", (DL_FUNC) &_KZ_pgas_cpp_m, 10},
     {"_KZ_bet_z_components", (DL_FUNC) &_KZ_bet_z_components, 11},
     {NULL, NULL, 0}
 };

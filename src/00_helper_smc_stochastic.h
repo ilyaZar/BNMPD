@@ -3,6 +3,7 @@
 
 #include "99_config.h"
 #include <RcppArmadillo.h>
+#include <dqrng.h>
 
 arma::uvec resample(const arma::colvec& weights,
                     const int& N,

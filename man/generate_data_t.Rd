@@ -5,7 +5,7 @@
 \title{Generates time series data for various models.}
 \usage{
 generate_data_t(
-  distribution = "dirichlet",
+  distribution,
   TT,
   DD,
   par_true,

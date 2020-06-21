@@ -162,6 +162,29 @@ w_log_cbpf_dm_bh <- function(N, DD, num_counts, y, xa, id_x) {
     .Call(`_KZ_w_log_cbpf_dm_bh`, N, DD, num_counts, y, xa, id_x)
 }
 
+#' SMC log-weights for the Multinomial
+#'
+#' Computes normalized bootrstrap particle weights.
+#'
+#' Can currently be used for Dirichlet-multinommial model only.
+#'
+#' @param N number of particles (int)
+#' @param DD number of state components (dirichlet fractions or number of
+#'   components in the multivariate latent state component) (int)
+#' @param y counts of dimension \code{DD} (part of the measurement data)
+#'   observed a specific t=1,...,TT; (arma::rowvec)
+#' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+#'   whole state vector has \code{DD} components and \code{N} is the number of
+#'   particles)
+#' @param id_x index vector giving the location of the N-dimensional components
+#'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+#'   \code{xa}
+#' @return particle weights
+#'
+w_log_cbpf_m <- function(N, DD, y, xa, id_x) {
+    .Call(`_KZ_w_log_cbpf_m`, N, DD, y, xa, id_x)
+}
+
 #' Normalization of log-weights
 #'
 #' Both, SMC weights and ancestor sampling weights possible. The function does
@@ -266,7 +289,32 @@ cbpf_as_dm_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x,
     .Call(`_KZ_cbpf_as_dm_cpp`, N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r)
 }
 
-#' Runs a paralle version of the conditional SMC (BPF) for the Dir. Mult. model
+#' Runs a conditional SMC (bootstrap particle filter) for the Multinomial model
+#'
+#' Runs a conditional bootstrap particle filter with ancestor sampling and arma
+#' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
+#' e.g. called via \code{pgas_arma()}.
+#'
+#' @param N number of particles
+#' @param TT time series dimension
+#' @param DD number of dirichlet fractions/shares i.e. categories
+#' @param y measurements: dirichlet fractions/shares
+#' @param Regs_beta  result of regressor values i.e. z_{t} (matrix) multiplied by
+#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
+#' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
+#' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
+#'   latent state process
+#' @param x_r reference/conditioning trajectory
+#'
+#' @return arma::matrix of DD components: DD columns are
+#'   \code{NxTT}-dimensional matrices each containing the conditional BPF
+#'   output per d'th component
+#' @export
+cbpf_as_m_cpp <- function(N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r) {
+    .Call(`_KZ_cbpf_as_m_cpp`, N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r)
+}
+
+#' Runs a parallel version of the conditional SMC (BPF) for the Dir. Mult. model
 #'
 #' Runs a conditional bootstrap particle filter with ancestor sampling and arma
 #' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
@@ -280,8 +328,8 @@ cbpf_as_dm_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x,
 #'   x_r_all}; see arguments below
 #' @param N number of particles
 #' @param TT time series dimension
-#' @param DD number of dirichlet fractions/shares i.e. categories
-#' @param y_all measurements: dirichlet fractions/shares
+#' @param DD multivariate dimension (number of dirichlet-multinomial categories)
+#' @param y_all measurements: dirichlet-multinomial counts
 #' @param num_counts_all measurements: dirichlet-multinomial total counts per time
 #'   period (\code{T}-dimensional vector)
 #' @param Regs_beta_all  result of regressor values i.e. z_{t} (matrix) multiplied by
@@ -300,6 +348,38 @@ cbpf_as_dm_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Reg
     .Call(`_KZ_cbpf_as_dm_cpp_par`, id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
+#' Runs a parallel version of the conditional SMC (BPF) for the Mult. model
+#'
+#' Runs a conditional bootstrap particle filter with ancestor sampling and arma
+#' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
+#' e.g. called via \code{pgas_arma()}.
+#'
+#' @param id_par_vec parallelization ID as an \code{IntegerVector}: determines
+#'   along which cross sectional component to compute: this is passed from the
+#'   \code{x}-argument of \code{paralllel::clusterApply()}, called within the
+#'   PGAS code, to this function so it knows along for which cross sectional
+#'   unit it has to slice the data: \code{y_all, num_counts_all, Regs_beta_all,
+#'   x_r_all}; see arguments below
+#' @param N number of particles
+#' @param TT time series dimension
+#' @param DD multivariate dimension (number of multinomial categories)
+#' @param y_all measurements: multinomial counts
+#' @param Regs_beta_all  result of regressor values i.e. z_{t} (matrix) multiplied by
+#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
+#' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
+#' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
+#'   latent state process
+#' @param x_r_all reference/conditioning trajectory
+#'
+#' @return arma::matrix of DD components: DD columns are
+#'   \code{NxTT}-dimensional matrices each containing the conditional BPF
+#'   output per d'th component
+#' @export
+#'
+cbpf_as_m_cpp_par <- function(id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_KZ_cbpf_as_m_cpp_par`, id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
+}
+
 #' Particle Gibbs with ancestor sampling (PGAS)
 #'
 #' Runs PGAS with various possible SMC procedures and Gibbs blocks. In this
@@ -311,12 +391,12 @@ cbpf_as_dm_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Reg
 #' @param N number of particles
 #' @param NN cross sectional dimension
 #' @param TT time series dimension
-#' @param DD number of dirichlet fractions/shares i.e. categories
+#' @param DD multivariate dimension (number of dirichlet-multinomial categories)
 #' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
 #'   of iterations of the SMC-part)
-#' @param data a list of data objects i.e. measurements: e.g. can be dirichlet
-#'   fractions and/or number of counts per category (only the latter if
-#'   measurements are from a multinomial, and both if measurements come from a
+#' @param data a list of data objects i.e. measurements: e.g. can be total counts 
+#'   as well as dirichlet multinomial number of counts per category (only the latter 
+#'   if measurements are from a multinomial, and both if measurements come from a
 #'   multinomial-dirichlet)
 #' @param Z regressors contained in the latent state process part
 #' @param priors hyperpriors for inverted gamma priors of the state process
@@ -328,8 +408,40 @@ cbpf_as_dm_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Reg
 #' @return List of parameter MCMC samples and latent state trajectory outputs
 #'
 #' @export
-pgas_cpp <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) {
-    .Call(`_KZ_pgas_cpp`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
+pgas_cpp_dm <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) {
+    .Call(`_KZ_pgas_cpp_dm`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
+}
+
+#' Particle Gibbs with ancestor sampling (PGAS)
+#'
+#' Runs PGAS with various possible SMC procedures and Gibbs blocks. In this
+#' case we use Armadillo random numbers for the MCMC part and the arma version
+#' of the conditional SMC (in principle, all combinations are possible e.g.
+#' using Rcpp/base-R random numbers for MCMC while the SMC procedure may rely
+#' on arma random numbers)
+#'
+#' @param N number of particles
+#' @param NN cross sectional dimension
+#' @param TT time series dimension
+#' @param DD multivariate dimension (number of multinomial categories)
+#' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
+#'   of iterations of the SMC-part)
+#' @param data a list of data objects i.e. measurements: e.g. can be total counts
+#'   as well as dirichlet multinomial number of counts per category (only the latter
+#'   if measurements are from a multinomial, and both if measurements come from a
+#'   multinomial-dirichlet)
+#' @param Z regressors contained in the latent state process part
+#' @param priors hyperpriors for inverted gamma priors of the state process
+#'   error variances
+#' @param par_init initial parameters i.e. starting values for the MCMC part of
+#'   the overall PGAS procedure
+#' @param traj_init initial latent state values i.e. starting values for the
+#'   SMC part of the overall PGAS procedure
+#' @return List of parameter MCMC samples and latent state trajectory outputs
+#'
+#' @export
+pgas_cpp_m <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) {
+    .Call(`_KZ_pgas_cpp_m`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
 }
 
 #' Computes bet_z MCMC parts

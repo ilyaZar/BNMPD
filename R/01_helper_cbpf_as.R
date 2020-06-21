@@ -11,7 +11,7 @@ helper_as <- function(M, x) {
         MARGIN = 1,
         function(x) {drop(crossprod(crossprod(M, x), x))})
 }
-#' Computes log=particle weights for the Multinomial model
+#' Computes log particle weights for the Multinomial model
 #'
 #' Computes normalized particle weights for particles in the
 #' \code{cbpf_as_m_R()} function.
@@ -19,22 +19,19 @@ helper_as <- function(M, x) {
 #' @param y measurements: multinomial counts; matrix of dimension \code{DDxTT}
 #' @param N number of particles
 #' @param xa state trajectories: matrix of DDxTT
-#' @param num_counts measurement: dirichlet-multinomial total counts per time
-#'   period; vector of dimension \code{TT}
 #' @param D number of categories/classes
 #'
 #' @return \code{N}-dimensional vector of normalized weights
-w_cbpf_m_R <- function(y, N, xa, num_counts, D = DD) {
-  log_num_counts_fac <- lfactorial(num_counts)
+w_cbpf_m_R <- function(y, N, xa, D) {
+  xs <- xa[, 1:(D - 1)]
+  ps <- exp(xs)
+  ys <- matrix(rep(as.vector(y[-D]), times = N),
+               ncol = D - 1, nrow = N, byrow = TRUE)
 
-  alphas <- matrix(cbind(exp(xa[, 1:(D - 1)]), rep(1, times = N)), nrow = N, ncol = D)
+  out_tmp <- xs - log(.rowSums(x = ps, m = N, n = (D - 1), na.rm = TRUE) + 1)
+  out_tmp <- out_tmp * ys
 
-  ys <- matrix(rep(as.vector(y), times = N), ncol = D, nrow = N, byrow = TRUE)
-
-  log_lhs <- log_num_counts_fac - sum(lfactorial(y))
-  log_rhs <- .rowSums(log(alphas/.rowSums(alphas, m = N, n = D)) * ys, m = N, n = D)
-  w <- log_lhs + log_rhs
-
+  w       <- .rowSums(out_tmp, m = N, n = (D - 1), na.rm = TRUE)
   if (any(is.nan(w)) || any(is.na(w))) {
     browser()
     stop("NAN or NA values in weight computation!")
@@ -55,7 +52,7 @@ w_cbpf_m_R <- function(y, N, xa, num_counts, D = DD) {
 #' @param D number of categories/classes
 #'
 #' @return \code{N}-dimensional vector of normalized weights
-w_cbpf_dm_R <- function(y, N, xa, num_counts, D = DD) {
+w_cbpf_dm_R <- function(y, N, xa, num_counts, D) {
   alphas <- matrix(exp(xa), nrow = N, ncol = D)
   # alphas[alphas == 0] <- 1e-300
   # log_Balpha <- rowSums(lgamma(alphas)) - lgamma(rowSums(alphas))

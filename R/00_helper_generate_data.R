@@ -121,7 +121,7 @@ generate_bet_u <- function(DD, NN, from_IW = FALSE,
 #' @return NN-dimensional list of lists of two: \code{[[1]]} -> regressors and
 #'   \code{[[2]]} -> latent states
 #' @export
-generate_data_t_n <- function(distribution = "dirichlet",
+generate_data_t_n <- function(distribution,
                               NN, TT, DD,
                               par_true,
                               x_levels,
@@ -267,7 +267,7 @@ generate_data_t_n <- function(distribution = "dirichlet",
 #'
 #' @return a list of two: \code{[[1]]} -> regressors and \code{[[2]]} -> latent
 #'   states
-generate_data_t <- function(distribution = "dirichlet",
+generate_data_t <- function(distribution,
                             TT, DD,
                             par_true,
                             x_levels,

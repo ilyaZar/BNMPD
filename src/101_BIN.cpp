@@ -1,5 +1,28 @@
 #include <RcppArmadillo.h>
+#include <dqrng.h>
 using namespace Rcpp;
+//
+//
+// //' Samples final particle trajectory index
+// //'
+// //' Last step of conditional SMC/BPF algorithm generates a particle trajectory
+// //' to output s.th. PGAS procedure can condition on this draw.
+// //'
+// //' @param weights arma::colvec of dimension \code{N} storing particle weights
+// //' @param N number of particles (int)
+// //' @param id_as_lnspc a arma::uvec starting from 1:N; redundant if R::sample()
+// //'   is used but necessary for the Armadillo functionality
+// //'
+// //' @return returns sampled index (as double; check if int-type could be used)
+// //' @export
+// // [[Rcpp::export]]
+// double sample_final_trajectory2(const arma::colvec& weights,
+//                                const int& N,
+//                                const arma::uvec& id_as_lnspc) {
+//   return(Rcpp::sample(N, 1, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(weights)))[0] - 1);
+//   // return(arma::as_scalar(Rcpp::RcppArmadillo::sample(id_as_lnspc, 1, true, weights)));
+//   return(dqrng::dqsample_num(N, 1, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(weights)))[0]);
+// }
 //' Computes bet_z MCMC parts
 //'
 //' @param dd bla

@@ -20,6 +20,9 @@ arma::uvec resample(const arma::colvec& weights,
   temp_vec = Rcpp::sample(N, N, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(weights))) - 1;
   return(Rcpp::as<arma::uvec>(temp_vec));
   // return(Rcpp::RcppArmadillo::sample(id_as_lnspc, N, true, weights));
+  // Rcpp::NumericVector temp_vec(N);
+  // temp_vec = dqrng::dqsample_num(N, N, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(weights)));
+  // return(Rcpp::as<arma::uvec>(temp_vec));
 }
 //' Samples final particle trajectory index
 //'
@@ -39,6 +42,7 @@ double sample_final_trajectory(const arma::colvec& weights,
                                const arma::uvec& id_as_lnspc) {
   return(Rcpp::sample(N, 1, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(weights)))[0] - 1);
   // return(arma::as_scalar(Rcpp::RcppArmadillo::sample(id_as_lnspc, 1, true, weights)));
+  // return(dqrng::dqsample_num(N, 1, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(weights)))[0]);
 }
 //' Samples initial particles from prior
 //'
@@ -55,6 +59,9 @@ arma::colvec sample_init_prtcls(const double& mmu,
                                 const int& N) {
   return(Rcpp::as<arma::vec>(Rcpp::rnorm(N, mmu, sdd)));
   // return(mmu + sdd * arma::randn(N, 1));
+  // Rcpp::NumericVector tmp_NumVec(N);
+  // tmp_NumVec = mmu + sdd * dqrng::dqrnorm(N, 0, 1.0);
+  // return(Rcpp::as<arma::vec>(tmp_NumVec));
 }
 //' Propagates particles forward
 //'
@@ -77,4 +84,7 @@ arma::colvec propagate_bpf(const arma::colvec& mmu,
   Rcpp::NumericVector temp_NumVec = Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(mmu)) + sdd * Rcpp::rnorm(N);
   return(Rcpp::as<arma::vec>(temp_NumVec));
   // return(mmu + sdd * arma::randn(N, 1));
+  // Rcpp::NumericVector tmp_NumVec(N);
+  // tmp_NumVec = Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(mmu)) + sdd *  dqrng::dqrnorm(N, 0, 1.0);
+  // return(Rcpp::as<arma::vec>(tmp_NumVec));
 }
