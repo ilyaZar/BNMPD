@@ -1,3 +1,26 @@
+Hi all,
+
+
+allright then. Addressing the points that were mentioned:
+
+
+@Zsuzsanna regarding the model 3A and 3B: 
+the difference is that 3B does not have a constant term/level effect at a share where the utilization dummy is present. For california this is coal. This is because I noticed (in some cases but not all!) a problem with the level effect and the utilization dummy interaction. They tend to cancel each other in their contribution to the share, think like this: you have a high constant/level effect,  in general, whenever you also observe a high share/fraction of the energy type but(!) if that fraction also has zero share value for some time and jumps only afterwards to that high level, the availability dummy representing this jump, also becomes important for explaining the high share/fraction (i.e. contributing in similar fashion as does the level effect/constant term). 
+Now very roughly speaking this might induce high correlation of coefficients at these variables; in a Bayesian setting one observes  therefor a high correlations of MCMC draws and a slow convergence to the marginal posteriors i.e. an in-efficient estimation (which I did from time to time); a textbook approach to remedy these effects would use more MCMC samples or think about a better sampling/updating scheme or change the model specification some other things, in a theoretically perfectly world; but we are not estimating the final model and we were focusing on exploring various modelling possibilities and comparing them in general, and so, instead of diving into details here,  I just decided to monitor this effect, also at the specification with cummulative capacities; thus I used the baseline 3A and then out of curiosity variant 3B without a constant term. 
+Comparing them now: take a look at the elasticities of model 3A: cumcap positive, coal avail positive, an elasticity of the constant term not included (meaningless because the constant never changes) but the constant would be insignificant, given the confidence interval from the table at page 63: mean is 0.63787 with standard deviation 1.2747. Now, a naive OLS approach: drop variables that are not significant so model 3B arises: same as model 3A but no constant, but as it turns out coal cumcap still positive but for whatever reason one gest coal_avail negative: it starts to account for the missing level effect in a weird fashion; though insignificant before the constant term being missing influences coal _avail; this is good to know in general so the specification is included
+@Nadja A: yes I did ESS and mcmc convergence diagnostics of the traces, autocorrelation etc. They looked good for most parameters and good enough for a few exceptions. 
+@Nadja B: What remains to do is DIC/WAIC and maybe (as you said) the quantile/pitt residual plots. One may do in sample forecasts, too. I'll focus on DIC/WAIC.
+
+Yet again a reminder; what works nicely with California or Texas need not carry over to other states or the final panel model specification
+
+-> So in principle, it is possible to toy around with another time series model and include some more policy variables for selected US states like California, or Texas; However, we will need a panel model using all states jointly: then, we'll have to re-estimate all specifications with different policy variables anyway and  re-run all diagnostics (DIC/WAIC/in sample forecasts/ quantile plots) once again for the panel model to determine the final model specification.
+
+Based on that my suggestion is to just move to the panel model implementation and see what variables work best and what DIC/WAIC say about model selection in this context. What do you think?
+
+Cheers
+Ilya
+
+
 TO-DO MYSELF:
 
 @data:

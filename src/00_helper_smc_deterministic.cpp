@@ -84,7 +84,7 @@ double w_as_c(const arma::mat& mean_diff,
   w_as_max = w_as.max();
   w_as = exp(w_as - w_as_max);
   w_as = w_as/sum(w_as);
-  if (w_as.has_nan() || w_as.has_inf()) {
+  if (w_as.has_nan() || w_as.has_inf() || !all(w_as)) {
     Rcpp::warning("NaN or INF values in ANCESTOR SAMPLING weight NORMALIZATION computation!");
   }
 
@@ -293,11 +293,11 @@ arma::vec w_log_cbpf_m(const int& N,
     w_log.replace(arma::datum::inf, w_log_min);
     // w_log = w_log_cbpf_dm_bh(N, DD, num_counts, y, xa, id_x);
   }
-  // if (!all(w_log)) {
-  //   Rcpp::warning("ZERO values in weight computation!");
-  //   w_log_min = w_log.min();
-  //   w_log.replace(0, w_log_min);
-  // }
+  if (!all(w_log)) {
+    Rcpp::warning("ZERO values in weight computation!");
+    w_log_min = w_log.min();
+    w_log.replace(0, w_log_min);
+  }
   if (w_log.has_nan()) {
     Rcpp::warning("NAN values in weight computation!");
     w_log_min = w_log.min();

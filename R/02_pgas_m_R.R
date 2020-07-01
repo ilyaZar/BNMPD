@@ -322,7 +322,6 @@ pgas_m_R <- function(N, MM, NN, TT, DD,
                                               "X"),
                               envir = envir_par)
       # parallel::clusterEvalQ(cl, set.seed(123))
-      # browser()
       out_cpf <- parallel::clusterApply(cl, x = task_indices,
                                         KZ::cbpf_as_m_cpp_par,
                                         N, TT, DD, y,

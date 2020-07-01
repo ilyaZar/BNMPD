@@ -88,11 +88,12 @@ Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_par_vec,
     ///////////////////////// I. INITIALIZATION (t = 0) //////////////////////////
     //////////////////////////////////////////////////////////////////////////////
     // Sampling initial particles from prior
-    for(int d = 0; d < DD; ++d) {
+    for(int d = 0; d < (DD - 1); ++d) {
       mmu = arma::as_scalar(Regs_beta.submat(0, d, 0, d))/(1.0 - phi_x(d));;
       sdd = sqrt(sig_sq_x(d)/(1.0 - pow(phi_x(d), 2)));
       xa.submat(id_x(d), 0, id_x(d + 1) - 1, 0) = sample_init_prtcls(mmu, sdd, N);
     }
+    xa.submat(id_x(DD - 1), 0, id_x(DD) - 1, 0) = 0;
     // weighting (set to 1/N since there is no measurement y_t=0 at t=0)
     // w.col(0).fill(1.0/N);
     w_norm.fill(1.0/N);
@@ -103,17 +104,23 @@ Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_par_vec,
     // a.col(0) = resample(w.col(0), N, id_as_lnspc);
     a.col(0) = resample(w_norm, N, id_as_lnspc);
     // propagation
-    for(int d = 0; d < DD; ++d) {
+    for(int d = 0; d < (DD - 1); ++d) {
       eval_f = f_cpp(xa.submat(id_x(d), 0, id_x(d + 1) - 1, 0),
                      phi_x(d),
                      as_scalar(Regs_beta.submat(0, d, 0, d)));
       eval_f = eval_f.elem(a.col(0));
       xa.submat(id_x(d), 0, id_x(d + 1) - 1, 0) = propagate_bpf(eval_f, sqrt(sig_sq_x(d)), N);
     }
+    eval_f = f_cpp(xa.submat(id_x(DD - 1), 0, id_x(DD) - 1, 0),
+                   phi_x(DD - 1),
+                   as_scalar(Regs_beta.submat(0, DD - 1, 0, DD - 1)));
+    eval_f = eval_f.elem(a.col(0));
+    xa.submat(id_x(DD - 1), 0, id_x(DD) - 1, 0) = 0;
     // conditioning
-    for(int d = 0; d < DD; ++d) {
+    for(int d = 0; d < (DD - 1); ++d) {
       xa(id_x(d + 1) - 1, 0) = x_r(0, d);//x_r(TT*d + 0);
     }
+    xa(id_x(DD) - 1, 0) = 0;
     // weighting
     w_log = w_log_cbpf_m(N, DD, y.row(0), xa.col(0), id_x);
     // w.col(0) = w_normalize_cpp(w_log);
@@ -126,16 +133,21 @@ Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_par_vec,
       // a.col(t) = resample(w.col(t - 1), N, id_as_lnspc);
       a.col(t) = resample(w_norm, N, id_as_lnspc);
       // propagation
-      for(int d = 0; d < DD; ++d) {
+      for(int d = 0; d < (DD - 1); ++d) {
         eval_f = f_cpp(xa.submat(id_x(d), t - 1, id_x(d + 1) - 1, t - 1), phi_x(d), as_scalar(Regs_beta.submat(t, d, t, d)));
         mean_diff.col(d) = eval_f -  x_r(t, d);//x_r(TT*d + t);
         eval_f = eval_f.elem(a.col(t));
         xa.submat(id_x(d), t, id_x(d + 1) - 1, t) = propagate_bpf(eval_f, sqrt(sig_sq_x(d)), N);
       }
+      eval_f = f_cpp(xa.submat(id_x(DD - 1), t - 1, id_x(DD) - 1, t - 1), phi_x(DD - 1), as_scalar(Regs_beta.submat(t, DD - 1, t, DD - 1)));
+      mean_diff.col(DD - 1) = eval_f -  x_r(t, DD - 1);//x_r(TT*d + t);
+      eval_f = eval_f.elem(a.col(t));
+      xa.submat(id_x(DD - 1), t, id_x(DD) - 1, t) = 0;
       // conditioning
-      for(int d = 0; d < DD; ++d) {
+      for(int d = 0; d < (DD - 1); ++d) {
         xa(id_x(d + 1) - 1, t) = x_r(t, d);//x_r(TT*d + t);
       }
+      xa(id_x(DD) - 1, t) = 0;
       // ancestor sampling
       a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
       // weighting

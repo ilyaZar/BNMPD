@@ -116,7 +116,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_bet_u"]][[d]]
     }
     for (n in 1:NN) {
-      if (identical(dim(traj_init), as.integer(TT, DD, NN))) {
+      if (identical(dim(traj_init), as.integer(c(TT, DD, NN)))) {
         X[ , d, 1, n]  <- traj_init[, d, n]
       } else if (identical(dim(traj_init), as.integer(c(DD, NN)))) {
         X[ , d, 1, n]  <- traj_init[d, n]
@@ -138,7 +138,6 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       Umat2 <- matrix(U[, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT)
       betu2 <- matrix(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], 1, n, drop = FALSE])
       U_beta[, d, n] <- Umat2 %*% betu2
-
       Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
     }
   }
@@ -159,6 +158,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
                                             "X"),
                             envir = envir_par)
     # parallel::clusterEvalQ(cl, set.seed(123))
+    browser()
     out_cpf <- parallel::clusterApply(cl, x = task_indices,
                                       KZ::cbpf_as_dm_cpp_par,
                                       N, TT, DD, y,
@@ -197,6 +197,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
     # I. Run GIBBS part
     # 1. pars for xa processes -------------------------------------------
     for (d in 1:DD) {
+      # browser()
       phi_x[d, m] <- phi_x[d, m - 1]
       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1]
       err_sig_sq_x_all <- 0
