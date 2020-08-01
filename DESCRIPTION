@@ -1,14 +1,13 @@
-Package: KZ
-Title: Bayesian estimation of multivariate, nonlinear panel data
-    models
+Package: BNMPD
+Title: Bayesian Nonparametric Multivariate Panel Data
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Ilya",
            family = "Zarubin",
            role = c("aut", "cre"),
            email = "zarubin@wiso.uni-koeln.de")
-Description: Implements estimation of Bayesian nonlinear,
-    dynamic panel data models for multivariate response/dependent variable
+Description: Implements estimation of Bayesian nonparametric multivariate 
+    panel data models for multivariate response/dependent variable
     settings. Estimation is performed using Particle Gibbs with ancestor
     sampling which is a method combining MCMC (here, Gibbs sampling) and
     SMC methods (here, a standard bootstrap particle filter and a particle
@@ -35,7 +34,7 @@ Suggests:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 LinkingTo: 
     Rcpp,
     RcppArmadillo,

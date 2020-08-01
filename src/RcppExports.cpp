@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // test_phi_oob
 bool test_phi_oob(const double& phi, const double& eps);
-RcppExport SEXP _KZ_test_phi_oob(SEXP phiSEXP, SEXP epsSEXP) {
+RcppExport SEXP _BNMPD_test_phi_oob(SEXP phiSEXP, SEXP epsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -20,7 +20,7 @@ END_RCPP
 }
 // f_cpp_vech
 arma::vec f_cpp_vech(const arma::vec& x_tt, const double& phi_x, const arma::vec& regs_add);
-RcppExport SEXP _KZ_f_cpp_vech(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP regs_addSEXP) {
+RcppExport SEXP _BNMPD_f_cpp_vech(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP regs_addSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -33,7 +33,7 @@ END_RCPP
 }
 // compute_err_sig_sq
 double compute_err_sig_sq(const arma::vec& Z_part1, const arma::mat& Z_part2, const arma::vec& state_part, const arma::vec& bet_part, const double& phi_part, const int& TT);
-RcppExport SEXP _KZ_compute_err_sig_sq(SEXP Z_part1SEXP, SEXP Z_part2SEXP, SEXP state_partSEXP, SEXP bet_partSEXP, SEXP phi_partSEXP, SEXP TTSEXP) {
+RcppExport SEXP _BNMPD_compute_err_sig_sq(SEXP Z_part1SEXP, SEXP Z_part2SEXP, SEXP state_partSEXP, SEXP bet_partSEXP, SEXP phi_partSEXP, SEXP TTSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -49,7 +49,7 @@ END_RCPP
 }
 // mvrnorm_c
 arma::vec mvrnorm_c(const arma::vec& mu, const arma::mat& Sigma);
-RcppExport SEXP _KZ_mvrnorm_c(SEXP muSEXP, SEXP SigmaSEXP) {
+RcppExport SEXP _BNMPD_mvrnorm_c(SEXP muSEXP, SEXP SigmaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -61,7 +61,7 @@ END_RCPP
 }
 // f_cpp
 arma::vec f_cpp(const arma::vec& x_tt, const double& phi_x, const double& regs_add);
-RcppExport SEXP _KZ_f_cpp(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP regs_addSEXP) {
+RcppExport SEXP _BNMPD_f_cpp(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP regs_addSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -74,7 +74,7 @@ END_RCPP
 }
 // w_as_c
 double w_as_c(const arma::mat& mean_diff, const arma::rowvec& vcm_diag, const arma::vec& log_weights, const int& N, const arma::uvec& id_as_lnspc);
-RcppExport SEXP _KZ_w_as_c(SEXP mean_diffSEXP, SEXP vcm_diagSEXP, SEXP log_weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
+RcppExport SEXP _BNMPD_w_as_c(SEXP mean_diffSEXP, SEXP vcm_diagSEXP, SEXP log_weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -89,7 +89,7 @@ END_RCPP
 }
 // w_log_cbpf_dm
 arma::vec w_log_cbpf_dm(const int& N, const int& DD, const int& num_counts, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
-RcppExport SEXP _KZ_w_log_cbpf_dm(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+RcppExport SEXP _BNMPD_w_log_cbpf_dm(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -105,7 +105,7 @@ END_RCPP
 }
 // w_log_cbpf_dm_bh
 arma::vec w_log_cbpf_dm_bh(const int& N, const int& DD, const int& num_counts, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
-RcppExport SEXP _KZ_w_log_cbpf_dm_bh(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+RcppExport SEXP _BNMPD_w_log_cbpf_dm_bh(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -121,7 +121,7 @@ END_RCPP
 }
 // w_log_cbpf_m
 arma::vec w_log_cbpf_m(const int& N, const int& DD, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
-RcppExport SEXP _KZ_w_log_cbpf_m(SEXP NSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+RcppExport SEXP _BNMPD_w_log_cbpf_m(SEXP NSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -136,7 +136,7 @@ END_RCPP
 }
 // w_normalize_cpp
 arma::vec w_normalize_cpp(const arma::vec& w);
-RcppExport SEXP _KZ_w_normalize_cpp(SEXP wSEXP) {
+RcppExport SEXP _BNMPD_w_normalize_cpp(SEXP wSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -147,7 +147,7 @@ END_RCPP
 }
 // resample
 arma::uvec resample(const arma::colvec& weights, const int& N, const arma::uvec& id_as_lnspc);
-RcppExport SEXP _KZ_resample(SEXP weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
+RcppExport SEXP _BNMPD_resample(SEXP weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -160,7 +160,7 @@ END_RCPP
 }
 // sample_final_trajectory
 double sample_final_trajectory(const arma::colvec& weights, const int& N, const arma::uvec& id_as_lnspc);
-RcppExport SEXP _KZ_sample_final_trajectory(SEXP weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
+RcppExport SEXP _BNMPD_sample_final_trajectory(SEXP weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -173,7 +173,7 @@ END_RCPP
 }
 // sample_init_prtcls
 arma::colvec sample_init_prtcls(const double& mmu, const double& sdd, const int& N);
-RcppExport SEXP _KZ_sample_init_prtcls(SEXP mmuSEXP, SEXP sddSEXP, SEXP NSEXP) {
+RcppExport SEXP _BNMPD_sample_init_prtcls(SEXP mmuSEXP, SEXP sddSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -186,7 +186,7 @@ END_RCPP
 }
 // propagate_bpf
 arma::colvec propagate_bpf(const arma::colvec& mmu, const double& sdd, const int& N);
-RcppExport SEXP _KZ_propagate_bpf(SEXP mmuSEXP, SEXP sddSEXP, SEXP NSEXP) {
+RcppExport SEXP _BNMPD_propagate_bpf(SEXP mmuSEXP, SEXP sddSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -199,7 +199,7 @@ END_RCPP
 }
 // cbpf_as_dm_cpp
 arma::mat cbpf_as_dm_cpp(const int& N, const int& TT, const int& DD, const arma::mat& y, const arma::vec& num_counts, const arma::mat& Regs_beta, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::vec& x_r);
-RcppExport SEXP _KZ_cbpf_as_dm_cpp(SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP num_countsSEXP, SEXP Regs_betaSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_rSEXP) {
+RcppExport SEXP _BNMPD_cbpf_as_dm_cpp(SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP num_countsSEXP, SEXP Regs_betaSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_rSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -218,7 +218,7 @@ END_RCPP
 }
 // cbpf_as_m_cpp
 arma::mat cbpf_as_m_cpp(const int& N, const int& TT, const int& DD, const arma::mat& y, const arma::mat& Regs_beta, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::vec& x_r);
-RcppExport SEXP _KZ_cbpf_as_m_cpp(SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP Regs_betaSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_rSEXP) {
+RcppExport SEXP _BNMPD_cbpf_as_m_cpp(SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP Regs_betaSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_rSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -236,7 +236,7 @@ END_RCPP
 }
 // cbpf_as_dm_cpp_par
 Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_par_vec, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& Regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
-RcppExport SEXP _KZ_cbpf_as_dm_cpp_par(SEXP id_par_vecSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP Regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+RcppExport SEXP _BNMPD_cbpf_as_dm_cpp_par(SEXP id_par_vecSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP Regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -256,7 +256,7 @@ END_RCPP
 }
 // cbpf_as_m_cpp_par
 Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_par_vec, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::cube& Regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
-RcppExport SEXP _KZ_cbpf_as_m_cpp_par(SEXP id_par_vecSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP Regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+RcppExport SEXP _BNMPD_cbpf_as_m_cpp_par(SEXP id_par_vecSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP Regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -275,7 +275,7 @@ END_RCPP
 }
 // pgas_cpp_dm
 Rcpp::List pgas_cpp_dm(const int& N, const int& NN, const int& TT, const int& DD, const int& MM, const Rcpp::List& data, const arma::mat& Z, const arma::vec& priors, const Rcpp::List& par_init, const arma::vec& traj_init);
-RcppExport SEXP _KZ_pgas_cpp_dm(SEXP NSEXP, SEXP NNSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP MMSEXP, SEXP dataSEXP, SEXP ZSEXP, SEXP priorsSEXP, SEXP par_initSEXP, SEXP traj_initSEXP) {
+RcppExport SEXP _BNMPD_pgas_cpp_dm(SEXP NSEXP, SEXP NNSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP MMSEXP, SEXP dataSEXP, SEXP ZSEXP, SEXP priorsSEXP, SEXP par_initSEXP, SEXP traj_initSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -295,7 +295,7 @@ END_RCPP
 }
 // pgas_cpp_m
 Rcpp::List pgas_cpp_m(const int& N, const int& NN, const int& TT, const int& DD, const int& MM, const Rcpp::List& data, const arma::mat& Z, const arma::vec& priors, const Rcpp::List& par_init, const arma::vec& traj_init);
-RcppExport SEXP _KZ_pgas_cpp_m(SEXP NSEXP, SEXP NNSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP MMSEXP, SEXP dataSEXP, SEXP ZSEXP, SEXP priorsSEXP, SEXP par_initSEXP, SEXP traj_initSEXP) {
+RcppExport SEXP _BNMPD_pgas_cpp_m(SEXP NSEXP, SEXP NNSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP MMSEXP, SEXP dataSEXP, SEXP ZSEXP, SEXP priorsSEXP, SEXP par_initSEXP, SEXP traj_initSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -315,7 +315,7 @@ END_RCPP
 }
 // bet_z_components
 Rcpp::List bet_z_components(const int& dd, const int& DD, const int& N, const int& T, const int& dim_bet_z_d, const arma::cube& vcm_x_errors_lhs, const arma::mat& vcm_x_errors_rhs, const arma::mat& prior_vcm_bet_z, const arma::mat& X, const arma::cube& regsz, const arma::uvec& id_regz);
-RcppExport SEXP _KZ_bet_z_components(SEXP ddSEXP, SEXP DDSEXP, SEXP NSEXP, SEXP TSEXP, SEXP dim_bet_z_dSEXP, SEXP vcm_x_errors_lhsSEXP, SEXP vcm_x_errors_rhsSEXP, SEXP prior_vcm_bet_zSEXP, SEXP XSEXP, SEXP regszSEXP, SEXP id_regzSEXP) {
+RcppExport SEXP _BNMPD_bet_z_components(SEXP ddSEXP, SEXP DDSEXP, SEXP NSEXP, SEXP TSEXP, SEXP dim_bet_z_dSEXP, SEXP vcm_x_errors_lhsSEXP, SEXP vcm_x_errors_rhsSEXP, SEXP prior_vcm_bet_zSEXP, SEXP XSEXP, SEXP regszSEXP, SEXP id_regzSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -336,31 +336,31 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_KZ_test_phi_oob", (DL_FUNC) &_KZ_test_phi_oob, 2},
-    {"_KZ_f_cpp_vech", (DL_FUNC) &_KZ_f_cpp_vech, 3},
-    {"_KZ_compute_err_sig_sq", (DL_FUNC) &_KZ_compute_err_sig_sq, 6},
-    {"_KZ_mvrnorm_c", (DL_FUNC) &_KZ_mvrnorm_c, 2},
-    {"_KZ_f_cpp", (DL_FUNC) &_KZ_f_cpp, 3},
-    {"_KZ_w_as_c", (DL_FUNC) &_KZ_w_as_c, 5},
-    {"_KZ_w_log_cbpf_dm", (DL_FUNC) &_KZ_w_log_cbpf_dm, 6},
-    {"_KZ_w_log_cbpf_dm_bh", (DL_FUNC) &_KZ_w_log_cbpf_dm_bh, 6},
-    {"_KZ_w_log_cbpf_m", (DL_FUNC) &_KZ_w_log_cbpf_m, 5},
-    {"_KZ_w_normalize_cpp", (DL_FUNC) &_KZ_w_normalize_cpp, 1},
-    {"_KZ_resample", (DL_FUNC) &_KZ_resample, 3},
-    {"_KZ_sample_final_trajectory", (DL_FUNC) &_KZ_sample_final_trajectory, 3},
-    {"_KZ_sample_init_prtcls", (DL_FUNC) &_KZ_sample_init_prtcls, 3},
-    {"_KZ_propagate_bpf", (DL_FUNC) &_KZ_propagate_bpf, 3},
-    {"_KZ_cbpf_as_dm_cpp", (DL_FUNC) &_KZ_cbpf_as_dm_cpp, 9},
-    {"_KZ_cbpf_as_m_cpp", (DL_FUNC) &_KZ_cbpf_as_m_cpp, 8},
-    {"_KZ_cbpf_as_dm_cpp_par", (DL_FUNC) &_KZ_cbpf_as_dm_cpp_par, 10},
-    {"_KZ_cbpf_as_m_cpp_par", (DL_FUNC) &_KZ_cbpf_as_m_cpp_par, 9},
-    {"_KZ_pgas_cpp_dm", (DL_FUNC) &_KZ_pgas_cpp_dm, 10},
-    {"_KZ_pgas_cpp_m", (DL_FUNC) &_KZ_pgas_cpp_m, 10},
-    {"_KZ_bet_z_components", (DL_FUNC) &_KZ_bet_z_components, 11},
+    {"_BNMPD_test_phi_oob", (DL_FUNC) &_BNMPD_test_phi_oob, 2},
+    {"_BNMPD_f_cpp_vech", (DL_FUNC) &_BNMPD_f_cpp_vech, 3},
+    {"_BNMPD_compute_err_sig_sq", (DL_FUNC) &_BNMPD_compute_err_sig_sq, 6},
+    {"_BNMPD_mvrnorm_c", (DL_FUNC) &_BNMPD_mvrnorm_c, 2},
+    {"_BNMPD_f_cpp", (DL_FUNC) &_BNMPD_f_cpp, 3},
+    {"_BNMPD_w_as_c", (DL_FUNC) &_BNMPD_w_as_c, 5},
+    {"_BNMPD_w_log_cbpf_dm", (DL_FUNC) &_BNMPD_w_log_cbpf_dm, 6},
+    {"_BNMPD_w_log_cbpf_dm_bh", (DL_FUNC) &_BNMPD_w_log_cbpf_dm_bh, 6},
+    {"_BNMPD_w_log_cbpf_m", (DL_FUNC) &_BNMPD_w_log_cbpf_m, 5},
+    {"_BNMPD_w_normalize_cpp", (DL_FUNC) &_BNMPD_w_normalize_cpp, 1},
+    {"_BNMPD_resample", (DL_FUNC) &_BNMPD_resample, 3},
+    {"_BNMPD_sample_final_trajectory", (DL_FUNC) &_BNMPD_sample_final_trajectory, 3},
+    {"_BNMPD_sample_init_prtcls", (DL_FUNC) &_BNMPD_sample_init_prtcls, 3},
+    {"_BNMPD_propagate_bpf", (DL_FUNC) &_BNMPD_propagate_bpf, 3},
+    {"_BNMPD_cbpf_as_dm_cpp", (DL_FUNC) &_BNMPD_cbpf_as_dm_cpp, 9},
+    {"_BNMPD_cbpf_as_m_cpp", (DL_FUNC) &_BNMPD_cbpf_as_m_cpp, 8},
+    {"_BNMPD_cbpf_as_dm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_dm_cpp_par, 10},
+    {"_BNMPD_cbpf_as_m_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_m_cpp_par, 9},
+    {"_BNMPD_pgas_cpp_dm", (DL_FUNC) &_BNMPD_pgas_cpp_dm, 10},
+    {"_BNMPD_pgas_cpp_m", (DL_FUNC) &_BNMPD_pgas_cpp_m, 10},
+    {"_BNMPD_bet_z_components", (DL_FUNC) &_BNMPD_bet_z_components, 11},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_KZ(DllInfo *dll) {
+RcppExport void R_init_BNMPD(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

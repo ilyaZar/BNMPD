@@ -223,6 +223,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       for (n in 1:NN) {
         tmp_scale_mat_vcm_bet_u <- tmp_scale_mat_vcm_bet_u + tcrossprod(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n])
       }
+      browser()
       tmp_scale_mat_vcm_bet_u <- solve(tmp_scale_mat_vcm_bet_u + prior_vcm_bet_u2[[d]])
       vcm_bet_u[[d]][, , m]   <- solve(stats::rWishart(1, dof_vcm_bet_u[d], tmp_scale_mat_vcm_bet_u)[, , 1])
       # vcm_bet_u[[d]][, , m] <- vcm_bet_u[[d]][, , m - 1]

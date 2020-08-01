@@ -12,7 +12,7 @@
 #'   absolute value given the precision \code{eps}
 #' @export
 test_phi_oob <- function(phi, eps) {
-    .Call(`_KZ_test_phi_oob`, phi, eps)
+    .Call(`_BNMPD_test_phi_oob`, phi, eps)
 }
 
 #' State transition
@@ -38,11 +38,11 @@ test_phi_oob <- function(phi, eps) {
 #'   as a \code{TTx1}-vector
 #' @export
 f_cpp_vech <- function(x_tt, phi_x, regs_add) {
-    .Call(`_KZ_f_cpp_vech`, x_tt, phi_x, regs_add)
+    .Call(`_BNMPD_f_cpp_vech`, x_tt, phi_x, regs_add)
 }
 
 compute_err_sig_sq <- function(Z_part1, Z_part2, state_part, bet_part, phi_part, TT) {
-    .Call(`_KZ_compute_err_sig_sq`, Z_part1, Z_part2, state_part, bet_part, phi_part, TT)
+    .Call(`_BNMPD_compute_err_sig_sq`, Z_part1, Z_part2, state_part, bet_part, phi_part, TT)
 }
 
 #' A cpp-wrapper for the R-internal MASS::mvrnorm()-function.
@@ -60,7 +60,7 @@ compute_err_sig_sq <- function(Z_part1, Z_part2, state_part, bet_part, phi_part,
 #'   mu/Sigma
 #' @export
 mvrnorm_c <- function(mu, Sigma) {
-    .Call(`_KZ_mvrnorm_c`, mu, Sigma)
+    .Call(`_BNMPD_mvrnorm_c`, mu, Sigma)
 }
 
 #' State transition
@@ -85,7 +85,7 @@ mvrnorm_c <- function(mu, Sigma) {
 #'   as a \code{Nx1}-vector
 #' @export
 f_cpp <- function(x_tt, phi_x, regs_add) {
-    .Call(`_KZ_f_cpp`, x_tt, phi_x, regs_add)
+    .Call(`_BNMPD_f_cpp`, x_tt, phi_x, regs_add)
 }
 
 #' Computes the ancestor sampling weights.
@@ -107,7 +107,7 @@ f_cpp <- function(x_tt, phi_x, regs_add) {
 #'   particle)
 #' @export
 w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
-    .Call(`_KZ_w_as_c`, mean_diff, vcm_diag, log_weights, N, id_as_lnspc)
+    .Call(`_BNMPD_w_as_c`, mean_diff, vcm_diag, log_weights, N, id_as_lnspc)
 }
 
 #' SMC log-weights for the Dirichlet Multinomial
@@ -132,7 +132,7 @@ w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
 #' @return particle weights
 #'
 w_log_cbpf_dm <- function(N, DD, num_counts, y, xa, id_x) {
-    .Call(`_KZ_w_log_cbpf_dm`, N, DD, num_counts, y, xa, id_x)
+    .Call(`_BNMPD_w_log_cbpf_dm`, N, DD, num_counts, y, xa, id_x)
 }
 
 #' SMC log-weights for the Dirichlet Multinomial; the BH-version
@@ -159,7 +159,7 @@ w_log_cbpf_dm <- function(N, DD, num_counts, y, xa, id_x) {
 #' @return particle weights
 #'
 w_log_cbpf_dm_bh <- function(N, DD, num_counts, y, xa, id_x) {
-    .Call(`_KZ_w_log_cbpf_dm_bh`, N, DD, num_counts, y, xa, id_x)
+    .Call(`_BNMPD_w_log_cbpf_dm_bh`, N, DD, num_counts, y, xa, id_x)
 }
 
 #' SMC log-weights for the Multinomial
@@ -182,7 +182,7 @@ w_log_cbpf_dm_bh <- function(N, DD, num_counts, y, xa, id_x) {
 #' @return particle weights
 #'
 w_log_cbpf_m <- function(N, DD, y, xa, id_x) {
-    .Call(`_KZ_w_log_cbpf_m`, N, DD, y, xa, id_x)
+    .Call(`_BNMPD_w_log_cbpf_m`, N, DD, y, xa, id_x)
 }
 
 #' Normalization of log-weights
@@ -196,7 +196,7 @@ w_log_cbpf_m <- function(N, DD, y, xa, id_x) {
 #'   contains the normalized weights
 #'
 w_normalize_cpp <- function(w) {
-    .Call(`_KZ_w_normalize_cpp`, w)
+    .Call(`_BNMPD_w_normalize_cpp`, w)
 }
 
 #' Resampling function
@@ -212,7 +212,7 @@ w_normalize_cpp <- function(w) {
 #'
 #' @return a arma::uvec of dimension \code{N} containing the resampled indices
 resample <- function(weights, N, id_as_lnspc) {
-    .Call(`_KZ_resample`, weights, N, id_as_lnspc)
+    .Call(`_BNMPD_resample`, weights, N, id_as_lnspc)
 }
 
 #' Samples final particle trajectory index
@@ -228,7 +228,7 @@ resample <- function(weights, N, id_as_lnspc) {
 #' @return returns sampled index (as double; check if int-type could be used)
 #'
 sample_final_trajectory <- function(weights, N, id_as_lnspc) {
-    .Call(`_KZ_sample_final_trajectory`, weights, N, id_as_lnspc)
+    .Call(`_BNMPD_sample_final_trajectory`, weights, N, id_as_lnspc)
 }
 
 #' Samples initial particles from prior
@@ -241,7 +241,7 @@ sample_final_trajectory <- function(weights, N, id_as_lnspc) {
 #'   standard deviations \code{sdd} as a \code{N}x1 arma::colvec
 #'
 sample_init_prtcls <- function(mmu, sdd, N) {
-    .Call(`_KZ_sample_init_prtcls`, mmu, sdd, N)
+    .Call(`_BNMPD_sample_init_prtcls`, mmu, sdd, N)
 }
 
 #' Propagates particles forward
@@ -259,7 +259,7 @@ sample_init_prtcls <- function(mmu, sdd, N) {
 #'   \code{N}x1 (\code{arma::colvec})
 #'
 propagate_bpf <- function(mmu, sdd, N) {
-    .Call(`_KZ_propagate_bpf`, mmu, sdd, N)
+    .Call(`_BNMPD_propagate_bpf`, mmu, sdd, N)
 }
 
 #' Runs a conditional SMC (bootstrap particle filter) for the Dir. Mult. model
@@ -286,7 +286,7 @@ propagate_bpf <- function(mmu, sdd, N) {
 #'   output per d'th component
 #' @export
 cbpf_as_dm_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r) {
-    .Call(`_KZ_cbpf_as_dm_cpp`, N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r)
+    .Call(`_BNMPD_cbpf_as_dm_cpp`, N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r)
 }
 
 #' Runs a conditional SMC (bootstrap particle filter) for the Multinomial model
@@ -311,7 +311,7 @@ cbpf_as_dm_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x,
 #'   output per d'th component
 #' @export
 cbpf_as_m_cpp <- function(N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r) {
-    .Call(`_KZ_cbpf_as_m_cpp`, N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r)
+    .Call(`_BNMPD_cbpf_as_m_cpp`, N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r)
 }
 
 #' Runs a parallel version of the conditional SMC (BPF) for the Dir. Mult. model
@@ -345,7 +345,7 @@ cbpf_as_m_cpp <- function(N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r) {
 #' @export
 #'
 cbpf_as_dm_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_KZ_cbpf_as_dm_cpp_par`, id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
+    .Call(`_BNMPD_cbpf_as_dm_cpp_par`, id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC (BPF) for the Mult. model
@@ -377,7 +377,7 @@ cbpf_as_dm_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Reg
 #' @export
 #'
 cbpf_as_m_cpp_par <- function(id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_KZ_cbpf_as_m_cpp_par`, id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
+    .Call(`_BNMPD_cbpf_as_m_cpp_par`, id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Particle Gibbs with ancestor sampling (PGAS)
@@ -409,7 +409,7 @@ cbpf_as_m_cpp_par <- function(id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_s
 #'
 #' @export
 pgas_cpp_dm <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) {
-    .Call(`_KZ_pgas_cpp_dm`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
+    .Call(`_BNMPD_pgas_cpp_dm`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
 }
 
 #' Particle Gibbs with ancestor sampling (PGAS)
@@ -441,7 +441,7 @@ pgas_cpp_dm <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
 #'
 #' @export
 pgas_cpp_m <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) {
-    .Call(`_KZ_pgas_cpp_m`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
+    .Call(`_BNMPD_pgas_cpp_m`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
 }
 
 #' Computes bet_z MCMC parts
@@ -461,6 +461,6 @@ pgas_cpp_m <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) 
 #'
 #' @export
 bet_z_components <- function(dd, DD, N, T, dim_bet_z_d, vcm_x_errors_lhs, vcm_x_errors_rhs, prior_vcm_bet_z, X, regsz, id_regz) {
-    .Call(`_KZ_bet_z_components`, dd, DD, N, T, dim_bet_z_d, vcm_x_errors_lhs, vcm_x_errors_rhs, prior_vcm_bet_z, X, regsz, id_regz)
+    .Call(`_BNMPD_bet_z_components`, dd, DD, N, T, dim_bet_z_d, vcm_x_errors_lhs, vcm_x_errors_rhs, prior_vcm_bet_z, X, regsz, id_regz)
 }
 
