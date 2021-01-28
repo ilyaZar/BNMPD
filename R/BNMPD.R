@@ -1,6 +1,7 @@
-#' BNMPD: A package for computating stuff
+#' BNMPD: A package for modeling and estimation of Bayesian
+#' non-parametric multivariate panel data
 #'
-#' This package provides important functions.
+#' This package provides important functions. TO-DO
 #'
 #' @section foo functions:
 #' The foo functions ...
@@ -11,7 +12,7 @@
 #' @importFrom stats rgamma
 #' @importFrom MASS mvrnorm
 #' @importFrom Rcpp sourceCpp
-## KZ namespace: end
+## BNMPD namespace: end
 #' @docType package
 #' @name BNMPD
 NULL

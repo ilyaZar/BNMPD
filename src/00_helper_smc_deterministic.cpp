@@ -93,6 +93,85 @@ double w_as_c(const arma::mat& mean_diff,
 
   return(as_draw);
 }
+//' SMC log-weights for the Dirichlet
+//'
+//' Computes normalized bootrstrap particle weights.
+//'
+//' Can currently be used for Dirichlet-model only.
+//'
+//' @param N number of particles (int)
+//' @param DD number of state components (dirichlet fractions or number of
+//'   components in the multivariate latent state component) (int)
+//' @param num_counts number of overall counts per t=1,...,TT (part of the
+//'   measurement data) i.e. a scalar int-value for the current time period
+//' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+//'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+//' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+//'   whole state vector has \code{DD} components and \code{N} is the number of
+//'   particles)
+//' @param id_x index vector giving the location of the N-dimensional components
+//'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+//'   \code{xa}
+//' @return particle weights
+//'
+// [[Rcpp::export]]
+arma::vec w_log_cbpf_d(const int& N,
+                       const int& DD,
+                       const int& num_counts,
+                       const arma::rowvec& y,
+                       const arma::vec& xa,
+                       const arma::uvec& id_x) {
+  arma::vec log_lhs;
+  arma::vec log_rhs;
+  arma::vec w_log;
+  arma::vec w_tilde;
+  // double w_max;
+  double w_log_min = 0;
+
+  arma::mat y_mat(N, DD, arma::fill::zeros);
+  y_mat.each_row() += y;
+  arma::mat alphas(N, DD);
+  for (int d = 0; d < DD; ++d) {
+    alphas.col(d) = xa.subvec(id_x(d), id_x(d + 1) - 1);
+  }
+  alphas = exp(alphas);
+
+  arma::vec rs_alphas(N);
+  rs_alphas = sum(alphas, 1);
+
+  arma::mat alphas_add_y;
+  alphas_add_y = alphas;
+  alphas_add_y.each_row() += y;
+
+  //////////////////////////////////////////////////////////////////////////////
+  // OLD PROBABLY WRONG VERSION ////////////////////////////////////////////////
+  log_lhs = lgamma(rs_alphas) - lgamma(rs_alphas + num_counts);
+  log_rhs = sum(lgamma(alphas_add_y) - lgamma(alphas), 1);
+  //////////////////////////////////////////////////////////////////////////////
+  // log_lhs = lgamma(num_counts + 1) + lgamma(rs_alphas) - lgamma(rs_alphas + num_counts);
+  // log_rhs = sum(lgamma(alphas_add_y) - lgamma(y_mat + 1) - lgamma(alphas), 1);
+  w_log   = log_lhs + log_rhs;
+  if (w_log.has_inf()) {
+    Rcpp::warning("INF values in weight computation!");
+    w_log_min = w_log.min();
+    w_log.replace(arma::datum::inf, w_log_min);
+    // w_log = w_log_cbpf_dm_bh(N, DD, num_counts, y, xa, id_x);
+  }
+  if (!all(w_log)) {
+    Rcpp::warning("ZERO values in weight computation!");
+    w_log_min = w_log.min();
+    w_log.replace(0, w_log_min);
+  }
+  if (w_log.has_nan()) {
+    Rcpp::warning("NAN values in weight computation!");
+    w_log_min = w_log.min();
+    w_log.replace(arma::datum::nan, w_log_min);
+  }
+  // w_max  = w_log.max();
+  // w_log = exp(w_log - w_max);
+  // return(w_log/sum(w_log));
+  return(w_log);
+}
 //' SMC log-weights for the Dirichlet Multinomial
 //'
 //' Computes normalized bootrstrap particle weights.
@@ -167,13 +246,9 @@ arma::vec w_log_cbpf_dm(const int& N,
     w_log_min = w_log.min();
     w_log.replace(arma::datum::nan, w_log_min);
   }
-
-
-
   // w_max  = w_log.max();
   // w_log = exp(w_log - w_max);
   // return(w_log/sum(w_log));
-
   return(w_log);
 }
 //' SMC log-weights for the Dirichlet Multinomial; the BH-version
@@ -235,7 +310,6 @@ arma::vec w_log_cbpf_dm_bh(const int& N,
     out = (log_lhs + log_rhs).convert_to<double>();
     w_log(n) = out;
   }
-
   return(w_log);
 }
 //' SMC log-weights for the Multinomial

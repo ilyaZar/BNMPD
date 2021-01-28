@@ -87,6 +87,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// w_log_cbpf_d
+arma::vec w_log_cbpf_d(const int& N, const int& DD, const int& num_counts, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
+RcppExport SEXP _BNMPD_w_log_cbpf_d(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
+    Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const int& >::type num_counts(num_countsSEXP);
+    Rcpp::traits::input_parameter< const arma::rowvec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type xa(xaSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type id_x(id_xSEXP);
+    rcpp_result_gen = Rcpp::wrap(w_log_cbpf_d(N, DD, num_counts, y, xa, id_x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // w_log_cbpf_dm
 arma::vec w_log_cbpf_dm(const int& N, const int& DD, const int& num_counts, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
 RcppExport SEXP _BNMPD_w_log_cbpf_dm(SEXP NSEXP, SEXP DDSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
@@ -342,6 +358,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_mvrnorm_c", (DL_FUNC) &_BNMPD_mvrnorm_c, 2},
     {"_BNMPD_f_cpp", (DL_FUNC) &_BNMPD_f_cpp, 3},
     {"_BNMPD_w_as_c", (DL_FUNC) &_BNMPD_w_as_c, 5},
+    {"_BNMPD_w_log_cbpf_d", (DL_FUNC) &_BNMPD_w_log_cbpf_d, 6},
     {"_BNMPD_w_log_cbpf_dm", (DL_FUNC) &_BNMPD_w_log_cbpf_dm, 6},
     {"_BNMPD_w_log_cbpf_dm_bh", (DL_FUNC) &_BNMPD_w_log_cbpf_dm_bh, 6},
     {"_BNMPD_w_log_cbpf_m", (DL_FUNC) &_BNMPD_w_log_cbpf_m, 5},

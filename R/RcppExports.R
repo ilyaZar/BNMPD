@@ -110,6 +110,31 @@ w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
     .Call(`_BNMPD_w_as_c`, mean_diff, vcm_diag, log_weights, N, id_as_lnspc)
 }
 
+#' SMC log-weights for the Dirichlet
+#'
+#' Computes normalized bootrstrap particle weights.
+#'
+#' Can currently be used for Dirichlet-model only.
+#'
+#' @param N number of particles (int)
+#' @param DD number of state components (dirichlet fractions or number of
+#'   components in the multivariate latent state component) (int)
+#' @param num_counts number of overall counts per t=1,...,TT (part of the
+#'   measurement data) i.e. a scalar int-value for the current time period
+#' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+#'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+#' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+#'   whole state vector has \code{DD} components and \code{N} is the number of
+#'   particles)
+#' @param id_x index vector giving the location of the N-dimensional components
+#'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+#'   \code{xa}
+#' @return particle weights
+#'
+w_log_cbpf_d <- function(N, DD, num_counts, y, xa, id_x) {
+    .Call(`_BNMPD_w_log_cbpf_d`, N, DD, num_counts, y, xa, id_x)
+}
+
 #' SMC log-weights for the Dirichlet Multinomial
 #'
 #' Computes normalized bootrstrap particle weights.
@@ -394,8 +419,8 @@ cbpf_as_m_cpp_par <- function(id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_s
 #' @param DD multivariate dimension (number of dirichlet-multinomial categories)
 #' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
 #'   of iterations of the SMC-part)
-#' @param data a list of data objects i.e. measurements: e.g. can be total counts 
-#'   as well as dirichlet multinomial number of counts per category (only the latter 
+#' @param data a list of data objects i.e. measurements: e.g. can be total counts
+#'   as well as dirichlet multinomial number of counts per category (only the latter
 #'   if measurements are from a multinomial, and both if measurements come from a
 #'   multinomial-dirichlet)
 #' @param Z regressors contained in the latent state process part

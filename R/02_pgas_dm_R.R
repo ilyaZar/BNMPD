@@ -160,7 +160,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
     # parallel::clusterEvalQ(cl, set.seed(123))
     browser()
     out_cpf <- parallel::clusterApply(cl, x = task_indices,
-                                      KZ::cbpf_as_dm_cpp_par,
+                                      BNMPD::cbpf_as_dm_cpp_par,
                                       N, TT, DD, y,
                                       num_counts, Regs_beta,
                                       sig_sq_x[, 1],
@@ -328,7 +328,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       # parallel::clusterEvalQ(cl, set.seed(123))
       # browser()
       out_cpf <- parallel::clusterApply(cl, x = task_indices,
-                                        KZ::cbpf_as_dm_cpp_par,
+                                        BNMPD::cbpf_as_dm_cpp_par,
                                         N, TT, DD, y,
                                         num_counts, Regs_beta,
                                         sig_sq_x[, m],

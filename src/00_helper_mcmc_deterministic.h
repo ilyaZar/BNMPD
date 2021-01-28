@@ -4,7 +4,6 @@
 #include "99_config.h"
 #include <RcppArmadillo.h>
 
-bool test_phi_oob(const double& phi, const double& eps);
 double compute_err_sig_sq(const arma::vec& Z_part1,
                           const arma::mat& Z_part2,
                           const arma::vec& state_part,

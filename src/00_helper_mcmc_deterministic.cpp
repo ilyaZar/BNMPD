@@ -1,27 +1,4 @@
 #include "00_helper_mcmc_deterministic.h"
-//' helper function to check whether phi-parameter is out of bounds
-//'
-//' helper function to check whether phi-parameter is out of bounds
-//'
-//' @param phi autoregressive parameter of the state process (double) which is
-//'   tested to be smaller than one in absolute value
-//' @param eps precision (double); how close phi is allowed to be to +1 or -1
-//' @return logical; if \code{TRUE}, then \code{phi} is smaller than one in
-//'   absolute value given the precision \code{eps}
-//' @export
-// [[Rcpp::export]]
-bool test_phi_oob(const double& phi, const double& eps) {
-  bool out_bool = false;
-  if(std::abs(phi) > 1) {
-    out_bool = true;
-    return(out_bool);
-  }
-  double out_val = 1 - std::abs(phi);
-  if (out_val < eps) {
-    out_bool = true;
-  }
-  return(out_bool);
-}
 //' State transition
 //'
 //' Helper function computing the deterministic state transition, or, to put

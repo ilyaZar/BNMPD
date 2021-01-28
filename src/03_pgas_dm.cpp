@@ -13,8 +13,8 @@
 //' @param DD multivariate dimension (number of dirichlet-multinomial categories)
 //' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
 //'   of iterations of the SMC-part)
-//' @param data a list of data objects i.e. measurements: e.g. can be total counts 
-//'   as well as dirichlet multinomial number of counts per category (only the latter 
+//' @param data a list of data objects i.e. measurements: e.g. can be total counts
+//'   as well as dirichlet multinomial number of counts per category (only the latter
 //'   if measurements are from a multinomial, and both if measurements come from a
 //'   multinomial-dirichlet)
 //' @param Z regressors contained in the latent state process part

@@ -805,13 +805,13 @@ plot_data_per_n <- function(DD,
 #' Generates random samples from dirichlet distribution
 #'
 #' Generates random samples from dirichlet distribution; the dimension of the
-#' Dirichlet distribution (i.e. the number of shares of fractions) is taken as
-#' the number of columns in the alpha-matrix; the number of samples are taken
-#' as the rows of the alpha matrix; hence, each row of \code{alpha} corresponds
-#' to \code{D} alpha parameters for which a \code{D}-dimensional random draw
-#' is generated, and all these \code{n} draws are returned in matrix form.
+#' Dirichlet distribution (i.e. the number of shares or fractions) is taken as
+#' the number of columns in the alpha-matrix; the number of samples are taken as
+#' the number of rows of the alpha matrix; hence, each row of \code{alpha}
+#' corresponds to \code{D} alpha parameters for which a \code{D}-dimensional
+#' random draw from the Dirichlet is generated.
 #'
-#' @param alpha alpha parameters of dirichlet distribution given as a matrix
+#' @param alpha a matrix of alpha parameters of a Dirichlet distribution
 #'
 #' @return a nxD dimensional matrix of Dirichlet draws
 my_rdirichlet <- function(alpha) {
@@ -822,6 +822,37 @@ my_rdirichlet <- function(alpha) {
   x <- matrix(stats::rgamma(n = n, shape = t(alpha)), ncol = l, byrow = TRUE)
   x_colsums <- as.vector(x %*% rep(1, l))
   x/x_colsums
+}
+#' Generates random samples from generalized Dirichlet distribution
+#'
+#' Generates random samples from generalized Dirichlet distribution; the
+#' dimension of the Dirichlet distribution (i.e. the number of shares or
+#' fractions) is taken as the number of columns in the alpha-matrix; the number
+#' of samples are taken as the number of rows of the alpha matrix; hence, each
+#' row of \code{alpha} corresponds to \code{D} alpha parameters for which a
+#' \code{D}-dimensional random draw from the generalized Dirichlet is generated.
+#'
+#' @param alpha a matrix of alpha parameters of a generalized Dirichlet
+#'   distribution
+#' @param beta a matrix of beta parameters of a generalized Dirichlet
+#'   distribution
+#'
+#' @return a nxD dimensional matrix of generalized Dirichlet draws
+my_r_generalized_dirichlet <- function(alpha, beta) {
+  browser()
+  if(!(nrow(alpha) == nrow(beta)) || !(ncol(alpha) == ncol(beta))) {
+    stop("Arguments 'alpha' and 'beta' must have the same number of rows/cols!")
+  }
+  n <- nrow(alpha)
+  l <- ncol(alpha)
+  n <- n*l
+  x <- matrix(stats::rbeta(n = n,
+                           shape1 = t(alpha),
+                           shape2 = t(beta)), ncol = l, byrow = TRUE)
+  x_cumsums <- t(apply(x, MARGIN = 1, cumsum))
+  x[, 2:l] <- x[, 2:l]*(1-x_cumsums[1:l])
+  stop("THIS FUNCTION STILL NEEDS TESTING!")
+  return(x)
 }
 #' Generates random samples from a mulinomial distribution
 #'

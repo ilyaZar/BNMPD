@@ -17,5 +17,4 @@ arma::colvec sample_init_prtcls(const double& mmu,
 arma::colvec propagate_bpf(const arma::colvec& mmu,
                            const double& sdd,
                            const int& N);
-
 #endif

@@ -16,6 +16,8 @@
 *.o
 *.so
 *.tar.gz
+*.code-workspace
+*.json
 /data/*
 /doc/*
 /literature/*

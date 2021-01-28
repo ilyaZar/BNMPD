@@ -14,8 +14,8 @@ Description: Implements estimation of Bayesian nonparametric multivariate
     EIS filter) to sample from the high dimensional and highly nonlinear
     posterior densities of model parameters and latent state variables.
 License: GPL (>= 2)
-URL: https://github.com/useRaddictIZ/pmcmcDiagnostics
-BugReports: https://github.com/useRaddictIZ/pmcmcDiagnostics
+URL: https://github.com/useRaddictIZ/BNMPD
+BugReports: https://github.com/useRaddictIZ/BNMPD
 Depends: 
     R (>= 3.5)
 Imports: 
