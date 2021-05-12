@@ -18,12 +18,12 @@ generate_data_t(
 )
 }
 \arguments{
-\item{distribution}{specifies the distribution; "dirichlet", "multinomial" or
+\item{distribution}{specifies the distribution; "Dirichlet", "multinomial" or
 "dirichlet-multinomial"}
 
 \item{TT}{number of time periods}
 
-\item{DD}{number of shares/fractions (for dirichlet or dirichlet-multinomial)
+\item{DD}{number of shares/fractions (for Dirichlet or Dirichlet-multinomial)
 or the number of categories for a multinomial distribution}
 
 \item{par_true}{list of true parameters that describe the latent state
@@ -32,11 +32,12 @@ process}
 \item{x_levels}{vector of target "means"/"levels" of the states around which
 they fluctuate}
 
-\item{x_log_scale}{logical; if \code{TRUE}, then \code{x_levels[i]} ist taken
+\item{x_log_scale}{logical; if \code{TRUE}, then \code{x_levels[i]} is taken
 as log and the random number generation for the states is performed in logs}
 
-\item{include_intercept}{logical vector of dimension \code{DD}; if \code{TRUE}
-include an intercept at the cross sectional unit for component \code{d}}
+\item{include_intercept}{logical vector of dimension \code{DD}; if
+\code{TRUE} include an intercept at the cross sectional unit for component
+\code{d}}
 
 \item{include_policy}{logical vector of dimension \code{DD}; if \code{TRUE}
 include a policy dummy at the cross sectional unit for component \code{d}}
@@ -72,9 +73,9 @@ states
 }
 \description{
 The data is a time series, for a given cross sectional unit, from a
-Dirichlet, Multinomial or Dirichlet-multinomial distribution. The mulivariate
-draws can vary along the time dimension. This is because the parameter of the
-distributions that generate the draws are modelled as a function of
-regressors and latent states where the regressors and latent states can vary
-over time.
+Dirichlet, Multinomial or Dirichlet-multinomial distribution. The
+multivariate draws can vary along the time dimension. This is because the
+parameter of the distributions that generate the draws are modeled as a
+function of regressors and latent states where the regressors and latent
+states can vary over time.
 }

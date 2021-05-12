@@ -21,7 +21,8 @@ rnorm_fast_n1 <- function(mu, Sigma, len) {
     warning("'Sigma' is not positive definite")
   }
   # return(mu + eS$vectors %*% (diag(sqrt(pmax(evals, 0)), len) %*% rnorm(len)))
-  return(mu + eS$vectors %*% matrix((sqrt(pmax(evals, 0))) * rnorm(len), ncol = 1))
+  return(mu + eS$vectors %*% matrix((sqrt(pmax(evals, 0))) * rnorm(len),
+                                    ncol = 1))
   #
   #
   #
@@ -42,7 +43,8 @@ rnorm_fast_n1 <- function(mu, Sigma, len) {
   #   X <- X %*% svd(X, nu = 0)$v
   #   X <- scale(X, FALSE, TRUE)
   # }
-  # if (!isSymmetric(Sigma, tol = sqrt(.Machine$double.eps), check.attributes = FALSE)) {
+  # if (!isSymmetric(Sigma, tol = sqrt(.Machine$double.eps), check.attributes
+  #  = FALSE)) {
   #   stop("Sigma must be a symmetric matrix")
   # }
   # if (length(mu) != nrow(Sigma))
@@ -85,8 +87,8 @@ rnorm_fast_n1 <- function(mu, Sigma, len) {
   #   R <- chol(Sigma, pivot = TRUE)
   #   R[, order(attr(R, "pivot"))]
   # }
-  # retval <- matrix(rnorm(n * ncol(Sigma)), nrow = n, byrow = !pre0.9_9994) %*%
-  #   R
+  # retval <- matrix(rnorm(n * ncol(Sigma)), nrow = n, byrow = !pre0.9_9994)
+  # %*% R
   # retval <- sweep(retval, 2, mean, "+")
   # colnames(retval) <- names(mean)
   # retval

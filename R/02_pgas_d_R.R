@@ -32,22 +32,22 @@
 #' @return a list with components being: all MCMC parameter draws and all drawn
 #'   state trajectories (smc outuput)
 #' @export
-pgas_dm_R <- function(N, MM, NN, TT, DD,
-                      data, Z, U,
-                      priors,
-                      par_init,
-                      traj_init,
-                      true_states,
-                      smc_parallel = FALSE,
-                      cluster_type = NULL,
-                      num_cores) {
+pgas_d_r <- function(N, MM, NN, TT, DD,
+                     data, Z, U,
+                     priors,
+                     par_init,
+                     traj_init,
+                     true_states,
+                     smc_parallel = FALSE,
+                     cluster_type = NULL,
+                     num_cores) {
   options(warn = 1)
   if (isTRUE(smc_parallel) && is.null(cluster_type)) {
     stop("Cluster type not specified although 'smc_parallel=TRUE'.")
   }
   # Initialize data containers
   y <- data[[1]]
-  num_counts <- data[[2]]
+  # num_counts <- data[[2]]
   dim_bet_z <- sapply(par_init[["init_bet_z"]],
                       length,
                       simplify = TRUE)
@@ -153,7 +153,7 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
 
     cl <- parallel::makeCluster(num_cores, type = cluster_type)
     parallel::clusterExport(cl, varlist = c("N", "TT", "DD",
-                                            "y", "num_counts"),
+                                            "y"),
                             envir = envir_par)
     parallel::clusterExport(cl, varlist = c("Regs_beta",
                                             "sig_sq_x",
@@ -163,9 +163,9 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
     # parallel::clusterEvalQ(cl, set.seed(123))
     # browser()
     out_cpf <- parallel::clusterApply(cl, x = task_indices,
-                                      BNMPD::cbpf_as_dm_cpp_par,
+                                      BNMPD::cbpf_as_d_cpp_par,
                                       N, TT, DD, y,
-                                      num_counts, Regs_beta,
+                                      Regs_beta,
                                       sig_sq_x[, 1],
                                       phi_x[, 1],
                                       X[ , , 1, ])
@@ -181,13 +181,19 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       #   set.seed(123)
       # }
       # browser()
-      # out_cpf <- cbpf_as_dm_cpp(N = N, TT = TT, DD = DD,
-      #                           y = y[, , n], num_counts = num_counts[, n],
-      #                           Regs_beta = Regs_beta[, , n],
-      #                           sig_sq_x = sig_sq_x[, 1],
-      #                           phi_x = phi_x[, 1],
-      #                           x_r = X[ , , 1, n])
-      out_cpf <- true_states[ , , n]
+      out_cpf <- cbpf_as_d_cpp(N = N, TT = TT, DD = DD,
+                               y = y[, , n],
+                               Regs_beta = Regs_beta[, , n],
+                               sig_sq_x = sig_sq_x[, 1],
+                               phi_x = phi_x[, 1],
+                               x_r = X[ , , 1, n])
+      # out_cpf <- cbpf_as_d_r(N = N, TT = TT, DD = DD,
+      #                        y = y[, , n],
+      #                        Regs_beta =  Regs_beta[, , n],
+      #                        sig_sq_x = sig_sq_x[, 1],
+      #                        phi_x = phi_x[, 1],
+      #                        x_r = X[ , , 1, n])
+      # out_cpf <- true_states[ , , n]
       for (d in 1:DD) {
         X[ , d, 1, n] <- out_cpf[, d]
       }
@@ -331,9 +337,9 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
       # parallel::clusterEvalQ(cl, set.seed(123))
       # browser()
       out_cpf <- parallel::clusterApply(cl, x = task_indices,
-                                        BNMPD::cbpf_as_dm_cpp_par,
+                                        BNMPD::cbpf_as_d_cpp_par,
                                         N, TT, DD, y,
-                                        num_counts, Regs_beta,
+                                        Regs_beta,
                                         sig_sq_x[, m],
                                         phi_x[, m],
                                         X[ , , m - 1, ])
@@ -351,13 +357,13 @@ pgas_dm_R <- function(N, MM, NN, TT, DD,
         #   set.seed(123)
         # }
         # browser()
-        # out_cpf <- cbpf_as_dm_cpp(N = N, TT = TT, DD = DD,
-        #                           y = y[, , n], num_counts = num_counts[, n],
-        #                           Regs_beta = Regs_beta[, , n],
-        #                           sig_sq_x = sig_sq_x[, m],
-        #                           phi_x = phi_x[, m],
-        #                           x_r = X[ , , m - 1, n])
-        out_cpf <- true_states[ , , n]
+        out_cpf <- cbpf_as_d_cpp(N = N, TT = TT, DD = DD,
+                                 y = y[, , n],
+                                 Regs_beta = Regs_beta[, , n],
+                                 sig_sq_x = sig_sq_x[, m],
+                                 phi_x = phi_x[, m],
+                                 x_r = X[ , , m - 1, n])
+        # out_cpf <- true_states[ , , n]
         for (d in 1:DD) {
           X[ , d, m, n] <- out_cpf[, d]
         }

@@ -41,8 +41,9 @@ fluctuate}
 \item{x_log_scale}{logical; if \code{TRUE}, x_levels are taken as logs and
 the random number generation for the states is performed in logs}
 
-\item{include_intercept}{logical vector of dimension \code{DD}; if \code{TRUE}
-include an intercept at the cross sectional unit for component \code{d}}
+\item{include_intercept}{logical vector of dimension \code{DD}; if
+\code{TRUE} include an intercept at the cross sectional unit for component
+\code{d}}
 
 \item{include_policy}{logical vector of dimension \code{DD}; if \code{TRUE}
 include a policy dummy at the cross sectional unit for component \code{d}}
@@ -70,7 +71,7 @@ per cross sectional unit \code{n=1,...,N} with a joint plot of all
 components together}
 
 \item{plot_states_each_d}{logical; if \code{TRUE}, latent states are
-plotted per cross sectional unit \code{n=1,...,N} with a seperate plot for
+plotted per cross sectional unit \code{n=1,...,N} with a separate plot for
 each component}
 
 \item{seed_no}{integer; random seed to set at the beginning, set \code{NULL}
@@ -82,8 +83,8 @@ NN-dimensional list of lists of two: \code{[[1]]} -> regressors and
 }
 \description{
 The data is a panel data from a Dirichlet, Multinomial or
-Dirichlet-multinomial distribution. The mulivariate draws can vary along the
-time and cross-sectional dimensions. This is because the parameter of the
+Dirichlet-multinomial distribution. The mulitivariate draws can vary along
+the time and cross-sectional dimensions. This is because the parameter of the
 distributions that generate the draws are modelled as a function of
 regressors and latent states where the regressors and latent states can vary
 over time and cross section.

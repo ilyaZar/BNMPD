@@ -6,6 +6,7 @@
 
 #include <boost/multiprecision/mpfr.hpp>
 #include <boost/math/special_functions/gamma.hpp>
+#include <sstream>
 
 namespace mp = boost::multiprecision;
 
@@ -20,6 +21,16 @@ double w_as_c(const arma::mat& mean_diff,
               const arma::vec& log_weights,
               const int& N,
               const arma::uvec& id_as_lnspc);
+arma::vec w_log_cbpf_d(const int& N,
+                       const int& DD,
+                       const arma::rowvec& y,
+                       const arma::vec& xa,
+                       const arma::uvec& id_x);
+arma::vec w_log_cbpf_d_bh(const int& N,
+                          const int& DD,
+                          const arma::rowvec& y,
+                          const arma::vec& xa,
+                          const arma::uvec& id_x);
 arma::vec w_log_cbpf_dm(const int& N,
                         const int& DD,
                         const int& num_counts,
@@ -36,5 +47,9 @@ arma::vec w_log_cbpf_m(const int& N,
                        const arma::rowvec& y,
                        const arma::vec& xa,
                        const arma::uvec& id_x);
-arma::vec w_normalize_cpp(const arma::vec& w);
+arma::vec w_normalize_cpp(const arma::vec& w, std::string w_type);
+void throw_weight_msg(const std::string w_type,
+                      const std::string m_info,
+                      const std::string m_type);
+void check_weights(arma::vec& w_log, const std::string w_type);
 #endif

@@ -1,5 +1,5 @@
 #include "01_cbpf_arma.h"
-//' Runs a conditional SMC (bootstrap particle filter) for the Multinomial model
+//' Runs a conditional SMC (bootstrap particle filter) for the Diririchlet model
 //'
 //' Runs a conditional bootstrap particle filter with ancestor sampling and arma
 //' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
@@ -9,7 +9,7 @@
 //' @param TT time series dimension
 //' @param DD number of dirichlet fractions/shares i.e. categories
 //' @param y measurements: dirichlet fractions/shares
-//' @param Regs_beta  result of regressor values i.e. z_{t} (matrix) multiplied by
+//' @param Regs_beta result of regressor matrix z_{t} (matrix) multiplied by
 //'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
 //' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 //' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
@@ -21,14 +21,14 @@
 //'   output per d'th component
 //' @export
 //[[Rcpp::export]]
-arma::mat cbpf_as_m_cpp(const int& N,
-                         const int& TT,
-                         const int& DD,
-                         const arma::mat& y,
-                         const arma::mat& Regs_beta,
-                         const arma::vec& sig_sq_x,
-                         const arma::vec& phi_x,
-                         const arma::vec& x_r) {
+arma::mat cbpf_as_d_cpp(const int& N,
+                        const int& TT,
+                        const int& DD,
+                        const arma::mat& y,
+                        const arma::mat& Regs_beta,
+                        const arma::vec& sig_sq_x,
+                        const arma::vec& phi_x,
+                        const arma::vec& x_r) {
   //////////////////////////////////////////////////////////////////////////////
   ///////////////////////////// 0. DATA CONTAINERS /////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -89,8 +89,8 @@ arma::mat cbpf_as_m_cpp(const int& N,
     xa(id_x(d + 1) - 1, 0) = x_r(TT*d + 0);
   }
   // weighting
-  w_log = w_log_cbpf_m(N, DD, y.row(0), xa.col(0), id_x);
-  // w.col(0) = w_normalize_cpp(w_log, "particle);
+  w_log = w_log_cbpf_d(N, DD, y.row(0), xa.col(0), id_x);
+  // w.col(0) = w_normalize_cpp(w_log, "particle");
   w_norm = w_normalize_cpp(w_log, "particle");
   //////////////////////////////////////////////////////////////////////////////
   ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS /////////////////////
@@ -113,8 +113,8 @@ arma::mat cbpf_as_m_cpp(const int& N,
     // ancestor sampling
     a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
     // weighting
-    w_log = w_log_cbpf_m(N, DD, y.row(t), xa.col(t), id_x);
-    // w.col(t) = w_normalize_cpp(w_log, "particle);
+    w_log = w_log_cbpf_d(N, DD, y.row(t), xa.col(t), id_x);
+    // w.col(t) = w_normalize_cpp(w_log, "particle");
     w_norm = w_normalize_cpp(w_log, "particle");
   }
   ind = a.col(TT - 1);

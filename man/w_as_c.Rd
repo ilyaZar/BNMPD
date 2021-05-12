@@ -24,8 +24,7 @@ project summary for details}
 is used but necessary for the Armadillo functionality}
 }
 \value{
-ancestor weights of dimension \code{Nx1}-dimensional (for each
-particle)
+ancestor index
 }
 \description{
 Computes the ancestor sampling weights.

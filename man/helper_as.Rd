@@ -12,7 +12,8 @@ helper_as(M, x)
 \item{x}{rhs}
 }
 \value{
-some return value needed within the computations of \code{cbpf_as_R()}
+some return value needed within the computations of
+\code{cbpf_as_r()}
 }
 \description{
 helps to compute as weights

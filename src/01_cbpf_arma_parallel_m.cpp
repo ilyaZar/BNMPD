@@ -15,8 +15,9 @@
 //' @param TT time series dimension
 //' @param DD multivariate dimension (number of multinomial categories)
 //' @param y_all measurements: multinomial counts
-//' @param Regs_beta_all  result of regressor values i.e. z_{t} (matrix) multiplied by
-//'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
+//' @param Regs_beta_all  result of regressor values i.e. z_{t} (matrix)
+//'   multiplied by parameters/coefficients (vector) over ALL \code{d=1...DD}
+//'   components
 //' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 //' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
 //'   latent state process
@@ -123,8 +124,8 @@ Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_par_vec,
     xa(id_x(DD) - 1, 0) = 0;
     // weighting
     w_log = w_log_cbpf_m(N, DD, y.row(0), xa.col(0), id_x);
-    // w.col(0) = w_normalize_cpp(w_log);
-    w_norm = w_normalize_cpp(w_log);
+    // w.col(0) = w_normalize_cpp(w_log, "particle);
+    w_norm = w_normalize_cpp(w_log, "particle");
     //////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS /////////////////////
     //////////////////////////////////////////////////////////////////////////////
@@ -152,8 +153,8 @@ Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_par_vec,
       a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
       // weighting
       w_log = w_log_cbpf_m(N, DD, y.row(t), xa.col(t), id_x);
-      // w.col(t) = w_normalize_cpp(w_log);
-      w_norm = w_normalize_cpp(w_log);
+      // w.col(t) = w_normalize_cpp(w_log, "particle);
+      w_norm = w_normalize_cpp(w_log, "particle");
     }
     ind = a.col(TT - 1);
     for (arma::uword t = TT-2; t >= 1; --t) {

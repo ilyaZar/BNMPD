@@ -7,16 +7,16 @@
 my_rdirichlet(alpha)
 }
 \arguments{
-\item{alpha}{alpha parameters of dirichlet distribution given as a matrix}
+\item{alpha}{a matrix of alpha parameters of a Dirichlet distribution}
 }
 \value{
 a nxD dimensional matrix of Dirichlet draws
 }
 \description{
 Generates random samples from dirichlet distribution; the dimension of the
-Dirichlet distribution (i.e. the number of shares of fractions) is taken as
-the number of columns in the alpha-matrix; the number of samples are taken
-as the rows of the alpha matrix; hence, each row of \code{alpha} corresponds
-to \code{D} alpha parameters for which a \code{D}-dimensional random draw
-is generated, and all these \code{n} draws are returned in matrix form.
+Dirichlet distribution (i.e. the number of shares or fractions) is taken as
+the number of columns in the alpha-matrix; the number of samples are taken as
+the number of rows of the alpha matrix; hence, each row of \code{alpha}
+corresponds to \code{D} alpha parameters for which a \code{D}-dimensional
+random draw from the Dirichlet is generated.
 }

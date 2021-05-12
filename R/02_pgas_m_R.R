@@ -10,16 +10,16 @@
 #' @param TT time series dimension
 #' @param DD multivariate response/measurement dimension: e.g. number of
 #'   shares/fractions if the measurements are from a Dirichlet
-#' @param data a list of data objects i.e. measurements: e.g. can be dirichlet
+#' @param data a list of data objects i.e. measurements: e.g. can be Dirichlet
 #'   fractions and/or number of counts per category (only the latter if
 #'   measurements are from a multinomial, and both if measurements come from a
 #'   multinomial-dirichlet)
-#' @param Z regressor matrix of Z_{t}'s (standard regressor covariates)
+#' @param Z regressor matrix of Z_{t}'s (standard covariates)
 #' @param U regressor matrix of U_{t}'s (random/individual effects)
-#' @param priors inverteg gamma prior (hyyper-)parameters
+#' @param priors inverting gamma prior (hyper-)parameters
 #' @param par_init initial values of parameters
 #' @param traj_init initial state trajectory
-#' @param true_states true laten states passed from simulated data for testing
+#' @param true_states true latent states passed from simulated data for testing
 #'   purposes
 #' @param smc_parallel logical; if \code{TRUE}, then the SMC part is run in
 #' paralle
@@ -55,7 +55,8 @@ pgas_m_R <- function(N, MM, NN, TT, DD,
   } else {
     dim_bet_u <- rep(2, times = DD)
     U <- array(0, c(TT, 2*DD, NN))
-    par_init <- c(par_init, init_bet_u = list(rep(list(matrix(0, 2, NN)), times = DD)))
+    par_init <- c(par_init, init_bet_u = list(rep(list(matrix(0, 2, NN)),
+                                                  times = DD)))
     u_null <- TRUE
   }
   dim_zet <- dim_bet_z

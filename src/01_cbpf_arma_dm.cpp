@@ -93,8 +93,8 @@ arma::mat cbpf_as_dm_cpp(const int& N,
   }
   // weighting
   w_log = w_log_cbpf_dm(N, DD, num_counts(0), y.row(0), xa.col(0), id_x);
-  // w.col(0) = w_normalize_cpp(w_log);
-  w_norm = w_normalize_cpp(w_log);
+  // w.col(0) = w_normalize_cpp(w_log, "particle");
+  w_norm = w_normalize_cpp(w_log, "particle");
   //////////////////////////////////////////////////////////////////////////////
   ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS /////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -117,8 +117,8 @@ arma::mat cbpf_as_dm_cpp(const int& N,
     a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
     // weighting
     w_log = w_log_cbpf_dm(N, DD, num_counts(t), y.row(t), xa.col(t), id_x);
-    // w.col(t) = w_normalize_cpp(w_log);
-    w_norm = w_normalize_cpp(w_log);
+    // w.col(t) = w_normalize_cpp(w_log, "particle");
+    w_norm = w_normalize_cpp(w_log, "particle");
   }
   ind = a.col(TT - 1);
   for (arma::uword t = TT-2; t >= 1; --t) {

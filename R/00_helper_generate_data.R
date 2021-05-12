@@ -4,13 +4,14 @@
 #'   of true parameter values is taken
 #'
 #' @return logical vector of dimension 4 given \code{TRUE} or \code{FALSE} if
-#'   (in this order) modelling of z-regressors, u-regressors, z spline regegressors
-#'   or u spline regegressors should be performed
+#'   (in this order) modeling of z-regressors, u-regressors, z spline regressors
+#'   or u spline regressors should be performed
 #'
 get_modelling_reg_types <- function(get_modelling_reg_types) {
   correct_names <- c("bet_z", "bet_u", "bet_z_spl", "bet_u_spl")
   if (length(intersect(get_modelling_reg_types, correct_names)) == 0) {
-    stop("The 'par_true' argument must have correct names: choose from 'bet_z', 'bet_u', 'bet_z_spl' or 'bet_u_spl'! ")
+    stop(paste0("The 'par_true' argument must have correct names: choose from",
+                "'bet_z', 'bet_u', 'bet_z_spl' or 'bet_u_spl'! "))
   }
   out <- vector("logical", 4)
   out[1] <- correct_names[1] %in% get_modelling_reg_types
@@ -71,8 +72,8 @@ generate_bet_u <- function(DD, NN, from_IW = FALSE,
 #' Generates panel data for various models.
 #'
 #' The data is a panel data from a Dirichlet, Multinomial or
-#' Dirichlet-multinomial distribution. The mulivariate draws can vary along the
-#' time and cross-sectional dimensions. This is because the parameter of the
+#' Dirichlet-multinomial distribution. The mulitivariate draws can vary along
+#' the time and cross-sectional dimensions. This is because the parameter of the
 #' distributions that generate the draws are modelled as a function of
 #' regressors and latent states where the regressors and latent states can vary
 #' over time and cross section.
@@ -89,8 +90,9 @@ generate_bet_u <- function(DD, NN, from_IW = FALSE,
 #'   fluctuate
 #' @param x_log_scale logical; if \code{TRUE}, x_levels are taken as logs and
 #'   the random number generation for the states is performed in logs
-#' @param include_intercept logical vector of dimension \code{DD}; if \code{TRUE}
-#'   include an intercept at the cross sectional unit for component \code{d}
+#' @param include_intercept logical vector of dimension \code{DD}; if
+#'   \code{TRUE} include an intercept at the cross sectional unit for component
+#'   \code{d}
 #' @param include_policy logical vector of dimension \code{DD}; if \code{TRUE}
 #'   include a policy dummy at the cross sectional unit for component \code{d}
 #' @param include_zeros numeric vector of dimension \code{DD} with values 1,
@@ -115,7 +117,7 @@ generate_bet_u <- function(DD, NN, from_IW = FALSE,
 #'   per cross sectional unit \code{n=1,...,N} with a joint plot of all
 #'   components together
 #' @param plot_states_each_d logical; if \code{TRUE}, latent states are
-#'   plotted per cross sectional unit \code{n=1,...,N} with a seperate plot for
+#'   plotted per cross sectional unit \code{n=1,...,N} with a separate plot for
 #'   each component
 #'
 #' @return NN-dimensional list of lists of two: \code{[[1]]} -> regressors and
@@ -133,6 +135,13 @@ generate_data_t_n <- function(distribution,
                               plot_states = FALSE,
                               plot_states_each_d = FALSE,
                               seed_no = NULL) {
+  densitities_supported <- c("multinomial", "dirichlet-mult",
+                             "gen-dirichlet-mult", "gen-dirichlet",
+                             "dirichlet")
+  if (!(distribution %in% densitities_supported)) {
+    stop(paste0("Argument to distribution must be one of: ",
+                paste0(densitities_supported, collapse = ", "), "!"))
+  }
   if (x_log_scale) {
     x_levels <- log(x_levels)
   }
@@ -142,7 +151,7 @@ generate_data_t_n <- function(distribution,
   modelling_reg_types <- get_modelling_reg_types(modelling_reg_types)
 
   data_part1 <- array(0, c(TT, DD, NN))
-  if (distribution == "multinomial" || distribution == "mult-diri") {
+  if (distribution == "multinomial" || distribution == "dirichlet-mult") {
     data_part2 <- matrix(0, nrow = TT, ncol = NN)
   }
 
@@ -165,7 +174,10 @@ generate_data_t_n <- function(distribution,
     par_true_current <- list(sig_sq = par_true[["sig_sq"]][, n],
                              phi = par_true[["phi"]][, n])
     if (modelling_reg_types[1]) par_true_current$bet_z <- par_true[["bet_z"]]
-    if (modelling_reg_types[2]) par_true_current$bet_u <- lapply(par_true[["bet_u"]], `[`, i = , j = n) # par_true[["bet_u"]]
+    if (modelling_reg_types[2]) {
+      # par_true[["bet_u"]]
+      par_true_current$bet_u <- lapply(par_true[["bet_u"]], `[`, i = , j = n)
+    }
 
     out_data_tmp <- generate_data_t(distribution = distribution,
                                     TT = TT, DD = DD,
@@ -173,11 +185,12 @@ generate_data_t_n <- function(distribution,
                                     x_levels = x_levels[, n],
                                     x_log_scale = x_log_scale,
                                     include_intercept = include_intercept,
-                                    include_policy = include_policy[, n, drop = TRUE],
+                                    include_policy = include_policy[, n,
+                                                                   drop = TRUE],
                                     include_zeros = include_zeros,
                                     modelling_reg_types = modelling_reg_types)
     data_part1[, , n] <- out_data_tmp[[1]]$yraw
-    if (distribution == "multinomial" || distribution == "mult-diri") {
+    if (distribution == "multinomial" || distribution == "dirichlet-mult") {
       data_part2[, n]   <- out_data_tmp[[1]]$num_counts
     }
     if (modelling_reg_types[1]) {
@@ -189,21 +202,21 @@ generate_data_t_n <- function(distribution,
     }
     states[, , n] <- out_data_tmp$x
     # browser()
-    plot_data_per_n(DD,
-                    yraw = data_part1[, , n],
-                    x = states[, , n],
-                    x_log_scale = x_log_scale,
-                    x_levels = x_levels[, n],
-                    plot_measurements = plot_measurements,
-                    plot_states       = plot_states,
-                    plot_states_each_d  = plot_states_each_d)
+    if (isTRUE(any(plot_measurements, plot_states, plot_states_each_d))) {
+      plot_data_per_n(DD, yraw = data_part1[, , n], x = states[, , n],
+                      x_log_scale = x_log_scale,
+                      x_levels = x_levels[, n],
+                      plot_measurements = plot_measurements,
+                      plot_states       = plot_states,
+                      plot_states_each_d  = plot_states_each_d)
+    }
   }
   out_data <- vector("list", 3)
   names(out_data) <- c("data", "regs", "states")
   if (distribution == "dirichlet") {
     out_data[[1]] <- list(yraw = data_part1)
   }
-  if (distribution == "multinomial" || distribution == "mult-diri") {
+  if (distribution == "multinomial" || distribution == "dirichlet-mult") {
     out_data[[1]] <- list(yraw = data_part1, num_counts = data_part2)
   }
   if (modelling_reg_types[1]) {
@@ -219,26 +232,27 @@ generate_data_t_n <- function(distribution,
 #' Generates time series data for various models.
 #'
 #' The data is a time series, for a given cross sectional unit, from a
-#' Dirichlet, Multinomial or Dirichlet-multinomial distribution. The mulivariate
-#' draws can vary along the time dimension. This is because the parameter of the
-#' distributions that generate the draws are modelled as a function of
-#' regressors and latent states where the regressors and latent states can vary
-#' over time.
+#' Dirichlet, Multinomial or Dirichlet-multinomial distribution. The
+#' multivariate draws can vary along the time dimension. This is because the
+#' parameter of the distributions that generate the draws are modeled as a
+#' function of regressors and latent states where the regressors and latent
+#' states can vary over time.
 #'
-#' @param distribution specifies the distribution; "dirichlet", "multinomial" or
+#' @param distribution specifies the distribution; "Dirichlet", "multinomial" or
 #'   "dirichlet-multinomial"
 #' @param TT number of time periods
-#' @param DD number of shares/fractions (for dirichlet or dirichlet-multinomial)
+#' @param DD number of shares/fractions (for Dirichlet or Dirichlet-multinomial)
 #'   or the number of categories for a multinomial distribution
 # @param n current cross sectional unit i.e. an integer \code{n=1,...,NN}
 #' @param par_true list of true parameters that describe the latent state
 #'   process
 #' @param x_levels vector of target "means"/"levels" of the states around which
 #'   they fluctuate
-#' @param x_log_scale logical; if \code{TRUE}, then \code{x_levels[i]} ist taken
+#' @param x_log_scale logical; if \code{TRUE}, then \code{x_levels[i]} is taken
 #'   as log and the random number generation for the states is performed in logs
-#' @param include_intercept logical vector of dimension \code{DD}; if \code{TRUE}
-#'   include an intercept at the cross sectional unit for component \code{d}
+#' @param include_intercept logical vector of dimension \code{DD}; if
+#'   \code{TRUE} include an intercept at the cross sectional unit for component
+#'   \code{d}
 #' @param include_policy logical vector of dimension \code{DD}; if \code{TRUE}
 #'   include a policy dummy at the cross sectional unit for component \code{d}
 #' @param include_zeros numeric vector of dimension \code{DD} with values 1,
@@ -292,7 +306,8 @@ generate_data_t <- function(distribution,
     bet_u <- NULL
   }
 
-  if (distribution %in% c("multinomial", "mult-diri", "mult-gen-diri")) {
+  if (distribution %in% c("multinomial", "dirichlet-mult",
+                          "gen-dirichlet-mul")) {
     num_counts <- sample(x = 80000:120000, size = TT)
   }
 
@@ -331,6 +346,7 @@ generate_data_t <- function(distribution,
 
   out_data_all <- list()
   if (distribution == "dirichlet") {
+    # browser()
     yraw <- my_rdirichlet(alpha = alphas)
     if (sum(rowSums(yraw)) != TT) {
       stop("Something is wrong with Dirichelet: fractions don't sum up to 1!")
@@ -338,11 +354,11 @@ generate_data_t <- function(distribution,
     out_data_all$data <- list(yraw = yraw)
   }
   if (distribution == "multinomial") {
-    alphas <- alphas/rowSums(alphas)
+    alphas <- alphas / rowSums(alphas)
     yraw <- my_rmultinomial(probs = alphas, num_counts = num_counts)
     out_data_all$data <- list(yraw = yraw, num_counts = num_counts)
   }
-  if (distribution == "mult-diri") {
+  if (distribution == "dirichlet-mult") {
     yraw <- my_rmult_diri(alpha = alphas, num_counts = num_counts)
     out_data_all$data <- list(yraw = yraw, num_counts = num_counts)
   }
@@ -410,7 +426,8 @@ generate_data_t <- function(distribution,
 #'   }
 #' @param drift  TO-BE-EXPLAINED-LATER
 #'
-#' @return a \code{length(beta_x)}x\code{TT} matrix of regressors and a \code{TT}-dimensional vector of latent states
+#' @return a \code{length(beta_x)}x\code{TT} matrix of regressors and a
+#'   \code{TT}-dimensional vector of latent states
 generate_x_z_u <- function(TT,
                            phi_x,
                            sig_sq_x,
@@ -491,6 +508,7 @@ generate_x_z_u <- function(TT,
   x[1] <- f(x_tt = xinit, regs = reg_all[1, ], phi_x = phi_x, bet_reg = bet_reg)
   x[1] <- x[1] + sqrt(sig_sq_x)*stats::rnorm(n = 1)
 
+  # browser()
   for (t in 1:TT) {
     if (t < TT) {
       x[t + 1] <- f(x_tt = x[t], regs = reg_all[t + 1, ],
@@ -570,7 +588,8 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                         rep(1, times = my_third),
                         rep(0, times = TT - 2*my_third))
     } else {
-      stop("Undefined zero patterns: please use 1L to 4L for different patterns and check the documentation/help for their meaning!")
+      stop(paste0("Undefined zero patterns: please use 1L to 4L for different",
+                  "patterns and check the doc/help for their meaning!"))
     }
   }
   if (dim_reg == 1) {
@@ -581,7 +600,9 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
       regs <- dummy_to_use
     } else {
       const_mean <- x_level * (1 - phi_x)/bet_reg
-      regs          <- matrix(stats::rnorm(TT*dim_reg, mean = const_mean, sd = reg_sd),
+      regs          <- matrix(stats::rnorm(TT*dim_reg,
+                                           mean = const_mean,
+                                           sd = reg_sd),
                               nrow = TT,
                               ncol = dim_reg,
                               byrow = TRUE)
@@ -596,7 +617,8 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
     }
     if (!intercept && !policy_dummy) {
       reg_means <- stats::rnorm(dim_reg - 1, mean = 0, sd = bet_sd)
-      last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-dim_reg])
+      last_reg_mean <- x_level * (1 - phi_x)
+      last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
       last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
       reg_means     <- c(reg_means, last_reg_mean)
       regs          <- matrix(stats::rnorm(TT*dim_reg,
@@ -634,7 +656,8 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
       reg_means <- stats::rnorm(dim_reg - 2, mean = 0, sd = bet_sd)
       reg_means <- c(1, reg_means)
 
-      last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-dim_reg])
+      last_reg_mean <- x_level * (1 - phi_x)
+      last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
       last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
       reg_means     <- c(reg_means, last_reg_mean)
       reg_len       <- length(reg_means)
@@ -644,10 +667,11 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                               nrow = TT,
                               ncol = reg_len,
                               byrow = TRUE)
-        regs[, 1] <- 1
+      regs[, 1] <- 1
     } else if (!intercept && policy_dummy ) {
       reg_means <- stats::rnorm(dim_reg - 2, mean = 0, sd = bet_sd)
-      last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-c(1, dim_reg)])
+      last_reg_mean <- x_level * (1 - phi_x)
+      last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-c(1, dim_reg)])
       last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
       reg_means     <- c(reg_means, last_reg_mean)
       reg_len       <- length(reg_means)
@@ -662,7 +686,8 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
       reg_means <- stats::rnorm(dim_reg - 3, mean = 0, sd = bet_sd)
       reg_means <- c(1, reg_means)
 
-      last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-c(2, dim_reg)])
+      last_reg_mean <- x_level * (1 - phi_x)
+      last_reg_mean <- last_reg_mean- sum(reg_means * bet_reg[-c(2, dim_reg)])
       last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
       reg_means     <- c(reg_means, last_reg_mean)
       reg_len       <- length(reg_means)
@@ -675,7 +700,8 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
       regs <- cbind(1, dummy_to_use, regs[, -c(1)])
     } else {
       reg_means <- stats::rnorm(dim_reg - 1, mean = 0, sd = bet_sd)
-      last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-dim_reg])
+      last_reg_mean <- x_level * (1 - phi_x)
+      last_reg_mean <- last_reg_mean- sum(reg_means * bet_reg[-dim_reg])
       last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
       reg_means     <- c(reg_means, last_reg_mean)
       reg_len       <- length(reg_means)
@@ -686,7 +712,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                               ncol = reg_len,
                               byrow = TRUE)
     }
-  return(regs)
+    return(regs)
   }
 }
 #' Function to plot the data
@@ -795,7 +821,8 @@ plot_data_per_n <- function(DD,
       #                xlab = names_xlab,
       #                col = d)
       # graphics::abline(h = (x_levels/sum(x_levels))[d], lty = 1, lwd = 3)
-      # graphics::abline(h = mean((all_states/rowSums(all_states))[, d, drop = TRUE]),
+      # graphics::abline(h = mean((all_states/rowSums(all_states))[, d,
+      #                                                           drop = TRUE]),
       #                  lty = 1, lwd = 1, col = d)
     }
   }
@@ -896,7 +923,8 @@ my_rmult_diri <- function(alpha, num_counts) {
   n <- nrow(alpha)
   l <- ncol(alpha)
   num_probs <- n*l
-  probs <- matrix(stats::rgamma(n = num_probs, shape = t(alpha)), ncol = l, byrow = TRUE)
+  probs <- matrix(stats::rgamma(n = num_probs, shape = t(alpha)),
+                  ncol = l, byrow = TRUE)
   probs_colsums <- as.vector(probs %*% rep(1, l))
   probs <- probs/probs_colsums
 
