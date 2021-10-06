@@ -180,19 +180,19 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       # if (n %in% seq_rs_seed_sequential) {
       #   set.seed(123)
       # }
-      # browser()
-      out_cpf <- cbpf_as_d_cpp(N = N, TT = TT, DD = DD,
-                               y = y[, , n],
-                               Regs_beta = Regs_beta[, , n],
-                               sig_sq_x = sig_sq_x[, 1],
-                               phi_x = phi_x[, 1],
-                               x_r = X[ , , 1, n])
-      # out_cpf <- cbpf_as_d_r(N = N, TT = TT, DD = DD,
-      #                        y = y[, , n],
-      #                        Regs_beta =  Regs_beta[, , n],
-      #                        sig_sq_x = sig_sq_x[, 1],
-      #                        phi_x = phi_x[, 1],
-      #                        x_r = X[ , , 1, n])
+      browser()
+      # out_cpf <- cbpf_as_d_cpp(N = N, TT = TT, DD = DD,
+                              #  y = y[, , n],
+                              #  Regs_beta = Regs_beta[, , n],
+                              #  sig_sq_x = sig_sq_x[, 1],
+                              #  phi_x = phi_x[, 1],
+                              #  x_r = X[ , , 1, n])
+      out_cpf <- cbpf_as_d_r(N = N, TT = TT, DD = DD,
+                             y = y[, , n],
+                             Regs_beta =  Regs_beta[, , n],
+                             sig_sq_x = sig_sq_x[, 1],
+                             phi_x = phi_x[, 1],
+                             x_r = X[ , , 1, n])
       # out_cpf <- true_states[ , , n]
       for (d in 1:DD) {
         X[ , d, 1, n] <- out_cpf[, d]
@@ -209,123 +209,58 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       # browser()
       phi_x[d, m] <- phi_x[d, m - 1]
       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1]
-      err_sig_sq_x_all <- 0
-      for (n in 1:NN) {
-        bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n] <- bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m - 1, n]
-        err_sig_sq_x <- X[2:TT, d, m - 1, n] - f(x_tt = X[1:(TT - 1), d, m - 1, n],
-                                                 regs  = cbind(Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n],
-                                                               U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n]),
-                                                 phi_x = phi_x[d, m - 1],
-                                                 bet_reg = c(bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1],
-                                                             bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m - 1, n]))
-        err_sig_sq_x_all <- err_sig_sq_x_all + crossprod(err_sig_sq_x)
-      }
-      sig_sq_x[d, m]  <- 1/stats::rgamma(n = 1,
-                                         prior_ig_a,
-                                         prior_ig_b + err_sig_sq_x_all/2)
-      #
-      #
-      #
-      #
-      #
-      tmp_scale_mat_vcm_bet_u <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
-      for (n in 1:NN) {
-        tmp_scale_mat_vcm_bet_u <- tmp_scale_mat_vcm_bet_u + tcrossprod(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n])
-      }
-      # browser()
-      tmp_scale_mat_vcm_bet_u <- solve(tmp_scale_mat_vcm_bet_u + prior_vcm_bet_u2[[d]])
-      vcm_bet_u[[d]][, , m]   <- solve(stats::rWishart(1, dof_vcm_bet_u[d], tmp_scale_mat_vcm_bet_u)[, , 1])
-      # vcm_bet_u[[d]][, , m] <- vcm_bet_u[[d]][, , m - 1]
-      #
-      #
-      #
-      #
-      #
-      vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x[d, m], times = TT - 1))
-      vmc_x_errors_rhs_inv  <- solve(vcm_x_errors_rhs[[d]])
-      vcm_bet_u_inv         <- solve(vcm_bet_u[[d]][, , m])
-      #
-      #
-      #
-      #
-      #
-      #
-      for (n in 1:NN) {
-        Omega_bet_u <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
-        mu_bet_u    <- matrix(0, nrow = dim_bet_u[d], ncol = 1)
-        x_tilde_n   <- X[2:TT, d, m - 1, n] - f(x_tt = X[1:(TT - 1), d, m - 1, n],
-                                                regs  = Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n],
-                                                phi_x = phi_x[d, m - 1],
-                                                bet_reg = bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1])
-        Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
-        Omega_bet_u <- crossprod(Umat, vmc_x_errors_rhs_inv) %*% Umat + vcm_bet_u_inv
-        Omega_bet_u <- solve(Omega_bet_u)
-        mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_rhs_inv) %*% x_tilde_n)
 
-        bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n] <- rnorm_fast_n1(mu = mu_bet_u, Sigma = Omega_bet_u, dim_bet_u[d])
-      }
-      ##########################################################################
-      # check_list_cpp <- bet_z_components(d, DD, NN, TT, dim_bet_z[d] + 1,
-      #                                    vcm_x_errors_lhs[[d]],
-      #                                    vcm_x_errors_rhs[[d]],
-      #                                    prior_vcm_bet_z[[d]],
-      #                                    X[, d, m - 1, ],
-      #                                    regs_z, id_reg_z)
-      # mu_bet    <- check_list_cpp[[1]]
-      # Omega_bet <- check_list_cpp[[2]]
-      ##########################################################################
-      # mu_tmp_all2 <- check_list_cpp[[1]]
-      # omega_tmp_all2 <- check_list_cpp[[2]]
-      # Omega_bet2    <- solve(omega_tmp_all2 + prior_vcm_bet_z[[d]])
-      # mu_bet2       <- Omega_bet2 %*% mu_tmp_all2
-      ##########################################################################
-      #
-      #
-      #
-      #
-      #
-      omega_tmp_all <- 0
-      mu_tmp_all <- 0
-      # if (m %in% (c(2,30))) browser()
-      for (n in 1:NN) {
-        regs_z[, id_reg_z[d] + 1, n]  <- X[1:(TT - 1), d, m - 1, n]
-        x_lhs        <- X[2:TT, d, m - 1, n]
+      sig_sq_x[d, m] <- sample_sig_sq_x(phi_x =  phi_x[d, m - 1],
+                                        bet_z = bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1],
+                                        bet_u = bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m - 1, , drop = FALSE],
+                                        X = X[, d, m - 1,],
+                                        regs_z = Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], ],
+                                        regs_u = U[2:TT, (id_uet[d] + 1):id_uet[d + 1], , drop = FALSE],
+                                        prior_ig = c(prior_ig_a,
+                                                     prior_ig_b),
+                                        iter_range_NN = 1:NN)
 
-        Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
-        vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]][, , m] %*% t(Umat)
-        vcm_x_errors          <- vcm_x_errors_lhs[[d]][, , n] + vcm_x_errors_rhs[[d]]
-        vcm_x_errors          <- solve(vcm_x_errors)
+      vcm_bet_u[[d]][, , m] <- sample_vcm_bet_u(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, , drop = FALSE],
+                                                dim_bet_u[d],
+                                                dof_vcm_bet_u[d],
+                                                prior_vcm_bet_u2[[d]],
+                                                1:NN)
+      bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, ] <- sample_bet_u(sig_sq_x[d, m],
+                                                                    phi_x[d, m - 1],
+                                                                    bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1],
+                                                                    vcm_bet_u[[d]][, , m],
+                                                                    dim_bet_u[d],
+                                                                    X[, d, m - 1, ],
+                                                                    Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], ],
+                                                                    U[2:TT, (id_uet[d] + 1):id_uet[d + 1], , drop = FALSE],
+                                                                    1:NN)
+      beta_sampled <- sample_beta_all(sig_sq_x = sig_sq_x[d, m],
+                                      vcm_bet_u = vcm_bet_u[[d]][, , m],
+                                      X = X[, d, m - 1, ],
+                                      regs_z = regs_z,
+                                      U = U[2:TT, (id_uet[d] + 1):id_uet[d + 1],
+                                            , drop = FALSE],
+                                      TT = TT,
+                                      id_reg_z = c(id_reg_z[d],
+                                                   id_reg_z[d + 1]),
+                                      dim_bet_z = dim_bet_z[d],
+                                      prior_vcm_bet_z = prior_vcm_bet_z[[d]],
+                                      iter_range_NN = 1:NN)
 
-        regs_tmp              <- regs_z[, (id_reg_z[d] + 1):id_reg_z[d + 1], n]
-        # omega_tmp <- crossprod(regs_tmp,
-        #                        regs_tmp)/sig_sq_x[d, m]
-        omega_tmp <- crossprod(regs_tmp,
-                               vcm_x_errors) %*% regs_tmp
-        omega_tmp_all <- omega_tmp_all + omega_tmp
-        # mu_tmp <- crossprod(regs_tmp, x_lhs)/sig_sq_x[d, m]
-        mu_tmp <- crossprod(regs_tmp, vcm_x_errors) %*% x_lhs
-        mu_tmp_all <- mu_tmp_all + mu_tmp
-      }
-      Omega_bet    <- solve(omega_tmp_all + prior_vcm_bet_z[[d]])
-      mu_bet       <- Omega_bet %*% mu_tmp_all
-      #
-      #
-      #
-      #
-      #
-      # beta_sampled   <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
-      beta_sampled <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z[d] + 1)
-      while ((abs(abs(beta_sampled[1]) - 1) < 0.01) | abs(beta_sampled[1]) > 1) {
-        # beta_sampled <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
-        beta_sampled <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z[d] + 1)
-      }
       phi_x[d, m] <- beta_sampled[1]
       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- beta_sampled[-1]
-      for (n in 1:NN) {
-        Z_beta[, d, n] <- Z[, (id_zet[d] + 1):id_zet[d + 1], n] %*% bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m]
-        U_beta[, d, n] <- matrix(U[, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT) %*% matrix(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n, drop = FALSE])
-        Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
-      }
+
+      Regs_beta[,d, ] <- get_regs_beta(Z  = Z[, (id_zet[d] + 1):id_zet[d + 1], ],
+                                       U = U,
+                                       id_uet = c(id_uet[d], id_uet[d + 1]),
+                                       TT = TT, NN = NN,
+                                       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m],
+                                       bet_u = bet_u[, m, , drop = FALSE],
+                                       id_bet_u = c(id_bet_u[d], id_bet_u[d + 1]),
+                                       iter_range_NN = 1:NN)
+      # Z_beta[,d, ]    <- regs_bet[[1]]
+      # U_beta[,d, ]    <- regs_bet[[2]]
+      # Regs_beta[,d, ] <- regs_bet[[3]]
     }
     # II. Run cBPF-AS part
     if (smc_parallel) {
@@ -383,6 +318,49 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
               vcm_bet_u = vcm_bet_u,
               x = X))
 }
+# tmp_scale_mat_vcm_bet_u <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
+# for (n in 1:NN) {
+#   tmp_scale_mat_vcm_bet_u <- tmp_scale_mat_vcm_bet_u + tcrossprod(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n])
+# }
+# tmp_scale_mat_vcm_bet_u <- solve(tmp_scale_mat_vcm_bet_u + prior_vcm_bet_u2[[d]])
+# set.seed(42)
+# vcm_bet_u[[d]][, , m]   <- solve(stats::rWishart(1, dof_vcm_bet_u[d],
+#                                                  tmp_scale_mat_vcm_bet_u)[, , 1])
+# browser()
+# set.seed(42)
+ #
+      # #
+      # #
+      # #
+      # vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x[d, m], times = TT - 1))
+      # vmc_x_errors_rhs_inv  <- solve(vcm_x_errors_rhs[[d]])
+      # vcm_bet_u_inv         <- solve(vcm_bet_u[[d]][, , m])
+      # #
+      # #
+      # #
+      # #
+      # #
+      # #
+      # # set.seed(42) bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- beta_sampled[-1]
+      # for (n in 1:NN) {
+      #   Omega_bet_u <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
+      #   mu_bet_u    <- matrix(0, nrow = dim_bet_u[d], ncol = 1)
+      #   x_tilde_n   <- X[2:TT, d, m - 1, n] - f(x_tt = X[1:(TT - 1), d, m - 1, n],
+      #                                           regs  = Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n],
+      #                                           phi_x = phi_x[d, m - 1],
+      #                                           bet_reg = bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1])
+      #   Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
+      #   Omega_bet_u <- crossprod(Umat, vmc_x_errors_rhs_inv) %*% Umat + vcm_bet_u_inv
+      #   Omega_bet_u <- solve(Omega_bet_u)
+      #   mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_rhs_inv) %*% x_tilde_n)
+      #
+      #   bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n] <- rnorm_fast_n1(mu = mu_bet_u, Sigma = Omega_bet_u, dim_bet_u[d])
+      # }
+#
+#
+#
+#
+#
 # monitor_pgas_states(states_drawn = cbind(exp(X1[1, ]), exp(X2[1, ]),
 #                                          exp(X3[1, ]), exp(X4[1, ]),
 #                                          exp(X5[1, ]), exp(X6[1, ])),
@@ -450,3 +428,43 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
 #                                         sig_sq_x6[1:m], phi_x6[1:m],
 #                                         t(bet_z6)[1:m,]),
 #                    dim_all = dim_all)
+# vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x[d, m], times = TT - 1))
+#       vmc_x_errors_rhs_inv  <- solve(vcm_x_errors_rhs[[d]])
+#       vcm_bet_u_inv         <- solve(vcm_bet_u[[d]][, , m])
+#       omega_tmp_all <- 0
+#       mu_tmp_all <- 0
+#       # if (m %in% (c(2,30))) browser()
+#       for (n in 1:NN) {
+#         regs_z[, id_reg_z[d] + 1, n]  <- X[1:(TT - 1), d, m - 1, n]
+#         x_lhs        <- X[2:TT, d, m - 1, n]
+#
+#         Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
+#         vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]][, , m] %*% t(Umat)
+#         vcm_x_errors          <- vcm_x_errors_lhs[[d]][, , n] + vcm_x_errors_rhs[[d]]
+#         vcm_x_errors          <- solve(vcm_x_errors)
+#
+#         regs_tmp              <- regs_z[, (id_reg_z[d] + 1):id_reg_z[d + 1], n]
+#         # omega_tmp <- crossprod(regs_tmp,
+#         #                        regs_tmp)/sig_sq_x[d, m]
+#         omega_tmp <- crossprod(regs_tmp,
+#                                vcm_x_errors) %*% regs_tmp
+#         omega_tmp_all <- omega_tmp_all + omega_tmp
+#         # mu_tmp <- crossprod(regs_tmp, x_lhs)/sig_sq_x[d, m]
+#         mu_tmp <- crossprod(regs_tmp, vcm_x_errors) %*% x_lhs
+#         mu_tmp_all <- mu_tmp_all + mu_tmp
+#       }
+#       Omega_bet    <- solve(omega_tmp_all + prior_vcm_bet_z[[d]])
+#       mu_bet       <- Omega_bet %*% mu_tmp_all
+#       #
+#       #
+#       #
+#       #
+#       #
+#       # beta_sampled   <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
+#       beta_sampled <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z[d] + 1)
+#       while ((abs(abs(beta_sampled[1]) - 1) < 0.01) | abs(beta_sampled[1]) > 1) {
+#         # beta_sampled <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
+#         beta_sampled <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z[d] + 1)
+#       }
+#       phi_x[d, m] <- beta_sampled[1]
+#       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- beta_sampled[-1]

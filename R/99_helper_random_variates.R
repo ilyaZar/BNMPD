@@ -92,5 +92,5 @@ rnorm_fast_n1 <- function(mu, Sigma, len) {
   # retval <- sweep(retval, 2, mean, "+")
   # colnames(retval) <- names(mean)
   # retval
-}
+  }
 

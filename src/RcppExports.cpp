@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // f_cpp_vech
 arma::vec f_cpp_vech(const arma::vec& x_tt, const double& phi_x, const arma::vec& regs_add);
 RcppExport SEXP _BNMPD_f_cpp_vech(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP regs_addSEXP) {

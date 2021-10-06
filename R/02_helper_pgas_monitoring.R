@@ -1,9 +1,8 @@
-# monitor_mcmc <- function(states_true, states_drawn) {
-# }
-# changes to be made s.th. state means are tracked for the MCMC iterations (in
-# addition to displaying mere computing time until simulation finished)
-#
-#' Monitors PGAS process
+#' Changes to be made s.th. state means are tracked for the MCMC iterations (in
+#' addition to displaying mere computing time until simulation finished)
+#'
+#' Monitors PGAS process. Think about
+#' \code{monitor_mcmc <- function(states_true, states_drawn) {}}
 #'
 #' Monitors time in terms of percentage of completed (particle) MCMC iterations.
 #' In this sense, the progress of PGAS is monitored.
@@ -69,25 +68,20 @@ monitor_pgas_mcmc <- function(current, total, num, burn,
     }
     print(out)
   }
+  # string_format <- paste0(rep("%.3f", times = num_pars), collapse = " ")
+  # string_print1 <- paste0("init values:     ", string_format, "\n")
+  # string_print2 <- paste0("true values:     ", string_format, "\n")
+  # string_print3 <- paste0("mean values:     ", string_format, "\n")
+  #
+  # args_print1 <- c(list(fmt = string_print1), val_init)
+  # args_print2 <- c(list(fmt = string_print2), val_true)
+  # args_print3 <- c(list(fmt = string_print3), val_mean_all)
+  #
+  # cat(sprintf("##########################################################\n"))
+  # cat(do.call(sprintf, args = args_print1))
+  # cat(do.call(sprintf, args = args_print2))
+  # cat(do.call(sprintf, args = args_print3))
 }
-# string_format <- paste0(rep("%.3f", times = num_pars), collapse = " ")
-# string_print1 <- paste0("init values:     ", string_format, "\n")
-# string_print2 <- paste0("true values:     ", string_format, "\n")
-# string_print3 <- paste0("mean values:     ", string_format, "\n")
-#
-# args_print1 <- c(list(fmt = string_print1), val_init)
-# args_print2 <- c(list(fmt = string_print2), val_true)
-# args_print3 <- c(list(fmt = string_print3), val_mean_all)
-#
-# cat(sprintf("##########################################################\n"))
-# cat(do.call(sprintf, args = args_print1))
-# cat(do.call(sprintf, args = args_print2))
-# cat(do.call(sprintf, args = args_print3))
-#
-#
-#
-#
-#
 #' PGAS state monitoring
 #'
 #' Displaying the sampled state trajectories of the current and the previoius
@@ -122,10 +116,10 @@ monitor_pgas_states <- function(states_drawn, states_comp, freeze = 1.5,
       graphics::par(mfrow = c(3, 1))
       for (i in 1:num_trajs) {
         graphics::matplot(cbind(states_drawn[, i]),
-                type = "l",
-                main = names_title[i],
-                ylab = names_ylab[i],
-                col = "red")
+                          type = "l",
+                          main = names_title[i],
+                          ylab = names_ylab[i],
+                          col = "red")
         Sys.sleep(freeze)
       }
     }
@@ -141,9 +135,9 @@ monitor_pgas_states <- function(states_drawn, states_comp, freeze = 1.5,
       graphics::par(mfrow = c(3, 1))
       for (i in 1:num_trajs) {
         graphics::matplot(cbind(states_comp[, i], states_drawn[, i]),
-                type = "l",
-                main = names_title[i],
-                ylab = names_ylab[i])
+                          type = "l",
+                          main = names_title[i],
+                          ylab = names_ylab[i])
         Sys.sleep(freeze)
       }
     }
