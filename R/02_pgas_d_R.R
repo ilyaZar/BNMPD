@@ -88,7 +88,6 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
   vcm_bet_u         <- vector("list", DD)
   vcm_x_errors_rhs  <- vector("list", DD)
   vcm_x_errors_lhs  <- vector("list", DD)
-  vcm_x_errors      <- matrix(0, nrow = TT - 1, ncol = TT - 1)
   for (d in 1:DD) {
     vcm_x_errors_rhs[[d]] <- matrix(0, nrow = TT - 1, ncol = TT - 1)
     vcm_x_errors_lhs[[d]] <- array(0, c(TT - 1, TT - 1, NN))
@@ -106,8 +105,8 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
   ## I. Initialize states to deterministic starting values,
   ## Initialize parameters and regressor values
   for (d in 1:DD) {
-    sig_sq_x[d, 1]                              <- par_init[["init_sig_sq"]][d, 1]
-    phi_x[d, 1]                                 <- par_init[["init_phi"]][[d, 1]]
+    sig_sq_x[d, 1] <- par_init[["init_sig_sq"]][d, 1]
+    phi_x[d, 1]    <- par_init[["init_phi"]][[d, 1]]
     bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], 1] <- par_init[["init_bet_z"]][[d]]
     prior_vcm_bet_z[[d]]  <- diag(1/1000, dim_bet_z[d] + 1)
     prior_vcm_bet_u2[[d]] <- diag(1/1000, dim_bet_u[d])
@@ -160,7 +159,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
                                             "phi_x",
                                             "X"),
                             envir = envir_par)
-    # parallel::clusterEvalQ(cl, set.seed(123))
+    parallel::clusterEvalQ(cl, set.seed(123))
     # browser()
     out_cpf <- parallel::clusterApply(cl, x = task_indices,
                                       BNMPD::cbpf_as_d_cpp_par,
@@ -206,39 +205,47 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
     # I. Run GIBBS part
     # 1. pars for xa processes -------------------------------------------
     for (d in 1:DD) {
+      id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
+      id_betu_tmp <- (id_bet_u[d] + 1):id_bet_u[d + 1]
+      id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
+      id_uet_tmp  <- (id_uet[d] + 1):id_uet[d + 1]
       # browser()
       phi_x[d, m] <- phi_x[d, m - 1]
-      bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1]
+      bet_z[id_betz_tmp, m] <- bet_z[id_betz_tmp, m - 1]
 
       sig_sq_x[d, m] <- sample_sig_sq_x(phi_x =  phi_x[d, m - 1],
-                                        bet_z = bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1],
-                                        bet_u = bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m - 1, , drop = FALSE],
-                                        X = X[, d, m - 1,],
-                                        regs_z = Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], ],
-                                        regs_u = U[2:TT, (id_uet[d] + 1):id_uet[d + 1], , drop = FALSE],
+                                        bet_z = bet_z[id_betz_tmp, m - 1],
+                                        bet_u = bet_u[id_betu_tmp, m - 1, ,
+                                                      drop = FALSE],
+                                        X = X[, d, m - 1, ],
+                                        regs_z = Z[2:TT, id_zet_tmp, ],
+                                        regs_u = U[2:TT, id_uet_tmp, ,
+                                                   drop = FALSE],
                                         prior_ig = c(prior_ig_a,
                                                      prior_ig_b),
                                         iter_range_NN = 1:NN)
 
-      vcm_bet_u[[d]][, , m] <- sample_vcm_bet_u(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, , drop = FALSE],
+      vcm_bet_u[[d]][, , m] <- sample_vcm_bet_u(bet_u[id_betu_tmp, m, ,
+                                                      drop = FALSE],
                                                 dim_bet_u[d],
                                                 dof_vcm_bet_u[d],
                                                 prior_vcm_bet_u2[[d]],
                                                 1:NN)
-      bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, ] <- sample_bet_u(sig_sq_x[d, m],
-                                                                    phi_x[d, m - 1],
-                                                                    bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1],
-                                                                    vcm_bet_u[[d]][, , m],
-                                                                    dim_bet_u[d],
-                                                                    X[, d, m - 1, ],
-                                                                    Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], ],
-                                                                    U[2:TT, (id_uet[d] + 1):id_uet[d + 1], , drop = FALSE],
-                                                                    1:NN)
+      bet_u[id_betu_tmp, m, ] <- sample_bet_u(sig_sq_x[d, m],
+                                              phi_x[d, m - 1],
+                                              bet_z[id_betz_tmp, m - 1],
+                                              vcm_bet_u[[d]][, , m],
+                                              dim_bet_u[d],
+                                              X[, d, m - 1, ],
+                                              Z[2:TT, id_zet_tmp, ],
+                                              U[2:TT, id_uet_tmp, ,
+                                                drop = FALSE],
+                                              1:NN)
       beta_sampled <- sample_beta_all(sig_sq_x = sig_sq_x[d, m],
                                       vcm_bet_u = vcm_bet_u[[d]][, , m],
                                       X = X[, d, m - 1, ],
                                       regs_z = regs_z,
-                                      U = U[2:TT, (id_uet[d] + 1):id_uet[d + 1],
+                                      U = U[2:TT, id_uet_tmp,
                                             , drop = FALSE],
                                       TT = TT,
                                       id_reg_z = c(id_reg_z[d],
@@ -248,16 +255,17 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
                                       iter_range_NN = 1:NN)
 
       phi_x[d, m] <- beta_sampled[1]
-      bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- beta_sampled[-1]
+      bet_z[id_betz_tmp, m] <- beta_sampled[-1]
 
-      Regs_beta[,d, ] <- get_regs_beta(Z  = Z[, (id_zet[d] + 1):id_zet[d + 1], ],
-                                       U = U,
-                                       id_uet = c(id_uet[d], id_uet[d + 1]),
-                                       TT = TT, NN = NN,
-                                       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m],
-                                       bet_u = bet_u[, m, , drop = FALSE],
-                                       id_bet_u = c(id_bet_u[d], id_bet_u[d + 1]),
-                                       iter_range_NN = 1:NN)
+      Regs_beta[, d, ] <- get_regs_beta(Z  = Z[, id_zet_tmp, ],
+                                        U = U,
+                                        id_uet = c(id_uet[d], id_uet[d + 1]),
+                                        TT = TT, NN = NN,
+                                        bet_z[id_betz_tmp, m],
+                                        bet_u = bet_u[, m, , drop = FALSE],
+                                        id_bet_u = c(id_bet_u[d],
+                                                     id_bet_u[d + 1]),
+                                        iter_range_NN = 1:NN)
       # Z_beta[,d, ]    <- regs_bet[[1]]
       # U_beta[,d, ]    <- regs_bet[[2]]
       # Regs_beta[,d, ] <- regs_bet[[3]]
@@ -269,7 +277,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
                                               "phi_x",
                                               "X"),
                               envir = envir_par)
-      # parallel::clusterEvalQ(cl, set.seed(123))
+      parallel::clusterEvalQ(cl, set.seed(123))
       # browser()
       out_cpf <- parallel::clusterApply(cl, x = task_indices,
                                         BNMPD::cbpf_as_d_cpp_par,
@@ -320,7 +328,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
 }
 # tmp_scale_mat_vcm_bet_u <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
 # for (n in 1:NN) {
-#   tmp_scale_mat_vcm_bet_u <- tmp_scale_mat_vcm_bet_u + tcrossprod(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n])
+#   tmp_scale_mat_vcm_bet_u <- tmp_scale_mat_vcm_bet_u + tcrossprod(bet_u[id_betu_tmp, m, n])
 # }
 # tmp_scale_mat_vcm_bet_u <- solve(tmp_scale_mat_vcm_bet_u + prior_vcm_bet_u2[[d]])
 # set.seed(42)
@@ -341,20 +349,20 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       # #
       # #
       # #
-      # # set.seed(42) bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- beta_sampled[-1]
+      # # set.seed(42) bet_z[id_betz_tmp, m] <- beta_sampled[-1]
       # for (n in 1:NN) {
       #   Omega_bet_u <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
       #   mu_bet_u    <- matrix(0, nrow = dim_bet_u[d], ncol = 1)
       #   x_tilde_n   <- X[2:TT, d, m - 1, n] - f(x_tt = X[1:(TT - 1), d, m - 1, n],
-      #                                           regs  = Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n],
+      #                                           regs  = Z[2:TT, id_zet_tmp, n],
       #                                           phi_x = phi_x[d, m - 1],
-      #                                           bet_reg = bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m - 1])
-      #   Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
+      #                                           bet_reg = bet_z[id_betz_tmp, m - 1])
+      #   Umat <- matrix(U[2:TT, id_uet_tmp, n, drop = FALSE], nrow = TT - 1)
       #   Omega_bet_u <- crossprod(Umat, vmc_x_errors_rhs_inv) %*% Umat + vcm_bet_u_inv
       #   Omega_bet_u <- solve(Omega_bet_u)
       #   mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_rhs_inv) %*% x_tilde_n)
       #
-      #   bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], m, n] <- rnorm_fast_n1(mu = mu_bet_u, Sigma = Omega_bet_u, dim_bet_u[d])
+      #   bet_u[id_betu_tmp, m, n] <- rnorm_fast_n1(mu = mu_bet_u, Sigma = Omega_bet_u, dim_bet_u[d])
       # }
 #
 #
@@ -438,7 +446,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
 #         regs_z[, id_reg_z[d] + 1, n]  <- X[1:(TT - 1), d, m - 1, n]
 #         x_lhs        <- X[2:TT, d, m - 1, n]
 #
-#         Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
+#         Umat <- matrix(U[2:TT, id_uet_tmp, n, drop = FALSE], nrow = TT - 1)
 #         vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]][, , m] %*% t(Umat)
 #         vcm_x_errors          <- vcm_x_errors_lhs[[d]][, , n] + vcm_x_errors_rhs[[d]]
 #         vcm_x_errors          <- solve(vcm_x_errors)
@@ -467,4 +475,4 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
 #         beta_sampled <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z[d] + 1)
 #       }
 #       phi_x[d, m] <- beta_sampled[1]
-#       bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], m] <- beta_sampled[-1]
+#       bet_z[id_betz_tmp, m] <- beta_sampled[-1]
