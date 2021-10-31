@@ -100,20 +100,29 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
   regs_u    <- array(0, c(TT - 1, sum(dim_uet) + DD, NN))
   Regs_beta <- array(0, c(TT, DD, NN))
   # Initialize priors:
-  prior_ig_a     <- priors[["ig_a"]] + NN*(TT - 1)/2
+  prior_ig_a     <- priors[["ig_a"]] + NN * (TT - 1) / 2
   prior_ig_b     <- priors[["ig_b"]]
   ## I. Initialize states to deterministic starting values,
   ## Initialize parameters and regressor values
   for (d in 1:DD) {
+    id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
+    id_betu_tmp <- (id_bet_u[d] + 1):id_bet_u[d + 1]
+    id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
+    id_uet_tmp  <- (id_uet[d] + 1):id_uet[d + 1]
+    id_regs_z_tmp <- (id_zet[d] + 1 + 1 * d):(id_zet[d + 1] + 1 * d)
+    id_regs_u_tmp <- (id_uet[d] + 1 + 1 * d):(id_uet[d + 1] + 1 * d)
+
     sig_sq_x[d, 1] <- par_init[["init_sig_sq"]][d, 1]
     phi_x[d, 1]    <- par_init[["init_phi"]][[d, 1]]
-    bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], 1] <- par_init[["init_bet_z"]][[d]]
-    prior_vcm_bet_z[[d]]  <- diag(1/1000, dim_bet_z[d] + 1)
-    prior_vcm_bet_u2[[d]] <- diag(1/1000, dim_bet_u[d])
+    bet_z[id_betz_tmp, 1] <- par_init[["init_bet_z"]][[d]]
+    prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + 1)
+    prior_vcm_bet_u2[[d]] <- diag(1 / 1000, dim_bet_u[d])
     prior_vcm_bet_u1[d]   <- dim_bet_u[d] + 1
     dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u1[d]
     if (u_null) {
-      vcm_bet_u[[d]][, , 1] <- matrix(0, nrow = dim_bet_u[d], ncol = dim_bet_u[d])
+      vcm_bet_u[[d]][, , 1] <- matrix(0,
+                                      nrow = dim_bet_u[d],
+                                      ncol = dim_bet_u[d])
     } else {
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_bet_u"]][[d]]
     }
@@ -124,21 +133,21 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
         X[ , d, 1, n]  <- traj_init[d, n]
       }
       # X2[ , d, 1, n] <- traj_init[d, n]
-      bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], 1, n] <- par_init[["init_bet_u"]][[d]][, n]
+      bet_u[id_betu_tmp, 1, n] <- par_init[["init_bet_u"]][[d]][, n]
 
-      regs_z[, (id_zet[d] + 1 + 1*d):(id_zet[d + 1] + 1*d), n] <- Z[2:TT, (id_zet[d] + 1):id_zet[d + 1], n]
-      regs_u[, (id_uet[d] + 1 + 1*d):(id_uet[d + 1] + 1*d), n] <- U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n]
+      regs_z[, id_regs_z_tmp, n] <- Z[2:TT, id_zet_tmp, n]
+      regs_u[, id_regs_u_tmp, n] <- U[2:TT, id_uet_tmp, n]
 
-      Umat <- matrix(U[2:TT, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT - 1)
+      Umat <- matrix(U[2:TT, id_uet_tmp, n, drop = FALSE], nrow = TT - 1)
       vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]][, , 1] %*% t(Umat)
       try(isSymmetric(vcm_x_errors_lhs[[d]][, , n]))
 
       Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
-      betz2 <- bet_z[(id_bet_z[d] + 1):id_bet_z[d + 1], 1]
+      betz2 <- bet_z[id_betz_tmp, 1]
       Z_beta[, d, n] <- Zmat2 %*% betz2
 
-      Umat2 <- matrix(U[, (id_uet[d] + 1):id_uet[d + 1], n, drop = FALSE], nrow = TT)
-      betu2 <- matrix(bet_u[(id_bet_u[d] + 1):id_bet_u[d + 1], 1, n, drop = FALSE])
+      Umat2 <- matrix(U[, id_uet_tmp, n, drop = FALSE], nrow = TT)
+      betu2 <- matrix(bet_u[id_betu_tmp, 1, n, drop = FALSE])
       U_beta[, d, n] <- Umat2 %*% betu2
       Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
     }
