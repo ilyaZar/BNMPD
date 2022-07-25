@@ -7,10 +7,11 @@ ModelDat <- R6::R6Class("ModelDat",
                           .pth_to_inits = NULL,
                           .data_raw = NULL,
                           .data_subset_used = NULL,
-                          .data_model_internal = NULL,
-                          .data_meta  = NULL,
+                          .data_internal = NULL,
+                          .data_dimensions  = NULL,
                           .data_priors = NULL,
                           .data_inits  = NULL,
+                          .data_meta  = NULL,
                           .var_y = NULL,
                           .var_z = NULL,
                           .var_u = NULL,
@@ -109,7 +110,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             msg <- "Possibly unbalanced panel."
                             for(t in iter_TT) {
                               check_NN <- nrow(data_tmp %>%
-                                dplyr::filter(.data[[private$.ts_name_var]]==t))
+                                                 dplyr::filter(.data[[private$.ts_name_var]]==t))
                               if (check_NN != NN) stop(msg)
                             }
                           },
@@ -186,22 +187,15 @@ ModelDat <- R6::R6Class("ModelDat",
                                 U[, (id_uet[d] + 1):id_uet[d + 1], i] <- as.matrix(tmp_U)
                               }
                             }
-                            # Output of measurement and regressor data:
-                            # data_out <- vector("list", private$.DD)
-                            private$.data_model_internal <- list()
-                            # names(private$.data_model_internal) <- c("y_t",
-                            # "num_counts", "Z", "NN", "TT", "DD")
-                            # names(private$.data_model_internal) <- c("y_t",
-                            # "Z", "NN", "TT", "DD")
-                            private$.data_model_internal$data       <- list()
-                            private$.data_model_internal$data$`y_t` <- y_t
-                            # private$.data_model_internal$data$`num_counts` <-
-                            # num_counts
-                            private$.data_model_internal$`Z` <- Z
-                            private$.data_model_internal$`U` <- U
-                            private$.data_model_internal$NN  <- private$.NN
-                            private$.data_model_internal$TT  <- private$.TT
-                            private$.data_model_internal$DD  <- private$.DD
+
+                            private$.data_internal            <- list()
+                            private$.data_internal$data       <- list()
+                            private$.data_internal$data$`y_t` <- y_t
+                            private$.data_internal$`Z`        <- Z
+                            private$.data_internal$`U`        <- U
+                            private$.data_internal$NN         <- private$.NN
+                            private$.data_internal$TT         <- private$.TT
+                            private$.data_internal$DD         <- private$.DD
 
                             invisible(self)
                           },
@@ -230,11 +224,11 @@ ModelDat <- R6::R6Class("ModelDat",
 
                             invisible(self)
                           },
-                          initialize_data_meta = function() {
-                            private$.data_meta <- new.env()
-                            private$.data_meta$TT <- private$.TT
-                            private$.data_meta$NN <- private$.NN
-                            private$.data_meta$DD <- private$.DD
+                          initialize_data_dimensions = function() {
+                            private$.data_dimensions <- new.env()
+                            private$.data_dimensions$TT <- private$.TT
+                            private$.data_dimensions$NN <- private$.NN
+                            private$.data_dimensions$DD <- private$.DD
                             invisible(self)
                           },
                           initialize_data_priors = function(pth_priors) {
@@ -243,7 +237,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             invisible(self)
                           },
                           get_states_init = function() {
-                            y_t <- private$.data_model_internal$data[["y_t"]]
+                            y_t <- private$.data_internal$data[["y_t"]]
                             TT  <- private$.TT
                             NN  <- private$.NN
                             DD  <- private$.DD
@@ -257,13 +251,10 @@ ModelDat <- R6::R6Class("ModelDat",
                               for (d in 1:DD) {
                                 init_tmp <- abs(y_t[, d, i])
                                 if(all(init_tmp == 0)) {
-                                  # init_tmp[init_tmp == 0] <- zero_lower_bound
                                   init[, d, i] <- init_tmp
                                 } else {
                                   init[, d, i] <- tryCatch(log(init_tmp/scl[d]))
                                 }
-                                # print(i)
-                                # print(d)
                               }
                             }
                             options(warn = 0)
@@ -340,10 +331,9 @@ ModelDat <- R6::R6Class("ModelDat",
                           initialize_data_inits = function() {
                             inits <- jsonlite::fromJSON(private$.pth_to_inits)
                             private$.data_inits <- new.env()
-                            y_t <- private$.data_model_internal[["y_t"]]
-                            NN  <- private$.data_meta$NN
-                            TT  <- private$.data_meta$TT
-                            DD  <- private$.data_meta$DD
+                            NN  <- private$.data_dimensions$NN
+                            TT  <- private$.data_dimensions$TT
+                            DD  <- private$.data_dimensions$DD
 
                             state_inits <- private$get_states_init()
 
@@ -381,6 +371,43 @@ ModelDat <- R6::R6Class("ModelDat",
                             par_init$init_vcm_bet_u <- init_vcm_bet_u
                             private$.data_inits$par_init  <- par_init
                             private$.data_inits$traj_init <- state_inits
+                          },
+                          initialize_data_meta = function() {
+                            # First type of meta data: availability indices
+                            #   - indicate the number of present components
+                            #   i.e. those that are not permanently zero
+                            tmp_y <- private$.data_internal$data$`y_t`
+                            zero_ind_nn <- apply(tmp_y, c(3),
+                                                 function(x) {
+                                                   apply(x, 2,
+                                                         function(y) {
+                                                           all(y == 0)
+                                                         })
+                                                 })
+                            avail_ind_nn <- apply(tmp_y, c(3),
+                                                  function(x) {
+                                                    apply(x, 2,
+                                                          function(y) {
+                                                            all(y != 0)
+                                                          })
+                                                  })
+                            colnames(zero_ind_nn) <- private$.cs_var_val
+                            rownames(zero_ind_nn) <- private$.var_y
+                            zero_ind_dd <- apply(zero_ind_nn, 1, which)
+                            zero_ind_nn <- apply(t(zero_ind_nn), 1, which)
+
+                            colnames(avail_ind_nn) <- private$.cs_var_val
+                            rownames(avail_ind_nn) <- private$.var_y
+                            avail_ind_dd <- apply(avail_ind_nn, 1, which)
+                            avail_ind_nn <- apply(t(avail_ind_nn), 1, which)
+
+                            inds <- list()
+                            inds$avail_ind_nn  <- avail_ind_nn
+                            inds$avail_ind_dd  <- avail_ind_dd
+                            inds$zero_ind_nn   <- zero_ind_nn
+                            inds$zero_ind_dd   <- zero_ind_dd
+                            private$.data_meta <- inds
+                            invisible(self)
                           }
                         ),
                         public = list(
@@ -398,22 +425,26 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$initialize_cs_ts(info_cs, info_ts)
                             private$initialize_data_raw(data_set)
                             private$initialize_data_used()
-                            private$initialize_data_meta()
+                            private$initialize_data_dimensions()
                             private$initialize_data_internal()
                             private$initialize_data_priors()
                             private$initialize_data_inits()
+                            private$initialize_data_meta()
                           },
                           # get_model_data_raw = function() {
                           #   private$.data_raw
                           # },
+                          get_model_data_meta = function() {
+                            private$.data_meta
+                          },
                           get_model_data_subset_used = function() {
                             private$.data_subset_used
                           },
                           get_model_data_internal = function() {
-                            private$.data_model_internal
+                            private$.data_internal
                           },
-                          get_model_data_meta = function() {
-                            private$.data_meta
+                          get_model_data_dimensions = function() {
+                            private$.data_dimensions
                           },
                           get_model_prior_setup = function() {
                             private$.data_priors

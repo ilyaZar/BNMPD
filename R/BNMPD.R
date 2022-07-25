@@ -12,6 +12,8 @@
 #' @importFrom stats rgamma
 #' @importFrom MASS mvrnorm
 #' @importFrom Rcpp sourceCpp
+#' @importFrom yaml read_yaml
+#' @importFrom magrittr `%>%`
 ## BNMPD namespace: end
 #' @docType package
 #' @name BNMPD

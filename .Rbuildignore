@@ -5,3 +5,5 @@
 ^BNMPD\.sublime-project$
 ^BNMPD\.sublime-workspace$
 ^runma_bash\.sh$
+^.Rhistory
+^.vscode$

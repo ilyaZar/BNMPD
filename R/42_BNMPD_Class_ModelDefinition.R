@@ -83,8 +83,6 @@ ModelDef <- R6::R6Class("ModelDef",
                               y_labs[i] <- private$.model_raw[[id]][["y_lab"]]
 
                             }
-                            # names(y_list)  <- y_labs
-
                             private$.var_z <- z_list
                             private$.var_u <- u_list
                             private$.var_y <- y_list

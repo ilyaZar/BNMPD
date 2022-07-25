@@ -437,7 +437,7 @@ void check_weights(arma::vec& w_log, const std::string w_type) {
   }
   if (w_log.has_nan()) {
     const std::string msg_info = "NaN values in weight computation!\n";
-    throw_weight_msg(w_type, msg_info, "error");
+    // throw_weight_msg(w_type, msg_info, "error");
     w_log.replace(arma::datum::nan, w_log_min);
   }
 }

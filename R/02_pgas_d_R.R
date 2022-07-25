@@ -16,13 +16,19 @@
 #'   multinomial-dirichlet)
 #' @param Z regressor matrix of Z_{t}'s (standard regressor covariates)
 #' @param U regressor matrix of U_{t}'s (random/individual effects)
+#' @param nn_list_dd a list of indicators for available DD-components of length
+#'   NN i.e. showing per cross sectional unit what type of multivariate
+#'   component is available (used in SMC part)
+#' @param dd_list_nn a list of indicators for available NN-units of length DD
+#'   i.e. showing per multivariate component what type of cross sectional unit
+#'   is available (used in MCMC part)
 #' @param priors inverteg gamma prior (hyyper-)parameters
 #' @param par_init initial values of parameters
 #' @param traj_init initial state trajectory
-#' @param true_states true laten states passed from simulated data for testing
+#' @param true_states true latent states passed from simulated data for testing
 #'   purposes
 #' @param smc_parallel logical; if \code{TRUE}, then the SMC part is run in
-#' paralle
+#'   parallel
 #' @param cluster_type character string of either "PSOCK", "FORK", or "MPI";
 #'   do not use "FORK" or "PSOCK" with CHEOPS. Do not use MPI with desktop
 #'   unless
@@ -34,6 +40,8 @@
 #' @export
 pgas_d_r <- function(N, MM, NN, TT, DD,
                      data, Z, U,
+                     nn_list_dd,
+                     dd_list_nn,
                      priors,
                      par_init,
                      traj_init,
@@ -41,6 +49,9 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
                      smc_parallel = FALSE,
                      cluster_type = NULL,
                      num_cores) {
+  # dd_list_nn <- rep(list(1:NN), times = DD)
+  # nn_list_dd <- rep(list(1:DD), times = NN)
+  nn_list_dd <- lapply(nn_list_dd, function(x) x - 1)
   options(warn = 1)
   if (isTRUE(smc_parallel) && is.null(cluster_type)) {
     stop("Cluster type not specified although 'smc_parallel=TRUE'.")
@@ -155,23 +166,23 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
   ## II. run cBPF and use output as first conditioning trajectory
   if (smc_parallel) {
     envir_par <- environment()
-    # browser()
     task_indices <- parallel::splitIndices(NN, ncl = num_cores)
-    task_indices <- lapply(task_indices, function(x) {x - 1})
+    # task_indices <- lapply(task_indices, function(x) {x - 1})
 
     cl <- parallel::makeCluster(num_cores, type = cluster_type)
     parallel::clusterExport(cl, varlist = c("N", "TT", "DD",
-                                            "y"),
+                                            "y", "nn_list_dd"),
                             envir = envir_par)
     parallel::clusterExport(cl, varlist = c("Regs_beta",
                                             "sig_sq_x",
                                             "phi_x",
                                             "X"),
                             envir = envir_par)
-    parallel::clusterEvalQ(cl, set.seed(123))
-    # browser()
+    # parallel::clusterEvalQ(cl, set.seed(123))
+    parallel::clusterSetRNGStream(cl, iseed = 123)
     out_cpf <- parallel::clusterApply(cl, x = task_indices,
                                       BNMPD::cbpf_as_d_cpp_par,
+                                      nn_list_dd,
                                       N, TT, DD, y,
                                       Regs_beta,
                                       sig_sq_x[, 1],
@@ -188,19 +199,29 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       # if (n %in% seq_rs_seed_sequential) {
       #   set.seed(123)
       # }
-      browser()
-      # out_cpf <- cbpf_as_d_cpp(N = N, TT = TT, DD = DD,
-                              #  y = y[, , n],
-                              #  Regs_beta = Regs_beta[, , n],
-                              #  sig_sq_x = sig_sq_x[, 1],
-                              #  phi_x = phi_x[, 1],
-                              #  x_r = X[ , , 1, n])
-      out_cpf <- cbpf_as_d_r(N = N, TT = TT, DD = DD,
-                             y = y[, , n],
-                             Regs_beta =  Regs_beta[, , n],
-                             sig_sq_x = sig_sq_x[, 1],
-                             phi_x = phi_x[, 1],
-                             x_r = X[ , , 1, n])
+      # out_cpf3 <- cbpf_as_d_cpp_par(id_par_vec = n,
+      #                               nn_list_dd,
+      #                               N = N, TT = TT, DD = DD,
+      #                               y_all = y,
+      #                               regs_beta_all = Regs_beta[, , ],
+      #                               sig_sq_x = sig_sq_x[, 1],
+      #                               phi_x = phi_x[, 1],
+      #                               x_r_all = X[ , , 1, ])
+      # out_cpf <- cbpf_as_d_cpp(nn_list_dd[[n]],
+      #                          N = N, TT = TT, DD = DD,
+      #                          y = y[, , n],
+      #                          Regs_beta = Regs_beta[, , n],
+      #                          sig_sq_x = sig_sq_x[, 1],
+      #                          phi_x = phi_x[, 1],
+      #                          x_r = X[ , , 1, n])
+      # out_cpf2 <- cbpf_as_d_r(nn_list_dd[[n]] + 1,
+      #                         N = N, TT = TT, DD = DD,
+      #                         y = y[, , n],
+      #                         Regs_beta =  Regs_beta[, , n],
+      #                         sig_sq_x = sig_sq_x[, 1],
+      #                         phi_x = phi_x[, 1],
+      #                         x_r = X[ , , 1, n])
+      # print(n)
       # out_cpf <- true_states[ , , n]
       for (d in 1:DD) {
         X[ , d, 1, n] <- out_cpf[, d]
@@ -214,13 +235,15 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
     # I. Run GIBBS part
     # 1. pars for xa processes -------------------------------------------
     for (d in 1:DD) {
+      # browser()
       id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
       id_betu_tmp <- (id_bet_u[d] + 1):id_bet_u[d + 1]
       id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
       id_uet_tmp  <- (id_uet[d] + 1):id_uet[d + 1]
-      # browser()
       phi_x[d, m] <- phi_x[d, m - 1]
       bet_z[id_betz_tmp, m] <- bet_z[id_betz_tmp, m - 1]
+
+      dd_range_nn <- dd_list_nn[[d]]
 
       sig_sq_x[d, m] <- sample_sig_sq_x(phi_x =  phi_x[d, m - 1],
                                         bet_z = bet_z[id_betz_tmp, m - 1],
@@ -232,24 +255,27 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
                                                    drop = FALSE],
                                         prior_ig = c(prior_ig_a,
                                                      prior_ig_b),
-                                        iter_range_NN = 1:NN)
+                                        iter_range_NN = dd_range_nn,
+                                        TT = TT)
 
       vcm_bet_u[[d]][, , m] <- sample_vcm_bet_u(bet_u[id_betu_tmp, m, ,
                                                       drop = FALSE],
                                                 dim_bet_u[d],
                                                 dof_vcm_bet_u[d],
                                                 prior_vcm_bet_u2[[d]],
-                                                1:NN)
-      bet_u[id_betu_tmp, m, ] <- sample_bet_u(sig_sq_x[d, m],
-                                              phi_x[d, m - 1],
-                                              bet_z[id_betz_tmp, m - 1],
-                                              vcm_bet_u[[d]][, , m],
-                                              dim_bet_u[d],
-                                              X[, d, m - 1, ],
-                                              Z[2:TT, id_zet_tmp, ],
-                                              U[2:TT, id_uet_tmp, ,
-                                                drop = FALSE],
-                                              1:NN)
+                                                dd_range_nn)
+      bet_u[id_betu_tmp, m, dd_range_nn] <- sample_bet_u(sig_sq_x[d, m],
+                                                         phi_x[d, m - 1],
+                                                         bet_z[id_betz_tmp,
+                                                               m - 1],
+                                                         vcm_bet_u[[d]][, , m],
+                                                         dim_bet_u[d],
+                                                         X[, d, m - 1, ],
+                                                         Z[2:TT, id_zet_tmp, ],
+                                                         U[2:TT, id_uet_tmp, ,
+                                                           drop = FALSE],
+                                                         dd_range_nn,
+                                                         TT)
       beta_sampled <- sample_beta_all(sig_sq_x = sig_sq_x[d, m],
                                       vcm_bet_u = vcm_bet_u[[d]][, , m],
                                       X = X[, d, m - 1, ],
@@ -261,7 +287,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
                                                    id_reg_z[d + 1]),
                                       dim_bet_z = dim_bet_z[d],
                                       prior_vcm_bet_z = prior_vcm_bet_z[[d]],
-                                      iter_range_NN = 1:NN)
+                                      iter_range_NN = dd_range_nn)
 
       phi_x[d, m] <- beta_sampled[1]
       bet_z[id_betz_tmp, m] <- beta_sampled[-1]
@@ -269,7 +295,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       Regs_beta[, d, ] <- get_regs_beta(Z  = Z[, id_zet_tmp, ],
                                         U = U,
                                         id_uet = c(id_uet[d], id_uet[d + 1]),
-                                        TT = TT, NN = NN,
+                                        TT = TT,
                                         bet_z[id_betz_tmp, m],
                                         bet_u = bet_u[, m, , drop = FALSE],
                                         id_bet_u = c(id_bet_u[d],
@@ -290,6 +316,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       # browser()
       out_cpf <- parallel::clusterApply(cl, x = task_indices,
                                         BNMPD::cbpf_as_d_cpp_par,
+                                        nn_list_dd,
                                         N, TT, DD, y,
                                         Regs_beta,
                                         sig_sq_x[, m],
@@ -309,7 +336,8 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
         #   set.seed(123)
         # }
         # browser()
-        out_cpf <- cbpf_as_d_cpp(N = N, TT = TT, DD = DD,
+        out_cpf <- cbpf_as_d_cpp(nn_list_dd[[n]],
+                                 N = N, TT = TT, DD = DD,
                                  y = y[, , n],
                                  Regs_beta = Regs_beta[, , n],
                                  sig_sq_x = sig_sq_x[, m],

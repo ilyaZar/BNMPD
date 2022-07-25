@@ -240,6 +240,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               tmp <- list(var_u = private$.ModelDef$get_var_u(),
                                           lab_u = private$.ModelDef$get_lab_u())
                               out$U    <- tmp
+                              tmp <- private$.ModelDat$get_model_data_meta()
+                              out$zero_avail_indicators <- tmp
                               return(out)
                             },
                             #' @description Print "raw" data set.
@@ -320,6 +322,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 load_modeldata_prior_setup()$
                                 load_modeldata_inits_setup()$
                                 load_modeldata_dimensions()$
+                                load_modeldata_meta()$
                                 load_settings()
                               # private$copy_env(parent.frame(), environment())
                               # private$copy_env(out_env, environment())
@@ -363,6 +366,19 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$copy_env(parent.frame(), out)
                               invisible(self)
                             },
+                            #' @description Loads model meta data
+                            #'
+                            #' @details Call to internal \code{ModelDef}-class
+                            #'   member that retrieves the model meta data.
+                            load_modeldata_meta = function() {
+                              tmp <-private$.ModelDat$get_model_data_meta()
+                              out <- list()
+                              out$avail_indicator_nn <- tmp$avail_ind_nn
+                              out$avail_indicator_dd <- tmp$avail_ind_dd
+                              out <- list2env(as.list(out))
+                              private$copy_env(parent.frame(), out)
+                              invisible(self)
+                            },
                             #' @description Loads model dimensions.
                             #'
                             #' @details Call to internal \code{ModelDef}-class
@@ -370,7 +386,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   \code{T,N,D}.
                             load_modeldata_dimensions = function() {
                               # browser()
-                              out <-private$.ModelDat$get_model_data_meta()
+                              out <-private$.ModelDat$get_model_data_dimensions()
                               # out2 <-private$.ModelDef$get_dimension()
                               out <- list2env(as.list(out))
                               private$copy_env(parent.frame(), out)
