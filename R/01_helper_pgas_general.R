@@ -201,7 +201,6 @@ initialize_dims <- function(par_init, U, DD) {
   invisible(to_env)
 }
 init_pgas <- function(pe, mm) {
-  # copy_env_to_parent(pe)
   if (pe$smc_parallel) {
     pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
     pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
@@ -213,12 +212,11 @@ init_pgas <- function(pe, mm) {
                                       pe$Regs_beta,
                                       pe$sig_sq_x[, mm],
                                       pe$phi_x[, mm],
-                                      pe$X[ , , mm, ])
+                                      pe$traj_init)
     out_cpf <- unlist(out_cpf, recursive = FALSE)
     for (n in 1:pe$NN) {
       pe$X[ , , mm, n] <- out_cpf[[n]]
     }
-    cat("Iteration number:", mm, "\n")
   } else {
     # seq_rs_seed_sequential <- seq(from = 1, to = NN, by = NN/num_cores)
     for (n in 1:pe$NN) {
@@ -252,15 +250,11 @@ init_pgas <- function(pe, mm) {
       for (d in 1:DD) {
         pe$X[ , d, mm, n] <- out_cpf[, d]
       }
-      # cat("Iteration number:", n, "\n")
     }
   }
-  # pe$cl <- cl
-  # pe$task_indices <- task_indices
   cat("Iteration number:", mm, "\n")
 }
 run_pgas <- function(pe, mm) {
-  # copy_env_to_parent(pe)
   if (pe$smc_parallel) {
     parallel::clusterEvalQ(pe$cl, set.seed(123))
     out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
@@ -278,7 +272,6 @@ run_pgas <- function(pe, mm) {
     for (n in 1:pe$NN) {
       pe$X[ , , mm, n] <- out_cpf[[n]]
     }
-    cat("Iteration number:", mm, "\n")
   } else {
     for (n in 1:NN) {
       # if (n %in% seq_rs_seed_sequential) {

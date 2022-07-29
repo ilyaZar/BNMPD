@@ -11,8 +11,8 @@
 #' @return a list with components being: all MCMC parameter draws and all drawn
 #'   state trajectories (smc outuput)
 #' @export
-pgas_d_test <- function(pgas_model,
-                        true_states) {
+pgas_d_lin <- function(pgas_model,
+                       true_states) {
   load_model(pgas_model)
   rm(pgas_model)
   options(warn = 1)
@@ -25,7 +25,7 @@ pgas_d_test <- function(pgas_model,
                              TT, DD, NN, MM)
   ## II. run cBPF and use output as first conditioning trajectory
   envir_par <- environment()
-  init_pgas(envir_par, m = 1)
+  init_pgas(envir_par, mm = 1)
   # print(identical(X[ , , 1, ], X2[ , , 1, ]))
   # Run MCMC loop
   for (m in 2:MM) {
@@ -36,6 +36,7 @@ pgas_d_test <- function(pgas_model,
   }
   if (envir_par$smc_parallel) {
     parallel::stopCluster(envir_par$cl)
+    if(envir_par$cluster_type %in% c("DEVEL", "CHEOPS")) Rmpi::mpi.exit()
   }
   options(warn = 0)
   return(list(sig_sq_x = envir_par$sig_sq_x,

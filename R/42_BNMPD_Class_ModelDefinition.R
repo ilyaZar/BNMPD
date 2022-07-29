@@ -19,6 +19,7 @@ ModelDef <- R6::R6Class("ModelDef",
                           .pth_to_md = NULL,
                           .model_raw = NULL,
                           .model_prnt = NULL,
+                          .project_id = NULL,
                           .model_type = NULL,
                           .num_cs = NULL,
                           .num_ts = NULL,
@@ -39,7 +40,7 @@ ModelDef <- R6::R6Class("ModelDef",
                           .ts_var_val = NULL,
                           .ts_var_lab = NULL,
                           .BFLT  = NULL,
-                          .yaml_offset = 4,
+                          .yaml_offset = 5,
                           set_model_dims = function() {
                             tmp_md <- private$.model_raw$dimension
                             private$.num_cs <- tmp_md$num_cross_section
@@ -49,6 +50,9 @@ ModelDef <- R6::R6Class("ModelDef",
                             private$.dimension <- c(private$.num_cs,
                                                     private$.num_ts,
                                                     private$.num_mc)
+                            internal_dim_names <- c("NN", "TT", "DD")
+                            names(private$.dimension) <- internal_dim_names
+
                             check_mc <- length(private$.model_raw)
                             check_mc <- check_mc - private$.yaml_offset
                             if (private$.num_mc!= check_mc) {
@@ -103,6 +107,138 @@ ModelDef <- R6::R6Class("ModelDef",
                             private$.ts_name_lab <- tmp_ts[["ts_name_lab"]]
                             private$.ts_var_val  <- tmp_ts[["ts_var_val"]]
                             private$.ts_var_lab  <- tmp_ts[["ts_var_lab"]]
+                          },
+                          check_cs_ts_DDy = function() {
+                            tmp_NN <- private$.dimension["NN"]
+                            tmp_TT <- private$.dimension["TT"]
+                            tmp_DD <- private$.dimension["DD"]
+                            # START CONSISTENCY CHECKS TYPE I:
+                            # This means that NN must match length of
+                            # cs_var_{lab,val}, TT must match length of
+                            # ts_var_{lab,val} and DD must match 'private$.var_y';
+                            # otherwise there must be an
+                            # error/inconsistency in 'model_definition.yaml'.
+                            NNlab <- length(private$.cs_var_lab)
+                            NNval <- length(private$.cs_var_val)
+                            TTlab <- length(private$.ts_var_lab)
+                            TTval <- length(private$.ts_var_val)
+                            YYlab <- length(private$.lab_y)
+                            YYvar <- length(private$.var_y)
+
+                            if(tmp_NN != NNlab) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "NN, i.e. num_cross_section, does ",
+                                            "not match 'cs_var_lab'!\n  ",
+                                            tmp_NN, " vs. ", NNlab)
+                              stop(msg)
+                            }
+                            if(tmp_NN != NNval) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "NN, i.e. num_cross_section, does ",
+                                            "not match 'cs_var_val'!\n  ",
+                                            tmp_NN, " vs. ", NNval)
+                              stop(msg)
+                            }
+                            if(tmp_TT != TTlab) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "TT, i.e. num_time_periods, does ",
+                                            "not match 'ts_var_lab'!\n  ",
+                                            tmp_TT, " vs. ", TTlab)
+                              stop(msg)
+                            }
+                            if(tmp_TT != TTval) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "TT, i.e. num_time_periods, does ",
+                                            "not match 'ts_var_val'!\n  ",
+                                            tmp_TT, " vs. ", TTval)
+                              stop(msg)
+                            }
+                            if(tmp_DD != YYlab) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "DD, i.e. num_mult_comp, does ",
+                                            "not match length of all 'y_lab's,",
+                                            " or, equivalently, number of D01,",
+                                            "D02, ..., D0DD!\n  ",
+                                            tmp_DD, " vs. ", YYlab)
+                              stop(msg)
+                            }
+                            if(tmp_DD != YYvar) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "DD, i.e. num_mult_comp, does ",
+                                            "not match length of all 'y_var's,",
+                                            " or, equivalently, number of D01,",
+                                            "D02, ..., D0DD!\n  ",
+                                            tmp_DD, " vs. ", YYvar)
+                              stop(msg)
+                            }
+                            # START CONSISTENCY CHECKS TYPE II:
+                            # This means that cross section an time series
+                            # values and labels must be unique (due to
+                            # miss-spelling the number of above components can
+                            # be the same with a double cross sectional entry
+                            # e.g. twice "California" instead of California and
+                            # Texas OR twice '1970' instead of 1970, 1971).
+                            NNlab <- length(unique(private$.cs_var_lab))
+                            NNval <- length(unique(private$.cs_var_val))
+                            TTlab <- length(unique(private$.ts_var_lab))
+                            TTval <- length(unique(private$.ts_var_val))
+                            YYlab <- length(unique(private$.lab_y))
+                            YYval <- length(unique(private$.var_y))
+
+                            if(tmp_NN != NNlab) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "probably non-unique (i.e. double)",
+                                            " entries in 'cs_var_lab'!\n  ",
+                                            tmp_NN, " vs. ", NNlab)
+                              stop(msg)
+                            }
+                            if(tmp_NN != NNval) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "probably non-unique (i.e. double)",
+                                            " entries in 'cs_var_val'!\n  ",
+                                            tmp_NN, " vs. ", NNval)
+                              stop(msg)
+                            }
+                            if(tmp_TT != TTlab) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "probably non-unique (i.e. double)",
+                                            " entries in 'ts_var_lab'!\n  ",
+                                            tmp_TT, " vs. ", TTlab)
+                              stop(msg)
+                            }
+                            if(tmp_TT != TTval) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "probably non-unique (i.e. double)",
+                                            " entries in 'ts_var_val'!\n  ",
+                                            tmp_TT, " vs. ", TTval)
+                              stop(msg)
+                            }
+                            if(tmp_DD != YYlab) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "probably non-unique (i.e. double)",
+                                            " entries in 'y_lab's: ",
+                                            tmp_DD, " vs. ", YYlab)
+                              stop(msg)
+                            }
+                            if(tmp_DD != YYvar) {
+                              msg <- paste0("Missmatch in ",
+                                            "'model_definition.yaml': \n  ",
+                                            "probably non-unique (i.e. double)",
+                                            " entries in 'y_var's: ",
+                                            tmp_DD, " vs. ", YYvar)
+                              stop(msg)
+                            }
                           },
                           generate_BFLT = function() {
                             num_all  <- 0
@@ -184,9 +320,11 @@ ModelDef <- R6::R6Class("ModelDef",
                           update_model_definition = function() {
                             private$.model_raw <- yaml::read_yaml(private$.pth_to_md)
                             private$.model_type <- private$.model_raw$model_type
+                            private$.project_id <- private$.model_raw$project_id
                             private$set_model_dims()
                             private$set_var_lab()
                             private$set_cs_ts()
+                            private$check_cs_ts_DDy()
                             invisible(self)
                           },
                           #' @description Prints the model definition.
@@ -222,6 +360,14 @@ ModelDef <- R6::R6Class("ModelDef",
                           print_model_overview = function() {
                             print(private$.BFLT)
                             invisible(self)
+                          },
+                          #' @description Retrieve some project meta info.
+                          #'
+                          #' @details Returns the model response type (dependent
+                          #'   variable) and the project ID.
+                          get_project_meta = function() {
+                            c(private$.project_id,
+                              private$.model_type)
                           },
                           #' @description Retrieve \emph{Big Fat Lookup Table}.
                           #'
@@ -287,10 +433,8 @@ ModelDef <- R6::R6Class("ModelDef",
                           },
                           #' @description Get dimension of data/model.
                           get_dimension = function() {
-                            tmp <- private$.dimension
-                            runtime_internal_dim_names <- c("NN", "TT", "DD")
-                            names(tmp) <- runtime_internal_dim_names
-                            tmp
+                            private$.dimension
+
                           }
                         )
 )

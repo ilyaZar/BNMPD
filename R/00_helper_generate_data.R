@@ -48,7 +48,8 @@ generate_bet_u <- function(DD, NN, from_IW = FALSE,
     n0u <- num_re + 1
     D0u <- vector("list", DD)
     for (d in 1:DD) {
-      D0u[[d]] <- solve(diag(1:num_re[d]*(10 + 1/num_re[d]), nrow = num_re[d]))
+      # D0u[[d]] <- solve(diag(1:num_re[d]*(10 + 1/num_re[d]), nrow = num_re[d]))
+      D0u[[d]] <- solve(diag(1:num_re[d]/10*(0.01 + 1/num_re[d]), nrow = num_re[d]))
       D0u[[d]] <- solve((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
       # D0u[[d]] <- diag(1, num_re[d])
       true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
@@ -208,7 +209,8 @@ generate_data_t_n <- function(distribution,
                       x_levels = x_levels[, n],
                       plot_measurements = plot_measurements,
                       plot_states       = plot_states,
-                      plot_states_each_d  = plot_states_each_d)
+                      plot_states_each_d  = plot_states_each_d,
+                      cs = n)
     }
   }
   out_data <- vector("list", 3)
@@ -312,11 +314,11 @@ generate_data_t <- function(distribution,
   }
 
   # reg_sd_levels <- c(0.0125, 0.1, 0.025, 0.1, 0.1, 0.1)
-  reg_sd_levels <- rep(0.5, times = DD)
-  bet_sd_level  <- 3
+  # reg_sd_levels <- rep(0.5, times = DD)
+  reg_sd_levels <- rep(0.05, times = DD)
+  bet_sd_level  <- 1
 
   for (d in 1:DD) {
-    # browser()
     res <- generate_x_z_u(TT = TT,
                           phi_x = phi_x[d],
                           sig_sq_x = sig_sq_x[d],
@@ -449,6 +451,7 @@ generate_x_z_u <- function(TT,
   dim_reg <- dim_z + dim_u
   bet_reg <- c(bet_z, bet_u)
   x <- rep(0, TT)
+  # browser()
   # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
   if (modelling_reg_types[1] && !modelling_reg_types[2]) {
     # browser()
@@ -461,7 +464,7 @@ generate_x_z_u <- function(TT,
                            bet_sd = bet_sd,
                            intercept = intercept,
                            policy_dummy = policy_dummy,
-                           zero_pattern = zero_pattern)
+                           zero_pattern = NULL)
     u <- NULL
   }
   if (!modelling_reg_types[1] && modelling_reg_types[2]) {
@@ -474,12 +477,12 @@ generate_x_z_u <- function(TT,
                            bet_sd = bet_sd,
                            intercept = intercept,
                            policy_dummy = policy_dummy,
-                           zero_pattern = zero_pattern)
+                           zero_pattern = NULL)
     z <- NULL
   }
   if (modelling_reg_types[1] && modelling_reg_types[2]) {
     # browser()
-    x_level_split <- x_level*c(0.8, 0.2)
+    x_level_split <- x_level*c(0.7, 0.3)
     z <- generate_reg_vals(TT = TT,
                            bet_reg = bet_z,
                            dim_reg = dim_z,
@@ -499,7 +502,7 @@ generate_x_z_u <- function(TT,
                            bet_sd = bet_sd,
                            intercept = intercept,
                            policy_dummy = policy_dummy,
-                           zero_pattern = zero_pattern)
+                           zero_pattern = NULL)
   }
   reg_all <- cbind(z, u)
   # END OF REGRESSOR SIMULATION: --------------------------------------------
@@ -736,6 +739,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
 #' @param plot_states_each_d logical; if \code{TRUE}, latent states are
 #'   plotted per cross sectional unit \code{n=1,...,N} with a seperate plot for
 #'   each component
+#' @param cs integer giving the cross sectional observation (1,2,...NN)
 #'
 #' @return invisible return; pure side effects function that plots the data
 plot_data_per_n <- function(DD,
@@ -744,7 +748,8 @@ plot_data_per_n <- function(DD,
                             x_levels,
                             plot_measurements,
                             plot_states,
-                            plot_states_each_d) {
+                            plot_states_each_d,
+                            cs) {
   if (plot_measurements && plot_states)  graphics::par(mfrow = c(2, 1))
   if (plot_measurements && !plot_states) graphics::par(mfrow = c(2, 1))
   if (!plot_measurements && plot_states) graphics::par(mfrow = c(2, 1))
@@ -759,41 +764,41 @@ plot_data_per_n <- function(DD,
                       type = "l",
                       lty = 1,
                       lwd = 1,
-                      main = names_title,
+                      main = paste0(names_title, " (levels; N = ", cs, ")"),
                       ylab = names_ylab,
                       xlab = names_xlab)
     graphics::matplot(all_measurms/rowSums(all_measurms),
                       type = "l",
                       lty = 1,
                       lwd = 1,
-                      main = names_title,
+                      main = paste0(names_title, " (fractions; N = ", cs, ")"),
                       ylab = names_ylab,
                       xlab = names_xlab)
   }
   if (plot_states || plot_states_each_d) {
     names_title <- "True States"
     names_ylab  <- "states: xt's"
-    names_xlab  <- c("x1_t (black),", "x2_t (red),",
-                     "x3_t (green),",  "x4_t (blue)",
-                     "x5_t (turq.)", "and", "x6_t (pink)")
+    names_xlab  <- paste0("x1_t (black),", "x2_t (red),",
+                          "x3_t (green),", "x4_t (blue)",
+                          "x5_t (turq.)", "and", "x6_t (pink)")
     all_states <- x
     if (x_log_scale) {
       all_states <- log(all_states)
     }
   }
   if (plot_states) {
-    graphics::matplot(all_states/rowSums(all_states),
-                      type = "l",
-                      lty = 2,
-                      lwd = 1,
-                      main = names_title,
-                      ylab = names_ylab,
-                      xlab = paste(names_xlab))
     graphics::matplot(all_states,
                       type = "l",
                       lty = 2,
                       lwd = 1,
-                      main = names_title,
+                      main = paste0(names_title, " (levels; N = ", cs, ")"),
+                      ylab = names_ylab,
+                      xlab = paste(names_xlab))
+    graphics::matplot(all_states/rowSums(all_states),
+                      type = "l",
+                      lty = 2,
+                      lwd = 1,
+                      main = paste0(names_title, " (fractions; N = ", cs, ")"),
                       ylab = names_ylab,
                       xlab = names_xlab)
   }

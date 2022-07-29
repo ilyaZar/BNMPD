@@ -14,26 +14,41 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                           cloneable = FALSE,
                           portable = FALSE,
                           private = list(
+                            # Some project meta info
+                            .project_id = NULL,
+                            .model_type = NULL,
+                            .model_part = NULL,
+                            # Paths to model directories: hard-coded, changeable
                             .pth_to_proj = NULL,
-                            .pth_to_data = "model/data/input/datasets",
+                            .pth_to_data = "model/input/datasets",
                             .pth_to_settings = "model/settings",
                             .pth_to_modeldef = "model/model-definition",
-                            .pth_to_modeldat = "model/data/input/setup",
                             .pth_to_priorset = "model/model-definition",
                             .pth_to_initsset = "model/model-definition",
+                            .pth_to_modelout = "model/output",
+                            # Paths to files inside dirs: hard-coded, changeable
                             .fn_prset = "setup_priors.json",
                             .fn_inits = "setup_inits.json",
                             .fn_mddef = "model_definition.yaml",
                             .fn_pfsmp = "settings-plattform&sampler.yaml",
+                            .fn_mdout = "out_ModelNo_PartNo_TIMESTAMP.RData",
+                            # Sub-classes as private fields for internal usage
                             .DataSet = NULL,
                             .Settings = NULL,
                             .ModelDef = NULL,
                             .ModelDat = NULL,
                             .ModelOut = NULL,
+                            .true_states = NULL,
                             get_setup_inits = function() {
                             },
                             get_setup_metadata_pf = function() {
                               private$.Settings$get_settings_set()
+                            },
+                            get_num_mdout = function() {
+                              private$.ModelOut$get_num_outs()
+                            },
+                            get_num_part = function() {
+                              private$.ModelOut$get_num_outs() + 1
                             },
                             copy_envs = function(to_env = NULL, ...) {
                               if(is.null(to_env)) to_env <- new.env()
@@ -61,15 +76,15 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                    c(private$.pth_to_data,
                                                      private$.pth_to_settings,
                                                      private$.pth_to_modeldef,
-                                                     private$.pth_to_modeldat,
                                                      private$.pth_to_priorset,
-                                                     private$.pth_to_initsset))
+                                                     private$.pth_to_initsset,
+                                                     private$.pth_to_modelout))
                               private$.pth_to_data     <- pth_jnd[1]
                               private$.pth_to_settings <- pth_jnd[2]
                               private$.pth_to_modeldef <- pth_jnd[3]
-                              private$.pth_to_modeldat <- pth_jnd[4]
-                              private$.pth_to_priorset <- pth_jnd[5]
-                              private$.pth_to_initsset <- pth_jnd[6]
+                              private$.pth_to_priorset <- pth_jnd[4]
+                              private$.pth_to_initsset <- pth_jnd[5]
+                              private$.pth_to_modelout <- pth_jnd[6]
                               invisible(NULL)
                             },
                             ##' @description update private file-path fields of
@@ -87,6 +102,53 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$.pth_to_initsset <- file.path(private$.pth_to_initsset,
                                                                     private$.fn_inits)
                               invisible(NULL)
+                            },
+                            update_file_pth_mdout = function() {
+                              mdout_fls <- list.files(private$.pth_to_modelout)
+                              tmp_num <- private$get_num_part()
+
+                              fn_name <- paste0("out_",
+                                                private$.project_id,
+                                                "_part_",
+                                                tmp_num, "_",
+                                                private$.Settings$get_platform())
+                              private$.fn_mdout <- file.path(private$.pth_to_modelout,
+                                                             fn_name)
+                              return(fn_name)
+                            },
+                            update_project_meta = function() {
+                              tmp_info <- private$.ModelDef$get_project_meta()
+                              private$.project_id <- tmp_info[1]
+                              private$.model_type <- tmp_info[2]
+                              private$.model_part <- private$get_num_part()
+                            },
+                            update_ModelOut = function(type) {
+                              private$.ModelOut$update_model_output()
+                              private$.model_part <- private$get_num_part()
+                              if(private$get_num_mdout() > 0) {
+                                tmp_inits <- private$.ModelOut$get_inits()
+                                private$.ModelDat$update_md_inits(tmp_inits)
+                              }
+                              if (type == "initialization") {
+                                msg <- paste0("Initialization of model No.: ",
+                                              crayon::green(private$.project_id),
+                                              " (response ",
+                                              "type ",
+                                              crayon::blue(private$.model_type),
+                                              "), and part No.: ",
+                                              crayon::red(private$.model_part),
+                                              " complete!")
+                              } else if (type == "intermediate") {
+                                msg <- paste0("Updating output of model No.: ",
+                                              crayon::green(private$.project_id),
+                                              " (response ",
+                                              "type ",
+                                              crayon::blue(private$.model_type),
+                                              "), and prepare part No.: ",
+                                              crayon::red(private$.model_part),
+                                              " for PGAS run!")
+                              }
+                              cat(msg)
                             },
                             ##' @description Validate path to directory
                             ##'
@@ -142,18 +204,32 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'
                             #' @param path_to_project character value setting
                             #'    the path to project
+                            #' @param path_to_true_states character value
+                            #'   setting the path to the .RData file that stores
+                            #'   the true values from a simulation study
                             #'
                             #' @examples
                             #' \dontrun{`ModelBNMPD$new(getwd())`}
-                            initialize = function(path_to_project) {
+                            initialize = function(path_to_project,
+                                                  path_to_true_states = NULL) {
+                              if(!is.null(path_to_true_states)) {
+                                store_ls_tmp1 <- ls()
+                                load(path_to_true_states)
+                                store_ls_tmp2 <- ls()
+                                name_true_states <- setdiff(store_ls_tmp2,
+                                                            c(store_ls_tmp1,
+                                                              "store_ls_tmp1"))
+                                assign("true_state_values",
+                                       eval(parse(text = name_true_states)))
+                                private$.true_states <- true_state_values
+                              }
                               private$.pth_to_proj <- path_to_project
 
                               private$update_all_dir_pths()
                               private$validate_dirs(private$.pth_to_proj,
                                                     private$.pth_to_data,
                                                     private$.pth_to_settings,
-                                                    private$.pth_to_modeldef,
-                                                    private$.pth_to_modeldat)
+                                                    private$.pth_to_modeldef)
                               private$update_all_file_pths()
                               private$validate_files(private$.pth_to_settings,
                                                      private$.pth_to_modeldef,
@@ -179,7 +255,15 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                                 list(ts_name_var = private$.ModelDef$get_ts_name_var(),
                                                                      ts_name_lab = private$.ModelDef$get_ts_name_lab(),
                                                                      ts_var_val  = private$.ModelDef$get_ts_var_val(),
-                                                                     ts_var_lab  = private$.ModelDef$get_ts_var_lab()))
+                                                                     ts_var_lab  = private$.ModelDef$get_ts_var_lab()),
+                                                                private$.ModelDef$get_dimension(),
+                                                                private$.true_states)
+                              private$.ModelOut <- ModelOut$new(private$.pth_to_modelout,
+                                                                private$.ModelDat$get_model_inits_start(),
+                                                                list(reg_names_Z = private$.ModelDef$get_var_z(),
+                                                                     reg_names_U = private$.ModelDef$get_var_u()))
+                              private$update_project_meta()
+                              private$update_ModelOut(type = "initialization")
                             },
                             #' @description Returns "raw" data set.
                             #'
@@ -244,6 +328,22 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               out$zero_avail_indicators <- tmp
                               return(out)
                             },
+                            #' @description Return parameter and trajectory
+                            #'   initialization for model.
+                            #'
+                            #' @details Either taken from
+                            #'   \code{setup_inits.json} or from last PGAS run,
+                            #'   depending on whether we already have a model
+                            #'   output from a PGAS run i.e. whenever
+                            #'   \code{get_num_mdout() > 0}.
+                            get_modeldata_inits_setup = function() {
+                              if (private$get_num_mdout() > 0) {
+                                out <-private$.ModelDat$get_model_inits_mdout()
+                              } else {
+                                out <-private$.ModelDat$get_model_inits_start()
+                              }
+                              return(out)
+                            },
                             #' @description Print "raw" data set.
                             #'
                             #' @details Call to internal \code{DataSet}-class
@@ -299,6 +399,19 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             update_model_definition = function() {
                               private$.ModelDef$update_model_definition()
                             },
+                            #' @description Updates the ModelOut class.
+                            #'
+                            #' @details This is required whenever output is
+                            #'   deleted from the \emph{model/output} directory
+                            #'   and/or initial values for parameters and states
+                            #'   need to be re-setted. The project meta data, in
+                            #'   particular the \code{part}-number is adjusted
+                            #'   according to the number of output in
+                            #'   \emph{model/ouput}.
+                            update_model_output = function() {
+                              private$update_ModelOut(type = "intermediate")
+                              private$update_project_meta()
+                            },
                             #' @description View "raw" data set.
                             #'
                             #' @details Call to internal \code{DataSet}-class
@@ -317,15 +430,12 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   the estimation this function retrieves/loads
                             #'   the model data in the required format.
                             load_modeldata_runtime_pgas = function() {
-                              # browser()
                               self$load_modeldata_internal()$
                                 load_modeldata_prior_setup()$
                                 load_modeldata_inits_setup()$
                                 load_modeldata_dimensions()$
                                 load_modeldata_meta()$
                                 load_settings()
-                              # private$copy_env(parent.frame(), environment())
-                              # private$copy_env(out_env, environment())
                               return(environment())
                             },
                             #' @description Not sure what this function is meant
@@ -362,7 +472,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   member that retrieves the model initialization
                             #'   setup.
                             load_modeldata_inits_setup = function() {
-                              out <-private$.ModelDat$get_model_inits_setup()
+                              out <- self$get_modeldata_inits_setup()
+                              out <- list2env(as.list(out))
                               private$copy_env(parent.frame(), out)
                               invisible(self)
                             },
@@ -409,6 +520,36 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               out <- list2env(out)
                               private$copy_env(parent.frame(), out)
                               invisible(self)
+                            },
+                            # load_pgas_model_out = function() {
+                            # },
+                            #' @description  Saves output from a PGAS run to
+                            #'   model class.
+                            #'
+                            #' @param out_pgas as returned from PGAS function
+                            save_pgas_model_out = function(out_pgas) {
+                              tmp_fn <- private$update_file_pth_mdout()
+                              assign(tmp_fn, out_pgas)
+                              tmp_pth <- file.path(paste0(private$.fn_mdout,
+                                                          ".RData"))
+                              save(list = tmp_fn, file = tmp_pth)
+
+                              private$update_project_meta()
+                              private$update_ModelOut(type = "intermediate")
                             }
+                            # part_ID <- "01"
+                            # project_ID   <- "05"
+                            # path_main <- "./04-results/empirical-panel/cumcap-levels/05-NN31-MM2000-cumcap"
+                            # project_name <- paste0("out_", project_ID, "_LOCAL_part_", part_ID)
+                            # load(file.path(path_main, "data/input/IN_part_00_data.RData"))
+                            # load(file.path(path_main, "data/input", paste0("IN_part_", part_ID, ".RData")))
+
+                            #mpi.exit()
+                            # assign(project_name, out_tmp)
+                            # path_out <- file.path(path_main, "data/output", paste0(project_name, ".RData"))
+                            # save(list = project_name, file = path_out)
+                            #
+                            #
+                            #
                           )
 )

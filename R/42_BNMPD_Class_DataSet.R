@@ -25,7 +25,7 @@ DataSet <- R6::R6Class(classname = "DataSet",
                          initialize = function(path_to_data) {
                            private$pth_to_data <- path_to_data
 
-                           self$update_dataset(TRUE)
+                           self$update_dataset(FALSE)
                          },
                          #' @description updates data set
                          #' @details searches in data folder and loads the data
@@ -35,7 +35,7 @@ DataSet <- R6::R6Class(classname = "DataSet",
                          #'   tibble
                          #'
                          #' @return
-                         update_dataset = function(print_data = FALSE) {
+                         update_dataset = function(print_data = TRUE) {
                            data_chosen <- NULL
                            data_chosen <- self$get_data(private$pth_to_data,
                                                         print_data)

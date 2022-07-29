@@ -10,7 +10,8 @@ ModelDat <- R6::R6Class("ModelDat",
                           .data_internal = NULL,
                           .data_dimensions  = NULL,
                           .data_priors = NULL,
-                          .data_inits  = NULL,
+                          .data_inits_start  = NULL,
+                          .data_inits_mdout  = NULL,
                           .data_meta  = NULL,
                           .var_y = NULL,
                           .var_z = NULL,
@@ -47,13 +48,15 @@ ModelDat <- R6::R6Class("ModelDat",
                             y_use  <- unname(private$.var_y)
                             z_use  <- unique(unlist(private$.var_z))
                             u_use  <- unique(unlist(private$.var_u))
+                            cs_lab <- private$.cs_name_lab
                             cs_var <- private$.cs_name_var
-                            ts_var <- private$.ts_name_var
                             cs_val <- private$.cs_var_val
+                            ts_lab <- private$.ts_name_lab
+                            ts_var <- private$.ts_name_var
                             ts_val <- private$.ts_var_val
 
-                            data_labels <- c(private$.cs_name_lab,
-                                             private$.ts_name_lab,
+                            data_labels <- c(cs_lab,
+                                             ts_lab,
                                              private$.lab_y,
                                              unique(unlist(private$.lab_z)),
                                              unique(unlist(private$.lab_u)))
@@ -70,36 +73,39 @@ ModelDat <- R6::R6Class("ModelDat",
                             check_unbalanced(data_to_use)
                             # POSSIBLY SPLINE MANIPULATIONS HERE #
                             # ...
+                            # ...
+                            # ...
                             # SPLINE MANIPULATION END
-                            private$.NN <- length(cs_val)
-                            private$.TT <- length(ts_val)
-                            if (private$.NN != length(private$.cs_var_lab)) {
-                              msg <- paste0("Missmatch between cross section ",
-                                            "number of labels vs. ",
-                                            "number of variables!")
-                              stop(msg)
-                            }
-                            if (private$.TT != length(private$.ts_var_lab)) {
-                              msg <- paste0("Missmatch between time series ",
-                                            "number of labels vs. ",
-                                            "number of variables!")
-                              stop(msg)
-                            }
+                            # START CONSISTENCY CHECKS:
                             if(private$.NN * private$.TT != nrow(data_to_use)) {
                               msg <- paste0("Possible missmatch between ",
                                             "dimension of ",
-                                            "true data set and cross section ",
-                                            "and/or time series lengths as ",
-                                            "pecified via the ",
-                                            "model_definition.yaml-file: ",
-                                            "do not specify more ",
+                                            "dataset to use and cross section ",
+                                            "and/or \n  ",
+                                            "time series lengths as ",
+                                            "specified via the ",
+                                            "model_definition.yaml-file:\n  ",
+                                            "number of rows inconsistent:\n  ",
+                                            "DO NOT specify more ",
                                             "cross section or time series ",
                                             "than actually given in the ",
-                                            "data set!")
+                                            "dataset!")
                               stop(msg)
                             }
-                            private$.DD <- length(y_use)
-
+                            check <- c(length(y_use),
+                                       length(z_use),
+                                       length(u_use))
+                            check <- 2 + sum(check)
+                            if(check != ncol(data_to_use)) {
+                              msg <- paste0("Possible missmatch between ",
+                                            "dimension of ",
+                                            "dataset to use and column\n  ",
+                                            "numbers as specified via the ",
+                                            "model_definition.yaml-file:\n  ",
+                                            "various reasons possible...")
+                              stop(msg)
+                            }
+                            # END CONSISTENCY CHECKS
                             private$.data_subset_used <- data_to_use
 
                             invisible(self)
@@ -224,7 +230,10 @@ ModelDat <- R6::R6Class("ModelDat",
 
                             invisible(self)
                           },
-                          initialize_data_dimensions = function() {
+                          initialize_data_dimensions = function(dimensions) {
+                            private$.TT <- dimensions["TT"]
+                            private$.NN <- dimensions["NN"]
+                            private$.DD <- dimensions["DD"]
                             private$.data_dimensions <- new.env()
                             private$.data_dimensions$TT <- private$.TT
                             private$.data_dimensions$NN <- private$.NN
@@ -236,7 +245,10 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_priors <- list2env(list(priors = tmp))
                             invisible(self)
                           },
-                          get_states_init = function() {
+                          get_states_init = function(true_states = NULL) {
+                            if (!is.null(true_states)) {
+                              return(true_states)
+                            }
                             y_t <- private$.data_internal$data[["y_t"]]
                             TT  <- private$.TT
                             NN  <- private$.NN
@@ -305,7 +317,6 @@ ModelDat <- R6::R6Class("ModelDat",
                                                                  type,
                                                                  dim_mat)
                             return(tmp)
-
                           },
                           get_dim_reg = function(data_list_init, reg_name) {
                             DD <- length(data_list_init)
@@ -316,26 +327,31 @@ ModelDat <- R6::R6Class("ModelDat",
                               err_msg <- paste0("Unequal number of params in: ",
                                                 reg_name,
                                                 ". See setup_inits.json file!")
-                              check_me <- (all.equal(length(tmp_list$lab),
-                                                     length(tmp_list$var)) &&
-                                             all.equal(length(tmp_list$var),
-                                                       length(tmp_list$val)))
+                              if (reg_name == "beta_u_reg") {
+                                check_me <- all.equal(length(tmp_list$lab),
+                                                      length(tmp_list$var))
+                              } else {
+                                check_me <- (all.equal(length(tmp_list$lab),
+                                                       length(tmp_list$var)) &&
+                                               all.equal(length(tmp_list$var),
+                                                         length(tmp_list$val)))
+                              }
                               if (!check_me) {
                                 stop(err_msg)
                               } else {
-                                num_regs[i] <- length(tmp_list$val)
+                                num_regs[i] <- length(tmp_list$var)
                               }
                             }
                             return(num_regs)
                           },
-                          initialize_data_inits = function() {
+                          initialize_data_inits_start = function(true_states) {
                             inits <- jsonlite::fromJSON(private$.pth_to_inits)
-                            private$.data_inits <- new.env()
+                            private$.data_inits_start <- list()
                             NN  <- private$.data_dimensions$NN
                             TT  <- private$.data_dimensions$TT
                             DD  <- private$.data_dimensions$DD
 
-                            state_inits <- private$get_states_init()
+                            state_inits <- private$get_states_init(true_states)
 
                             init_sig_sq <- matrix(0, nrow = DD, ncol = 1)
                             init_sig_sq[, 1] <- initialize_par_vec(inits,
@@ -369,8 +385,8 @@ ModelDat <- R6::R6Class("ModelDat",
                             par_init$init_bet_z     <- init_bet_z
                             par_init$init_bet_u     <- init_bet_u
                             par_init$init_vcm_bet_u <- init_vcm_bet_u
-                            private$.data_inits$par_init  <- par_init
-                            private$.data_inits$traj_init <- state_inits
+                            private$.data_inits_start$par_init  <- par_init
+                            private$.data_inits_start$traj_init <- state_inits
                           },
                           initialize_data_meta = function() {
                             # First type of meta data: availability indices
@@ -393,13 +409,17 @@ ModelDat <- R6::R6Class("ModelDat",
                                                   })
                             colnames(zero_ind_nn) <- private$.cs_var_val
                             rownames(zero_ind_nn) <- private$.var_y
-                            zero_ind_dd <- apply(zero_ind_nn, 1, which)
-                            zero_ind_nn <- apply(t(zero_ind_nn), 1, which)
+                            zero_ind_dd <- apply(zero_ind_nn, 1,
+                                                 which, simplify = FALSE)
+                            zero_ind_nn <- apply(t(zero_ind_nn), 1,
+                                                 which, simplify = FALSE)
 
                             colnames(avail_ind_nn) <- private$.cs_var_val
                             rownames(avail_ind_nn) <- private$.var_y
-                            avail_ind_dd <- apply(avail_ind_nn, 1, which)
-                            avail_ind_nn <- apply(t(avail_ind_nn), 1, which)
+                            avail_ind_dd <- apply(avail_ind_nn, 1,
+                                                  which, simplify = FALSE)
+                            avail_ind_nn <- apply(t(avail_ind_nn), 1,
+                                                  which, simplify = FALSE)
 
                             inds <- list()
                             inds$avail_ind_nn  <- avail_ind_nn
@@ -418,17 +438,19 @@ ModelDat <- R6::R6Class("ModelDat",
                                                 info_z,
                                                 info_u,
                                                 info_cs,
-                                                info_ts) {
+                                                info_ts,
+                                                info_dim,
+                                                true_states = NULL) {
                             private$initialize_paths(pth_prior,
                                                      pth_inits)
+                            private$initialize_data_dimensions(info_dim)
                             private$initialize_var_names(info_y, info_z, info_u)
                             private$initialize_cs_ts(info_cs, info_ts)
                             private$initialize_data_raw(data_set)
                             private$initialize_data_used()
-                            private$initialize_data_dimensions()
                             private$initialize_data_internal()
                             private$initialize_data_priors()
-                            private$initialize_data_inits()
+                            private$initialize_data_inits_start(true_states)
                             private$initialize_data_meta()
                           },
                           # get_model_data_raw = function() {
@@ -449,7 +471,13 @@ ModelDat <- R6::R6Class("ModelDat",
                           get_model_prior_setup = function() {
                             private$.data_priors
                           },
-                          get_model_inits_setup = function() {
-                            private$.data_inits
+                          get_model_inits_start = function() {
+                            private$.data_inits_start
+                          },
+                          get_model_inits_mdout = function() {
+                            private$.data_inits_mdout
+                          },
+                          update_md_inits = function(tmp_md_inits) {
+                            private$.data_inits_mdout <- tmp_md_inits
                           }
                         ))

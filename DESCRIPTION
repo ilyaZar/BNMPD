@@ -27,7 +27,8 @@ Imports:
     colorDF,
     magrittr (>= 1.5),
     yaml,
-    sjlabelled
+    sjlabelled,
+    Rmpi
 Suggests: 
     crayon,
     HDInterval,
