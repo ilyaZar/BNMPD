@@ -163,7 +163,6 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
     }
   }
-  browser()
   ## II. run cBPF and use output as first conditioning trajectory
   if (smc_parallel) {
     envir_par <- environment()
@@ -230,7 +229,6 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       # cat("Iteration number:", n, "\n")
     }
   }
-  browser()
   # print(identical(X[ , , 1, ], X2[ , , 1, ]))
   # Run MCMC loop
   for (m in 2:MM) {
@@ -314,7 +312,6 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
                                               "phi_x",
                                               "X"),
                               envir = envir_par)
-      parallel::clusterEvalQ(cl, set.seed(123))
       # browser()
       out_cpf <- parallel::clusterApply(cl, x = task_indices,
                                         BNMPD::cbpf_as_d_cpp_par,

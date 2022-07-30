@@ -137,7 +137,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                               crayon::blue(private$.model_type),
                                               "), and part No.: ",
                                               crayon::red(private$.model_part),
-                                              " complete!")
+                                              " complete!\n")
                               } else if (type == "intermediate") {
                                 msg <- paste0("Updating output of model No.: ",
                                               crayon::green(private$.project_id),
@@ -146,7 +146,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                               crayon::blue(private$.model_type),
                                               "), and prepare part No.: ",
                                               crayon::red(private$.model_part),
-                                              " for PGAS run!")
+                                              " for PGAS run!\n")
                               }
                               cat(msg)
                             },

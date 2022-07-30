@@ -35,7 +35,7 @@ Suggests:
     gtools,
     dplyr,
     devtools (>= 2.2.2.9000),
-    testthat (>= 2.3.2),
+    testthat (>= 3.0.0),
     colorDF
 Encoding: UTF-8
 LazyData: true
@@ -46,3 +46,4 @@ LinkingTo:
     RcppArmadillo,
     BH,
     dqrng
+Config/testthat/edition: 3

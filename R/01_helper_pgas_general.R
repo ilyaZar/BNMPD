@@ -34,23 +34,51 @@ get_regs_beta <- function(Z, U, id_uet, TT,
   }
   return(Regs_beta)
 }
-load_model = function(from_env) {
-  # if (is.null(to_env)) to_env <- new.env()
-  to_env <- parent.frame()
-  nn_list_dd <- lapply(from_env$avail_indicator_nn, function(x) x - 1)
-  dd_list_nn <- from_env$avail_indicator_dd
-  from_env$nn_list_dd <- nn_list_dd
-  from_env$dd_list_nn <- dd_list_nn
-  # dd_list_nn <- rep(list(1:NN), times = DD)
-  # nn_list_dd <- rep(list(1:DD), times = NN)
-  y <- from_env$data[[1]]
-  from_env$y <- y
-  if (length(from_env$data) == 2) {
-    num_counts <- from_env$data[[2]]
-    from_env$num_counts <- num_counts
+generate_environment_parallel <- function(envir_current,
+                                          type = NULL) {
+  if(type == "testing") return(envir_current)
+  if(type == "clean_run") {
+    envir_used <- new.env(parent = rlang::env_parents(environment())[[1]])
+    return(envir_used)
   }
-  for(n in ls(from_env, all.names = TRUE)) {
-    assign(n, get(n, from_env), to_env)
+}
+load_model = function(env_model, to_env) {
+  # to_env <- parent.frame()
+  nn_list_dd <- lapply(env_model$avail_indicator_nn, function(x) x - 1)
+  dd_list_nn <- env_model$avail_indicator_dd
+  env_model$nn_list_dd <- nn_list_dd
+  env_model$dd_list_nn <- dd_list_nn
+  y <- env_model$data[[1]]
+  env_model$y <- y
+  if (length(env_model$data) == 2) {
+    num_counts <- env_model$data[[2]]
+    env_model$num_counts <- num_counts
+  }
+  initialize_data_containers(env_model$par_init,
+                             env_model$traj_init,
+                             env_model$priors,
+                             env_model$Z,
+                             env_model$U,
+                             env_model$TT,
+                             env_model$DD,
+                             env_model$NN,
+                             env_model$MM,
+                             to_env = env_model)
+  all_model_names <- ls(env_model, all.names = TRUE)
+  use_model_names <- setdiff(all_model_names,
+                             c("avail_indicator_nn",
+                               "avail_indicator_dd",
+                               "data",
+                               "par_init",
+                               "traj_init",
+                               "priors"))
+  for(n in use_model_names) {
+    assign(n, get(n, env_model), to_env)
+  }
+  rm(pgas_model, envir = parent.frame())
+  options(warn = 1)
+  if (isTRUE(env_model$smc_parallel) && is.null(env_model$cluster_type)) {
+    stop("Cluster type not specified although 'smc_parallel=TRUE'.")
   }
   invisible(to_env)
 }
@@ -59,8 +87,7 @@ initialize_data_containers <- function(par_init,
                                        priors,
                                        Z, U,
                                        TT, DD, NN, MM,
-                                       dim_bet_z,
-                                       dim_bet_u) {
+                                       to_env) {
 
   initialize_dims(par_init, U, DD)
   if (!is.null(U)) {
@@ -126,9 +153,11 @@ initialize_data_containers <- function(par_init,
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_bet_u"]][[d]]
     }
     for (n in 1:NN) {
-      if (identical(dim(traj_init), as.integer(c(TT, DD, NN)))) {
+      if (all.equal(dim(traj_init), as.integer(c(TT, DD, NN)),
+                    check.attributes = FALSE)) {
         X[ , d, 1, n]  <- traj_init[, d, n]
-      } else if (identical(dim(traj_init), as.integer(c(DD, NN)))) {
+      } else if (all.equal(dim(traj_init), as.integer(c(DD, NN)),
+                           check.attributes = FALSE)) {
         X[ , d, 1, n]  <- traj_init[d, n]
       }
       # X2[ , d, 1, n] <- traj_init[d, n]
@@ -151,8 +180,8 @@ initialize_data_containers <- function(par_init,
       Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
     }
   }
-  to_env  <- parent.frame()
-  vec_obj <- c("dim_bet_z", "dim_bet_u", "dim_zet", "dim_uet",
+  # to_env  <- parent.frame()
+  vec_obj <- c("dim_bet_z", "dim_bet_u",
                "id_bet_z", "id_bet_u", "id_zet", "id_uet", "id_reg_z",
                "dof_vcm_bet_u",
                "prior_vcm_bet_z",
@@ -200,11 +229,14 @@ initialize_dims <- function(par_init, U, DD) {
   }
   invisible(to_env)
 }
-init_pgas <- function(pe, mm) {
+pgas_init <- function(pe, mm) {
   if (pe$smc_parallel) {
     pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
     pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
-    parallel::clusterSetRNGStream(pe$cl, iseed = 123)
+    if(!is.null(pe$settings_seed$seed_pgas_init)) {
+      parallel::clusterSetRNGStream(pe$cl,
+                                    iseed = pe$settings_seed$seed_pgas_init)
+    }
     out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
                                       BNMPD::cbpf_as_d_cpp_par,
                                       pe$nn_list_dd,
@@ -212,8 +244,11 @@ init_pgas <- function(pe, mm) {
                                       pe$Regs_beta,
                                       pe$sig_sq_x[, mm],
                                       pe$phi_x[, mm],
-                                      pe$traj_init)
+                                      pe$X[ , , mm, ])
     out_cpf <- unlist(out_cpf, recursive = FALSE)
+    if (!all.equal(as.numeric(names(out_cpf)), 0:(pe$NN - 1))) {
+      stop("Cluster does not compute trajectories in order!")
+    }
     for (n in 1:pe$NN) {
       pe$X[ , , mm, n] <- out_cpf[[n]]
     }
@@ -251,12 +286,12 @@ init_pgas <- function(pe, mm) {
         pe$X[ , d, mm, n] <- out_cpf[, d]
       }
     }
+  # print(identical(X[ , , 1, ], X2[ , , 1, ]))
   }
   cat("Iteration number:", mm, "\n")
 }
-run_pgas <- function(pe, mm) {
+pgas_run <- function(pe, mm) {
   if (pe$smc_parallel) {
-    parallel::clusterEvalQ(pe$cl, set.seed(123))
     out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
                                       BNMPD::cbpf_as_d_cpp_par,
                                       pe$nn_list_dd,
@@ -266,9 +301,6 @@ run_pgas <- function(pe, mm) {
                                       pe$phi_x[, mm],
                                       pe$X[ , , mm - 1, ])
     out_cpf <- unlist(out_cpf, recursive = FALSE)
-    if (!all.equal(as.numeric(names(out_cpf)), 0:(pe$NN - 1))) {
-      stop("Cluster does not compute trajectories in order!")
-    }
     for (n in 1:pe$NN) {
       pe$X[ , , mm, n] <- out_cpf[[n]]
     }
