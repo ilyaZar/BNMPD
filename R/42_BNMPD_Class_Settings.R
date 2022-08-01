@@ -68,8 +68,10 @@ Settings <- R6::R6Class("Settings",
                             invisible(self)
                           },
                           ask_manual  = function() {
-                            msg <- paste0("Re-read from project settings file (1), ",
-                                          "or have a look and update manually (2): ")
+                            msg <- paste0("Re-read from project"
+                                          ," settings file (1), ",
+                                          "or have a look and",
+                                          " update manually (2): ")
                             tv <- 99
                             while(tv != 1 && tv != 2) {
                               tv <- as.numeric(readline(msg))
@@ -87,12 +89,13 @@ Settings <- R6::R6Class("Settings",
                           ask_settings = function() {
                             message("Which setting to change? \n")
                             tv <- 99
-                            while(!(tv %in% 1:5)) {
+                            while(!(tv %in% 1:6)) {
                               tv <- readline(paste0("1. Parallelization?\n",
                                                     "2. Number of cores?\n",
                                                     "3. Cluster type?\n",
                                                     "4. Number of particles?\n",
-                                                    "5. Number of MCMC iterations?\n"))
+                                                    "5. Number of MCMC iterations?\n",
+                                                    "6. Conditional SMC type?\n"))
                               tv <- as.numeric(tv)
                             }
                             new_val <- private$ask_new_val(tv)
@@ -105,7 +108,8 @@ Settings <- R6::R6Class("Settings",
                                            "(an integer): ",
                                            "('MPI' or 'PSOCK'): ",
                                            "(an integer): ",
-                                           "(an integer): ")
+                                           "(an integer): ",
+                                           "'bpf', 'aux' or 'eis': ")
                             msg <- paste0("Current value: ",
                                           private$..settings_set[[case_num]],
                                           ".\n",

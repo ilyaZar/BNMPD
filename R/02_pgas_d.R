@@ -28,9 +28,9 @@
 #' @return a list with components being: all MCMC parameter draws and all drawn
 #'   state trajectories (smc outuput)
 #' @export
-pgas_d_lin <- function(pgas_model,
-                       settings_type = "clean_run",
-                       settings_seed = NULL) {
+pgas_d <- function(pgas_model,
+                   settings_type = "clean_run",
+                   settings_seed = NULL) {
   if(!is.null(settings_seed)) set.seed(settings_seed$seed_all_init)
   # Initialize environment for parallel execution
   envir_par <- generate_environment_parallel(environment(),
@@ -38,7 +38,6 @@ pgas_d_lin <- function(pgas_model,
   # Initialize data containers and copy to environment used for parallel runs
   load_model(env_model = pgas_model,
              to_env = envir_par)
-  class(envir_par) <- envir_par$model_type_lat
   # 0. run cBPF and use output as first conditioning trajectory
   pgas_init(envir_par, mm = 1)
   # Run (P)MCMC loop

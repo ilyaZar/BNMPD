@@ -388,9 +388,9 @@ ModelDef <- R6::R6Class("ModelDef",
                           #' @details Returns the model response type (dependent
                           #'   variable) and the project ID.
                           get_project_meta = function() {
-                            c(private$.project_id,
-                              private$.model_type_obs,
-                              private$.model_type_lat)
+                            c(project_id = private$.project_id,
+                              model_type_obs = private$.model_type_obs,
+                              model_type_lat = private$.model_type_lat)
                           },
                           #' @description Retrieve \emph{Big Fat Lookup Table}.
                           #'

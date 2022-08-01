@@ -492,12 +492,13 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             load_modeldata_meta = function() {
                               tmp  <-private$.ModelDat$get_model_data_meta()
                               tmp2 <- private$.ModelDef$get_project_meta()
+                              tmp3 <- private$.Settings$get_settings_set()
                               out <- list()
                               out$avail_indicator_nn <- tmp$avail_ind_nn
                               out$avail_indicator_dd <- tmp$avail_ind_dd
                               out$model_type_obs <- tmp2[2]
                               out$model_type_lat <- tmp2[3]
-                              # out$model_type_smc <- tmp$model_type_smc
+                              out$model_type_smc <- tmp3["csmc_type"]
                               out <- list2env(as.list(out))
                               private$copy_env(parent.frame(), out)
                               invisible(self)
@@ -528,7 +529,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             load_settings = function() {
                               out <-private$.Settings$get_settings_set()
                               names(out) <- c("smc_parallel", "num_cores",
-                                              "cluster_type", "N", "MM")
+                                              "cluster_type", "N", "MM",
+                                              "smc_type")
                               out <- list2env(out)
                               private$copy_env(parent.frame(), out)
                               invisible(self)

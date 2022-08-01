@@ -121,4 +121,4 @@ true_states <- dataSim$states
 # save(true_states, file = "inst/simulation-studies/Dirichlet_NN12_DD3/model/input/init_states_true.RData")
 zero_states <- true_states
 zero_states[, , ] <- 0
-save(zero_states, file = "inst/simulation-studies/Dirichlet_NN12_DD3/model/input/init_states_zero.RData")
+# save(zero_states, file = "inst/simulation-studies/Dirichlet_NN12_DD3/model/input/init_states_zero.RData")
