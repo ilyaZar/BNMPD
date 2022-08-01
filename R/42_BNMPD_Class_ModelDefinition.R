@@ -20,7 +20,8 @@ ModelDef <- R6::R6Class("ModelDef",
                           .model_raw = NULL,
                           .model_prnt = NULL,
                           .project_id = NULL,
-                          .model_type = NULL,
+                          .model_type_obs = NULL,
+                          .model_type_lat = NULL,
                           .num_cs = NULL,
                           .num_ts = NULL,
                           .num_mc = NULL,
@@ -40,7 +41,7 @@ ModelDef <- R6::R6Class("ModelDef",
                           .ts_var_val = NULL,
                           .ts_var_lab = NULL,
                           .BFLT  = NULL,
-                          .yaml_offset = 5,
+                          .yaml_offset = 6,
                           set_model_dims = function() {
                             tmp_md <- private$.model_raw$dimension
                             private$.num_cs <- tmp_md$num_cross_section
@@ -335,9 +336,11 @@ ModelDef <- R6::R6Class("ModelDef",
                           #'   is similar to \code{update_settings()} from
                           #'   [`Settings`].
                           update_model_definition = function() {
-                            private$.model_raw <- yaml::read_yaml(private$.pth_to_md)
-                            private$.model_type <- private$.model_raw$model_type
-                            private$.project_id <- private$.model_raw$project_id
+                            md_tmp <- yaml::read_yaml(private$.pth_to_md)
+                            private$.model_raw  <- md_tmp
+                            private$.model_type_obs <- md_tmp$model_type_obs
+                            private$.model_type_lat <- md_tmp$model_type_lat
+                            private$.project_id <- md_tmp$project_id
                             private$set_model_dims()
                             private$set_var_lab()
                             private$set_cs_ts()
@@ -350,7 +353,9 @@ ModelDef <- R6::R6Class("ModelDef",
                           #'   regressor for each component and all model
                           #'   dimensions.
                           print_model_definition = function() {
-                            overview <- data.frame(c(private$.model_type,
+                            model_type <- paste0(private$.model_type_obs,
+                                                 private$.model_type_lat)
+                            overview <- data.frame(c(model_type,
                                                      as.list(private$.dimension)))
                             names(overview) <- c("Model-type", "N", "T", "D")
                             message(crayon::green("Model overview:"))
@@ -384,7 +389,8 @@ ModelDef <- R6::R6Class("ModelDef",
                           #'   variable) and the project ID.
                           get_project_meta = function() {
                             c(private$.project_id,
-                              private$.model_type)
+                              private$.model_type_obs,
+                              private$.model_type_lat)
                           },
                           #' @description Retrieve \emph{Big Fat Lookup Table}.
                           #'

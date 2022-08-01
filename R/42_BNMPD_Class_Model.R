@@ -16,7 +16,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                           private = list(
                             # Some project meta info
                             .project_id = NULL,
-                            .model_type = NULL,
+                            .model_type_obs = NULL,
+                            .model_type_lat = NULL,
                             .model_part = NULL,
                             # Paths to model directories: hard-coded, changeable
                             .pth_to_proj = NULL,
@@ -119,7 +120,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             update_project_meta = function() {
                               tmp_info <- private$.ModelDef$get_project_meta()
                               private$.project_id <- tmp_info[1]
-                              private$.model_type <- tmp_info[2]
+                              private$.model_type_obs <- tmp_info[2]
+                              private$.model_type_lat <- tmp_info[3]
                               private$.model_part <- private$get_num_part()
                             },
                             update_ModelOut = function(type) {
@@ -129,12 +131,16 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 tmp_inits <- private$.ModelOut$get_inits()
                                 private$.ModelDat$update_md_inits(tmp_inits)
                               }
+                              tmp_type_obs <- private$.model_type_obs
+                              tmp_type_lat <- private$.model_type_lat
                               if (type == "initialization") {
                                 msg <- paste0("Initialization of model No.: ",
                                               crayon::green(private$.project_id),
                                               " (response ",
                                               "type ",
-                                              crayon::blue(private$.model_type),
+                                              crayon::blue(tmp_type_obs),
+                                              " and regressor type ",
+                                              crayon::blue(tmp_type_lat),
                                               "), and part No.: ",
                                               crayon::red(private$.model_part),
                                               " complete!\n")
@@ -143,7 +149,9 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                               crayon::green(private$.project_id),
                                               " (response ",
                                               "type ",
-                                              crayon::blue(private$.model_type),
+                                              crayon::blue(tmp_type_obs),
+                                              " and regressor type ",
+                                              crayon::blue(tmp_type_lat),
                                               "), and prepare part No.: ",
                                               crayon::red(private$.model_part),
                                               " for PGAS run!\n")
@@ -482,10 +490,14 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @details Call to internal \code{ModelDef}-class
                             #'   member that retrieves the model meta data.
                             load_modeldata_meta = function() {
-                              tmp <-private$.ModelDat$get_model_data_meta()
+                              tmp  <-private$.ModelDat$get_model_data_meta()
+                              tmp2 <- private$.ModelDef$get_project_meta()
                               out <- list()
                               out$avail_indicator_nn <- tmp$avail_ind_nn
                               out$avail_indicator_dd <- tmp$avail_ind_dd
+                              out$model_type_obs <- tmp2[2]
+                              out$model_type_lat <- tmp2[3]
+                              # out$model_type_smc <- tmp$model_type_smc
                               out <- list2env(as.list(out))
                               private$copy_env(parent.frame(), out)
                               invisible(self)

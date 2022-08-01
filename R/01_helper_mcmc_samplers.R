@@ -209,7 +209,14 @@ sample_beta_all <- function(sig_sq_x,
   }
   return(out)
 }
-sample_all <- function(pe, mm) {
+sample_all_params <- function(pe, mm) {
+  UseMethod("sample_all_params", pe)
+}
+sample_all_params.default <- function(pe, mm) {
+  msg <- paste0("Could not find suitable sampler for sampler type: ", class(pe))
+  stop(msg)
+}
+sample_all_params.lin_re <- function(pe, mm) {
   for (d in 1:pe$DD) {
     id_betz_tmp <- (pe$id_bet_z[d] + 1):pe$id_bet_z[d + 1]
     id_betu_tmp <- (pe$id_bet_u[d] + 1):pe$id_bet_u[d + 1]
@@ -289,6 +296,30 @@ sample_all <- function(pe, mm) {
   #   pe$vcm_bet_u[[d]][, , mm] <- [[d]][, , mm]
   # }
   # pe$Regs_beta <- Regs_beta
+}
+sample_all_params.spl <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
+}
+sample_all_params.lin <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
+}
+sample_all_params.re <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
+}
+sample_all_params.lin_spl <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
+}
+sample_all_params.spl_re <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
+}
+sample_all_params.lin_spl_re <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
 }
 #
 #

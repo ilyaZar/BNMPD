@@ -38,12 +38,13 @@ pgas_d_lin <- function(pgas_model,
   # Initialize data containers and copy to environment used for parallel runs
   load_model(env_model = pgas_model,
              to_env = envir_par)
+  class(envir_par) <- envir_par$model_type_lat
   # 0. run cBPF and use output as first conditioning trajectory
   pgas_init(envir_par, mm = 1)
   # Run (P)MCMC loop
   for (m in 2:envir_par$MM) {
     # I. Run GIBBS part
-    sample_all(envir_par, mm = m)
+    sample_all_params(envir_par, mm = m)
     # II. Run cBPF-AS part
     pgas_run(envir_par,  mm = m)
   }
