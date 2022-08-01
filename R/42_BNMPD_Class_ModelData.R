@@ -274,9 +274,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_priors <- list2env(list(priors = tmp))
                             invisible(self)
                           },
-                          get_states_init = function(true_states = NULL) {
-                            if (!is.null(true_states)) {
-                              return(true_states)
+                          get_states_init = function(states_init = NULL) {
+                            if (!is.null(states_init)) {
+                              return(states_init)
                             }
                             y_t <- private$.data_internal$data[["y_t"]]
                             TT  <- private$.TT
@@ -373,14 +373,14 @@ ModelDat <- R6::R6Class("ModelDat",
                             }
                             return(num_regs)
                           },
-                          initialize_data_inits_start = function(true_states) {
+                          initialize_data_inits_start = function(states_init) {
                             inits <- jsonlite::fromJSON(private$.pth_to_inits)
                             private$.data_inits_start <- list()
                             NN  <- private$.data_dimensions$NN
                             TT  <- private$.data_dimensions$TT
                             DD  <- private$.data_dimensions$DD
 
-                            state_inits <- private$get_states_init(true_states)
+                            state_inits <- private$get_states_init(states_init)
 
                             init_sig_sq <- matrix(0, nrow = DD, ncol = 1)
                             init_sig_sq[, 1] <- initialize_par_vec(inits,
@@ -469,7 +469,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                                 info_cs,
                                                 info_ts,
                                                 info_dim,
-                                                true_states = NULL) {
+                                                states_init = NULL) {
                             private$initialize_paths(pth_prior,
                                                      pth_inits)
                             private$initialize_data_dimensions(info_dim)
@@ -479,7 +479,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$initialize_data_used()
                             private$initialize_data_internal()
                             private$initialize_data_priors()
-                            private$initialize_data_inits_start(true_states)
+                            private$initialize_data_inits_start(states_init)
                             private$initialize_data_meta()
                           },
                           # get_model_data_raw = function() {

@@ -38,7 +38,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .ModelDef = NULL,
                             .ModelDat = NULL,
                             .ModelOut = NULL,
-                            .true_states = NULL,
+                            .states_init = NULL,
                             get_setup_inits = function() {
                             },
                             get_setup_metadata_pf = function() {
@@ -204,24 +204,24 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'
                             #' @param path_to_project character value setting
                             #'    the path to project
-                            #' @param path_to_true_states character value
+                            #' @param path_to_states_init character value
                             #'   setting the path to the .RData file that stores
                             #'   the true values from a simulation study
                             #'
                             #' @examples
                             #' \dontrun{`ModelBNMPD$new(getwd())`}
                             initialize = function(path_to_project,
-                                                  path_to_true_states = NULL) {
-                              if(!is.null(path_to_true_states)) {
+                                                  path_to_states_init = NULL) {
+                              if(!is.null(path_to_states_init)) {
                                 store_ls_tmp1 <- ls()
-                                load(path_to_true_states)
+                                load(path_to_states_init)
                                 store_ls_tmp2 <- ls()
-                                name_true_states <- setdiff(store_ls_tmp2,
+                                name_states_init <- setdiff(store_ls_tmp2,
                                                             c(store_ls_tmp1,
                                                               "store_ls_tmp1"))
-                                assign("true_state_values",
-                                       eval(parse(text = name_true_states)))
-                                private$.true_states <- true_state_values
+                                assign("states_init",
+                                       eval(parse(text = name_states_init)))
+                                private$.states_init <-states_init
                               }
                               private$.pth_to_proj <- path_to_project
 
@@ -257,7 +257,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                                      ts_var_val  = private$.ModelDef$get_ts_var_val(),
                                                                      ts_var_lab  = private$.ModelDef$get_ts_var_lab()),
                                                                 private$.ModelDef$get_dimension(),
-                                                                private$.true_states)
+                                                                private$.states_init)
                               private$.ModelOut <- ModelOut$new(private$.pth_to_modelout,
                                                                 private$.ModelDat$get_model_inits_start(),
                                                                 list(reg_names_Z = private$.ModelDef$get_var_z(),
