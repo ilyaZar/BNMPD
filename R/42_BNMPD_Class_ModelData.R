@@ -55,6 +55,35 @@ ModelDat <- R6::R6Class("ModelDat",
                             ts_var <- private$.ts_name_var
                             ts_val <- private$.ts_var_val
 
+                            msg_err <- "Can not find CS col-name in dataset."
+                            if(!(cs_var %in% names(private$.data_raw))) {
+                              stop(msg_err)
+                            }
+                            msg_err <- "Can not find TS col-name in dataset."
+                            if(!(ts_var %in% names(private$.data_raw))) {
+                              stop(msg_err)
+                            }
+                            msg_err <- "Can not find values in CS."
+                            tmp_data <- private$.data_raw %>%
+                              dplyr::filter(.data[[cs_var]] %in% cs_val)
+                            if(nrow(tmp_data) == 0){
+                              stop(msg_err)
+                            }
+                            msg_err <- "Some values in CS not found..."
+                            if(!all(cs_val %in% unique(private$.data_raw[[cs_var]]))){
+                              stop(msg_err)
+                            }
+                            msg_err <- "Can not find values in TS."
+                            tmp_data <- private$.data_raw %>%
+                              dplyr::filter(.data[[ts_var]] %in% ts_val)
+                            if(nrow(tmp_data) == 0){
+                              stop(msg_err)
+                            }
+                            msg_err <- "Some values in TS not found..."
+                            if(!all(ts_val %in% unique(private$.data_raw[[ts_var]]))){
+                              stop(msg_err)
+                            }
+
                             data_labels <- c(cs_lab,
                                              ts_lab,
                                              private$.lab_y,

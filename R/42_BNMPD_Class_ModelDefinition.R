@@ -95,18 +95,35 @@ ModelDef <- R6::R6Class("ModelDef",
                             private$.lab_y <- y_labs
                           },
                           set_cs_ts = function() {
-                            tmp_cs <- private$.model_raw[["cross_section_used"]]
-                            tmp_ts <- private$.model_raw[["time_series_used"]]
+                            tmpcs <- private$.model_raw[["cross_section_used"]]
+                            tmpts <- private$.model_raw[["time_series_used"]]
 
-                            private$.cs_name_var <- tmp_cs[["cs_name_var"]]
-                            private$.cs_name_lab <- tmp_cs[["cs_name_lab"]]
-                            private$.cs_var_val  <- tmp_cs[["cs_var_val"]]
-                            private$.cs_var_lab  <- tmp_cs[["cs_var_lab"]]
+                            private$.cs_name_var <- tmpcs[["cs_name_var"]]
+                            private$.cs_name_lab <- tmpcs[["cs_name_lab"]]
+                            private$.cs_var_val  <- prs(tmpcs[["cs_var_val"]],
+                                                        private$.num_cs)
+                            private$.cs_var_lab  <- prs(tmpcs[["cs_var_lab"]],
+                                                        private$.num_cs)
 
-                            private$.ts_name_var <- tmp_ts[["ts_name_var"]]
-                            private$.ts_name_lab <- tmp_ts[["ts_name_lab"]]
-                            private$.ts_var_val  <- tmp_ts[["ts_var_val"]]
-                            private$.ts_var_lab  <- tmp_ts[["ts_var_lab"]]
+                            private$.ts_name_var <- tmpts[["ts_name_var"]]
+                            private$.ts_name_lab <- tmpts[["ts_name_lab"]]
+                            private$.ts_var_val  <- prs(tmpts[["ts_var_val"]],
+                                                        private$.num_ts)
+                            private$.ts_var_lab  <- prs(tmpts[["ts_var_lab"]],
+                                                        private$.num_ts)
+                          },
+                          prs = function(to_parse, dim) {
+                            if (length(to_parse) != dim) {
+                              out <- eval(parse(text = to_parse))
+                              msg <- paste0("Dimension error when parsing ... ",
+                                            "check expression to parse or dim.")
+                              if (length(out) != dim) {
+                                stop(msg)
+                              }
+                              return(out)
+                            } else {
+                              return(to_parse)
+                            }
                           },
                           check_cs_ts_DDy = function() {
                             tmp_NN <- private$.dimension["NN"]
