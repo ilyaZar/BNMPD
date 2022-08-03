@@ -1,7 +1,9 @@
 #' BNMPD: A package for modeling and estimation of Bayesian
 #' non-parametric multivariate panel data
 #'
-#' This package provides important functions. TO-DO
+#' This package provides facilities for running a Particle Gibbs with Ancestor
+#' sampling procedure on various multivariate (non-parametric) Bayesian panel
+#' data models.
 #'
 #' @section foo functions:
 #' The foo functions ...

@@ -22,7 +22,7 @@ Settings <- R6::R6Class("Settings",
                           .settings_set = NULL,
                           .sttgs_pfs = NULL,
                           .sttgs_sys = NULL,
-                          .pf_all = c("LOCAL", "DEVEL", "MAIN"),
+                          .pf_all = c("LOCAL", "DEVEL", "CHEOPS"),
                           .pf_set = NULL,
                           .pf_sel = NULL,
                           .lab_env_slrm = c("JOB_ID",
@@ -48,6 +48,7 @@ Settings <- R6::R6Class("Settings",
                             invisible(self)
                           },
                           initialize_settings_set = function() {
+                            browser()
                             private$get_pf_sel()
                             tmp_sel <- private$.settings_all[private$.pf_sel]
                             private$.settings_set <- tmp_sel[[1]]
@@ -75,20 +76,22 @@ Settings <- R6::R6Class("Settings",
                             return(prnt_sttgs)
                           },
                           read_pf = function() {
-                            check_slrm <- any(grepl("^SLURM", Sys.getenv()))
+                            browser()
+                            check_slrm <- any(grepl("^SLURM",
+                                                    names(Sys.getenv())))
                             if(check_slrm) {
                               check_devel <- Sys.getenv("SLURM_JOB_PARTITION") == "devel-rh7"
-                              if(check_devel == "devel") {
-                                private$.pf_set <- "DEVEL"
+                              if(check_devel) {
+                                private$.pf_set <- private$.pf_all[2]
                                 private$.pf_sel <- 2
                               } else {
-                                private$.pf_set <- toupper(check_devel)
+                                private$.pf_set <- private$.pf_all[3]
                                 private$.pf_sel <- 3
                               }
                             } else {
                               checkme <- Sys.info()[["sysname"]]
                                 if("Linux" == checkme) {
-                                  private$.pf_set <- "LOCAL"
+                                  private$.pf_set <- private$.pf_all[1]
                                   private$.pf_sel <- 1
                                 } else {
                                   stop("IDENTIFY OTHER PLATFORM NAMES!")
@@ -150,9 +153,8 @@ Settings <- R6::R6Class("Settings",
                                                     "JOB_CPUS_PER_NODE",
                                                     "MEM_PER_NODE"))
                               env_slurm <- Sys.getenv(env_slurm)
-                              print(env_slurm)
                               names(env_slurm) <- private$.lab_env_slrm
-                              if(env_slurm[["SLURM_JOB_PARTITION"]] == "devel-rh7"){
+                              if(env_slurm[["PARTITION"]] == "devel-rh7"){
                                 out[[2]] <- env_slurm
                                 out[[3]] <- env_slurm_empty
                               } else {
