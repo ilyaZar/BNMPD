@@ -47,9 +47,8 @@ pgas_d <- function(pgas_model,
     # II. Run cBPF-AS part
     pgas_run(envir_par,  mm = m)
   }
-  if (envir_par$smc_parallel) {
+  if ("cl" %in% names(envir_par)) {
     parallel::stopCluster(envir_par$cl)
-    if(envir_par$cluster_type %in% c("DEVEL", "CHEOPS")) Rmpi::mpi.exit()
   }
   options(warn = 0)
   return(list(sig_sq_x = envir_par$sig_sq_x,

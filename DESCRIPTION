@@ -28,7 +28,9 @@ Imports:
     magrittr (>= 1.5),
     yaml,
     sjlabelled,
-    Rmpi
+    Rmpi,
+    snow,
+    parallel
 Suggests: 
     crayon,
     HDInterval,
@@ -36,7 +38,6 @@ Suggests:
     dplyr,
     devtools (>= 2.2.2.9000),
     testthat (>= 3.0.0),
-    colorDF
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

@@ -23,6 +23,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .pth_to_proj = NULL,
                             .pth_to_data = "model/input/datasets",
                             .pth_to_settings = "model/settings",
+                            .pth_to_setting1 = "model/settings",
+                            .pth_to_setting2 = "model/settings",
                             .pth_to_modeldef = "model/model-definition",
                             .pth_to_priorset = "model/model-definition",
                             .pth_to_initsset = "model/model-definition",
@@ -31,7 +33,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .fn_prset = "setup_priors.json",
                             .fn_inits = "setup_inits.json",
                             .fn_mddef = "model_definition.yaml",
-                            .fn_pfsmp = "settings-plattform&sampler.yaml",
+                            .fn_pfsmp = "settings_plattform&sampler.yaml",
+                            .fn_prjct = "settings_project.yaml",
                             .fn_mdout = "out_ModelNo_PartNo_TIMESTAMP.RData",
                             # Sub-classes as private fields for internal usage
                             .DataSet = NULL,
@@ -96,8 +99,10 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             update_all_file_pths = function() {
                               private$.pth_to_modeldef <- file.path(private$.pth_to_modeldef,
                                                                     private$.fn_mddef)
-                              private$.pth_to_settings <- file.path(private$.pth_to_settings,
+                              private$.pth_to_setting1 <- file.path(private$.pth_to_settings,
                                                                     private$.fn_pfsmp)
+                              private$.pth_to_setting2 <- file.path(private$.pth_to_settings,
+                                                                    private$.fn_prjct)
                               private$.pth_to_priorset <- file.path(private$.pth_to_priorset,
                                                                     private$.fn_prset)
                               private$.pth_to_initsset <- file.path(private$.pth_to_initsset,
@@ -239,13 +244,14 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                     private$.pth_to_settings,
                                                     private$.pth_to_modeldef)
                               private$update_all_file_pths()
-                              private$validate_files(private$.pth_to_settings,
+                              private$validate_files(private$.pth_to_setting1,
+                                                     private$.pth_to_setting2,
                                                      private$.pth_to_modeldef,
                                                      private$.pth_to_priorset,
                                                      private$.pth_to_initsset)
 
                               private$.DataSet  <- DataSet$new(private$.pth_to_data)
-                              private$.Settings <- Settings$new(private$.pth_to_settings)
+                              private$.Settings <- Settings$new(private$.pth_to_setting1)
                               private$.ModelDef <- ModelDef$new(private$.pth_to_modeldef)
                               private$.ModelDat <- ModelDat$new(private$.pth_to_priorset,
                                                                 private$.pth_to_initsset,
@@ -368,7 +374,10 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @details Call to internal \code{Settings}-class
                             #'   member that does the pretty printing.
                             print_settings = function() {
-                              private$.Settings$print_settings(silent = FALSE)
+                              msg <- paste0("The current sampler, platform ",
+                                            "and system settings are: ")
+                              msg <- list(msg, "")
+                              private$.Settings$print_settings(msg = msg)
                             },
                             #' @description Prints model definition to console.
                             #'
@@ -388,17 +397,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   for estimation.
                             print_model_data_summary = function() {
                               private$.ModelDef$print_model_overview()
-                            },
-                            #' @description Update settings when
-                            #'   \code{.yaml}-file is changed.
-                            #'
-                            #' @details Call to internal \code{Settings}-class
-                            #'   member that updates meta data (changes to the
-                            #'   \code{.yaml}-file need to be re-sourced into
-                            #'   the object of class ModelBNMPD in the current
-                            #'   R session).
-                            update_settings = function() {
-                              private$.Settings$update_settings()
                             },
                             #' @description Updates the model definition
                             #'
@@ -496,9 +494,9 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               out <- list()
                               out$avail_indicator_nn <- tmp$avail_ind_nn
                               out$avail_indicator_dd <- tmp$avail_ind_dd
-                              out$model_type_obs <- tmp2[2]
-                              out$model_type_lat <- tmp2[3]
-                              out$model_type_smc <- tmp3["csmc_type"]
+                              out$model_type_obs <- tmp2[1]
+                              out$model_type_lat <- tmp2[2]
+                              out$model_type_smc <- tmp3[["csmc_type"]]
                               out <- list2env(as.list(out))
                               private$copy_env(parent.frame(), out)
                               invisible(self)
@@ -524,13 +522,21 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @description  Loads current settings.
                             #'
                             #' @details Call to internal \code{Settings}-class
-                            #'   member that retrieves the settings and loads
-                            #'   them into the execution environment.
+                            #'   member that retrieves the \emph{relevant}
+                            #'   settings and loads them into the execution
+                            #'   environment.
                             load_settings = function() {
                               out <-private$.Settings$get_settings_set()
-                              names(out) <- c("smc_parallel", "num_cores",
-                                              "cluster_type", "N", "MM",
-                                              "smc_type")
+                              names_relevant <- c("num_cores",
+                                                  "cluster_type",
+                                                  "num_particles",
+                                                  "pmcmc_iterations",
+                                                  "csmc_type")
+                              names_internal <- c("num_cores", "cluster_type",
+                                                  "N", "MM", "csmc_type")
+                              id_rel <- which(names(out) %in% names_relevant)
+                              out <- out[id_rel]
+                              names(out) <- names_internal
                               out <- list2env(out)
                               private$copy_env(parent.frame(), out)
                               invisible(self)

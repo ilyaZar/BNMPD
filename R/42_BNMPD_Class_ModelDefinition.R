@@ -41,7 +41,7 @@ ModelDef <- R6::R6Class("ModelDef",
                           .ts_var_val = NULL,
                           .ts_var_lab = NULL,
                           .BFLT  = NULL,
-                          .yaml_offset = 6,
+                          .yaml_offset = 5,
                           set_model_dims = function() {
                             tmp_md <- private$.model_raw$dimension
                             private$.num_cs <- tmp_md$num_cross_section
