@@ -22,7 +22,9 @@ Settings <- R6::R6Class("Settings",
                           .settings_set = NULL,
                           .sttgs_pfs = NULL,
                           .sttgs_sys = NULL,
-                          .pf_all = c("LOCAL", "DEVEL", "CHEOPS"),
+                          .pf_all = c("LOCAL-CGS",
+                                      "CHEOPS-DEV", "CHEOPS-MPI",
+                                      "CHEOPS-LCL", "CHEOPS-INT"),
                           .pf_set = NULL,
                           .pf_sel = NULL,
                           .lab_env_slrm = c("JOB_ID",
@@ -77,25 +79,40 @@ Settings <- R6::R6Class("Settings",
                           },
                           read_pf = function() {
                             browser()
-                            check_slrm <- any(grepl("^SLURM",
-                                                    names(Sys.getenv())))
-                            if(check_slrm) {
-                              check_devel <- Sys.getenv("SLURM_JOB_PARTITION") == "devel-rh7"
-                              if(check_devel) {
-                                private$.pf_set <- private$.pf_all[2]
+                            tmp_sys <- Sys.getenv()
+                            tmp_hnm <- tmp_sys[['PMIX_HOSTNAME']]
+                            tmp_prt <- tmp_sys[['SLURM_JOB_PARTITION']]
+
+                            check_slr <- any(grepl("^SLURM", names(tmp_sys)))
+                            check_chp <- tmp_hnm == "cheops1"
+                            check_cgs <- grepl("CGS", tmp_hnm)
+                            if(check_chp) {
+                              tmp_partition <- Sys.getenv("SLURM_JOB_PARTITION")
+                              if(tmp_partition == "devel-rh7") {
                                 private$.pf_sel <- 2
-                              } else {
-                                private$.pf_set <- private$.pf_all[3]
+                                private$.pf_set <- private$.pf_all[2]
+                              } else if(tmp_partition == "mpi-rh7") {
                                 private$.pf_sel <- 3
+                                private$.pf_set <- private$.pf_all[3]
+                              } else if(tmp_partition == "") {
+                                cat(crayon::magenta("Using login node..."))
+                                private$.pf_sel <- 4
+                                private$.pf_set <- private$.pf_all[4]
+                              } else {
+                                msg <- paste0("Unknown partition: maybe ",
+                                              "mpi-core-rh7 or interactive?")
+                                stop(msg)
                               }
-                            } else {
+                            } else if (!check_chp && check_cgs) {
                               checkme <- Sys.info()[["sysname"]]
                                 if("Linux" == checkme) {
-                                  private$.pf_set <- private$.pf_all[1]
                                   private$.pf_sel <- 1
+                                  private$.pf_set <- private$.pf_all[1]
                                 } else {
                                   stop("IDENTIFY OTHER PLATFORM NAMES!")
                                 }
+                            } else {
+                              msg <- "Unknown hostname: check system!"
                             }
                             invisible(self)
                           },
@@ -110,13 +127,23 @@ Settings <- R6::R6Class("Settings",
                                                        private$.sttgs_sys[[2]])
                             tmp_settings_all[[3]] <- c(private$.sttgs_pfs[[3]],
                                                        private$.sttgs_sys[[3]])
-                            names(tmp_settings_all) <- private$.pf_all
-                            private$.settings_all <- tmp_settings_all
+                            tmp_settings_all[[4]] <- c(private$.sttgs_pfs[[4]],
+                                                       private$.sttgs_sys[[4]])
+                            tmp_settings_all[[5]] <- c(private$.sttgs_pfs[[5]],
+                                                       private$.sttgs_sys[[5]])
+                            names(private$.settings_all) <- private$.pf_all
                             invisible(self)
                           },
                           read_settings_yml = function(pth) {
                             private$.sttgs_pfs <- yaml::read_yaml(pth)
-                            private$.pf_all    <- names(private$.sttgs_pfs)
+                            if (private$.pf_all != names(private$.sttgs_pfs)) {
+                              msg <- paste0("Malformatted '",
+                                            "settings_plattform&sampler.yaml'",
+                                            " file: platform names in .yaml ",
+                                            "do not match 'private$.pf_all' ",
+                                            "in the 'Settings'-class.")
+                              stop(msg)
+                            }
                             invisible(self)
                           },
                           read_settings_sys = function() {
@@ -129,6 +156,7 @@ Settings <- R6::R6Class("Settings",
                             out <- vector("list", num_sys)
                             names(out) <-lab_sys
 
+                            browser()
                             env_vars <- list(NA_integer_,
                                              NA_character_,
                                              "LOCAL_CGS1",
@@ -144,7 +172,7 @@ Settings <- R6::R6Class("Settings",
                             names(env_vars)        <- private$.lab_env_slrm
                             names(env_slurm_empty) <- private$.lab_env_slrm
                             out[[1]] <- env_vars
-                            if (private$.pf_set != "LOCAL") {
+                            if (private$.pf_set != "LOCAL-CGS") {
                               env_slurm <- paste0("SLURM_",
                                                   c("JOB_ID",
                                                     "JOB_NODELIST",
@@ -157,13 +185,23 @@ Settings <- R6::R6Class("Settings",
                               if(env_slurm[["PARTITION"]] == "devel-rh7"){
                                 out[[2]] <- env_slurm
                                 out[[3]] <- env_slurm_empty
-                              } else {
+                                out[[4]] <- env_slurm_empty
+                                out[[5]] <- env_slurm_empty
+                              } else if(env_slurm[["PARTITION"]] == "mpi-rh7") {
                                 out[[2]] <- env_slurm_empty
                                 out[[3]] <- env_slurm
-                              }
-                            } else {
+                                out[[4]] <- env_slurm_empty
+                                out[[5]] <- env_slurm_empty
+                              } else if(env_slurm[["PARTITION"]] == "") {
                               out[[2]] <- env_slurm_empty
                               out[[3]] <- env_slurm_empty
+                              out[[4]] <- env_slurm
+                              out[[5]] <- env_slurm_empty
+                              } else {
+                                msg <- paste0("Unknown partition: maybe ",
+                                              "mpi-core-rh7 or interactive?")
+                                stop(msg)
+                              }
                             }
                             private$.sttgs_sys <- out
                             invisible(self)
