@@ -27,6 +27,7 @@ Settings <- R6::R6Class("Settings",
                                       "CHEOPS-LCL", "CHEOPS-INT"),
                           .pf_set = NULL,
                           .pf_sel = NULL,
+                          .num_pf = NA_integer_,
                           .lab_env_slrm = c("JOB_ID",
                                             "NODELIST",
                                             "PARTITION",
@@ -50,7 +51,6 @@ Settings <- R6::R6Class("Settings",
                             invisible(self)
                           },
                           initialize_settings_set = function() {
-                            browser()
                             private$get_pf_sel()
                             tmp_sel <- private$.settings_all[private$.pf_sel]
                             private$.settings_set <- tmp_sel[[1]]
@@ -78,24 +78,31 @@ Settings <- R6::R6Class("Settings",
                             return(prnt_sttgs)
                           },
                           read_pf = function() {
-                            browser()
                             tmp_sys <- Sys.getenv()
-                            tmp_hnm <- tmp_sys[['PMIX_HOSTNAME']]
-                            tmp_prt <- tmp_sys[['SLURM_JOB_PARTITION']]
+                            tmp_hnm <- tmp_sys[["PMIX_HOSTNAME"]]
 
-                            check_slr <- any(grepl("^SLURM", names(tmp_sys)))
-                            check_chp <- tmp_hnm == "cheops1"
+                            cat("My hostname is: ", tmp_hnm)
+                            check_chp <- grepl("^cheops", tmp_hnm)
                             check_cgs <- grepl("CGS", tmp_hnm)
-                            if(check_chp) {
-                              tmp_partition <- Sys.getenv("SLURM_JOB_PARTITION")
-                              if(tmp_partition == "devel-rh7") {
+                            if (check_chp) {
+                              check_prt <- any(grepl("SLURM_JOB_PARTITION",
+                                                     names(tmp_sys)))
+                              if (check_prt) {
+                                tmp_prt <- Sys.getenv("SLURM_JOB_PARTITION")
+                              } else {
+                                tmp_prt <- ""
+                              }
+                              cat("My partition is: ", tmp_prt)
+                              if (tmp_prt == "devel-rh7") {
+                                cat(crayon::magenta("Using devel-rh7...\n"))
                                 private$.pf_sel <- 2
                                 private$.pf_set <- private$.pf_all[2]
-                              } else if(tmp_partition == "mpi-rh7") {
+                              } else if (tmp_prt == "mpi-rh7") {
+                                cat(crayon::magenta("Using mpi-rh7...\n"))
                                 private$.pf_sel <- 3
                                 private$.pf_set <- private$.pf_all[3]
-                              } else if(tmp_partition == "") {
-                                cat(crayon::magenta("Using login node..."))
+                              } else if (tmp_prt == "") {
+                                cat(crayon::magenta("Using login node...\n"))
                                 private$.pf_sel <- 4
                                 private$.pf_set <- private$.pf_all[4]
                               } else {
@@ -105,7 +112,7 @@ Settings <- R6::R6Class("Settings",
                               }
                             } else if (!check_chp && check_cgs) {
                               checkme <- Sys.info()[["sysname"]]
-                                if("Linux" == checkme) {
+                                if ("Linux" == checkme) {
                                   private$.pf_sel <- 1
                                   private$.pf_set <- private$.pf_all[1]
                                 } else {
@@ -120,23 +127,19 @@ Settings <- R6::R6Class("Settings",
                             private$read_settings_yml(pth)
                             private$read_settings_sys()
 
-                            tmp_settings_all <- list()
-                            tmp_settings_all[[1]] <- c(private$.sttgs_pfs[[1]],
-                                                       private$.sttgs_sys[[1]])
-                            tmp_settings_all[[2]] <- c(private$.sttgs_pfs[[2]],
-                                                       private$.sttgs_sys[[2]])
-                            tmp_settings_all[[3]] <- c(private$.sttgs_pfs[[3]],
-                                                       private$.sttgs_sys[[3]])
-                            tmp_settings_all[[4]] <- c(private$.sttgs_pfs[[4]],
-                                                       private$.sttgs_sys[[4]])
-                            tmp_settings_all[[5]] <- c(private$.sttgs_pfs[[5]],
-                                                       private$.sttgs_sys[[5]])
+                            tmp_settings <- vector("list", private$.num_pf)
+                            for (i in 1:private$.num_pf) {
+                              tmp_settings[[i]] <- c(private$.sttgs_pfs[[i]],
+                                                     private$.sttgs_sys[[i]])
+                            }
+                            private$.settings_all        <- tmp_settings
                             names(private$.settings_all) <- private$.pf_all
                             invisible(self)
                           },
                           read_settings_yml = function(pth) {
                             private$.sttgs_pfs <- yaml::read_yaml(pth)
-                            if (private$.pf_all != names(private$.sttgs_pfs)) {
+                            if (!(all.equal(private$.pf_all,
+                                            names(private$.sttgs_pfs)))) {
                               msg <- paste0("Malformatted '",
                                             "settings_plattform&sampler.yaml'",
                                             " file: platform names in .yaml ",
@@ -144,6 +147,7 @@ Settings <- R6::R6Class("Settings",
                                             "in the 'Settings'-class.")
                               stop(msg)
                             }
+                            private$.num_pf <- length(private$.sttgs_pfs)
                             invisible(self)
                           },
                           read_settings_sys = function() {
@@ -154,24 +158,31 @@ Settings <- R6::R6Class("Settings",
                             num_sys <- length(private$.sttgs_pfs)
                             lab_sys <- names(private$.sttgs_pfs)
                             out <- vector("list", num_sys)
-                            names(out) <-lab_sys
+                            names(out) <- lab_sys
 
-                            browser()
-                            env_vars <- list(NA_integer_,
-                                             NA_character_,
-                                             "LOCAL_CGS1",
-                                             1L,
-                                             tmp_nc,
-                                             NA_integer_)
+                            env_local <- list(NA_integer_,
+                                              NA_character_,
+                                              "LOCAL_CGS1",
+                                              1L,
+                                              tmp_nc,
+                                              NA_integer_)
                             env_slurm_empty <- list(NA_integer_,
                                                     NA_character_,
                                                     "default",
                                                     NA_integer_,
                                                     NA_integer_,
                                                     NA_integer_)
-                            names(env_vars)        <- private$.lab_env_slrm
+                            names(env_local)       <- private$.lab_env_slrm
                             names(env_slurm_empty) <- private$.lab_env_slrm
-                            out[[1]] <- env_vars
+
+                            out[[1]] <- env_local
+                            cat("Platform set to:", private$.pf_set)
+                            if (private$.pf_set == "LOCAL-CGS") {
+                              out[[2]] <- env_slurm_empty
+                              out[[3]] <- env_slurm_empty
+                              out[[4]] <- env_slurm_empty
+                              out[[5]] <- env_slurm_empty
+                            }
                             if (private$.pf_set != "LOCAL-CGS") {
                               env_slurm <- paste0("SLURM_",
                                                   c("JOB_ID",
@@ -182,20 +193,21 @@ Settings <- R6::R6Class("Settings",
                                                     "MEM_PER_NODE"))
                               env_slurm <- Sys.getenv(env_slurm)
                               names(env_slurm) <- private$.lab_env_slrm
-                              if(env_slurm[["PARTITION"]] == "devel-rh7"){
+                              check_prt <- env_slurm[["PARTITION"]]
+                              if (check_prt == "devel-rh7") {
                                 out[[2]] <- env_slurm
                                 out[[3]] <- env_slurm_empty
                                 out[[4]] <- env_slurm_empty
                                 out[[5]] <- env_slurm_empty
-                              } else if(env_slurm[["PARTITION"]] == "mpi-rh7") {
+                              } else if (check_prt == "mpi-rh7") {
                                 out[[2]] <- env_slurm_empty
                                 out[[3]] <- env_slurm
                                 out[[4]] <- env_slurm_empty
                                 out[[5]] <- env_slurm_empty
-                              } else if(env_slurm[["PARTITION"]] == "") {
+                              } else if (check_prt == "") {
                               out[[2]] <- env_slurm_empty
                               out[[3]] <- env_slurm_empty
-                              out[[4]] <- env_slurm
+                              out[[4]] <- env_slurm_empty
                               out[[5]] <- env_slurm_empty
                               } else {
                                 msg <- paste0("Unknown partition: maybe ",
@@ -279,168 +291,4 @@ Settings <- R6::R6Class("Settings",
                             private$.settings_set
                           }
                         )
-                        )
-
-# ask_manual  = function() {
-#   msg <- paste0("Re-read from project"
-#                 ," settings file (1), ",
-#                 "or have a look and",
-#                 " update manually (2): ")
-#   tv <- 99
-#   while(tv != 1 && tv != 2) {
-#     tv <- as.numeric(readline(msg))
-#   }
-#   return(tv)
-# },
-# ask_changes = function() {
-#   tv <- 99
-#   while(tv != 1 && tv != 2) {
-#     tv <- readline("Make changes to an entry? (1 = yes, 2 = no): ")
-#     tv <- as.numeric(tv)
-#   }
-#   return(tv)
-# },
-# ask_settings = function() {
-#   message("Which setting to change? \n")
-#   tv <- 99
-#   while(!(tv %in% 1:5)) {
-#     tv <- readline(paste0("1. Number of cores?\n",
-#                           "2. Cluster type?\n",
-#                           "3. Number of particles?\n",
-#                           "4. Number of MCMC iterations?\n",
-#                           "5. Conditional SMC type?\n"))
-#     tv <- as.numeric(tv)
-#   }
-#   new_val <- private$ask_new_val(tv)
-#   private$ask_confirm_changes(new_val,tv)
-# },
-# ask_new_val = function(case_num) {
-#   new_val <- NA
-#   fail <- TRUE
-#   msg_cases <- c("(an integer): ",
-#                  "('MPI' or 'PSOCK'): ",
-#                  "(an integer): ",
-#                  "(an integer): ",
-#                  "'bpf', 'aux' or 'eis': ")
-#   msg <- paste0("Current value: ",
-#                 private$.settings_set[[case_num]],
-#                 ".\n",
-#                 "Please enter new value ",
-#                 msg_cases[case_num])
-#   while (fail) {
-#     new_val <-readline(msg)
-#     if (case_num == 1) {
-#       fail <- !(new_val %in% c("T", "TRUE", "F", "FALSE"))
-#     } else if (case_num == 3) {
-#       fail <- !(new_val %in% c("MPI", "PSOCK"))
-#     } else {
-#       new_val <- as.numeric(new_val)
-#       fail <- !(new_val == floor(new_val) && new_val>0)
-#     }
-#     if(fail) private$wrong_entry()
-#   }
-#   if (case_num == 1) new_val <- as.logical(new_val)
-#   # Required since otherwise settings won't be written
-#   # correctly to the yaml file (will be 9.0 instead of 9)
-#   if (case_num %in% c(2, 4, 5)) new_val <- as.integer(new_val)
-#   return(new_val)
-# },
-# wrong_entry = function() {
-#   warnings("Wrong entry: use correct input values.")
-# },
-# ask_confirm_changes = function(new_val, case_num) {
-#   private$.settings_tmp <-  private$.settings_all
-#   private$.settings_tmp[[private$.pf_set]][[case_num]] <-new_val
-#
-#   self$print_settings(private$.settings_tmp,
-#                       silent = FALSE)
-#   val <- 99
-#   while(val !=1 && val !=2) {
-#     val <- readline(crayon::green("Apply changes (1) or abort (2): "))
-#     val <- as.numeric(val)
-#   }
-#   if(val == 2) {
-#     warning("Changes not applied.")
-#   } else if (val == 1) {
-#     private$.settings_set[[case_num]] <- new_val
-#     private$.settings_all <- private$.settings_tmp
-#     private$ask_update_global()
-#   }
-#   invisible(self)
-# },
-# ask_update_global = function() {
-#   tv <- 99
-#   msg <- paste0("Update for current session only (1),",
-#                 " or globally (project/model wide) ",
-#                 "(2): ")
-#   while(tv != 1 && tv != 2) {
-#     tv <- as.numeric(readline(msg))
-#   }
-#   private$update_val(tv)
-#   invisible(self)
-# },
-# update_val = function(tv) {
-#   if (tv == 1) {
-#     message(crayon::green("Local update: no changes for new class instances."))
-#   }
-#   if(tv == 2) {
-#     message(crayon::green(paste0("Global update: changes written to...",
-#                                  private$pth_to_settings)))
-#     private$write_settings()
-#   }
-# },
-# #' @description Sets platform.
-# #'
-# #' @param pf_val character string for the platform
-# #'   type. Must be either of
-# #'   \itemize{
-# #'   \item{"LOCAL"}
-# #'   \item{"DEVEL"}
-# #'   \item{"CHEOPS"}
-# #'   }
-#' set_platform = function(pf_val) {
-#'   stopifnot("Platform must be LOCAL, DEVEL or CHEOPS",
-#'             pf_val %in% c('LOCAL', 'DEVEL', 'CHEOPS'))
-#'   tv <- 99
-#'   msg <- paste0("Overwrite platform settings?",
-#'                 " Yes (1)",
-#'                 " No (2): ")
-#'   while(tv != 1 && tv != 2) {
-#'     tv <- as.numeric(readline(msg))
-#'   }
-#'   if (tv == 1) {
-#'     private$.pf_set <- pf_val
-#'   } else if (tv == 2) {
-#'     message("Aborting platform reset (probably a wise choice...).")
-#'   }
-#' },
-# #' @description Updates the settings
-# #'
-# #' @details Updating the settings is necessary
-# #'   whenever the underlying \code{.yaml} settings
-# #'   file \code{model_definition.yaml} changes as
-# #'   updates to this need to be re-sourced into the
-# #'   currently loaded [`ModelBNMPD`] instance to have
-# #'   any effect. This is similar to
-# #'   \code{update_model_definition()} from
-# #'   [`ModelDef`].
-# update_settings = function() {
-#   tv <- private$ask_manual()
-#   if (tv == 1) {
-#     private$initilialize_settings()
-#   } else if (tv == 2) {
-#     self$print_settings(silent = FALSE)
-#     tv <- private$ask_changes()
-#     if (tv == 1) {
-#       private$ask_settings()
-#     }
-#   }
-# },
-#
-#
-# initialize_setting_vals = function() {
-#   private$update_pf_sel()
-#   tmp_settings <- private$get_printable_settings(private$.settings_all)
-#   private$.settings_set <- tmp_settings[private$.pf_sel, ]
-#   invisible(self)
-# },
+)
