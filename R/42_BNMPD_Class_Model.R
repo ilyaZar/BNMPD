@@ -29,6 +29,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .pth_to_priorset = "model/model-definition",
                             .pth_to_initsset = "model/model-definition",
                             .pth_to_modelout = "model/output",
+                            .pth_to_history = "model/history",
                             # Paths to files inside dirs: hard-coded, changeable
                             .fn_prset = "setup_priors.json",
                             .fn_inits = "setup_inits.json",
@@ -38,6 +39,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .fn_mdout = "out_ModelNo_PartNo_TIMESTAMP.RData",
                             # Sub-classes as private fields for internal usage
                             .DataSet = NULL,
+                            .History = NULL,
                             .Settings = NULL,
                             .ModelDef = NULL,
                             .ModelDat = NULL,
@@ -55,7 +57,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$.ModelOut$get_num_outs() + 1
                             },
                             copy_envs = function(to_env = NULL, ...) {
-                              if(is.null(to_env)) to_env <- new.env()
+                              if (is.null(to_env)) to_env <- new.env()
                               from_env <- list(...)
                               num_env <- length(from_env)
                               for (i in 1:num_env) {
@@ -65,7 +67,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             },
                             copy_env = function(to_env = NULL, from_env) {
                               if (is.null(to_env)) to_env <- new.env()
-                              for(n in ls(from_env, all.names = TRUE)) {
+                              for (n in ls(from_env, all.names = TRUE)) {
                                 assign(n, get(n, from_env), to_env)
                               }
                               invisible(to_env)
@@ -132,7 +134,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             update_ModelOut = function(type) {
                               private$.ModelOut$update_model_output()
                               private$.model_part <- private$get_num_part()
-                              if(private$get_num_mdout() > 0) {
+                              if (private$get_num_mdout() > 0) {
                                 tmp_inits <- private$.ModelOut$get_inits()
                                 private$.ModelDat$update_md_inits(tmp_inits)
                               }
@@ -225,7 +227,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' \dontrun{`ModelBNMPD$new(getwd())`}
                             initialize = function(path_to_project,
                                                   path_to_states_init = NULL) {
-                              if(!is.null(path_to_states_init)) {
+                              if (!is.null(path_to_states_init)) {
                                 store_ls_tmp1 <- ls()
                                 load(path_to_states_init)
                                 store_ls_tmp2 <- ls()
@@ -234,7 +236,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                               "store_ls_tmp1"))
                                 assign("states_init",
                                        eval(parse(text = name_states_init)))
-                                private$.states_init <-states_init
+                                private$.states_init <- states_init
                               }
                               private$.pth_to_proj <- path_to_project
 
@@ -252,7 +254,9 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
 
                               private$.DataSet  <- DataSet$new(private$.pth_to_data)
                               private$.Settings <- Settings$new(private$.pth_to_setting1)
+                              cat("Settings successful\n")
                               private$.ModelDef <- ModelDef$new(private$.pth_to_modeldef)
+                              cat("ModelDef successful\n")
                               private$.ModelDat <- ModelDat$new(private$.pth_to_priorset,
                                                                 private$.pth_to_initsset,
                                                                 private$.DataSet$get_data_set(),
@@ -272,12 +276,20 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                                      ts_var_lab  = private$.ModelDef$get_ts_var_lab()),
                                                                 private$.ModelDef$get_dimension(),
                                                                 private$.states_init)
+                              cat("ModelDat successful\n")
                               private$.ModelOut <- ModelOut$new(private$.pth_to_modelout,
                                                                 private$.ModelDat$get_model_inits_start(),
                                                                 list(reg_names_Z = private$.ModelDef$get_var_z(),
                                                                      reg_names_U = private$.ModelDef$get_var_u()))
+                              cat("ModelOut successful\n")
+                              private$.History <- History$new(private$.pth_to_history,
+                                                              private$.Settings$get_settings_set(),
+                                                              NULL)
+                              cat("ModelHistory successful\n")
                               private$update_project_meta()
+                              cat("Update project meta successful.\n")
                               private$update_ModelOut(type = "initialization")
+                              cat("Update model output successful.\n")
                             },
                             #' @description Returns "raw" data set.
                             #'
@@ -352,9 +364,9 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   \code{get_num_mdout() > 0}.
                             get_modeldata_inits_setup = function() {
                               if (private$get_num_mdout() > 0) {
-                                out <-private$.ModelDat$get_model_inits_mdout()
+                                out <- private$.ModelDat$get_model_inits_mdout()
                               } else {
-                                out <-private$.ModelDat$get_model_inits_start()
+                                out <- private$.ModelDat$get_model_inits_start()
                               }
                               return(out)
                             },
@@ -425,6 +437,24 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             view_data_set = function() {
                               private$.DataSet$view_data_set()
                             },
+                            #' @description View error log.
+                            #'
+                            #' @details Call to internal \code{Hitory}-class
+                            #'   member that retrieves the error log written
+                            #'   by CHEOPS into the directory specified in the
+                            #'   batch-file.
+                            view_runtime_errors = function() {
+                              private$.History$view_history_error()
+                            },
+                            #' @description View log-file.
+                            #'
+                            #' @details Call to internal \code{Hitory}-class
+                            #'   member that retrieves the log-file written by
+                            #'   CHEOPS into the directory specified in the
+                            #'   batch-file.
+                            view_runtime_log = function() {
+                              private$.History$view_history_log()
+                            },
                             #' @description Loads model data for PGAS
                             #'   estimation.
                             #'
@@ -458,7 +488,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   member that loads the internal data used by the
                             #'   PGAS function for inference.
                             load_modeldata_internal = function() {
-                              out <-private$.ModelDat$get_model_data_internal()
+                              out <- private$.ModelDat$get_model_data_internal()
                               private$copy_env(parent.frame(), out)
                               invisible(self)
                             },
@@ -468,7 +498,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   that copies prior setup into execution
                             #'   environment
                             load_modeldata_prior_setup = function() {
-                              out <-private$.ModelDat$get_model_prior_setup()
+                              out <- private$.ModelDat$get_model_prior_setup()
                               private$copy_env(parent.frame(), out)
                               invisible(self)
                             },
@@ -488,7 +518,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @details Call to internal \code{ModelDef}-class
                             #'   member that retrieves the model meta data.
                             load_modeldata_meta = function() {
-                              tmp  <-private$.ModelDat$get_model_data_meta()
+                              tmp  <- private$.ModelDat$get_model_data_meta()
                               tmp2 <- private$.ModelDef$get_project_meta()
                               tmp3 <- private$.Settings$get_settings_set()
                               out <- list()
@@ -526,7 +556,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   settings and loads them into the execution
                             #'   environment.
                             load_settings = function() {
-                              out <-private$.Settings$get_settings_set()
+                              out <- private$.Settings$get_settings_set()
                               names_relevant <- c("num_cores",
                                                   "cluster_type",
                                                   "num_particles",

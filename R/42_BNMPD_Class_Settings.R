@@ -70,7 +70,6 @@ Settings <- R6::R6Class("Settings",
                                               "pmcmc_iterations",
                                               "JOB_ID",
                                               "NUM_NODES",
-                                              "NUM_CPUS_PER_NODE",
                                               "MEM_PER_NODE")
                             id_cls <- which(names(prnt_sttgs) %in% numeric_cols)
                             rpl_cls <- as.numeric(unlist(prnt_sttgs[id_cls]))
@@ -81,7 +80,6 @@ Settings <- R6::R6Class("Settings",
                             tmp_sys <- Sys.getenv()
                             tmp_hnm <- tmp_sys[["PMIX_HOSTNAME"]]
 
-                            cat("My hostname is: ", tmp_hnm)
                             check_chp <- grepl("^cheops", tmp_hnm)
                             check_cgs <- grepl("CGS", tmp_hnm)
                             if (check_chp) {
@@ -92,7 +90,6 @@ Settings <- R6::R6Class("Settings",
                               } else {
                                 tmp_prt <- ""
                               }
-                              cat("My partition is: ", tmp_prt)
                               if (tmp_prt == "devel-rh7") {
                                 cat(crayon::magenta("Using devel-rh7...\n"))
                                 private$.pf_sel <- 2
@@ -164,19 +161,24 @@ Settings <- R6::R6Class("Settings",
                                               NA_character_,
                                               "LOCAL_CGS1",
                                               1L,
-                                              tmp_nc,
+                                              paste0(tmp_nc, "(1x)"),
                                               NA_integer_)
+                            env_slurm_local <- list(NA_integer_,
+                                                    NA_character_,
+                                                    "default",
+                                                    1L,
+                                                    paste0(tmp_nc, "(1x)"),
+                                                    NA_integer_)
                             env_slurm_empty <- list(NA_integer_,
                                                     NA_character_,
                                                     "default",
                                                     NA_integer_,
-                                                    NA_integer_,
+                                                    NA_character_,
                                                     NA_integer_)
                             names(env_local)       <- private$.lab_env_slrm
                             names(env_slurm_empty) <- private$.lab_env_slrm
 
                             out[[1]] <- env_local
-                            cat("Platform set to:", private$.pf_set)
                             if (private$.pf_set == "LOCAL-CGS") {
                               out[[2]] <- env_slurm_empty
                               out[[3]] <- env_slurm_empty
@@ -207,7 +209,7 @@ Settings <- R6::R6Class("Settings",
                               } else if (check_prt == "") {
                               out[[2]] <- env_slurm_empty
                               out[[3]] <- env_slurm_empty
-                              out[[4]] <- env_slurm_empty
+                              out[[4]] <- env_slurm_local
                               out[[5]] <- env_slurm_empty
                               } else {
                                 msg <- paste0("Unknown partition: maybe ",
