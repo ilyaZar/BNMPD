@@ -438,17 +438,21 @@ ModelDat <- R6::R6Class("ModelDat",
                                                   })
                             colnames(zero_ind_nn) <- private$.cs_var_val
                             rownames(zero_ind_nn) <- private$.var_y
-                            zero_ind_dd <- apply(zero_ind_nn, 1,
-                                                 which, simplify = FALSE)
-                            zero_ind_nn <- apply(t(zero_ind_nn), 1,
-                                                 which, simplify = FALSE)
+                            zero_ind_dd <- private$transform_zero_ind(zero_ind_nn)
+                            # zero_ind_dd <- apply(zero_ind_nn, 1,
+                            #                      which, simplify = FALSE)
+                            zero_ind_nn <- private$transform_zero_ind(t(zero_ind_nn))
+                            # zero_ind_nn <- apply(t(zero_ind_nn), 1,
+                            #                      which, simplify = FALSE)
 
                             colnames(avail_ind_nn) <- private$.cs_var_val
                             rownames(avail_ind_nn) <- private$.var_y
-                            avail_ind_dd <- apply(avail_ind_nn, 1,
-                                                  which, simplify = FALSE)
-                            avail_ind_nn <- apply(t(avail_ind_nn), 1,
-                                                  which, simplify = FALSE)
+                            avail_ind_dd <- private$transform_zero_ind(avail_ind_nn)
+                            # avail_ind_dd <- apply(avail_ind_nn, 1,
+                            #                       which, simplify = FALSE)
+                            avail_ind_nn <- private$transform_zero_ind(t(avail_ind_nn))
+                            # avail_ind_nn <- apply(t(avail_ind_nn), 1,
+                            #                       which, simplify = FALSE)
 
                             inds <- list()
                             inds$avail_ind_nn  <- avail_ind_nn
@@ -457,6 +461,32 @@ ModelDat <- R6::R6Class("ModelDat",
                             inds$zero_ind_dd   <- zero_ind_dd
                             private$.data_meta <- inds
                             invisible(self)
+                          },
+                          transform_zero_ind = function(inds) {
+                            num_rows <- nrow(inds)
+                            row_names <- rownames(inds)
+                            col_names <- colnames(inds)
+
+                            out <- vector("list", num_rows)
+                            names(out) <-row_names
+
+                            for (i in 1:num_rows) {
+                              out[[i]] <- which(inds[i, , drop = FALSE])
+                              names(out[[i]]) <- col_names[out[[i]]]
+                            }
+                            return(out)
+                            # REASON THIS FUNCTION EXISTS - apply DOES NOT HAVE
+                            # A simplify argument for R<4.1.0
+                            # DOES NOT WORK ON CHEOPS CLUSTER DEVEL PLATFORM!!!
+                            # zero_ind_dd <- apply(zero_ind_nn, 1,
+                            #                      which, simplify = FALSE)
+                            # zero_ind_nn <- apply(t(zero_ind_nn), 1,
+                            #                      which, simplify = FALSE)
+                            #
+                            # avail_ind_dd <- apply(avail_ind_nn, 1,
+                            #                       which, simplify = FALSE)
+                            # avail_ind_nn <- apply(t(avail_ind_nn), 1,
+                            #                       which, simplify = FALSE)
                           }
                         ),
                         public = list(

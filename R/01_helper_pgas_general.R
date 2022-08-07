@@ -293,7 +293,7 @@ pgas_init <- function(pe, mm) {
   #   }
   #   # print(identical(X[ , , 1, ], X2[ , , 1, ]))
   }
-  cat("Iteration number:", mm, "\n")
+  cat("cSMC iteration number:", mm, "\n")
 }
 pgas_run <- function(pe, mm) {
     if (pe$model_type_obs == "DIRICHLET") {
@@ -312,7 +312,7 @@ pgas_run <- function(pe, mm) {
         }
       }
     }
-  cat("Iteration number:", mm, "\n")
+  cat("cSMC iteration number:", mm, "\n")
   # } else {
   #   for (n in 1:NN) {
       # if (n %in% seq_rs_seed_sequential) {
