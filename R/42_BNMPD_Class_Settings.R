@@ -78,8 +78,16 @@ Settings <- R6::R6Class("Settings",
                           },
                           read_pf = function() {
                             tmp_sys <- Sys.getenv()
-                            tmp_hnm <- tmp_sys[["PMIX_HOSTNAME"]]
-
+                            if (any(grepl("PMIX_HOSTNAME", names(tmp_sys)))) {
+                              tmp_hnm <- tmp_sys[["PMIX_HOSTNAME"]]
+                            } else {
+                              if (any(grepl("^SLURM", names(tmp_sys)))) {
+                                tmp_hnm <- "cheops_local"
+                              } else {
+                                msg <- "Can not identify hostname/platform."
+                                stop(msg)
+                              }
+                            }
                             check_chp <- grepl("^cheops", tmp_hnm)
                             check_cgs <- grepl("CGS", tmp_hnm)
                             if (check_chp) {
