@@ -44,7 +44,6 @@ pgas_d <- function(pgas_model,
   for (m in 2:envir_par$MM) {
     # I. Run GIBBS part
     sample_all_params(envir_par, mm = m)
-    cat("MCMC iteration number: ", m)
     # II. Run cBPF-AS part
     pgas_run(envir_par,  mm = m)
   }

@@ -296,6 +296,7 @@ sample_all_params.lin_re <- function(pe, mm) {
   #   pe$vcm_bet_u[[d]][, , mm] <- [[d]][, , mm]
   # }
   # pe$Regs_beta <- Regs_beta
+  cat("MCMC iteration number:", mm, "\n")
 }
 sample_all_params.spl <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")

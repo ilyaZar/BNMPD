@@ -44,7 +44,5 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 LinkingTo: 
     Rcpp,
-    RcppArmadillo,
-    BH,
-    dqrng
+    RcppArmadillo
 Config/testthat/edition: 3

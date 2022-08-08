@@ -4,11 +4,11 @@
 #include "99_config.h"
 #include <RcppArmadillo.h>
 
-#include <boost/multiprecision/mpfr.hpp>
-#include <boost/math/special_functions/gamma.hpp>
-#include <sstream>
+// #include <boost/multiprecision/mpfr.hpp>
+// #include <boost/math/special_functions/gamma.hpp>
+// #include <sstream>
 
-namespace mp = boost::multiprecision;
+// namespace mp = boost::multiprecision;
 
 arma::vec f_cpp(const arma::vec& x_tt,
                 const double& phi_x,
@@ -26,22 +26,22 @@ arma::vec w_log_cbpf_d(const int& N,
                        const arma::rowvec& y,
                        const arma::vec& xa,
                        const arma::uvec& id_x);
-arma::vec w_log_cbpf_d_bh(const int& N,
-                          const int& DD,
-                          const arma::rowvec& y,
-                          const arma::vec& xa,
-                          const arma::uvec& id_x);
+// arma::vec w_log_cbpf_d_bh(const int& N,
+//                           const int& DD,
+//                           const arma::rowvec& y,
+//                           const arma::vec& xa,
+//                           const arma::uvec& id_x);
 arma::vec w_log_cbpf_dm(const int& N,
                         const int& DD,
                         const int& num_counts,
                         const arma::rowvec& y,
                         const arma::vec& xa,
                         const arma::uvec& id_x);
-arma::vec w_log_cbpf_dm_bh(const int& N,
-                           const int& DD,
-                           const arma::rowvec& y,
-                           const arma::vec& xa,
-                           const arma::uvec& id_x);
+// arma::vec w_log_cbpf_dm_bh(const int& N,
+//                            const int& DD,
+//                            const arma::rowvec& y,
+//                            const arma::vec& xa,
+//                            const arma::uvec& id_x);
 arma::vec w_log_cbpf_m(const int& N,
                        const int& DD,
                        const arma::rowvec& y,

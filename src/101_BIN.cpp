@@ -1,5 +1,5 @@
 #include <RcppArmadillo.h>
-#include <dqrng.h>
+// #include <dqrng.h>
 using namespace Rcpp;
 //
 //

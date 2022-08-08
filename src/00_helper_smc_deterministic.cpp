@@ -141,64 +141,64 @@ arma::vec w_log_cbpf_d(const int& N,
   check_weights(w_log, weight_type);
   return(w_log);
 }
-//' SMC log-weights for the Dirichlet model; the BH-version
-//'
-//' Computes normalized bootrstrap particle weights; same as
-//' \code{w_log_d_cbpf()} but uses higher precision containers to deal with
-//' over- and underflow issues.
-//'
-//' Can currently be used for Dirichlet-multinommial model only.
-//'
-//' @param N number of particles (int)
-//' @param DD number of state components (dirichlet fractions or number of
-//'   components in the multivariate latent state component) (int)
-//' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
-//'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
-//' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
-//'   whole state vector has \code{DD} components and \code{N} is the number of
-//'   particles)
-//' @param id_x index vector giving the location of the N-dimensional components
-//'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
-//'   \code{xa}
-//' @return particle log-weights
-//'
-// [[Rcpp::export]]
-arma::vec w_log_cbpf_d_bh(const int& N,
-                          const int& DD,
-                          const arma::rowvec& y,
-                          const arma::vec& xa,
-                          const arma::uvec& id_x) {
-  double out = 0;
-
-  arma::vec w_log(N);
-
-  std::vector<mp::mpf_float_50> y2(DD);
-  std::vector<mp::mpf_float_50> x2(DD);
-
-  mp::mpf_float_50 log_lhs(0);
-  mp::mpf_float_50 log_rhs(0);
-  mp::mpf_float_50 sum_exp_x(0);
-
-  for(int n = 0; n < N; ++n) {
-    log_lhs = 0;
-    log_rhs = 0;
-    sum_exp_x = 0;
-    for(int d = 0; d<DD; ++d) {
-      y2[d] = y(d);
-      x2[d] = exp(xa(id_x(d) + n));
-
-      sum_exp_x += x2[d];
-
-      log_rhs += (x2[d] - 1) * log(y2[d]);
-      log_lhs -= mp::lgamma(x2[d]);
-    }
-    log_lhs += mp::lgamma(sum_exp_x);
-    out = (log_lhs + log_rhs).convert_to<double>();
-    // out = log_lhs.convert_to<double>();
-    w_log(n) = out;
-  }
-  return(w_log);
-}
+// //' SMC log-weights for the Dirichlet model; the BH-version
+// //'
+// //' Computes normalized bootrstrap particle weights; same as
+// //' \code{w_log_d_cbpf()} but uses higher precision containers to deal with
+// //' over- and underflow issues.
+// //'
+// //' Can currently be used for Dirichlet-multinommial model only.
+// //'
+// //' @param N number of particles (int)
+// //' @param DD number of state components (dirichlet fractions or number of
+// //'   components in the multivariate latent state component) (int)
+// //' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+// //'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+// //' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+// //'   whole state vector has \code{DD} components and \code{N} is the number of
+// //'   particles)
+// //' @param id_x index vector giving the location of the N-dimensional components
+// //'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+// //'   \code{xa}
+// //' @return particle log-weights
+// //'
+// // [[Rcpp::export]]
+// arma::vec w_log_cbpf_d_bh(const int& N,
+//                           const int& DD,
+//                           const arma::rowvec& y,
+//                           const arma::vec& xa,
+//                           const arma::uvec& id_x) {
+//   double out = 0;
+//
+//   arma::vec w_log(N);
+//
+//   std::vector<mp::mpf_float_50> y2(DD);
+//   std::vector<mp::mpf_float_50> x2(DD);
+//
+//   mp::mpf_float_50 log_lhs(0);
+//   mp::mpf_float_50 log_rhs(0);
+//   mp::mpf_float_50 sum_exp_x(0);
+//
+//   for(int n = 0; n < N; ++n) {
+//     log_lhs = 0;
+//     log_rhs = 0;
+//     sum_exp_x = 0;
+//     for(int d = 0; d<DD; ++d) {
+//       y2[d] = y(d);
+//       x2[d] = exp(xa(id_x(d) + n));
+//
+//       sum_exp_x += x2[d];
+//
+//       log_rhs += (x2[d] - 1) * log(y2[d]);
+//       log_lhs -= mp::lgamma(x2[d]);
+//     }
+//     log_lhs += mp::lgamma(sum_exp_x);
+//     out = (log_lhs + log_rhs).convert_to<double>();
+//     // out = log_lhs.convert_to<double>();
+//     w_log(n) = out;
+//   }
+//   return(w_log);
+// }
 //' SMC log-weights for the Dirichlet Multinomial
 //'
 //' Computes normalized bootrstrap particle weights.
@@ -266,69 +266,69 @@ arma::vec w_log_cbpf_dm(const int& N,
 
   return(w_log);
 }
-//' SMC log-weights for the Dirichlet Multinomial; the BH-version
-//'
-//' Computes normalized bootrstrap particle weights; same as
-//' \code{w_log_dm_cbpf()} but uses higher precision containers to deal with
-//' over- and underflow issues.
-//'
-//' Can currently be used for Dirichlet-multinommial model only.
-//'
-//' @param N number of particles (int)
-//' @param DD number of state components (dirichlet fractions or number of
-//'   components in the multivariate latent state component) (int)
-//' @param num_counts number of overall counts per t=1,...,TT (part of the
-//'   measurement data) i.e. a scalar int-value for the current time period
-//' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
-//'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
-//' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
-//'   whole state vector has \code{DD} components and \code{N} is the number of
-//'   particles)
-//' @param id_x index vector giving the location of the N-dimensional components
-//'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
-//'   \code{xa}
-//' @return particle log-weights
-//'
-// [[Rcpp::export]]
-arma::vec w_log_cbpf_dm_bh(const int& N,
-                           const int& DD,
-                           const int& num_counts,
-                           const arma::rowvec& y,
-                           const arma::vec& xa,
-                           const arma::uvec& id_x) {
-  double out = 0;
-
-  arma::vec w_log(N);
-
-  std::vector<mp::mpf_float_50> y2(DD);
-  std::vector<mp::mpf_float_50> x2(DD);
-
-  mp::mpf_float_50 n2(num_counts);
-  mp::mpf_float_50 log_lhs(0);
-  mp::mpf_float_50 log_rhs(0);
-  mp::mpf_float_50 sum_exp_x(0);
-
-  for(int n = 0; n < N; ++n) {
-    log_rhs = 0;
-    sum_exp_x = 0;
-    for(int d = 0; d<DD; ++d) {
-      y2[d] = y(d);
-      x2[d] = exp(xa(id_x(d) + n));
-
-      sum_exp_x += x2[d];
-
-      log_rhs += mp::lgamma(y2[d] + x2[d]);
-      log_rhs -= mp::lgamma(x2[d]);
-      //(mp::lgamma(y2[d] + 1) + mp::lgamma(x2[d]))
-    }
-    log_lhs = mp::lgamma(sum_exp_x) - mp::lgamma(n2 + sum_exp_x);
-    // log_lhs = mp::lgamma(n2 + 1) + mp::lgamma(sum_exp_x) -
-    // mp::lgamma(n2 + sum_exp_x);
-    out = (log_lhs + log_rhs).convert_to<double>();
-    w_log(n) = out;
-  }
-  return(w_log);
-}
+// //' SMC log-weights for the Dirichlet Multinomial; the BH-version
+// //'
+// //' Computes normalized bootrstrap particle weights; same as
+// //' \code{w_log_dm_cbpf()} but uses higher precision containers to deal with
+// //' over- and underflow issues.
+// //'
+// //' Can currently be used for Dirichlet-multinommial model only.
+// //'
+// //' @param N number of particles (int)
+// //' @param DD number of state components (dirichlet fractions or number of
+// //'   components in the multivariate latent state component) (int)
+// //' @param num_counts number of overall counts per t=1,...,TT (part of the
+// //'   measurement data) i.e. a scalar int-value for the current time period
+// //' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+// //'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+// //' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+// //'   whole state vector has \code{DD} components and \code{N} is the number of
+// //'   particles)
+// //' @param id_x index vector giving the location of the N-dimensional components
+// //'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+// //'   \code{xa}
+// //' @return particle log-weights
+// //'
+// // [[Rcpp::export]]
+// arma::vec w_log_cbpf_dm_bh(const int& N,
+//                            const int& DD,
+//                            const int& num_counts,
+//                            const arma::rowvec& y,
+//                            const arma::vec& xa,
+//                            const arma::uvec& id_x) {
+//   double out = 0;
+//
+//   arma::vec w_log(N);
+//
+//   std::vector<mp::mpf_float_50> y2(DD);
+//   std::vector<mp::mpf_float_50> x2(DD);
+//
+//   mp::mpf_float_50 n2(num_counts);
+//   mp::mpf_float_50 log_lhs(0);
+//   mp::mpf_float_50 log_rhs(0);
+//   mp::mpf_float_50 sum_exp_x(0);
+//
+//   for(int n = 0; n < N; ++n) {
+//     log_rhs = 0;
+//     sum_exp_x = 0;
+//     for(int d = 0; d<DD; ++d) {
+//       y2[d] = y(d);
+//       x2[d] = exp(xa(id_x(d) + n));
+//
+//       sum_exp_x += x2[d];
+//
+//       log_rhs += mp::lgamma(y2[d] + x2[d]);
+//       log_rhs -= mp::lgamma(x2[d]);
+//       //(mp::lgamma(y2[d] + 1) + mp::lgamma(x2[d]))
+//     }
+//     log_lhs = mp::lgamma(sum_exp_x) - mp::lgamma(n2 + sum_exp_x);
+//     // log_lhs = mp::lgamma(n2 + 1) + mp::lgamma(sum_exp_x) -
+//     // mp::lgamma(n2 + sum_exp_x);
+//     out = (log_lhs + log_rhs).convert_to<double>();
+//     w_log(n) = out;
+//   }
+//   return(w_log);
+// }
 //' SMC log-weights for the Multinomial
 //'
 //' Computes normalized bootrstrap particle weights.
