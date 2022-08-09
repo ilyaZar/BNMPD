@@ -193,7 +193,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             ##'
                             ##' @details side effect only, defaults to invisible
                             ##'   `NULL`, or error if path is neither a
-                            ##'   character or misspecified (e.g. directory
+                            ##'   character or missspecified (e.g. directory
                             ##'   cannot be found)
                             validate_files = function(...) {
                               files_to_val <- list(...)

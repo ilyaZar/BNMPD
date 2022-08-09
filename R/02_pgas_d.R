@@ -50,8 +50,9 @@ pgas_d <- function(pgas_model,
   cat("PGAS finished!\n")
   if ("cl" %in% names(envir_par)) {
   cat("Closing cluster!\n")
-    parallel::stopCluster(envir_par$cl)
+    # snow::stopCluster(envir_par$cl)
   cat("Cluster closed!\n")
+  # if (envir_par$cluster_type == "MPI") Rmpi::mpi.exit(); cat("MPI exit ...");
   }
   options(warn = 0)
   cat("Resetting options!\n")
