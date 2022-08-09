@@ -47,10 +47,14 @@ pgas_d <- function(pgas_model,
     # II. Run cBPF-AS part
     pgas_run(envir_par,  mm = m)
   }
+  cat("PGAS finished!\n")
   if ("cl" %in% names(envir_par)) {
+  cat("Closing cluster!\n")
     parallel::stopCluster(envir_par$cl)
+  cat("Cluster closed!\n")
   }
   options(warn = 0)
+  cat("Resetting options!\n")
   return(list(sig_sq_x = envir_par$sig_sq_x,
               phi_x = envir_par$phi_x,
               bet_z = envir_par$bet_z,
