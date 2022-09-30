@@ -20,8 +20,6 @@ DataSet <- R6::R6Class(classname = "DataSet",
                          #'
                          #' @param path_to_data character string; path to data
                          #'   passed internally via [`ModelBNMPD`] construction
-                         #'
-                         #' @return
                          initialize = function(path_to_data) {
                            private$pth_to_data <- path_to_data
 
@@ -33,8 +31,6 @@ DataSet <- R6::R6Class(classname = "DataSet",
                          #' @param print_data logical; if `FALSE`, data is not
                          #'   printed to screen otherwise data is printed as a
                          #'   tibble
-                         #'
-                         #' @return
                          update_dataset = function(print_data = TRUE) {
                            data_chosen <- NULL
                            data_chosen <- self$get_data(private$pth_to_data,

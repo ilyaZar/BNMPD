@@ -1,12 +1,14 @@
 #' R6 Class representing a BNMPD model
 #'
-#' @description The class gives access to the data set used for estimation and
-#'   various other meta data. Also stores information on estimation process.
-#' @details See example of construction of an object if the R-Script is in the
-#'   same directory as the other project files and the working directory is set
-#'   accordingly; this should be the default, though, an object can be
-#'   constructed when called from a different working directory but providing
-#'   the correct path to the project.
+#' @description Defines a model class of which instances can be passed to the
+#'   PGAS estimation functions. A class instance gives access to the data set
+#'   used for estimation and other meta data (e.g. stores information about
+#'   the model definition, estimation process etc.).
+#' @details As the default, construction of an object instance should be done
+#'   from an R-Script that is in the same directory as the other project files.
+#'   It is possible, though, to construct an object when called from a different
+#'   directory and providing the path to the project files via
+#'   \code{path_to_project} to the `.$new()`-constructor as first argument.
 #'
 #' @export
 ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
@@ -31,13 +33,16 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .pth_to_modelout = "model/output",
                             .pth_to_history = "model/history",
                             # Paths to files inside dirs: hard-coded, changeable
+                            ### I. files inside ./model/model-definition:
+                            .fn_mddef = "model_definition.yaml",
                             .fn_prset = "setup_priors.json",
                             .fn_inits = "setup_inits.json",
-                            .fn_mddef = "model_definition.yaml",
+                            ### II. files inside ./model/settings:
                             .fn_pfsmp = "settings_plattform&sampler.yaml",
                             .fn_prjct = "settings_project.yaml",
+                            ### III. files inside ./model/output:
                             .fn_mdout = "out_ModelNo_PartNo_TIMESTAMP.RData",
-                            # Sub-classes as private fields for internal usage
+                            # private fields for sub-classes: INTERNAL USAGE
                             .DataSet = NULL,
                             .History = NULL,
                             .Settings = NULL,
@@ -45,8 +50,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .ModelDat = NULL,
                             .ModelOut = NULL,
                             .states_init = NULL,
-                            get_setup_inits = function() {
-                            },
                             get_setup_metadata_pf = function() {
                               private$.Settings$get_settings_set()
                             },
@@ -72,11 +75,11 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               }
                               invisible(to_env)
                             },
-                            ##' @description update private dir-path fields of
-                            ##'   Model-class
-                            ##' @details internal use; pure side effect function
-                            ##'  updating the paths based on current project
-                            ##'  path
+                            ## @description update private dir-path fields of
+                            ##   Model-class
+                            ## @details internal use; pure side effect function
+                            ##  updating the paths based on current project
+                            ##  path
                             update_all_dir_pths = function() {
                               pth_jnd <- file.path(private$.pth_to_proj,
                                                    c(private$.pth_to_data,
@@ -93,11 +96,11 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$.pth_to_modelout <- pth_jnd[6]
                               invisible(NULL)
                             },
-                            ##' @description update private file-path fields of
-                            ##'   Model-class
-                            ##' @details internal use; pure side effect function
-                            ##'  updating the paths based on main project path
-                            ##'  provided
+                            ## @description update private file-path fields of
+                            ##   Model-class
+                            ## @details internal use; pure side effect function
+                            ##  updating the paths based on main project path
+                            ##  provided
                             update_all_file_pths = function() {
                               private$.pth_to_modeldef <- file.path(private$.pth_to_modeldef,
                                                                     private$.fn_mddef)
@@ -165,12 +168,12 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               }
                               cat(msg)
                             },
-                            ##' @description Validate path to directory
-                            ##'
-                            ##' @details side effect only, defaults to invisible
-                            ##'   `NULL`, or error if path is neither a
-                            ##'   character or missspecified (e.g. directory
-                            ##'   cannot be found)
+                            ## @description Validate path to directory
+                            ##
+                            ## @details side effect only, defaults to invisible
+                            ##   `NULL`, or error if path is neither a
+                            ##   character or missspecified (e.g. directory
+                            ##   cannot be found)
                             validate_dirs = function(...) {
                               dir_to_val <- list(...)
                               num_dir    <- length(dir_to_val)
@@ -189,12 +192,12 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               }
                               invisible(NULL)
                             },
-                            ##' @description Validate path to directory
-                            ##'
-                            ##' @details side effect only, defaults to invisible
-                            ##'   `NULL`, or error if path is neither a
-                            ##'   character or missspecified (e.g. directory
-                            ##'   cannot be found)
+                            ## @description Validate path to directory
+                            ##
+                            ## @details side effect only, defaults to invisible
+                            ##   `NULL`, or error if path is neither a
+                            ##   character or missspecified (e.g. directory
+                            ##   cannot be found)
                             validate_files = function(...) {
                               files_to_val <- list(...)
                               num_files    <- length(files_to_val)
@@ -217,16 +220,18 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                           public = list(
                             #' @description Class initializer.
                             #'
-                            #' @param path_to_project character value setting
-                            #'    the path to project
-                            #' @param path_to_states_init character value
-                            #'   setting the path to the .RData file that stores
-                            #'   the true values from a simulation study
+                            #' @param path_to_project character setting the path
+                            #'   to project
+                            #' @param path_to_states_init character setting the
+                            #'   path to the `.RData` file that stores the true
+                            #'   values from a simulation study; defaults to
+                            #'   \code{NULL}
                             #'
                             #' @examples
                             #' \dontrun{`ModelBNMPD$new(getwd())`}
                             initialize = function(path_to_project,
                                                   path_to_states_init = NULL) {
+                              browser()
                               if (!is.null(path_to_states_init)) {
                                 store_ls_tmp1 <- ls()
                                 load(path_to_states_init)
