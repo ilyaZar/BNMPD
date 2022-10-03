@@ -119,7 +119,13 @@ for(n in 1:NN) {
   data_out[id_rows, id_col_z] <- dataSim$regs$z[, , n]
   data_out[id_rows, id_col_u] <- dataSim$regs$u[, , n]
 }
+pth_to_write <- "./inst/generate-artificial-datasets/"
 write.csv(data_out,
-          file = "./inst/simulation-studies/Dirichlet_NN12_DD6/model/input/datasets/simulated_dataset.csv")
+          file = file.path(pth_to_write, "/simulated_dataset_NN12DD6.csv"))
 true_states <- dataSim$states
-save(true_states, file = "inst/simulation-studies/Dirichlet_NN12_DD6/model/input/true_states.RData")
+save(true_states, file = file.path(pth_to_write,
+                                   "init_states_true_NN12DD6.RData"))
+zero_states <- true_states
+zero_states[, , ] <- 0
+save(zero_states,  file = file.path(pth_to_write,
+                                    "init_states_zero_NN12DD6.RData"))

@@ -1,6 +1,6 @@
 # 1. Data settings: -------------------------------------------------------
 # Dimensions:
-NN <- 12 # Cross sectional length
+NN <- 4  # Cross sectional length
 TT <- 40 # Time series length
 DD <- 3  # Dimension of multivariate distr. (e.g. number of share for Dirichlet)
 # Target state level, intercepts, policy dummies
@@ -31,7 +31,8 @@ sig_sq_tmp <- (2.1 + 1.1*0:(DD - 1))/10
 true_sig_sq <- matrix(sig_sq_tmp,
                       nrow = DD, ncol = NN)
 # True autoregressive parameter for states
-phi_tmp  <- rep(0.75, times = DD)
+# phi_tmp  <- rep(0.75, times = DD)
+phi_tmp  <- c(0.35, 0.55, 0.75)
 true_phi <- matrix(phi_tmp,
                    nrow = DD,
                    ncol = NN)
@@ -102,7 +103,8 @@ names(data_out) <- c(paste0("Y", 1:DD),
                      paste0(paste0("U_", 1:NUM_BETA_U), "_",
                             rep(1:DD, each = NUM_BETA_U)))
 data_ts_cs_entries <-tibble::tibble(CS = as.character(paste0("cs_",
-                                                             rep(1:12, each = TT))),
+                                                             rep(seq_len(NN),
+                                                                 each = TT))),
                                     TS = rep(1:TT, times = NN))
 data_out <- dplyr::bind_cols(data_ts_cs_entries, data_out)
 for(n in 1:NN) {
@@ -115,10 +117,13 @@ for(n in 1:NN) {
   data_out[id_rows, id_col_z] <- dataSim$regs$z[, , n]
   data_out[id_rows, id_col_u] <- dataSim$regs$u[, , n]
 }
-# write.csv(data_out,
-          # file = "./inst/simulation-studies/Dirichlet_NN12_DD3/model/input/datasets/simulated_dataset.csv")
+pth_to_write <- "./inst/generate-artificial-datasets/"
+write.csv(data_out,
+          file = file.path(pth_to_write, "/simulated_dataset_NN4DD3.csv"))
 true_states <- dataSim$states
-# save(true_states, file = "inst/simulation-studies/Dirichlet_NN12_DD3/model/input/init_states_true.RData")
+save(true_states, file = file.path(pth_to_write,
+                                   "init_states_true_NN4DD3.RData"))
 zero_states <- true_states
 zero_states[, , ] <- 0
-# save(zero_states, file = "inst/simulation-studies/Dirichlet_NN12_DD3/model/input/init_states_zero.RData")
+save(zero_states,  file = file.path(pth_to_write,
+                                    "init_states_zero_NN4DD3.RData"))
