@@ -1,3 +1,10 @@
+#' R6 Class representing a model data of a BNMPD model
+#'
+#' @description Defines a model data class that contains observations,
+#'   regressors, prior settings, initialization values etc. It is a field of the
+#'   base BNMPD model class
+#' @details This class is not intended for direct interaction but rather has
+#'   getters/setters wrapped in the base BNMPD model class.
 ModelDat <- R6::R6Class("ModelDat",
                         class = FALSE,
                         cloneable = FALSE,
@@ -490,6 +497,31 @@ ModelDat <- R6::R6Class("ModelDat",
                           }
                         ),
                         public = list(
+                          #' Class initializer.
+                          #'
+                          #' @param pth_prior path to prior settings json-file
+                          #' @param pth_inits path to initialization settings
+                          #'   json-file
+                          #' @param data_set the raw data set as stored within
+                          #'   the [BNMPD::DataSet()] class
+                          #' @param info_y information on observations (variable
+                          #'   name and label)
+                          #' @param info_z information on z-type regressors
+                          #'   (variable names and labels)
+                          #' @param info_u information on u-type regressors
+                          #'   (variable names and labels)
+                          #' @param info_cs information on cross section units
+                          #'   (variable names and labels, variable value and
+                          #'   labels of these values)
+                          #' @param info_ts information on time series units
+                          #'   (variable names and labels, variable value and
+                          #'   labels of these values)
+                          #' @param info_dim information on model dimensions
+                          #' @param states_init path to `.Rdata`-file for state
+                          #'   initialization; can be `NULL` in which case the
+                          #'   the corresponding method tries to generate
+                          #'   reasonable starting values by itself (via
+                          #'   transformations of the measurements)
                           initialize = function(pth_prior,
                                                 pth_inits,
                                                 data_set,
@@ -515,28 +547,66 @@ ModelDat <- R6::R6Class("ModelDat",
                           # get_model_data_raw = function() {
                           #   private$.data_raw
                           # },
+                          #' Getter for model meta-data
+                          #'
+                          #' @description Currently only zero/avail indicators.
+                          #'
+                          #' @details Zero-indicators: which components in the
+                          #'   multivariate D are zero. Avail-indicators: which
+                          #'   which components in the multivariate D are
+                          #'   available/non-zero.
+                          #'
                           get_model_data_meta = function() {
                             private$.data_meta
                           },
+                          #' Getter for data subset used for estimation.
+                          #'
+                          #' @description The model-settings file determine the
+                          #'   internal labels and the subset of cross section
+                          #'   and time series used in estimation.
+                          #' @details The raw data set can differ based on the
+                          #'   specifics of the model-settings files, see the
+                          #'   files for details.
+                          #'
                           get_model_data_subset_used = function() {
                             private$.data_subset_used
                           },
+                          #' Getter for internal data.
+                          #'
+                          #' @description Internal data in specific format used
+                          #'   by PGAS estimation functions
+                          #'
+                          #' @details no additional information provided
+                          #'   compared to the `get_model_data_subset_used`
+                          #'   member of this class, just a different format
+                          #'   that the PGAS estimation requires.
                           get_model_data_internal = function() {
                             private$.data_internal
                           },
+                          #' Getter for dimension of the data set
+                          #'
+                          #' @description Getter for dimension of the data set
+                          #'   used for estimation which may change due to
+                          #'   data subsetting as defined in the model-settings
+                          #'   files.
+                          #' @details see the settings files for details.
                           get_model_data_dimensions = function() {
                             private$.data_dimensions
                           },
+                          #' Getter for the model prior setup
+                          #'
+                          #' @description Getter for the model prior setup
+                          #'   used for estimation.
+                          #' @details see the prior-settings file for details.
                           get_model_prior_setup = function() {
                             private$.data_priors
                           },
+                          #' Getter for initialization values
+                          #'
+                          #' @description Getter for initialization values used
+                          #'   in a PGAS run.
+                          #' @details see the inits-settings file for details.
                           get_model_inits_start = function() {
                             private$.data_inits_start
-                          },
-                          get_model_inits_mdout = function() {
-                            private$.data_inits_mdout
-                          },
-                          update_md_inits = function(tmp_md_inits) {
-                            private$.data_inits_mdout <- tmp_md_inits
                           }
                         ))

@@ -220,18 +220,30 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                           public = list(
                             #' @description Class initializer.
                             #'
-                            #' @param path_to_project character setting the path
-                            #'   to project
-                            #' @param path_to_states_init character setting the
-                            #'   path to the `.RData` file that stores the true
-                            #'   values from a simulation study; defaults to
-                            #'   \code{NULL}
+                            #' @param path_to_project character to the project
+                            #'   directory (having the proper structure) that
+                            #'   contains all meta files and data that are
+                            #'   necessary to construct a class instance
+                            #' @param path_to_states_init either \code{NULL},
+                            #'   which is the default and for which
+                            #'   [BNMPD::ModelDat()] tries to construct initial latent
+                            #'   state values from raw data set (measurements),
+                            #'   or a character to the `.RData`-file that stores
+                            #'   the initialization values: these values can be
+                            #'   the true values from a simulation study or,
+                            #'   most often, taken from a previous PGAS-output
+                            #'   i.e. the last PMCMC-iteration to re-initialize
+                            #'   the estimation process at these values (
+                            #'   typically PGAS-runs are performed in batches of
+                            #'   say \code{10x2000} iterations so e.g. the
+                            #'   2000th iteration of the first batch is taken as
+                            #'   the initial value for the second run - batch
+                            #'   2001-4000 and so on)
                             #'
                             #' @examples
                             #' \dontrun{`ModelBNMPD$new(getwd())`}
                             initialize = function(path_to_project,
                                                   path_to_states_init = NULL) {
-                              browser()
                               if (!is.null(path_to_states_init)) {
                                 store_ls_tmp1 <- ls()
                                 load(path_to_states_init)

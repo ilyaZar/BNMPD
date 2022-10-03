@@ -143,8 +143,8 @@ Settings <- R6::R6Class("Settings",
                           },
                           read_settings_yml = function(pth) {
                             private$.sttgs_pfs <- yaml::read_yaml(pth)
-                            if (!(all.equal(private$.pf_all,
-                                            names(private$.sttgs_pfs)))) {
+                            cs <- private$.pf_all == names(private$.sttgs_pfs)
+                            if (!(all(cs))) {
                               msg <- paste0("Malformatted '",
                                             "settings_plattform&sampler.yaml'",
                                             " file: platform names in .yaml ",
