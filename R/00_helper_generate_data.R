@@ -1,11 +1,13 @@
 #' Deduces from vector of parameter names, which type of modelling to employ
 #'
-#' @param get_modelling_reg_types names of parameters list elements; the list
-#'   of true parameter values is taken
+#' @param get_modelling_reg_types a named list of parameter names; the list
+#'   of true parameter values is taken usually taken but empty named list
+#'   elements are also possible
 #'
-#' @return logical vector of dimension 4 given \code{TRUE} or \code{FALSE} if
-#'   (in this order) modeling of z-regressors, u-regressors, z spline regressors
-#'   or u spline regressors should be performed
+#' @return a named, logical vector of dimension 4 given \code{TRUE} or
+#'   \code{FALSE} if (in this order) modeling of z-regressors, u-regressors, z
+#'   spline regressors or u spline regressors should be performed (with names
+#'   of return vector set to these variants)
 #'
 get_modelling_reg_types <- function(get_modelling_reg_types) {
   correct_names <- c("bet_z", "bet_u", "bet_z_spl", "bet_u_spl")
@@ -18,6 +20,11 @@ get_modelling_reg_types <- function(get_modelling_reg_types) {
   out[2] <- correct_names[2] %in% get_modelling_reg_types
   out[3] <- correct_names[3] %in% get_modelling_reg_types
   out[4] <- correct_names[5] %in% get_modelling_reg_types
+
+  names(out) <- c("z-regressors",
+                  "u-regressors",
+                  "z-spline-regressors",
+                  "u-spline-regressors")
   return(out)
 }
 #' Generates random effects per cross sectional unit (e.g. US-state)
@@ -136,6 +143,7 @@ generate_data_t_n <- function(distribution,
                               plot_states = FALSE,
                               plot_states_each_d = FALSE,
                               seed_no = NULL) {
+  browser()
   densitities_supported <- c("multinomial", "dirichlet-mult",
                              "gen-dirichlet-mult", "gen-dirichlet",
                              "dirichlet")
@@ -180,6 +188,7 @@ generate_data_t_n <- function(distribution,
       par_true_current$bet_u <- lapply(par_true[["bet_u"]], `[`, i = , j = n)
     }
 
+    browser()
     out_data_tmp <- generate_data_t(distribution = distribution,
                                     TT = TT, DD = DD,
                                     par_true = par_true_current,
@@ -292,6 +301,7 @@ generate_data_t <- function(distribution,
                             include_policy,
                             include_zeros,
                             modelling_reg_types) {
+  browser()
   x <- matrix(nrow = TT, ncol = DD, 0)
   sig_sq_x <- par_true[["sig_sq"]]
   phi_x    <- par_true[["phi"]]
@@ -375,41 +385,42 @@ generate_data_t <- function(distribution,
   out_data_all$x <- x
   return(out_data_all)
 }
-#' Simulates regressors and latent states.
+#' Simulates regressors and latent states for fixed NN/DD but all TT.
 #'
-#' The core function that simulates the regressors and latent states given
-#' certain parameters.
+#' Core function to simulate regressors and latent states given certain
+#' parameters along the time dimension (i.e. for a fixed cross sectional unit
+#' and multivariate component).
 #'
 #' @param TT number of time periods
 #' @param phi_x autoregressive parameter of latent states
 #' @param sig_sq_x standard deviation of error term in latent state transition
 #'   equation
 #' @param bet_z regressor coefficients/parameters of latent state process
-#'   referring to all cross secitonal units  and are non-linear i.e. splines
+#'   referring to all cross sectional units
 #' @param bet_u regressor coefficients/parameters of latent state process;
 #'   random effects that refer to each individual cross sectional unit
 #' @param bet_z_spl regressor coefficients/parameters of latent state process
-#'   referring to all cross secitonal units
+#'   referring to all cross sectional units and are non-linear i.e. splines
 #' @param bet_u_spl regressor coefficients/parameters of latent state process;
 #'   random effects that refer to each individual cross sectional unit and are
 #'   non-linear i.e. splines
-#' @param modelling_reg_types logical vector of dimension 4 where each component
-#'   indicates, if \code{TRUE}, that the corresponding regressor type is to be
-#'   generated in the following order:
+#' @param x_level target levels i.e. stationary mean/level of latent states (
+#'   ensures that states at each multivariate component of the response
+#'   fluctuates around that particular level too)
+#' @param reg_sd standard deviations of the regressor values (tunable)
+#' @param bet_sd standard deviations of random coefficient value draws (tunable)
+#' @param modelling_reg_types named logical vector of dimension 4 where each
+#'   component indicates, if \code{TRUE}, that the corresponding regressor type
+#'   is to be generated in the following order:
 #'   \itemize{
 #'     \item{modelling_reg_types, component 1: }{includes z regressors}
 #'     \item{modelling_reg_types, component 2: }{includes u regressors}
 #'     \item{modelling_reg_types, component 3: }{includes z spline regressors}
 #'     \item{modelling_reg_types, component 4: }{includes u spline regressors}
 #'   }
-#' @param x_level target levels of latent states around which they fluctuate (a
-#'   tuning parameter that ensures that states at each multivariate component of
-#'   the response fluctuate around a particular level)
-#' @param reg_sd sstandard deviations for the regressor values
-#' @param bet_sd standard deviations for random coefficient value draws
 #' @param x_log_scale logical; if \code{TRUE} process is simulated on the
 #'   log-scale
-#' @param intercept logical; if \code{TRUE}, includes an intercept term i.e. a
+#' @param intercept logical; if \code{TRUE} includes an intercept term i.e. a
 #'   constant level regressor
 #' @param policy_dummy logical; if \code{TRUE} includes a dummy that jumps from
 #'   zero to one (e.g. a policy or other jump effect to be modelled)
@@ -437,10 +448,10 @@ generate_x_z_u <- function(TT,
                            bet_u = NULL,
                            bet_z_spl = NULL,
                            bet_u_spl = NULL,
-                           modelling_reg_types,
                            x_level,
                            reg_sd,
                            bet_sd,
+                           modelling_reg_types,
                            x_log_scale,
                            intercept,
                            policy_dummy = FALSE,
@@ -454,7 +465,6 @@ generate_x_z_u <- function(TT,
   # browser()
   # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
   if (modelling_reg_types[1] && !modelling_reg_types[2]) {
-    # browser()
     z <- generate_reg_vals(TT = TT,
                            bet_reg = bet_reg,
                            dim_reg = dim_reg,
@@ -573,6 +583,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                               intercept,
                               policy_dummy,
                               zero_pattern = NULL) {
+  browser()
   if (policy_dummy) {
     if (zero_pattern == 1) {
       dummy_to_use <- c(rep(0, times = round(0.5*TT, digits = 0)),
