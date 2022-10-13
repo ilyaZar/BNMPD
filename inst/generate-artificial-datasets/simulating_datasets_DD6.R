@@ -117,7 +117,9 @@ for(n in 1:NN) {
   id_col_u <- DD + NUM_BETA_Z*DD + 1:(NUM_BETA_U*DD) + offset_col
   data_out[id_rows, id_col_y] <- dataSim$data$yraw[, , n]
   data_out[id_rows, id_col_z] <- dataSim$regs$z[, , n]
-  data_out[id_rows, id_col_u] <- dataSim$regs$u[, , n]
+  if (SIMUL_U_BETA) {
+    data_out[id_rows, id_col_u] <- dataSim$regs$u[, , n]
+  }
 }
 pth_to_write <- "./inst/generate-artificial-datasets/"
 write.csv(data_out,
