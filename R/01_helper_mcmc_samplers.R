@@ -1,7 +1,8 @@
 #' Draws a (particle) Gibbs sample of the std. deviation parameter
 #'
 #' The standard deviation is per component \code{d} of the DD-dimensional
-#' latent state process and drawn from the inverse Gamma.
+#' latent state process and drawn from the inverse Gamma. This version is
+#' adjusted to incorporate linear regressors as well as random effects.
 #'
 #' @param phi_x m'th sample of auto-regressive parameter of the state component
 #'   \code{d}
@@ -39,6 +40,37 @@ sample_sig_sq_x <- function(phi_x,
                                   regs  = tmp_regs,
                                   phi_x = phi_x,
                                   bet_reg = c(bet_z, bet_u_n))
+    err_sig_sq_x_all <- err_sig_sq_x_all + crossprod(err_sig_sq_x)
+  }
+  out <- 1/stats::rgamma(n = 1,
+                         prior_ig[1],
+                         prior_ig[2] + err_sig_sq_x_all/2)
+  return(out)
+}
+#' Draws a (particle) Gibbs sample of the std. deviation parameter
+#'
+#' The standard deviation is per component \code{d} of the DD-dimensional
+#' latent state process and drawn from the inverse Gamma. This version is
+#' adjusted to only incorporate linear regressors and not random effects.
+#'
+#' @inheritParams sample_sig_sq_x
+#' @export
+sample_sig_sq_x_lin <- function(phi_x,
+                                bet_z,
+                                X,
+                                regs_z,
+                                prior_ig,
+                                iter_range_NN,
+                                TT) {
+  err_sig_sq_x_all <- 0
+  x_lhs <- X[2:TT, ]
+  x_rhs <- X[1:(TT - 1), ]
+  for(n in iter_range_NN) {
+    tmp_regs <- regs_z[, , n]
+    err_sig_sq_x <- x_lhs[, n]- f(x_tt = x_rhs[, n],
+                                  regs  = tmp_regs,
+                                  phi_x = phi_x,
+                                  bet_reg = bet_z)
     err_sig_sq_x_all <- err_sig_sq_x_all + crossprod(err_sig_sq_x)
   }
   out <- 1/stats::rgamma(n = 1,
@@ -142,6 +174,7 @@ sample_bet_u <- function(sig_sq_x,
 }
 #' Draws a (particle) Gibbs sample of the covariance matrix of random effects
 #'
+#' This is the linear and random effects regressot-type sampler so some details:
 #' The covariance matrix of random effects is per component \code{d} of the
 #' DD-dimensional latent state process and drawn from the inverse Wishart.
 #'
@@ -173,8 +206,8 @@ sample_beta_all <- function(sig_sq_x,
                             prior_vcm_bet_z,
                             iter_range_NN) {
   vcm_x_errors_rhs     <- diag(rep(sig_sq_x, times = TT - 1))
-  vmc_x_errors_rhs_inv <- solve(vcm_x_errors_rhs)
-  vcm_bet_u_inv        <- solve(vcm_bet_u)
+  # vmc_x_errors_rhs_inv <- solve(vcm_x_errors_rhs)
+  # vcm_bet_u_inv        <- solve(vcm_bet_u)
   omega_tmp_all <- 0
   mu_tmp_all    <- 0
   # if (m %in% (c(2,30))) browser()
@@ -182,7 +215,7 @@ sample_beta_all <- function(sig_sq_x,
   x_rhs_all <- X[2:TT, ]
   for (n in iter_range_NN) {
     regs_z[, id_reg_z[1] + 1, n] <- x_lhs[, n]
-    x_rhs                     <- x_rhs_all[, n]
+    x_rhs                        <- x_rhs_all[, n]
 
     Umat             <- matrix(U[,, n, drop = FALSE], nrow = TT - 1)
     vcm_x_errors_lhs <- Umat %*% vcm_bet_u %*% t(Umat)
@@ -209,13 +242,84 @@ sample_beta_all <- function(sig_sq_x,
   }
   return(out)
 }
+#' Draws a (particle) Gibbs sample of the covariance matrix of random effects
+#'
+#' This is the linear-only reg-type sampler.
+#'
+#' @param inheritParams sample_bet_all
+#'
+#' @return a sample
+#' @export
+sample_beta_all_lin <- function(sig_sq_x,
+                                X,
+                                regs_z,
+                                TT,
+                                id_reg_z,
+                                dim_bet_z,
+                                prior_vcm_bet_z,
+                                iter_range_NN) {
+  vcm_x_errors_rhs     <- diag(rep(sig_sq_x, times = TT - 1))
+  omega_tmp_all <- 0
+  mu_tmp_all    <- 0
+  # if (m %in% (c(2,30))) browser()
+  x_lhs     <- X[1:(TT - 1), ]
+  x_rhs_all <- X[2:TT, ]
+  for (n in iter_range_NN) {
+    regs_z[, id_reg_z[1] + 1, n] <- x_lhs[, n]
+    x_rhs                        <- x_rhs_all[, n]
+
+    vcm_x_errors     <- solve(vcm_x_errors_rhs)
+
+    regs_tmp  <- regs_z[, (id_reg_z[1] + 1):id_reg_z[2], n]
+    # omega_tmp <- crossprod(regs_tmp,
+    #                        regs_tmp)/sig_sq_x[d, m]
+    omega_tmp <- crossprod(regs_tmp,
+                           vcm_x_errors) %*% regs_tmp
+    omega_tmp_all <- omega_tmp_all + omega_tmp
+    # mu_tmp <- crossprod(regs_tmp, x_rhs)/sig_sq_x[d, m]
+    mu_tmp <- crossprod(regs_tmp, vcm_x_errors) %*% x_rhs
+    mu_tmp_all <- mu_tmp_all + mu_tmp
+  }
+  Omega_bet <- solve(omega_tmp_all + prior_vcm_bet_z)
+  mu_bet    <- Omega_bet %*% mu_tmp_all
+  out <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z + 1)
+  # out   <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
+  while ((abs(abs(out[1]) - 1) < 0.01) | abs(out[1]) > 1) {
+    # out <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
+    out <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z + 1)
+  }
+  return(out)
+}
+#' Generic methods to runs Gibbs sampler.
+#'
+#' Dispatches on attribute-class of \code{pe} to determine whether to invoke
+#' linear regressor type MCMC sampler, random effects sampler or hybrid or
+#' spline versions thereof.
+#'
+#' @param pe environment of appropriate class (see Description) with parameter
+#'   containers
+#' @param mm MCMC iteration
+#'
+#' @return updated environment with parameter containers containing the draws
+#' @export
 sample_all_params <- function(pe, mm) {
   UseMethod("sample_all_params", pe)
 }
+#' Default method for generic [BNMPD::sample_all_params()]
+#'
+#' @inheritParams sample_all_params
+#'
+#' @export
+#'
 sample_all_params.default <- function(pe, mm) {
   msg <- paste0("Could not find suitable sampler for sampler type: ", class(pe))
   stop(msg)
 }
+#' Method for linear and random effects Gibbs sampler.
+#'
+#' @inheritParams sample_all_params
+#'
+#' @export
 sample_all_params.lin_re <- function(pe, mm) {
   for (d in 1:pe$DD) {
     id_betz_tmp <- (pe$id_bet_z[d] + 1):pe$id_bet_z[d + 1]
@@ -302,9 +406,47 @@ sample_all_params.spl <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
+#' Method for only linear effects Gibbs sampler.
+#'
+#' @inheritParams sample_all_params
+#'
+#' @export
 sample_all_params.lin <- function(pe, mm) {
-  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
-  stop(msg)
+  for (d in 1:pe$DD) {
+    id_betz_tmp <- (pe$id_bet_z[d] + 1):pe$id_bet_z[d + 1]
+    id_zet_tmp  <- (pe$id_zet[d] + 1):pe$id_zet[d + 1]
+
+    dd_range_nn <- pe$dd_list_nn[[d]]
+
+    pe$sig_sq_x[d, mm] <- sample_sig_sq_x_lin(phi_x = pe$phi_x[d, mm - 1],
+                                              bet_z = pe$bet_z[id_betz_tmp,
+                                                               mm - 1],
+                                              X = pe$X[, d, mm - 1, ],
+                                              regs_z = pe$Z[2:pe$TT,
+                                                            id_zet_tmp, ],
+                                              prior_ig = c(pe$prior_ig_a,
+                                                           pe$prior_ig_b),
+                                              iter_range_NN = dd_range_nn,
+                                              TT = pe$TT)
+    beta_sampled <- sample_beta_all_lin(sig_sq_x = pe$sig_sq_x[d, mm],
+                                        X = pe$X[, d, mm - 1, ],
+                                        regs_z = pe$regs_z,
+                                        TT = pe$TT,
+                                        id_reg_z = c(pe$id_reg_z[d],
+                                                     pe$id_reg_z[d + 1]),
+                                        dim_bet_z = pe$dim_bet_z[d],
+                                        prior_vcm_bet_z = pe$prior_vcm_bet_z[[d]],
+                                        iter_range_NN = dd_range_nn)
+
+    pe$phi_x[d, mm] <- beta_sampled[1]
+    pe$bet_z[id_betz_tmp, mm] <- beta_sampled[-1]
+
+    pe$Regs_beta[, d, ] <- get_regs_beta_lin(Z  = pe$Z[, id_zet_tmp, ],
+                                             TT = pe$TT,
+                                             pe$bet_z[id_betz_tmp, mm],
+                                             iter_range_NN = 1:pe$NN)
+  }
+  cat("MCMC iteration number:", mm, "\n")
 }
 sample_all_params.re <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")

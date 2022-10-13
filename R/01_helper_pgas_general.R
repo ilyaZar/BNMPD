@@ -1,7 +1,8 @@
 #' Multiplication of regressor matrix with coefficient vector
 #'
 #' Multiplication of regressor matrices Z and U with corresponding coefficient
-#' vectors and adding up. The result needs to be passed to the SMC sampler.
+#' vectors and adding up. The result needs to be passed to the SMC sampler. This
+#' is the version for linear and random effect type regressors.
 #'
 #' @param Z Z regressor matrix sliced at corresponding component \code{d}
 #' @param U U regressor matrix sliced at corresponding component \code{d}
@@ -31,6 +32,29 @@ get_regs_beta <- function(Z, U, id_uet, TT,
     Z_beta[, n]    <- Z_tmp %*% bet_z
     U_beta[, n]    <- U_tmp %*% bet_u_tmp
     Regs_beta[, n] <- Z_beta[, n] + U_beta[, n]
+  }
+  return(Regs_beta)
+}
+#' Multiplication of regressor matrix with coefficient vector
+#'
+#' Multiplication of regressor matrices Z with corresponding coefficient
+#' vectors and adding up (this is the linear-regressor only type version). The
+#' result needs to be passed to the SMC sampler.
+#'
+#' @inheritParams get_regs_beta_lin
+#'
+#' @return a vector of dimension \code{TT x NN}, containing the corresponding
+#'   multiplication result for the d'th component
+#' @export
+get_regs_beta_lin <- function(Z, TT, bet_z, iter_range_NN) {
+  NN <- length(iter_range_NN)
+  Z_beta    <- matrix(0, nrow = TT, ncol = NN)
+  Regs_beta <- matrix(0, nrow = TT, ncol = NN)
+  # browser()
+  for (n in iter_range_NN) {
+    Z_tmp <- Z[, , n]
+
+    Regs_beta[, n] <- Z_tmp %*% bet_z
   }
   return(Regs_beta)
 }
