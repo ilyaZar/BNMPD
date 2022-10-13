@@ -63,37 +63,78 @@ ModelDef <- R6::R6Class("ModelDef",
                             }
                           },
                           set_var_lab = function() {
-                            y_list <- vector("character", private$.num_mc)
-                            y_labs <- vector("character", private$.num_mc)
-                            z_list <- vector("list", private$.num_mc)
-                            u_list <- vector("list", private$.num_mc)
-
+                            browser()
+                            check_u_avail <- check_reg_avail(private$.model_raw,
+                                                             private$.num_mc,
+                                                             "u_reg")
+                            check_z_avail <- check_reg_avail(private$.model_raw,
+                                                             private$.num_mc,
+                                                             "z_reg")
                             rng_names <- seq(from = private$.yaml_offset + 1,
                                              to = length(private$.model_raw),
                                              by = 1)
-                            names(z_list) <- names(private$.model_raw[rng_names])
-                            names(u_list) <- names(z_list)
 
+                            y_list <- vector("character", private$.num_mc)
+                            y_labs <- vector("character", private$.num_mc)
+
+                            if (check_z_avail) {
+                              z_list <- vector("list", private$.num_mc)
+                              names(z_list) <- names(private$.model_raw[rng_names])
+                            }
+                            if (check_u_avail) {
+                              u_list <- vector("list", private$.num_mc)
+                              names(u_list) <- names(private$.model_raw[rng_names])
+                            }
                             for (i in 1:private$.num_mc) {
                               id <- i + private$.yaml_offset
-
-                              tmp_z_reg <- private$.model_raw[[id]][["z_reg"]]
-                              tmp_u_reg <- private$.model_raw[[id]][["u_reg"]]
-                              z_list[[i]] <- tmp_z_reg[["var"]]
-                              names(z_list[[i]]) <- tmp_z_reg[["lab"]]
-                              u_list[[i]] <- tmp_u_reg[["var"]]
-                              names(u_list[[i]]) <- tmp_u_reg[["lab"]]
 
                               y_list[i] <- private$.model_raw[[id]][["y_var"]]
                               y_labs[i] <- private$.model_raw[[id]][["y_lab"]]
 
+                              if (check_z_avail) {
+                                tmp_z_reg <- private$.model_raw[[id]][["z_reg"]]
+                                z_list[[i]] <- tmp_z_reg[["var"]]
+                                names(z_list[[i]]) <- tmp_z_reg[["lab"]]
+                              }
+                              if (check_u_avail) {
+                                tmp_u_reg <- private$.model_raw[[id]][["u_reg"]]
+                                u_list[[i]] <- tmp_u_reg[["var"]]
+                                names(u_list[[i]]) <- tmp_u_reg[["lab"]]
+                              }
                             }
-                            private$.var_z <- z_list
-                            private$.var_u <- u_list
                             private$.var_y <- y_list
-                            private$.lab_z <- lapply(z_list, names)
-                            private$.lab_u <- lapply(u_list, names)
                             private$.lab_y <- y_labs
+                            if (check_z_avail) {
+                              private$.var_z <- z_list
+                              private$.lab_z <- lapply(z_list, names)
+                            }
+                            if (check_u_avail) {
+                              private$.lab_u <- lapply(u_list, names)
+                              private$.var_u <- u_list
+                            }
+                          },
+                          check_reg_avail = function(model_raw,
+                                                     num_mc,
+                                                     reg_name) {
+                            rng_names <- seq(from = private$.yaml_offset + 1,
+                                             to = length(private$.model_raw),
+                                             by = 1)
+                            model_raw_tmp <- model_raw[rng_names]
+                            checks <- lapply(model_raw_tmp[seq_len(num_mc)],
+                                             function(x) {
+                                               any(names(x) == reg_name)
+                                             })
+                            checks <- unlist(checks)
+                            if (all(checks)) {
+                              return(TRUE)
+                            } else if (any(checks)) {
+                              stop(paste0("Only some of '", reg_name, "' have",
+                                          "specified labels or vars"))
+                            } else if (!all(checks)) {
+                              warning(paste0("No ", reg_name, " specified ",
+                                             "which may be fine ..."))
+                              return(FALSE)
+                            }
                           },
                           set_cs_ts = function() {
                             tmpcs <- private$.model_raw[["cross_section_used"]]
