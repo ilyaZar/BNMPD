@@ -1,3 +1,147 @@
+#' Generates output container for true parameter values
+#'
+#' Arguments specify true parameter values, dimension of the model and which
+#' regressor types to use. For random effects (beta_u-type regressors) a seed
+#' makes sure to produce the same setup. Output container can be used when
+#' plotting diagnostics (in a simulation study) as well as generating simulated
+#' data sets based on the true parameter values.
+#'
+#' @param dim_model a vector with three components: \code{NN x TT x DD}
+#' @param sig_sq a vector of length \code{DD} and strictly positive elements
+#' @param phi a vector of length \code{DD} with elements between 0 and 1
+#' @param bet_z a list of length \code{DD} with (possibly) varying number of
+#'    regressors
+#' @param SIMUL_Z_BETA logical; if \code{TRUE}, then standard continuous
+#'   (z-type) covariates are included
+#' @param SIMUL_U_BETA logical; if \code{TRUE}, then random effects (u-type
+#'    regressors) are simulated based on the argument \code{seed_taken}
+#' @param NUM_BETA_U integer giving the number of random effects per cross
+#'   section to simulate
+#' @param seed_taken the seed used drawing random effects
+#'
+#' @return a list of four elements each giving the corresponding true parameters
+#'    container for the model size/dimension
+#' @export
+generate_true_params <- function(dim_model,
+                                 sig_sq,
+                                 phi,
+                                 bet_z,
+                                 SIMUL_Z_BETA,
+                                 SIMUL_U_BETA,
+                                 NUM_BETA_U,
+                                 seed_taken) {
+  check_args <- (missing(sig_sq) || missing(phi) || missing(bet_z) ||
+                   missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
+                   missing(seed_taken) || missing(dim_model))
+  if (check_args) stop("Missing arguments")
+  if (SIMUL_U_BETA && missing(NUM_BETA_U)) stop("Number of REs not specified!")
+  # 1. Data settings: -------------------------------------------------------
+  NN <- dim_model[1]   # Cross sectional length
+  cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
+      crayon::green("to "), crayon::red(NN), crayon::green("!\n"))
+  TT <- dim_model[2]  # Time series length
+  cat(crayon::green("Setting dimension "), crayon::yellow("TT"),
+      crayon::green("to "), crayon::red(TT), crayon::green("!\n"))
+  DD <- dim_model[3]
+  cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
+      crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
+  # 2. Set up parameter values: ---------------------------------------------
+  check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
+  if (!check_sig_sq) stop("'sig_sq' >0 and a vector of length DD ...\n")
+  true_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
+  #
+  check_phi <- all(phi > 0) && all(phi < 1) && all(length(phi) == DD)
+  if (!check_phi) stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
+  true_phi <- matrix(phi, nrow = DD, ncol = NN)
+  #
+  if (SIMUL_Z_BETA) {
+    check_bet_z <- is.list(bet_z) && length(bet_z) == DD
+    if (!check_bet_z) stop("'bet_z' not a list or not of length = DD ...\n")
+    true_bet_z <- bet_z
+  } else {
+    true_bet_z <- NULL
+  }
+  #
+  if (SIMUL_U_BETA) {
+    true_out_u <- BNMPD::generate_bet_u(DD, NN,
+                                        TRUE, rep(NUM_BETA_U,
+                                                  times = DD),
+                                        seed_no = seed_taken)
+    true_bet_u <- true_out_u[[1]]
+    true_D0u_u <- true_out_u[[2]]
+  } else {
+    true_bet_u <- NULL
+    true_D0u_u <- NULL
+  }
+  par_trues <- list(sig_sq = true_sig_sq,
+                    phi = true_phi,
+                    bet_z = true_bet_z,
+                    bet_u = true_bet_u,
+                    vcm_u = true_D0u_u)
+  return(true_params = par_trues)
+}
+#' Generates random effects per cross sectional unit (e.g. US-state)
+#'
+#' @param DD dimension of the latent state process
+#' @param NN number of cross sectional units
+#' @param from_IW logical; if \code{TRUE}, then random effects (per dimension of
+#'   the state process \code{d=1,...,DD}) are generated from an IW-distribution
+#'   with internally specified degrees of freedom and scale matrix s.th. per d,
+#'   the NN different random effect vectors are i.i.d
+#' @param num_re integer vector of dimension \code{DD} if \code{from_IW == TRUE}
+#'   or a scalar integer value if \code{from_IW == FALSE} that specifies the
+#'   number of random effects per component \code{d=1,...,DD}
+#' @param seed_no integer; random seed to set at the beginning, set \code{NULL}
+#'   if not required
+#'
+#' @return a named list of two elements:
+#'   \itemize{
+#'      \item{\code{true_bet_u}:}{a list of length \code{DD} of matrices of
+#'                                dimension \code{num_re x NN} with random
+#'                                effects}
+#'      \item{\code{true_vcm_u}:}{a list of length \code{DD} of diagonal
+#'                                matrices of dimension \code{num_re x num_re}
+#'                                which are the covariance matrices of random
+#'                                effects}
+#'   }
+#'
+#' @export
+generate_bet_u <- function(DD, NN,
+                           from_IW = FALSE,
+                           num_re = rep(2, times = DD),
+                           seed_no = 42) {
+  true_bet_u <- vector("list", DD)
+  if (from_IW) {
+    stopifnot(is.numeric(num_re) && (length(num_re) == DD))
+    if (!is.null(seed_no))  set.seed(seed_no)
+    n0u <- num_re + 1
+    D0u <- vector("list", DD)
+    for (d in 1:DD) {
+      # D0u[[d]] <- solve(diag(1:num_re[d]*(10 + 1/num_re[d]),
+      #  nrow = num_re[d]))
+      D0u[[d]] <- solve(diag(1:num_re[d]/10*(0.01 + 1/num_re[d]),
+                             nrow = num_re[d]))
+      D0u[[d]] <- solve((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
+      # D0u[[d]] <- diag(1, num_re[d])
+      true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
+      # browser()
+      for (n in 1:NN) {
+        true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
+                                              mu = rep(0, times = num_re[d]),
+                                              Sigma = D0u[[d]])
+      }
+    }
+    return(list(true_bet_u = true_bet_u,
+                true_vcm_u = D0u))
+  } else {
+    stopifnot(is.numeric(num_re) && (length(num_re) == 1))
+    vals <- matrix(1:(num_re*DD)*c(-1, 1), nrow = num_re*DD, ncol = NN)
+    for (d in 1:DD) {
+      true_bet_u[[d]] <- vals[1:num_re + num_re*(d - 1), , drop = FALSE]
+    }
+    return(true_bet_u = true_bet_u)
+  }
+}
 #' Deduces from vector of parameter names, which type of modelling to employ
 #'
 #' @param get_modelling_reg_types a named list of parameter names; the list
@@ -27,55 +171,50 @@ get_modelling_reg_types <- function(get_modelling_reg_types) {
                   "u-spline-regressors")
   return(out)
 }
-#' Generates random effects per cross sectional unit (e.g. US-state)
+#' Generate Dirichlet target levels for simulation study
 #'
-#' @param DD dimension of the latent state process
-#' @param NN number of cross sectional units
-#' @param from_IW logical; if \code{TRUE}, then random effects (per dimension of
-#'   the state process \code{d=1,...,DD}) are generated from an IW-distribution
-#'   with internally specified degrees of freedom and scale matrix s.th. per d,
-#'   the NN different random effect vectors are i.i.d
-#' @param num_re integer vector of dimension \code{DD} if \code{from_IW == TRUE}
-#'   or a scalar integer value if \code{from_IW == FALSE} that specifies the
-#'   number of random effects per component \code{d=1,...,DD}
-#' @param seed_no integer; random seed to set at the beginning, set \code{NULL}
-#'   if not required
+#' A sequence of fractions should not be too erratic over time and the different
+#' fractions not too far away from each other. This function achieves the latter
+#' by computing target fractions levels that are neither too small, nor too
+#' large so that fractions are not too far apart.
 #'
-#' @return a list of \code{DD} components, each containing a matrix of dimension
-#'   \code{num_re[d]} $times$ \code{NN}
+#' The tuning parameter list, as given by default values of the argument, works
+#' nicely for DD = 3, see the examples section below. The resulting values - 30,
+#' 30, 40 - are reasonable target parameters for the Dirichlet taken as
+#' `alpha_1=30`, `alpha_2=30`, `and alpha_3=40`.
 #'
+#'
+#' @param DD integer giving the multivariate dimension
+#' @param NN number of cross sectional units (repetitions of target values)
+#' @param tuning_parameters a set of tuning parameters that generate a
+#'   reasonably spaced sequence of target values
+#'
+#' @return a matrix of dimension \code{NN x DD}, with each row being the target
+#'   levels (currently all the same)
 #' @export
-generate_bet_u <- function(DD, NN, from_IW = FALSE,
-                           num_re = rep(2, times = DD),
-                           seed_no = 42) {
-  true_bet_u <- vector("list", DD)
-  if (from_IW) {
-    stopifnot(is.numeric(num_re) && (length(num_re) == DD))
-    if (!is.null(seed_no))  set.seed(seed_no)
-    n0u <- num_re + 1
-    D0u <- vector("list", DD)
-    for (d in 1:DD) {
-      # D0u[[d]] <- solve(diag(1:num_re[d]*(10 + 1/num_re[d]), nrow = num_re[d]))
-      D0u[[d]] <- solve(diag(1:num_re[d]/10*(0.01 + 1/num_re[d]), nrow = num_re[d]))
-      D0u[[d]] <- solve((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
-      # D0u[[d]] <- diag(1, num_re[d])
-      true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
-      # browser()
-      for (n in 1:NN) {
-        true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
-                                              mu = rep(0, times = num_re[d]),
-                                              Sigma = D0u[[d]])
-      }
-    }
-    return(list(true_bet_u, D0u))
-  } else {
-    stopifnot(is.numeric(num_re) && (length(num_re) == 1))
-    vals <- matrix(1:(num_re*DD)*c(-1, 1), nrow = num_re*DD, ncol = NN)
-    for (d in 1:DD) {
-      true_bet_u[[d]] <- vals[1:num_re + num_re*(d - 1), , drop = FALSE]
-    }
-    return(true_bet_u)
-  }
+#'
+#' @examples
+#' get_dirichlet_levels(DD = 3, NN = 4)
+get_dirichlet_levels <- function(DD, NN,
+                                 tuning_parameters = list(seq_start = 0.3,
+                                                          seq_step = 0.1,
+                                                          seq_rep = 2,
+                                                          seq_scale = 100)) {
+  seq_start <- tuning_parameters$seq_start
+  seq_step  <- tuning_parameters$seq_step
+  seq_rep   <- tuning_parameters$seq_rep
+
+  tuned_vec <- rep(seq(from = seq_start,
+                       to = seq_start + seq_step * DD,
+                       by = seq_step),
+                   each = seq_rep)
+  tuned_vec <- tuned_vec[1:DD]
+  tuned_vec <- tuned_vec/sum(tuned_vec)
+
+  matrix(tuned_vec * 100,
+         nrow = DD,
+         ncol = NN)
+
 }
 #' Generates panel data for various models.
 #'
@@ -136,14 +275,29 @@ generate_data_t_n <- function(distribution,
                               par_true,
                               x_levels,
                               x_log_scale,
-                              include_intercept,
+                              include_intercept = NULL,
                               include_policy,
-                              include_zeros,
+                              include_zeros = NULL,
                               plot_measurements = FALSE,
                               plot_states = FALSE,
                               plot_states_each_d = FALSE,
                               seed_no = NULL) {
-  browser()
+  if (is.null(include_intercept)) {
+    include_intercept <- rep(FALSE, times = DD)
+  }
+  if (is.null(include_policy)) {
+    include_policy <- matrix(FALSE, nrow = DD, ncol = NN)
+  # policy_modelling    <- cbind(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+  #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+  #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+  #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+  #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+  #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))
+  }
+  if (is.null(include_zeros)) {
+    include_zeros <- NULL
+  }
+  # zero_modelling      <- c(1:4, 1, 2) # rep(4, times = DD) # c(1, 2, 3, 4, 1, 2)
   densitities_supported <- c("multinomial", "dirichlet-mult",
                              "gen-dirichlet-mult", "gen-dirichlet",
                              "dirichlet")
@@ -188,7 +342,6 @@ generate_data_t_n <- function(distribution,
       par_true_current$bet_u <- lapply(par_true[["bet_u"]], `[`, i = , j = n)
     }
 
-    browser()
     out_data_tmp <- generate_data_t(distribution = distribution,
                                     TT = TT, DD = DD,
                                     par_true = par_true_current,
@@ -301,7 +454,7 @@ generate_data_t <- function(distribution,
                             include_policy,
                             include_zeros,
                             modelling_reg_types) {
-  browser()
+  # browser()
   x <- matrix(nrow = TT, ncol = DD, 0)
   sig_sq_x <- par_true[["sig_sq"]]
   phi_x    <- par_true[["phi"]]
@@ -455,7 +608,7 @@ generate_x_z_u <- function(TT,
                            x_log_scale,
                            intercept,
                            policy_dummy = FALSE,
-                           zero_pattern = 1,
+                           zero_pattern = NULL,
                            drift = FALSE) {
   dim_z <- length(bet_z)
   dim_u <- length(bet_u)
@@ -583,7 +736,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                               intercept,
                               policy_dummy,
                               zero_pattern = NULL) {
-  browser()
+  # browser()
   if (policy_dummy) {
     if (zero_pattern == 1) {
       dummy_to_use <- c(rep(0, times = round(0.5*TT, digits = 0)),
@@ -993,3 +1146,146 @@ f <- function(x_tt, regs, phi_x, bet_reg) {
 #   exp_var <- (exp(log_sd^2) - 1)*(exp(2*log_mu + log_sd^2))
 #   return(list(exp_mu, exp_var))
 # }
+#
+#
+#
+#' Save simulated data and true parameter values used to generate it.
+#'
+#' @param pth_to_write path to output directory
+#' @param fn_data_set file name (\code{.csv}-ending required) for simulated data
+#' @param fn_true_states file name for R-containter object that stores true
+#'   states
+#' @param fn_zero_states file name for R-containter object that stores true
+#'   states
+#' @param data_sim simulated data set as produced via [generate_data_t_n()]
+#' @param true_params true parameter values used to generate data (to determine
+#'   containter/data sizes) as produced by output from [generate_true_params()]
+#' @param dim_model a vector with three components: \code{NN x TT x DD}
+#'
+#' @return side effect function; saves simulated data and true params to output
+#'   path
+#'
+#' @export
+save_simulated_data <- function(pth_to_write,
+                                fn_data_set,
+                                fn_true_states,
+                                fn_zero_states,
+                                data_sim,
+                                dim_model,
+                                true_params) {
+  SIMUL_U_BETA <- !is.null(data_sim$regs$u)
+  NN <- dim_model[1]   # Cross sectional length
+  cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
+      crayon::green("to "), crayon::red(NN), crayon::green("!"))
+  TT <- dim_model[2]  # Time series length
+  cat(crayon::green("Setting dimension "), crayon::yellow("TT"),
+      crayon::green("to "), crayon::red(TT), crayon::green("!"))
+  DD <- dim_model[3]
+  cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
+      crayon::green("to "), crayon::red(DD), crayon::green("!"))
+
+  seq_regs_z <- lapply(true_params$bet_z, length)
+  num_regs_z <- sum(unlist(seq_regs_z))
+  seq_regs_u <- lapply(true_params$bet_u, nrow)
+  num_regs_u <- sum(unlist(seq_regs_u))
+
+  ncol_out <- DD + num_regs_z + num_regs_u
+  data_out <- matrix(0, nrow = TT * NN, ncol = ncol_out)
+  data_out <- as.data.frame(data_out)
+
+  names_z_reg <- paste0(paste0(paste0("Z_", sapply(lapply(seq_regs_z,
+                                                          function(x) {
+                                                            seq_len(x)}),
+                                                   as.character)), "_"),
+                        rep(1:DD, unlist(seq_regs_z)))
+  if (SIMUL_U_BETA) {
+    names_u_reg <- paste0(paste0(paste0("U_", sapply(lapply(seq_regs_u,
+                                                            function(x) {
+                                                              seq_len(x)}),
+                                                     as.character)), "_"),
+                          rep(1:DD, unlist(seq_regs_u)))
+  } else {
+    names_u_reg <- NULL
+  }
+  names(data_out) <- c(paste0("Y", 1:DD), names_z_reg, names_u_reg)
+  vals_cs  <- as.character(paste0("cs_", rep(seq_len(NN), each = TT)))
+  vals_ts  <- rep(1:TT, times = NN)
+  cs_ts    <-tibble::tibble(CS = vals_cs, TS = vals_ts)
+  data_out <- dplyr::bind_cols(cs_ts, data_out)
+  for(n in 1:NN) {
+    id_rows <- TT*(n - 1) + (1:TT)
+    offset_col <- 2
+    id_col_y <- 1:DD + offset_col
+    id_col_z <- DD + 1:(num_regs_z) + offset_col
+    id_col_u <- DD + num_regs_z + 1:(num_regs_u) + offset_col
+    data_out[id_rows, id_col_y] <- data_sim$data$yraw[, , n]
+    data_out[id_rows, id_col_z] <- data_sim$regs$z[, , n]
+    if (SIMUL_U_BETA) {
+      data_out[id_rows, id_col_u] <- data_sim$regs$u[, , n]
+    }
+  }
+  write.csv(data_out, file = file.path(pth_to_write, fn_data_set))
+  true_states <- data_sim$states
+  save(true_states, file = file.path(pth_to_write, fn_true_states))
+  zero_states <- true_states
+  zero_states[, , ] <- 0
+  save(zero_states,  file = file.path(pth_to_write, fn_zero_states))
+}
+#' Generates consistent file names for simulation study
+#'
+#' @param fn_data character giving the filename of the simulated data set
+#'   (saved in \code{.csv}-format)
+#' @param fn_true_states character giving the filename of the simulated true
+#'   states (saved in \code{.RData}-format)
+#' @param fn_zero_states  character giving the filename of the states set all to
+#'   zero (saved in \code{.RData}-format)
+#' @param dim_model numeric vector of 3 elements: \code{NN x TT x DD}
+#' @param SIMUL_Z_BETA logical; if \code{TRUE} Z-type regressors are simulated
+#'   which is reflected in the naming of simulated data sets
+#' @param SIMUL_U_BETA logical; if \code{TRUE} U-type regressors (i.e. random
+#'   effects) are simulated which is reflected in the naming of simulated data
+#'   sets
+#' @param num_z_regs numeric vector giving number of Z-type regressors; parsed
+#'   as comma-seperated sequence of numbers i.e. for \code{num_z_regs = 1:3} we
+#'   get "withLIN,1,2,3" in the file names
+#' @param num_u_regs numeric vector giving number of U-type regressors; parsed
+#'   as comma-seperated sequence of numbers i.e. for \code{num_u_regs = 1:3} we
+#'   get "withRE,1,2,3" in the file names
+#'
+#' @return a list of 3:
+#'    \itemize{
+#'    \item\code{fn_data_set}: file name of the data set
+#'    \item\code{fn_data_set}: file name for true state values
+#'    \item\code{fn_data_set}: file name for zero state values
+#'    }
+#' @export
+get_file_names_simul_data <- function(fn_data,
+                                      fn_true_states,
+                                      fn_zero_states,
+                                      dim_model,
+                                      SIMUL_Z_BETA,
+                                      SIMUL_U_BETA,
+                                      num_z_regs,
+                                      num_u_regs) {
+  tmp_fn <- paste0("NN", dim_model[1],
+                   "_TT", dim_model[2],
+                   "_DD", dim_model[3])
+  if (SIMUL_Z_BETA) {
+    tmp_fn <- paste0(tmp_fn, "_", "withLIN", paste0(",", num_z_regs,
+                                                       collapse = ""))
+  } else {
+    tmp_fn <- paste0(tmp_fn, "_", "noLIN")
+  }
+  if (SIMUL_U_BETA) {
+    tmp_fn <- paste0(tmp_fn, "_", "withRE", paste0(",", num_u_regs,
+                                                      collapse = ""))
+  } else {
+    tmp_fn <- paste0(tmp_fn, "_", "noRE")
+  }
+  fn_data_set <- paste0(fn_data, "_", tmp_fn, ".csv")
+  fn_true_val <- paste0(fn_true_states, "_", tmp_fn, ".RData")
+  fn_zero_val <- paste0(fn_zero_states, "_", tmp_fn, ".RData")
+  return(list(fn_data_set = fn_data_set,
+              fn_true_val = fn_true_val,
+              fn_zero_val = fn_zero_val))
+}
