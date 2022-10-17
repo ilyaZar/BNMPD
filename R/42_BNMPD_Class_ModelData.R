@@ -52,7 +52,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_raw <- data_set
                           },
                           initialize_data_used = function() {
-                            browser()
+                            # browser()
                             y_use  <- unname(private$.var_y)
                             z_use  <- unique(unlist(private$.var_z))
                             u_use  <- unique(unlist(private$.var_u))
@@ -245,7 +245,7 @@ ModelDat <- R6::R6Class("ModelDat",
                           initialize_var_names = function(info_y,
                                                           info_z,
                                                           info_u) {
-                            browser()
+                            # browser()
                             private$.var_y <- info_y$var_y
                             private$.var_z <- info_z$var_z
                             private$.var_u <- info_u$var_u

@@ -63,7 +63,6 @@ ModelDef <- R6::R6Class("ModelDef",
                             }
                           },
                           set_var_lab = function() {
-                            browser()
                             check_u_avail <- check_reg_avail(private$.model_raw,
                                                              private$.num_mc,
                                                              "u_reg")

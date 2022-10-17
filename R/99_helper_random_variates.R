@@ -13,6 +13,7 @@ rnorm_fast_n1 <- function(mu, Sigma, len) {
 
   tol <- sqrt(.Machine$double.eps)
   if (!isSymmetric(Sigma, tol = tol, check.attributes = FALSE)) {
+    browser()
     warning("Sigma must be a symmetric matrix")
   }
   eS <- eigen(Sigma, symmetric = TRUE)
@@ -23,74 +24,98 @@ rnorm_fast_n1 <- function(mu, Sigma, len) {
   # return(mu + eS$vectors %*% (diag(sqrt(pmax(evals, 0)), len) %*% rnorm(len)))
   return(mu + eS$vectors %*% matrix((sqrt(pmax(evals, 0))) * rnorm(len),
                                     ncol = 1))
-  #
-  #
-  #
-  #
-  #
-  ##############################################################################
-  ##############################################################################
-  ##############################################################################
-  # n = 1, tol = 1e-06, method = c("eigen", "svd", "chol")
-  # p <- length(mu)
-  # nm <- names(mu)
-  # if (is.null(nm) && !is.null(dn <- dimnames(Sigma)))
-  #   nm <- dn[[1L]]
-  # dimnames(X) <- list(nm, NULL)
-  # empirical = FALSE
-  # if (empirical) {
-  #   X <- scale(X, TRUE, FALSE)
-  #   X <- X %*% svd(X, nu = 0)$v
-  #   X <- scale(X, FALSE, TRUE)
-  # }
-  # if (!isSymmetric(Sigma, tol = sqrt(.Machine$double.eps), check.attributes
-  #  = FALSE)) {
-  #   stop("Sigma must be a symmetric matrix")
-  # }
-  # if (length(mu) != nrow(Sigma))
-  #   stop("mu and Sigma have non-conforming size")
-  # if (!all(dim(Sigma) == c(p, p)))
-  #   stop("incompatible arguments")
-  # eS <- eigen(Sigma, symmetric = TRUE)
-  # ev <- eS$values
-  # if (!all(ev >= -tol * abs(ev[1L])))
-  #   stop("'Sigma' is not positive definite")
-  # X <- matrix(rnorm(p * n), n)
-  # X <- drop(mu) + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% t(X)
-  #
-  # if (n == 1)
-  #   drop(X)
-  # else t(X)
-  #
-  #
-  #
-  #
-  ##############################################################################
-  ##############################################################################
-  ##############################################################################
-  # method <- match.arg(method)
-  # R <- if (method == "eigen") {
-  #   ev <- eigen(Sigma, symmetric = TRUE)
-  #   if (!all(ev$values >= -sqrt(.Machine$double.eps) * abs(ev$values[1]))) {
-  #     warning("Sigma is numerically not positive semidefinite")
-  #   }
-  #   t(ev$vectors %*% (t(ev$vectors) * sqrt(pmax(ev$values, 0))))
-  # }
-  # else if (method == "svd") {
-  #   s. <- svd(Sigma)
-  #   if (!all(s.$d >= -sqrt(.Machine$double.eps) * abs(s.$d[1]))) {
-  #     warning("Sigma is numerically not positive semidefinite")
-  #   }
-  #   t(s.$v %*% (t(s.$u) * sqrt(pmax(s.$d, 0))))
-  # }
-  # else if (method == "chol") {
-  #   R <- chol(Sigma, pivot = TRUE)
-  #   R[, order(attr(R, "pivot"))]
-  # }
-  # retval <- matrix(rnorm(n * ncol(Sigma)), nrow = n, byrow = !pre0.9_9994)
-  # %*% R
-  # retval <- sweep(retval, 2, mean, "+")
-  # colnames(retval) <- names(mean)
-  # retval
+}
+#' Wrapper to various matrix inverse calculations via R
+#'
+#' Taken from stackoverflow; search for "numeric stable inversion".
+#'
+#' @param mat a matrix (positive definite and symmetric)
+#'
+#' @return inverse of \code{mat}
+#' @export
+solveme <- function(mat) {
+  tol <- sqrt(.Machine$double.eps)
+  # mat_out <- solve(mat); meth <- "solve()"
+  mat_out <- chol2inv(chol(mat)); meth <- "chol2inv(chol(mat))"
+  if (!isSymmetric(mat_out, tol = tol, check.attributes = FALSE)) {
+    warning(crayon::green("IZ: mat must be symmetric after call to: \n"),
+            crayon::red(meth))
   }
+  eS <- eigen(mat_out, symmetric = TRUE)
+  evals <- eS$values
+  if (any(evals < -tol * abs(evals[1L]))) {
+    warning(crayon::green("IZ: mat must be pos. definite after call to: \n"),
+            crayon::red(meth))
+  }
+  mat_out
+}
+#
+#
+#
+#
+#
+##############################################################################
+##############################################################################
+##############################################################################
+# n = 1, tol = 1e-06, method = c("eigen", "svd", "chol")
+# p <- length(mu)
+# nm <- names(mu)
+# if (is.null(nm) && !is.null(dn <- dimnames(Sigma)))
+#   nm <- dn[[1L]]
+# dimnames(X) <- list(nm, NULL)
+# empirical = FALSE
+# if (empirical) {
+#   X <- scale(X, TRUE, FALSE)
+#   X <- X %*% svd(X, nu = 0)$v
+#   X <- scale(X, FALSE, TRUE)
+# }
+# if (!isSymmetric(Sigma, tol = sqrt(.Machine$double.eps), check.attributes
+#  = FALSE)) {
+#   stop("Sigma must be a symmetric matrix")
+# }
+# if (length(mu) != nrow(Sigma))
+#   stop("mu and Sigma have non-conforming size")
+# if (!all(dim(Sigma) == c(p, p)))
+#   stop("incompatible arguments")
+# eS <- eigen(Sigma, symmetric = TRUE)
+# ev <- eS$values
+# if (!all(ev >= -tol * abs(ev[1L])))
+#   stop("'Sigma' is not positive definite")
+# X <- matrix(rnorm(p * n), n)
+# X <- drop(mu) + eS$vectors %*% diag(sqrt(pmax(ev, 0)), p) %*% t(X)
+#
+# if (n == 1)
+#   drop(X)
+# else t(X)
+#
+#
+#
+#
+##############################################################################
+##############################################################################
+##############################################################################
+# method <- match.arg(method)
+# R <- if (method == "eigen") {
+#   ev <- eigen(Sigma, symmetric = TRUE)
+#   if (!all(ev$values >= -sqrt(.Machine$double.eps) * abs(ev$values[1]))) {
+#     warning("Sigma is numerically not positive semidefinite")
+#   }
+#   t(ev$vectors %*% (t(ev$vectors) * sqrt(pmax(ev$values, 0))))
+# }
+# else if (method == "svd") {
+#   s. <- svd(Sigma)
+#   if (!all(s.$d >= -sqrt(.Machine$double.eps) * abs(s.$d[1]))) {
+#     warning("Sigma is numerically not positive semidefinite")
+#   }
+#   t(s.$v %*% (t(s.$u) * sqrt(pmax(s.$d, 0))))
+# }
+# else if (method == "chol") {
+#   R <- chol(Sigma, pivot = TRUE)
+#   R[, order(attr(R, "pivot"))]
+# }
+# retval <- matrix(rnorm(n * ncol(Sigma)), nrow = n, byrow = !pre0.9_9994)
+# %*% R
+# retval <- sweep(retval, 2, mean, "+")
+# colnames(retval) <- names(mean)
+# retval
 
