@@ -70,108 +70,95 @@ generate_x_z_u <- function(TT,
                            policy_dummy = FALSE,
                            zero_pattern = NULL,
                            drift = FALSE) {
+  spl_lvl <- c(0.7, 0.3)
   dim_z <- length(bet_z)
   dim_u <- length(bet_u)
-  dim_reg <- dim_z + dim_u
-  bet_reg <- c(bet_z, bet_u)
-  x <- rep(0, TT)
-  # browser()
   # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
-  if (modelling_reg_types[1] && !modelling_reg_types[2]) {
-    z <- generate_reg_vals(TT = TT,
-                           bet_reg = bet_reg,
-                           dim_reg = dim_reg,
-                           phi_x = phi_x,
-                           x_level = x_level,
-                           reg_sd = reg_sd,
-                           bet_sd = bet_sd,
-                           intercept = intercept_z,
-                           policy_dummy = policy_dummy,
-                           zero_pattern = NULL)
-    u <- NULL
-  }
-  if (!modelling_reg_types[1] && modelling_reg_types[2]) {
-    u <- generate_reg_vals(TT = TT,
-                           bet_reg = bet_reg,
-                           dim_reg = dim_reg,
-                           phi_x = phi_x,
-                           x_level = x_level,
-                           reg_sd = reg_sd,
-                           bet_sd = bet_sd,
-                           intercept = intercept_u,
-                           policy_dummy = policy_dummy,
-                           zero_pattern = NULL)
-    z <- NULL
-  }
-  if (modelling_reg_types[1] && modelling_reg_types[2]) {
-    # browser()
-    x_level_split <- x_level*c(0.7, 0.3)
+  if (modelling_reg_types[1]) {
+    x_level_split_z <- ifelse(modelling_reg_types[2],
+                              x_level * spl_lvl[1],
+                              x_level)
+    policy_dummy_z  <- ifelse(modelling_reg_types[2], FALSE, policy_dummy)
     z <- generate_reg_vals(TT = TT,
                            bet_reg = bet_z,
                            dim_reg = dim_z,
                            phi_x = phi_x,
-                           x_level = x_level_split[1],
+                           x_level = x_level_split_z,
                            reg_sd = reg_sd,
                            bet_sd = bet_sd,
                            intercept = intercept_z,
-                           policy_dummy = FALSE,
+                           policy_dummy = policy_dummy_z,
                            zero_pattern = NULL)
+  } else {
+    z <- NULL
+  }
+  if (modelling_reg_types[2]) {
+    x_level_split_u <- ifelse(modelling_reg_types[1],
+                              x_level * spl_lvl[2],
+                              x_level)
     u <- generate_reg_vals(TT = TT,
                            bet_reg = bet_u,
                            dim_reg = dim_u,
                            phi_x = phi_x,
-                           x_level = x_level_split[2],
+                           x_level = x_level_split_u,
                            reg_sd = reg_sd,
                            bet_sd = bet_sd,
                            intercept = intercept_u,
                            policy_dummy = policy_dummy,
                            zero_pattern = NULL)
+  } else {
+    u <- NULL
   }
-  reg_all <- cbind(z, u)
+  regs_all <- cbind(z, u)
   # END OF REGRESSOR SIMULATION: --------------------------------------------
   # browser()
+  out <- list()
+  out$x <- simulate_x(x_level, regs = regs_all,
+                      phi_x, sig_sq_x,
+                      bet_reg = c(bet_z, bet_u),
+                      TT)
+  out$z <- z
+  out$u <- u
+  return(out)
+}
+simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT) {
+  x <- rep(0, TT)
   xinit <- x_level
-  x[1] <- f(x_tt = xinit, regs = reg_all[1, ], phi_x = phi_x, bet_reg = bet_reg)
+  x[1] <- f(x_tt = xinit,
+            regs = regs[1, ],
+            phi_x = phi_x, sig_sq_x,
+            bet_reg = bet_reg)
   x[1] <- x[1] + sqrt(sig_sq_x)*stats::rnorm(n = 1)
 
-  # browser()
   for (t in 1:TT) {
     if (t < TT) {
-      x[t + 1] <- f(x_tt = x[t], regs = reg_all[t + 1, ],
+      x[t + 1] <- f(x_tt = x[t], regs = regs[t + 1, ],
                     phi_x = phi_x, bet_reg = bet_reg)
       x[t + 1] <- x[t + 1] + sqrt(sig_sq_x)*stats::rnorm(n = 1)
     }
   }
-  out <- list()
-  out$x <- x
-  if (modelling_reg_types[1]) {
-    out$z <- z
-  }
-  if (modelling_reg_types[2]) {
-    out$u <- u
-  }
-  return(out)
+  return(x)
 }
 #' Generates the actual regressor values
 #'
 #' Generates all types of regressors values including \code{z} (standard
 #' "overall regressors"), \code{u} i.e. random effect regressors affecting only
-#' the cross sectional unit and the correspodning spline version \code{z_spl}
+#' the cross sectional unit and the corresponding spline version \code{z_spl}
 #' and \code{u_spl}
 #'
 #' @param TT number of time periods
-#' @param bet_reg merged betas including thos for \code{z} (\code{bet_z}),
+#' @param bet_reg merged betas including those for \code{z} (\code{bet_z}),
 #'   \code{u} (\code{bet_u}), \code{z_spl} (\code{bet_z_spl}) and
 #'   \code{u_spl} (\code{bet_u_spl})
 #' @param dim_reg overall dimension including all regressors (i.e. length of
 #'   \code{bet_reg})
-#' @param phi_x autoregressive paramter
+#' @param phi_x autoregressive parameter
 #' @param x_level target level of the states to simulate
 #' @param reg_sd standard deviations for the regressor values
 #' @param reg_sd standard deviations for the regressor values
 #' @param bet_sd standard deviations for random coefficient value draws
 #' @param intercept logical; if \code{TRUE}, then an intercept is included
-#' @param policy_dummy logical; if \code{TRUE}, then a policz dummy is included
+#' @param policy_dummy logical; if \code{TRUE}, then a policy dummy is included
 #' @param zero_pattern double with possible values 1, 2, 3 or 4:
 #'   \itemize{
 #'     \item{1: }{A dummy pattern that starts at the beginning with zeros and
