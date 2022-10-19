@@ -70,15 +70,16 @@ generate_x_z_u <- function(TT,
                            policy_dummy = FALSE,
                            zero_pattern = NULL,
                            drift = FALSE) {
+  # browser()
   spl_lvl <- c(0.7, 0.3)
   dim_z <- length(bet_z)
   dim_u <- length(bet_u)
   # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
   if (modelling_reg_types[1]) {
-    x_level_split_z <- ifelse(modelling_reg_types[2],
+    x_level_split_z <- ifelse(modelling_reg_types[[2]],
                               x_level * spl_lvl[1],
                               x_level)
-    policy_dummy_z  <- ifelse(modelling_reg_types[2], FALSE, policy_dummy)
+    policy_dummy_z  <- ifelse(modelling_reg_types[[2]], FALSE, policy_dummy)
     z <- generate_reg_vals(TT = TT,
                            bet_reg = bet_z,
                            dim_reg = dim_z,
@@ -93,7 +94,7 @@ generate_x_z_u <- function(TT,
     z <- NULL
   }
   if (modelling_reg_types[2]) {
-    x_level_split_u <- ifelse(modelling_reg_types[1],
+    x_level_split_u <- ifelse(modelling_reg_types[[1]],
                               x_level * spl_lvl[2],
                               x_level)
     u <- generate_reg_vals(TT = TT,
@@ -126,7 +127,7 @@ simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT) {
   xinit <- x_level
   x[1] <- f(x_tt = xinit,
             regs = regs[1, ],
-            phi_x = phi_x, sig_sq_x,
+            phi_x = phi_x,
             bet_reg = bet_reg)
   x[1] <- x[1] + sqrt(sig_sq_x)*stats::rnorm(n = 1)
 
@@ -180,6 +181,40 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                               policy_dummy,
                               zero_pattern = NULL) {
   # browser()
+  dummy_to_use <- get_pattern_policy_zeros(policy_dummy, zero_pattern, TT)
+
+  reg_means <- stats::rnorm(max(dim_reg - 2, 0), mean = 0, sd = bet_sd)
+  if (!intercept && !policy_dummy) {
+    reg_means <- c(stats::rnorm(dim_reg - 1, mean = 0, sd = bet_sd),
+                   reg_means)
+  } else if (intercept && !policy_dummy) {
+    reg_means <- c(1, reg_means)
+  } else if (!intercept && policy_dummy) {
+    reg_means <- c(0, reg_means)
+  } else if (intercept && policy_dummy) {
+    if (dim_reg < 3) stop("Can't simulate intercept and policy_dummy for dim<3!")
+    reg_means <- c(1, 0, reg_means[-1])
+  }
+  last_reg_mean <- x_level * (1 - phi_x)
+  last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
+  last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
+  reg_means     <- c(reg_means, last_reg_mean)
+
+  reg_len       <- length(reg_means)
+  regs          <- matrix(stats::rnorm(TT*reg_len,
+                                       mean = reg_means,
+                                       sd = reg_sd),
+                          nrow = TT,
+                          ncol = reg_len,
+                          byrow = TRUE)
+
+  if (intercept && !policy_dummy) regs[, 1]   <- 1
+  if (!intercept && policy_dummy) regs[, 1]   <- policy_dummy
+  if (intercept && policy_dummy)  regs[, 1:2] <- c(1, policy_dummy)
+
+  return(regs)
+}
+get_pattern_policy_zeros <- function(policy_dummy, zero_pattern, TT) {
   if (policy_dummy) {
     if (zero_pattern == 1) {
       dummy_to_use <- c(rep(0, times = round(0.5*TT, digits = 0)),
@@ -201,128 +236,9 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
       stop(paste0("Undefined zero patterns: please use 1L to 4L for different",
                   "patterns and check the doc/help for their meaning!"))
     }
-  }
-  if (dim_reg == 1) {
-    if (intercept) {
-      const_level <- x_level * (1 - phi_x)/bet_reg
-      regs <- matrix(const_level, nrow = TT, ncol = dim_reg)
-    } else if (policy_dummy) {
-      regs <- dummy_to_use
-    } else {
-      const_mean <- x_level * (1 - phi_x)/bet_reg
-      regs          <- matrix(stats::rnorm(TT*dim_reg,
-                                           mean = const_mean,
-                                           sd = reg_sd),
-                              nrow = TT,
-                              ncol = dim_reg,
-                              byrow = TRUE)
-    }
-    return(regs)
-  }
-  if (dim_reg == 2) {
-    if (intercept && policy_dummy) {
-      regs <- cbind(rep(1, times = TT),
-                    dummy_to_use)
-      return(regs)
-    }
-    if (!intercept && !policy_dummy) {
-      reg_means <- stats::rnorm(dim_reg - 1, mean = 0, sd = bet_sd)
-      last_reg_mean <- x_level * (1 - phi_x)
-      last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
-      last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
-      reg_means     <- c(reg_means, last_reg_mean)
-      regs          <- matrix(stats::rnorm(TT*dim_reg,
-                                           mean = reg_means,
-                                           sd = reg_sd),
-                              nrow = TT,
-                              ncol = dim_reg,
-                              byrow = TRUE)
-      return(regs)
-    }
-    if (intercept && !policy_dummy) {
-      reg_means <- 1
-    } else if (!intercept && policy_dummy) {
-      reg_means <- dummy_to_use[1]
-    }
-    last_reg_mean <- x_level * (1 - phi_x) - sum(reg_means * bet_reg[-dim_reg])
-    last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
-    reg_means     <- c(reg_means, last_reg_mean)
-    regs          <- matrix(stats::rnorm(TT*dim_reg,
-                                         mean = reg_means,
-                                         sd = reg_sd),
-                            nrow = TT,
-                            ncol = dim_reg,
-                            byrow = TRUE)
-    if (intercept && !policy_dummy) {
-      regs[, 1] <- 1
-      return(regs)
-    } else if (!intercept && policy_dummy) {
-      regs[, 1] <- dummy_to_use[1]
-      return(regs)
-    }
-  }
-  if (dim_reg > 2) {
-    if (intercept && !policy_dummy) {
-      reg_means <- stats::rnorm(dim_reg - 2, mean = 0, sd = bet_sd)
-      reg_means <- c(1, reg_means)
-
-      last_reg_mean <- x_level * (1 - phi_x)
-      last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
-      last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
-      reg_means     <- c(reg_means, last_reg_mean)
-      reg_len       <- length(reg_means)
-      regs          <- matrix(stats::rnorm(TT*reg_len,
-                                           mean = reg_means,
-                                           sd = reg_sd),
-                              nrow = TT,
-                              ncol = reg_len,
-                              byrow = TRUE)
-      regs[, 1] <- 1
-    } else if (!intercept && policy_dummy ) {
-      reg_means <- stats::rnorm(dim_reg - 2, mean = 0, sd = bet_sd)
-      last_reg_mean <- x_level * (1 - phi_x)
-      last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-c(1, dim_reg)])
-      last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
-      reg_means     <- c(reg_means, last_reg_mean)
-      reg_len       <- length(reg_means)
-      regs          <- matrix(stats::rnorm(TT*reg_len,
-                                           mean = reg_means,
-                                           sd = reg_sd),
-                              nrow = TT,
-                              ncol = reg_len,
-                              byrow = TRUE)
-      regs <- cbind(dummy_to_use, regs)
-    } else if (policy_dummy && intercept) {
-      reg_means <- stats::rnorm(dim_reg - 3, mean = 0, sd = bet_sd)
-      reg_means <- c(1, reg_means)
-
-      last_reg_mean <- x_level * (1 - phi_x)
-      last_reg_mean <- last_reg_mean- sum(reg_means * bet_reg[-c(2, dim_reg)])
-      last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
-      reg_means     <- c(reg_means, last_reg_mean)
-      reg_len       <- length(reg_means)
-      regs          <- matrix(stats::rnorm(TT*reg_len,
-                                           mean = reg_means,
-                                           sd = reg_sd),
-                              nrow = TT,
-                              ncol = reg_len,
-                              byrow = TRUE)
-      regs <- cbind(1, dummy_to_use, regs[, -c(1)])
-    } else {
-      reg_means <- stats::rnorm(dim_reg - 1, mean = 0, sd = bet_sd)
-      last_reg_mean <- x_level * (1 - phi_x)
-      last_reg_mean <- last_reg_mean- sum(reg_means * bet_reg[-dim_reg])
-      last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
-      reg_means     <- c(reg_means, last_reg_mean)
-      reg_len       <- length(reg_means)
-      regs          <- matrix(stats::rnorm(TT*reg_len,
-                                           mean = reg_means,
-                                           sd = reg_sd),
-                              nrow = TT,
-                              ncol = reg_len,
-                              byrow = TRUE)
-    }
-    return(regs)
+    return(dummy_to_use)
+  } else {
+    return(NULL)
   }
 }
 #' State transition

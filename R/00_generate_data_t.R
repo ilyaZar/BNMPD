@@ -57,7 +57,7 @@ generate_data_t <- function(distribution,
                             x_levels,
                             options_include,
                             modelling_reg_types) {
-  browser()
+  # browser()
   x <- matrix(nrow = TT, ncol = DD, 0)
 
   if (modelling_reg_types[1]) {
