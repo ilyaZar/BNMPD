@@ -59,19 +59,16 @@ generate_data_t <- function(distribution,
                             modelling_reg_types) {
   browser()
   x <- matrix(nrow = TT, ncol = DD, 0)
-  sig_sq_x <- par_true[["sig_sq"]]
-  phi_x    <- par_true[["phi"]]
+
   if (modelling_reg_types[1]) {
     z <- list()
-    bet_z <- par_true[["bet_z"]]
   } else {
-    bet_z <- NULL
+    z <- NULL
   }
   if (modelling_reg_types[2]) {
     u <- list()
-    bet_u <- par_true[["bet_u"]]
   } else {
-    bet_u <- NULL
+    u <- NULL
   }
 
   # reg_sd_levels <- c(0.0125, 0.1, 0.025, 0.1, 0.1, 0.1)
@@ -81,10 +78,10 @@ generate_data_t <- function(distribution,
 
   for (d in 1:DD) {
     res <- generate_x_z_u(TT = TT,
-                          phi_x = phi_x[d],
-                          sig_sq_x = sig_sq_x[d],
-                          bet_z = bet_z[[d]],
-                          bet_u = bet_u[[d]],
+                          phi_x = par_true[["phi"]][d],
+                          sig_sq_x = par_true[["sig_sq"]][d],
+                          bet_z = par_true[["bet_z"]][[d]],
+                          bet_u = par_true[["bet_u"]][[d]],
                           modelling_reg_types = modelling_reg_types,
                           x_level = x_levels[d],
                           reg_sd = reg_sd_levels[d],
@@ -101,19 +98,19 @@ generate_data_t <- function(distribution,
       u[[d]] <- res$u
     }
   }
-  out_data <- list()
-  if (modelling_reg_types[1]) {
-    z <- Reduce(cbind, z)
-    out_data$z <- z
-  } else {
-    out_data$z <- NULL
-  }
-  if (modelling_reg_types[2]) {
-    u <- Reduce(cbind, u)
-    out_data$u <- u
-  } else {
-    out_data$u <- NULL
-  }
-  out_data$x <- x
+  out_data <- get_out_data_t(x, z, u)
   return(out_data)
+}
+get_out_data_t <- function(x_states, z_regs, u_regs) {
+  tmp_out <- list()
+  if (!is.null(z_regs)) {
+    z_regs <- Reduce(cbind, z_regs)
+  }
+  tmp_out$z_regs <- z_regs
+  if (!is.null(u_regs)) {
+    u_regs <- Reduce(cbind, u_regs)
+  }
+  tmp_out$u_regs <- u_regs
+  tmp_out$x_states <- x_states
+  return(tmp_out)
 }

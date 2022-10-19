@@ -80,7 +80,6 @@ generate_data_t_n <- function(distribution,
                                                   states = FALSE,
                                                   states_each_d = FALSE),
                               seed_no = NULL) {
-  browser()
   check_distribution_args(distribution)
   opt1 <- get_opt_include(options_include, NN, DD)
 
