@@ -209,7 +209,7 @@ sample_beta_all <- function(sig_sq_x,
                             dim_bet_z,
                             prior_vcm_bet_z,
                             iter_range_NN) {
-  # browser()
+  browser()
   vcm_x_errors_rhs     <- diag(rep(sig_sq_x, times = TT - 1))
   # vmc_x_errors_rhs_inv <- solveme(vcm_x_errors_rhs)
   # vcm_bet_u_inv        <- solveme(vcm_bet_u)
@@ -330,7 +330,7 @@ sample_all_params.default <- function(pe, mm) {
 #' @export
 sample_all_params.lin_re <- function(pe, mm) {
   for (d in 1:pe$DD) {
-    # browser()
+    browser()
     id_betz_tmp <- (pe$id_bet_z[d] + 1):pe$id_bet_z[d + 1]
     id_betu_tmp <- (pe$id_bet_u[d] + 1):pe$id_bet_u[d + 1]
     id_zet_tmp  <- (pe$id_zet[d] + 1):pe$id_zet[d + 1]
@@ -338,27 +338,27 @@ sample_all_params.lin_re <- function(pe, mm) {
 
     dd_range_nn <- pe$dd_list_nn[[d]]
 
-    # pe$sig_sq_x[d, mm] <- sample_sig_sq_x(phi_x = pe$phi_x[d, mm - 1],
-    #                                       bet_z = pe$bet_z[id_betz_tmp, mm - 1],
-    #                                       bet_u = pe$bet_u[id_betu_tmp, mm - 1,,
-    #                                                        drop = FALSE],
-    #                                       X = pe$X[, d, mm - 1, ],
-    #                                       regs_z = pe$Z[2:pe$TT, id_zet_tmp, ],
-    #                                       regs_u = pe$U[2:pe$TT, id_uet_tmp, ,
-    #                                                     drop = FALSE],
-    #                                       prior_ig = c(pe$prior_ig_a,
-    #                                                    pe$prior_ig_b),
-    #                                       iter_range_NN = dd_range_nn,
-    #                                       TT = pe$TT)
-    pe$sig_sq_x[d, mm] <- c(0.21, 0.32, 0.43)[d]
+    pe$sig_sq_x[d, mm] <- sample_sig_sq_x(phi_x = pe$phi_x[d, mm - 1],
+                                          bet_z = pe$bet_z[id_betz_tmp, mm - 1],
+                                          bet_u = pe$bet_u[id_betu_tmp, mm - 1,,
+                                                           drop = FALSE],
+                                          X = pe$X[, d, mm - 1, ],
+                                          regs_z = pe$Z[2:pe$TT, id_zet_tmp, ],
+                                          regs_u = pe$U[2:pe$TT, id_uet_tmp, ,
+                                                        drop = FALSE],
+                                          prior_ig = c(pe$prior_ig_a,
+                                                       pe$prior_ig_b),
+                                          iter_range_NN = dd_range_nn,
+                                          TT = pe$TT)
+    # pe$sig_sq_x[d, mm] <- c(0.21, 0.32, 0.43)[d]
 
-    # pe$vcm_bet_u[[d]][, , mm] <- sample_vcm_bet_u(pe$bet_u[id_betu_tmp, mm, ,
-    #                                                        drop = FALSE],
-    #                                               pe$dim_bet_u[d],
-    #                                               pe$dof_vcm_bet_u[d],
-    #                                               pe$prior_vcm_bet_u2[[d]],
-    #                                               dd_range_nn)
-    pe$vcm_bet_u[[d]][, , mm] <- c(0.2771419, 0.02868432, 0.07917361)[d]
+    pe$vcm_bet_u[[d]][, , mm] <- sample_vcm_bet_u(pe$bet_u[id_betu_tmp, mm, ,
+                                                           drop = FALSE],
+                                                  pe$dim_bet_u[d],
+                                                  pe$dof_vcm_bet_u[d],
+                                                  pe$prior_vcm_bet_u2[[d]],
+                                                  dd_range_nn)
+    # pe$vcm_bet_u[[d]][, , mm] <- c(0.2771419, 0.02868432, 0.07917361)[d]
     pe$bet_u[id_betu_tmp, mm,
              dd_range_nn] <- sample_bet_u(pe$sig_sq_x[d, mm],
                                           pe$phi_x[d, mm - 1],
@@ -385,11 +385,11 @@ sample_all_params.lin_re <- function(pe, mm) {
                                     prior_vcm_bet_z = pe$prior_vcm_bet_z[[d]],
                                     iter_range_NN = dd_range_nn)
 
-    # pe$phi_x[d, mm] <- beta_sampled[1]
+    pe$phi_x[d, mm] <- beta_sampled[1]
     pe$bet_z[id_betz_tmp, mm] <- beta_sampled[-1]
 
     # pe$phi_x[d, mm] <- c(0.35, 0.55, 0.75)[d]
-    pe$phi_x[d, mm] <- c(0.0, 0.0, 0.0)[d]
+    # pe$phi_x[d, mm] <- c(0.0, 0.0, 0.0)[d]
     # pe$bet_z[id_betz_tmp, mm] <- list(c(-2.5, 3.0),
     #                                   c(2.0, -4.0),
     #                                   c(0.4, -0.7))[[d]]

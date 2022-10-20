@@ -302,8 +302,8 @@ generate_z_u_container <- function(pars, NN, TT, DD, cnt_name, reg_type) {
 get_par_true_n <- function(pars, reg_types, n) {
   pars_out <- list(sig_sq = pars[["sig_sq"]][, n],
                    phi = pars[["phi"]][, n])
-  if (reg_types[1]) pars_out$bet_z <- pars[["bet_z"]]
-  if (reg_types[2]) pars_out$bet_u <- lapply(pars[["bet_u"]],
+  if (reg_types[1]) pars_out$bet_z <- pars[["beta_z_lin"]]
+  if (reg_types[2]) pars_out$bet_u <- lapply(pars[["beta_u_lin"]],
                                              `[`, i = , j = n)
   return(pars_out)
 }

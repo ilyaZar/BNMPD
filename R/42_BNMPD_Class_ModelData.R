@@ -310,7 +310,6 @@ ModelDat <- R6::R6Class("ModelDat",
                             options(warn = 0)
                             return(init)
                           },
-                          dim_mat = NULL,
                           initialize_param_vals = function(data_inits,
                                                            par_name,
                                                            type = NULL,
@@ -400,10 +399,10 @@ ModelDat <- R6::R6Class("ModelDat",
                                                                 "phi",
                                                                 "listof-vec")
 
-                            dim_zet <- get_dim_reg(inits, "beta_z_reg")
+                            dim_zet <- get_dim_reg(inits, "beta_z_lin")
 
                             init_bet_z <- initialize_par_list(inits,
-                                                              "beta_z_reg",
+                                                              "beta_z_lin",
                                                               "listof-vec")
                             dim_u   <- get_dim_reg(inits, "beta_u_reg")
                             dim_uet <- list(dim_u, rep(NN, times = DD))

@@ -78,9 +78,9 @@ save_simulated_data <- function(pth_to_write,
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!"))
 
-  seq_regs_z <- lapply(true_params$bet_z, length)
+  seq_regs_z <- lapply(true_params$beta_z_lin, length)
   num_regs_z <- sum(unlist(seq_regs_z))
-  seq_regs_u <- lapply(true_params$bet_u, nrow)
+  seq_regs_u <- lapply(true_params$beta_u_lin, nrow)
   num_regs_u <- sum(unlist(seq_regs_u))
 
   ncol_out <- DD + num_regs_z + num_regs_u
@@ -182,4 +182,63 @@ get_file_names_simul_data <- function(fn_data,
   return(list(fn_data_set = fn_data_set,
               fn_true_val = fn_true_val,
               fn_zero_val = fn_zero_val))
+}
+#' Subset simulated data from [generate_data_t_n()]
+#'
+#' The output from [generate_data_t_n()] is a list with all data components
+#' simulated, so this function returns the same structure but subseted
+#' accordingly.
+#'
+#' @param data the data set as given by the output from [generate_data_t_n()]
+#' @param names_dim character with names of the dimension to retrieve; any of
+#'   "TT", "DD", or "NN", or a vector containing either of these elements
+#' @param id_seq for each element in \code{names_dim}, an integer or character
+#'   sequence that retrieves the subset of the dimension
+#'
+#' @return a subset of \code{data}
+#' @export
+subset_data_simul <- function(data, names_dim, id_seq) {
+  out_data_subset <-  data
+  dim_data <- dim(data$states)
+
+  dim_tk <- c(t = "TT", d = "DD", n = "NN")
+  dim_ns <- names(dim_tk)
+  dim_id <- which(dim_tk == names_dim)
+  dim_nm <- length(dim_id)
+
+  id_subset <- vector("list", 3)
+  iter_id_seq <- 1
+  for (i in 1:3) {
+    if (i %in% dim_id) {
+      id_subset[[i]] <- paste0(dim_ns[i], "_", id_seq[[iter_id_seq]])
+      iter_id_seq <- iter_id_seq + 1
+    } else {
+      id_subset[[i]] <- paste0(dim_ns[i], "_", seq_len(dim_data[[i]]))
+    }
+  }
+  out_data_subset$states <- data$states[id_subset[[1]],
+                                        id_subset[[2]],
+                                        id_subset[[3]],
+                                        drop = FALSE]
+  out_data_subset$data[[1]] <- data$data[[1]][id_subset[[1]],
+                                              id_subset[[2]],
+                                              id_subset[[3]],
+                                              drop = FALSE]
+
+  tmp_d_id <- paste0(substr(id_subset[[2]], 1, 1),
+                     substr(id_subset[[2]], 3, 3))
+  regexp   <- paste0("(", paste0(".*_", tmp_d_id, collapse = "|"), ")")
+
+  tmp_z_id <- grepl(regexp,dimnames(data$regs$z)[[2]])
+  out_data_subset$regs$z <- data$regs$z[id_subset[[1]],
+                                        tmp_z_id,
+                                        id_subset[[3]],
+                                        drop = FALSE]
+  tmp_u_id <- grepl(regexp, dimnames(data$regs$u)[[2]])
+  out_data_subset$regs$u <- data$regs$u[id_subset[[1]],
+                                        tmp_u_id,
+                                        id_subset[[3]],
+                                        drop = FALSE]
+
+  return(out_data_subset)
 }
