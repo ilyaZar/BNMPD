@@ -366,9 +366,9 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
 # for (n in 1:NN) {
 #   tmp_scale_mat_vcm_bet_u <- tmp_scale_mat_vcm_bet_u + tcrossprod(bet_u[id_betu_tmp, m, n])
 # }
-# tmp_scale_mat_vcm_bet_u <- solve(tmp_scale_mat_vcm_bet_u + prior_vcm_bet_u2[[d]])
+# tmp_scale_mat_vcm_bet_u <- solveme(tmp_scale_mat_vcm_bet_u + prior_vcm_bet_u2[[d]])
 # set.seed(42)
-# vcm_bet_u[[d]][, , m]   <- solve(stats::rWishart(1, dof_vcm_bet_u[d],
+# vcm_bet_u[[d]][, , m]   <- solveme(stats::rWishart(1, dof_vcm_bet_u[d],
 #                                                  tmp_scale_mat_vcm_bet_u)[, , 1])
 # browser()
 # set.seed(42)
@@ -377,8 +377,8 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       # #
       # #
       # vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x[d, m], times = TT - 1))
-      # vmc_x_errors_rhs_inv  <- solve(vcm_x_errors_rhs[[d]])
-      # vcm_bet_u_inv         <- solve(vcm_bet_u[[d]][, , m])
+      # vmc_x_errors_rhs_inv  <- solveme(vcm_x_errors_rhs[[d]])
+      # vcm_bet_u_inv         <- solveme(vcm_bet_u[[d]][, , m])
       # #
       # #
       # #
@@ -395,7 +395,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
       #                                           bet_reg = bet_z[id_betz_tmp, m - 1])
       #   Umat <- matrix(U[2:TT, id_uet_tmp, n, drop = FALSE], nrow = TT - 1)
       #   Omega_bet_u <- crossprod(Umat, vmc_x_errors_rhs_inv) %*% Umat + vcm_bet_u_inv
-      #   Omega_bet_u <- solve(Omega_bet_u)
+      #   Omega_bet_u <- solveme(Omega_bet_u)
       #   mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_rhs_inv) %*% x_tilde_n)
       #
       #   bet_u[id_betu_tmp, m, n] <- rnorm_fast_n1(mu = mu_bet_u, Sigma = Omega_bet_u, dim_bet_u[d])
@@ -473,8 +473,8 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
 #                                         t(bet_z6)[1:m,]),
 #                    dim_all = dim_all)
 # vcm_x_errors_rhs[[d]] <- diag(rep(sig_sq_x[d, m], times = TT - 1))
-#       vmc_x_errors_rhs_inv  <- solve(vcm_x_errors_rhs[[d]])
-#       vcm_bet_u_inv         <- solve(vcm_bet_u[[d]][, , m])
+#       vmc_x_errors_rhs_inv  <- solveme(vcm_x_errors_rhs[[d]])
+#       vcm_bet_u_inv         <- solveme(vcm_bet_u[[d]][, , m])
 #       omega_tmp_all <- 0
 #       mu_tmp_all <- 0
 #       # if (m %in% (c(2,30))) browser()
@@ -485,7 +485,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
 #         Umat <- matrix(U[2:TT, id_uet_tmp, n, drop = FALSE], nrow = TT - 1)
 #         vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]][, , m] %*% t(Umat)
 #         vcm_x_errors          <- vcm_x_errors_lhs[[d]][, , n] + vcm_x_errors_rhs[[d]]
-#         vcm_x_errors          <- solve(vcm_x_errors)
+#         vcm_x_errors          <- solveme(vcm_x_errors)
 #
 #         regs_tmp              <- regs_z[, (id_reg_z[d] + 1):id_reg_z[d + 1], n]
 #         # omega_tmp <- crossprod(regs_tmp,
@@ -497,7 +497,7 @@ pgas_d_r <- function(N, MM, NN, TT, DD,
 #         mu_tmp <- crossprod(regs_tmp, vcm_x_errors) %*% x_lhs
 #         mu_tmp_all <- mu_tmp_all + mu_tmp
 #       }
-#       Omega_bet    <- solve(omega_tmp_all + prior_vcm_bet_z[[d]])
+#       Omega_bet    <- solveme(omega_tmp_all + prior_vcm_bet_z[[d]])
 #       mu_bet       <- Omega_bet %*% mu_tmp_all
 #       #
 #       #

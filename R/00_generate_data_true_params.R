@@ -7,34 +7,43 @@
 #' data sets based on the true parameter values.
 #'
 #' @param dim_model a vector with three components: \code{NN x TT x DD}
-#' @param sig_sq a vector of length \code{DD} and strictly positive elements
-#' @param phi a vector of length \code{DD} with elements between 0 and 1
+#' @param sig_sq a vector of length \code{DD} and strictly positive elements; if
+#'    \code{NULL}, then defaults are generated (see [get_default_sig_sq])
+#' @param phi a vector of length \code{DD} with elements between 0 and 1; if
+#'    \code{NULL}, then defaults are generated (see [get_default_phi])
 #' @param beta_z_lin a list of length \code{DD} with (possibly) varying number of
-#'    regressors
+#'    regressors; if \code{NULL}, then defaults are generated (see
+#'    [get_default_beta_z_lin])
 #' @param SIMUL_Z_BETA logical; if \code{TRUE}, then standard continuous
 #'   (z-type) covariates are included
 #' @param SIMUL_U_BETA logical; if \code{TRUE}, then random effects (u-type
 #'    regressors) are simulated based on the argument \code{seed_taken}
-#' @param NUM_BETA_U integer giving the number of random effects per cross
-#'   section to simulate
+#' @param num_z_regs integer giving the number of z-type regressors (either
+#'   the same number for all multivariate components, or a vector of length
+#'   equal to the number of multivariate components)
+#' @param num_u_regs integer giving the number of random effects per cross
+#'   section to simulate (either the same number for all multivariate
+#'   components, or a vector of length equal to the number of multivariate
+#'   components; currently not varying along the cross sectional units but
+#'   extension is possible)
 #' @param seed_taken the seed used drawing random effects
 #'
 #' @return a list of four elements each giving the corresponding true parameters
 #'    container for the model size/dimension
 #' @export
 generate_true_params <- function(dim_model,
-                                 sig_sq,
-                                 phi,
-                                 beta_z_lin,
+                                 sig_sq = NULL,
+                                 phi = NULL,
+                                 beta_z_lin = NULL,
                                  SIMUL_Z_BETA,
                                  SIMUL_U_BETA,
-                                 NUM_BETA_U,
+                                 num_u_regs = NULL,
+                                 num_z_regs = NULL,
                                  seed_taken) {
-  check_args <- (missing(sig_sq) || missing(phi) || missing(beta_z_lin) ||
-                   missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
-                   missing(seed_taken) || missing(dim_model))
+  check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
+                 missing(seed_taken) || missing(dim_model))
   if (check_args) stop("Missing arguments")
-  if (SIMUL_U_BETA && missing(NUM_BETA_U)) stop("Number of REs not specified!")
+  if (SIMUL_U_BETA && missing(num_u_regs)) stop("Number of REs not specified!")
   # 1. Data settings: -------------------------------------------------------
   NN <- dim_model[1]   # Cross sectional length
   cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
@@ -46,26 +55,42 @@ generate_true_params <- function(dim_model,
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
   # 2. Set up parameter values: ---------------------------------------------
-  check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
-  if (!check_sig_sq) stop("'sig_sq' >0 and a vector of length DD ...\n")
-  true_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
-  #
-  check_phi <- all(phi >= 0) && all(phi < 1) && all(length(phi) == DD)
-  if (!check_phi) stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
-  true_phi <- matrix(phi, nrow = DD, ncol = NN)
-  #
+  if (!is.null(sig_sq)) {
+    check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
+    if (!check_sig_sq) stop("'sig_sq' >0 and a vector of length DD ...\n")
+    true_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
+  } else {
+    tmp_sig_sq  <- get_default_sig_sq(DD)
+    true_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
+  }
+  if (!is.null(phi)) {
+    check_phi <- all(phi >= 0) && all(phi < 1) && all(length(phi) == DD)
+    if (!check_phi) stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
+    true_phi <- matrix(phi, nrow = DD, ncol = NN)
+  } else {
+    tmp_phi <- get_default_phi(DD)
+    true_phi <- matrix(tmp_phi, nrow = DD, ncol = NN)
+  }
   if (SIMUL_Z_BETA) {
-    check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
-    if (!check_bet_z) stop("'beta_z_lin' not a list or not of length = DD ...\n")
-    true_bet_z <- beta_z_lin
+    if (!is.null(beta_z_lin)) {
+      check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
+      if (!check_bet_z) stop("'beta_z_lin' not a list or not of length = DD...")
+      true_bet_z <- beta_z_lin
+    } else {
+      if (is.null(num_z_regs)) stop("Num. of 'beta_z_lin' regressors required.")
+      true_bet_z <- get_default_beta_z_lin(DD, num = num_z_regs)
+    }
   } else {
     true_bet_z <- NULL
   }
-  #
   if (SIMUL_U_BETA) {
-    true_out_u <- BNMPD::generate_bet_u(DD, NN,
-                                        TRUE, rep(NUM_BETA_U,
-                                                  times = DD),
+    if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
+    num_reg_seq <- if (length(num_u_regs) == 1) {
+      num_reg_seq <- rep(num_u_regs, times = DD)
+    } else {
+      num_reg_seq <- num_u_regs
+    }
+    true_out_u <- BNMPD::generate_bet_u(DD, NN, TRUE, num_reg_seq,
                                         seed_no = seed_taken)
     true_bet_u <- true_out_u[[1]]
     true_D0u_u <- true_out_u[[2]]
@@ -79,6 +104,69 @@ generate_true_params <- function(dim_model,
                     beta_u_lin = true_bet_u,
                     vcm_u_lin = true_D0u_u)
   return(true_params = par_trues)
+}
+#' Get default values for true \code{sig_sq} parameters in simulation
+#'
+#' @param DD number of multivariate components
+#'
+#' @return a vector of length \code{DD}
+get_default_sig_sq <- function(DD) {
+  dwn_scl <- 10
+  str_scl <- 2.1 / dwn_scl
+  add_scl <- 1.1 / dwn_scl
+  return(str_scl + add_scl * 0:(DD - 1))
+}
+#' Get default values for true \code{phi} parameters in simulation
+#'
+#' @inheritParams get_default_sig_sq
+#'
+#' @return a vector of length \code{DD}
+get_default_phi <- function(DD) {
+  return(rep(c(0.35, 0.55, 0.75, 0.95), length.out = DD))
+}
+#' Get default values for true \code{beta_z_lin} parameters in simulation
+#'
+#' @inheritParams get_default_sig_sq
+#' @param num inter giving number of regressor components (if
+#'   \code{length(num) == 1}, then each code{beta_z_lin} gets the same number;
+#'   else must be a vector satisfying \code{length(num) == DD})
+#'
+#' @return a list of length \code{DD}, with number of elements = \code{num}, or,
+#'   if \code{num} is a vector of length \code{DD}, \code{num[d]}, for
+#'   \code{d=1,...,DD}
+get_default_beta_z_lin <- function(DD, num) {
+  num_reg_len <- length(num)
+  tmp1 <- c(-2.5, 3)     # tmp values large, first component negative
+  tmp2 <- c(2, -4)       # tmp values large, first component positive
+  tmp3 <- c(-0.4, 0.7)   # tmp values small, first component negative
+  tmp4 <- c(0.85, -0.35) # tmp values small, first component positive
+  if (num_reg_len == 1) {
+    # tmp1 <- tmp1 + rnorm(num, 0, c(0, 0, 1, 1)[1:num])
+    # tmp2 <- tmp2 + rnorm(num, 0, c(0, 0, 1, 1)[1:num])
+    # tmp3 <- tmp3 + rnorm(num, 0, c(0, 0, 1, 1)[1:num])
+    # tmp4 <- tmp4 + rnorm(num, 0, c(0, 0, 1, 1)[1:num])
+    tmp_neg_pos_large <- rep(tmp1, length.out = num)
+    tmp_pos_neg_large <- rep(tmp2, length.out = num)
+    tmp_neg_pos_small <- rep(tmp3, length.out = num)
+    tmp_pos_neg_small <- rep(tmp4, length.out = num)
+
+  } else if (num_reg_len == DD) {
+    # tmp1 <- tmp1 + rnorm(num, 0, c(0, 0, 1, 1)[1:num[1]])
+    # tmp2 <- tmp2 + rnorm(num, 0, c(0, 0, 1, 1)[1:num[1]])
+    # tmp3 <- tmp3 + rnorm(num, 0, c(0, 0, 1, 1)[1:num[1]])
+    # tmp4 <- tmp4 + rnorm(num, 0, c(0, 0, 1, 1)[1:num[1]])
+    tmp_neg_pos_large <- rep(tmp1, length.out = num[1])
+    tmp_pos_neg_large <- rep(tmp2, length.out = num[2])
+    tmp_neg_pos_small <- rep(tmp3, length.out = num[3])
+    tmp_pos_neg_small <- rep(tmp4, length.out = num[4])
+  } else {
+    stop("If 'num_z_regs' is a vector, it must be of length 'DD'...")
+  }
+  list_vals <- list(tmp_neg_pos_large,
+                    tmp_pos_neg_large,
+                    tmp_neg_pos_small,
+                    tmp_pos_neg_small)
+  return(rep(list_vals, length.out = DD))
 }
 #' Generates random effects per cross sectional unit (e.g. US-state)
 #'
@@ -109,6 +197,7 @@ generate_true_params <- function(dim_model,
 generate_bet_u <- function(DD, NN,
                            from_IW = FALSE,
                            num_re,
+                           prior_vcm_u_scl = 10,
                            seed_no = 42) {
   true_bet_u <- vector("list", DD)
   if (from_IW) {
@@ -117,12 +206,10 @@ generate_bet_u <- function(DD, NN,
     n0u <- num_re + 1
     D0u <- vector("list", DD)
     for (d in 1:DD) {
-      # D0u[[d]] <- solve(diag(1:num_re[d]*(10 + 1/num_re[d]),
-      #  nrow = num_re[d]))
-      D0u[[d]] <- solve(diag(1:num_re[d]*100/10*(0.01 + 1/num_re[d]),
+      prior_vcm_u_scl_adj <- prior_vcm_u_scl * (0.01 + 1/num_re[d])
+      D0u[[d]] <- solve(diag(1:num_re[d] * prior_vcm_u_scl_adj,
                              nrow = num_re[d]))
       D0u[[d]] <- solve((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
-      # D0u[[d]] <- diag(1, num_re[d])
       true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
       # browser()
       for (n in 1:NN) {
@@ -134,6 +221,7 @@ generate_bet_u <- function(DD, NN,
     return(list(true_bet_u = true_bet_u,
                 true_vcm_u = D0u))
   } else {
+    warning("Not simulating RE with VCM distributed as ~IW().")
     stopifnot(is.numeric(num_re) && (length(num_re) == 1))
     vals <- matrix(1:(num_re*DD)*c(-1, 1), nrow = num_re*DD, ncol = NN)
     for (d in 1:DD) {
@@ -278,13 +366,15 @@ get_reg_to_sublist <- function(num, d_tmp, name) {
 #' @return pure side-effect function that generates the \code{json}-file
 #' @export
 generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
+  browser()
   check_args_to_generate_yaml_json(dimension)
   DD <- dimension[["DD"]]
 
   true_params$phi    <- true_params$phi[, 1]
   true_params$sig_sq <- true_params$sig_sq[, 1]
-  list_json <- list()
+  list_json <- vector("list", DD)
   for(d in seq_len(DD)) {
+    browser()
     name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
 
     par_avail <- get_par_avail(true_params, num_d = d)
@@ -292,32 +382,34 @@ generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
 
     par_to_list <- list()
     for (j in par_avail_names) {
-      par_to_list[[j]] <- par_to_list(par_avail[[j]], j, d)
+      par_to_list[[j]] <- par_to_list(par_avail_names[[j]], j, d)
     }
     list_json[[name_list_elem]] <- par_to_list
   }
   jsonlite::write_json(list_json, pth_to_json, digits = 8, pretty = TRUE)
 }
 par_to_list <- function(par_val, par_name, num_d) {
+  browser()
   if (par_name == "phi") {
     lab <- paste0("phi_{", num_d,"}")
     var <- paste0(par_name, num_d)
     val <- par_val
   }
   if (par_name == "beta_z_lin") {
-    num_comp <- seq_len(length(par_val))
-    lab <-  paste0(paste0("beta_{z", num_comp, ","), num_d,"}^{lin}")
+    num_comp <- length(par_val)
+    lab <- paste0("beta_{z", num_comp,"}^{lin}")
     var <- paste0(paste0("Z_", num_comp), "_", num_d)
     val <- par_val
   }
   if (par_name == "beta_u_lin") {
-    if (is.matrix(par_val)) {
-      num_comp <- seq_len(nrow(par_val))
-    } else {
-      num_comp <- seq_len(length(par_val))
-    }
-    lab <- paste0(paste0("beta_{u", num_comp, ","), num_d,"}^{lin}")
+    num_comp <- length(par_val)
+    lab <- paste0("beta_{u", num_comp,"}^{lin}")
     var <- paste0(paste0("U_", num_comp), "_", num_d)
+    val <- par_val
+  }
+  if (par_name == "vcm_u_lin") {
+    lab <- paste0("beta_{u-vcm", num_d,"}")
+    var <- paste0("buVCM", num_d)
     val <- par_val
   }
   if (par_name == "sig_sq") {
@@ -325,36 +417,26 @@ par_to_list <- function(par_val, par_name, num_d) {
     var <- paste0(par_name, num_d)
     val <- par_val
   }
-  if (par_name == "vcm_u_lin") {
-    lab <- paste0("beta_{u-vcm", num_d,"}")
-    var <- paste0("buVCM", num_d)
-    val <- as.vector(par_val)
-  }
   list(lab =  lab,
        var =  var,
        val =  val)
 }
 get_par <- function(par_to_check, par_name, num_d) {
   if (par_name %in% c("sig_sq", "phi")) {
-    tmp_val <- par_to_check[num_d]
-    return(tmp_val)
-    # if(is.na(tmp_val)) return(NA_real_) or NLL; else return(tmp_val)
+    return(ifelse(is.na(par_to_check[num_d, 1]), FALSE, TRUE))
   } else if (par_name %in% c("beta_z_lin", "beta_u_lin", "vcm_u_lin")) {
-    tmp_val <- par_to_check[[num_d]]
-    # if(is.null(tmp_val)) return(tmp_val); else return(tmp_val)
-    return(tmp_val)
+    return(ifelse(is.null(par_to_check[[num_d]]), FALSE, TRUE))
   } else {
     stop("Unknown parameter name.")
   }
 }
 get_par_avail <- function(true_params, num_d) {
-  check_pars <- c("phi", "beta_z_lin", "beta_u_lin", "vcm_u_lin", "sig_sq")
+  browser()
+  check_pars <- c("phi", "beta_z_lin", "beta_u_lin", "sig_sq", "vcm_u_lin")
   id_avail  <- NULL
   par_avail <- list()
-  for (j in seq_along(check_pars)) {
-    par_avail[[j]] <- get_par(true_params[[check_pars[j]]],
-                              check_pars[j],
-                              num_d)
+  for (j in 1:seq_along(check_pars)) {
+    par_avail[[j]] <- get_par(true_params[[check_pars[j]]], check_pars[j], num_d)
     if(!is.null(par_avail[[j]])) id_avail <- c(id_avail, j)
   }
   names(par_avail) <- check_pars[id_avail]

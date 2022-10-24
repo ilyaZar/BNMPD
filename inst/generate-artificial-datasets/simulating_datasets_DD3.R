@@ -1,12 +1,14 @@
 # model_dim <-  c(NN = 2, TT = 80, DD = 3)
-# model_dim <-  c(NN = 2, TT = 4, DD = 3)
-model_dim <-  c(NN = 20, TT = 150, DD = 3)
+
+model_dim <-  c(NN = 2, TT = 4, DD = 3)
+# model_dim <-  c(NN = 20, TT = 150, DD = 3)
+
 # model_dim <-  c(NN = 1, TT = 40, DD = 3)
 # model_dim <-  c(NN = 1, TT = 40, DD = 6)
 # model_dim <-  c(NN = 4, TT = 40, DD = 6)
 SIMUL_Z_BETA <- TRUE # FALSE
 SIMUL_U_BETA <- TRUE # FALSE
-NUM_BETA_Z <- 2 #2
+NUM_BETA_Z <- 3 #2
 NUM_BETA_U <- 2 #1
 SEED_NR <- 123
 
@@ -32,17 +34,14 @@ fn_all <- BNMPD::get_file_names_simul_data(fn_data = "sim_data",
                                            num_z_regs = NUM_BETA_Z,
                                            num_u_regs = NUM_BETA_U)
 par_trues <- BNMPD::generate_true_params(dim_model = model_dim,
-                                         sig_sq = (2.1 + 1.1*0:(model_dim[["DD"]] - 1))/10,
-                                         # phi = rep(c(0.35, 0.55, 0.75, 0.95),
+                                         sig_sq = NULL, # use defaults
                                          phi = rep(c(0.0, 0.0, 0.0, 0.0),
                                                    length.out = model_dim[["DD"]]),
-                                         beta_z_lin =  rep(list(c(-2.5, 3),
-                                                                c(2, -4),
-                                                                c(0.4, -0.7)),
-                                                      times = 5)[1:model_dim[["DD"]]],
+                                         beta_z_lin = NULL,
                                          SIMUL_Z_BETA = SIMUL_Z_BETA,
                                          SIMUL_U_BETA = SIMUL_U_BETA,
-                                         NUM_BETA_U = NUM_BETA_U,
+                                         num_z_regs = NUM_BETA_Z,
+                                         num_u_regs = NUM_BETA_U,
                                          seed_taken = SEED_NR)
 
 BNMPD::generate_setup_init_json(model_dim, par_trues, "./test.json")
