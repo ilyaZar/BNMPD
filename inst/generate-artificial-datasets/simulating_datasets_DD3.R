@@ -62,7 +62,7 @@ dirichlet_levels <- BNMPD::get_dirichlet_levels(DD = model_dim[3],
 intercept_list <- list(at_z = rep(TRUE, model_dim[3]),
                        at_u = rep(TRUE, model_dim[3]))
 
-dataSim <-  BNMPD::generate_data_t_n(distribution = "dirichlet",
+dataSim <-  BNMPD::generate_data_t_n(distribution = "normal",
                                      par_true = par_trues,
                                      NN = model_dim[["NN"]],
                                      TT = model_dim[["TT"]],

@@ -328,7 +328,7 @@ get_output_data_simul <- function(cnt_data,
   dist <- attr(cnt_data, which = "distribution")
   out_data <- vector("list", 3)
   names(out_data) <- c("data", "regs", "states")
-  if (dist == "dirichlet") {
+  if (dist %in% c("dirichlet", "normal")) {
     out_data[[1]] <- list(yraw = cnt_data[["part1"]])
   } else if (dist == "multinomial" || dist == "dirichlet-mult") {
     out_data[[1]] <- list(yraw = cnt_data[["part1"]],
