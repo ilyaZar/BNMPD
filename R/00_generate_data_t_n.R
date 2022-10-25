@@ -99,8 +99,7 @@ generate_data_t_n <- function(distribution,
                               reg_types[["u-linear-regressors"]])
   for (n in 1:NN) {
     par_true_current <- get_par_true_n(par_true, reg_types, n)
-    out_data_tmp <- generate_data_t(distribution = distribution,
-                                    TT = TT, DD = DD,
+    out_data_tmp <- generate_data_t(TT = TT, DD = DD,
                                     par_true = par_true_current,
                                     x_levels = x_levels[, n],
                                     options_include = opt1[[n]],
@@ -217,7 +216,7 @@ get_opt_include <- function(includes, NN, DD) {
 check_distribution_args <- function(distribution) {
   densitities_supported <- c("multinomial", "dirichlet-mult",
                              "gen-dirichlet-mult", "gen-dirichlet",
-                             "dirichlet")
+                             "dirichlet", "normal")
   if (!(distribution %in% densitities_supported)) {
     stop(paste0("Argument to distribution must be one of: ",
                 paste0(densitities_supported, collapse = ", "), "!"))
@@ -374,6 +373,10 @@ get_measurements <- function(x_states, x_log_scale, distribution) {
   }
   if (x_log_scale) {
     x <- exp(x_states)
+  }
+  if (distribution == "normal") {
+    out_data[["part1"]] <- x_states
+    return(out_data) # early return with y=x for a Gaussian linear model spec.
   }
   for (n in 1:NN) {
     if (distribution == "dirichlet") {

@@ -5,7 +5,6 @@
 \title{Generates time series data for various models.}
 \usage{
 generate_data_t(
-  distribution,
   TT,
   DD,
   par_true,
@@ -15,9 +14,6 @@ generate_data_t(
 )
 }
 \arguments{
-\item{distribution}{specifies the distribution; "Dirichlet", "Multinomial" or
-"Dirichlet-Multinomial"}
-
 \item{TT}{number of time periods}
 
 \item{DD}{number of shares/fractions (for Dirichlet or Dirichlet-Multinomial)
@@ -67,10 +63,9 @@ a list of two: \code{[[1]]} -> regressors and \code{[[2]]} -> latent
 states
 }
 \description{
-The data is a time series, for a given cross sectional unit, from a
-Dirichlet, Multinomial or Dirichlet-Multinomial distribution. The
-multivariate draws can vary along the time dimension. This is because the
-parameter of the distributions that generate the draws are modeled as a
-function of regressors and latent states where the regressors and latent
-states can vary over time.
+The data is a time series of latent state processes of dimension DD as the
+multivariate draws can vary along the time dimension. These are used as
+parameters of the response/measurement distribution linked/modelled as a
+function of regressors (attached to the latent states) where the regressors
+and latent states can vary over time.
 }

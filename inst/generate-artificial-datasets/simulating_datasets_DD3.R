@@ -56,7 +56,8 @@ par_trues <- BNMPD::generate_true_params(dim_model = model_dim,
 
 BNMPD::generate_setup_init_json(model_dim, par_trues, "./test.json")
 
-dirichlet_levels <- BNMPD::get_dirichlet_levels(DD = model_dim[3], NN = model_dim[1])
+dirichlet_levels <- BNMPD::get_dirichlet_levels(DD = model_dim[3],
+                                                NN = model_dim[1])
 
 intercept_list <- list(at_z = rep(TRUE, model_dim[3]),
                        at_u = rep(TRUE, model_dim[3]))
