@@ -75,11 +75,13 @@ generate_x_z_u <- function(TT,
   dim_z <- length(bet_z)
   dim_u <- length(bet_u)
   # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
-  if (modelling_reg_types[1]) {
-    x_level_split_z <- ifelse(modelling_reg_types[[2]],
+  if (modelling_reg_types[["z-linear-regressors"]]) {
+    x_level_split_z <- ifelse(modelling_reg_types[["z-linear-regressors"]],
                               x_level * spl_lvl[1],
                               x_level)
-    policy_dummy_z  <- ifelse(modelling_reg_types[[2]], FALSE, policy_dummy)
+    policy_dummy_z  <- ifelse(modelling_reg_types[["u-linear-regressors"]],
+                              FALSE,
+                              policy_dummy)
     z <- generate_reg_vals(TT = TT,
                            bet_reg = bet_z,
                            dim_reg = dim_z,
@@ -93,8 +95,8 @@ generate_x_z_u <- function(TT,
   } else {
     z <- NULL
   }
-  if (modelling_reg_types[2]) {
-    x_level_split_u <- ifelse(modelling_reg_types[[1]],
+  if (modelling_reg_types[["u-linear-regressors"]]) {
+    x_level_split_u <- ifelse(modelling_reg_types[["z-linear-regressors"]],
                               x_level * spl_lvl[2],
                               x_level)
     u <- generate_reg_vals(TT = TT,

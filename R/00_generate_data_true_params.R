@@ -366,15 +366,13 @@ get_reg_to_sublist <- function(num, d_tmp, name) {
 #' @return pure side-effect function that generates the \code{json}-file
 #' @export
 generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
-  browser()
   check_args_to_generate_yaml_json(dimension)
   DD <- dimension[["DD"]]
 
   true_params$phi    <- true_params$phi[, 1]
   true_params$sig_sq <- true_params$sig_sq[, 1]
-  list_json <- vector("list", DD)
+  list_json <- list()
   for(d in seq_len(DD)) {
-    browser()
     name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
 
     par_avail <- get_par_avail(true_params, num_d = d)
@@ -382,33 +380,36 @@ generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
 
     par_to_list <- list()
     for (j in par_avail_names) {
-      par_to_list[[j]] <- par_to_list(par_avail_names[[j]], j, d)
+      par_to_list[[j]] <- par_to_list(par_avail[[j]], j, d)
     }
     list_json[[name_list_elem]] <- par_to_list
   }
   jsonlite::write_json(list_json, pth_to_json, digits = 8, pretty = TRUE)
 }
 par_to_list <- function(par_val, par_name, num_d) {
-  browser()
   if (par_name == "phi") {
     lab <- paste0("phi_{", num_d,"}")
     var <- paste0(par_name, num_d)
     val <- par_val
   }
   if (par_name == "beta_z_lin") {
-    num_comp <- length(par_val)
-    lab <- paste0("beta_{z", num_comp,"}^{lin}")
-    var <- paste0(paste0("Z_", num_comp), "_", num_d)
+    num_comp <- seq_along(par_val)
+    lab <- paste0("beta_{z", num_comp, ",", num_d, "}^{lin}")
+    var <- paste0("Z_", num_comp, "_", num_d)
     val <- par_val
   }
   if (par_name == "beta_u_lin") {
-    num_comp <- length(par_val)
-    lab <- paste0("beta_{u", num_comp,"}^{lin}")
-    var <- paste0(paste0("U_", num_comp), "_", num_d)
+    if (is.null(nrow(par_val))) {
+      num_comp <- 1
+    } else {
+      num_comp <- seq_len(nrow(par_val))
+    }
+    lab <- paste0("beta_{u", num_comp, ",", num_d, "}^{lin}")
+    var <- paste0("U_", num_comp, "_", num_d)
     val <- par_val
   }
   if (par_name == "vcm_u_lin") {
-    lab <- paste0("beta_{u-vcm", num_d,"}")
+    lab <- paste0("vcm_beta_u{", num_d,"}")
     var <- paste0("buVCM", num_d)
     val <- par_val
   }
@@ -423,21 +424,33 @@ par_to_list <- function(par_val, par_name, num_d) {
 }
 get_par <- function(par_to_check, par_name, num_d) {
   if (par_name %in% c("sig_sq", "phi")) {
-    return(ifelse(is.na(par_to_check[num_d, 1]), FALSE, TRUE))
+    # if (is.na(par_to_check[num_d])) {
+    #   return(NA)
+    # } else {
+    #   return(par_to_check[num_d])
+    # }
+    return(par_to_check[num_d])
   } else if (par_name %in% c("beta_z_lin", "beta_u_lin", "vcm_u_lin")) {
-    return(ifelse(is.null(par_to_check[[num_d]]), FALSE, TRUE))
+    # if (is.null(par_to_check[[num_d]])) {
+    #   return(NULL)
+    # } else {
+    #   return(par_to_check[[num_d]])
+    # }
+    return(par_to_check[[num_d]])
   } else {
     stop("Unknown parameter name.")
   }
 }
 get_par_avail <- function(true_params, num_d) {
-  browser()
   check_pars <- c("phi", "beta_z_lin", "beta_u_lin", "sig_sq", "vcm_u_lin")
+  num_pars <- length(check_pars)
   id_avail  <- NULL
   par_avail <- list()
-  for (j in 1:seq_along(check_pars)) {
+  for (j in seq_len(num_pars)) {
     par_avail[[j]] <- get_par(true_params[[check_pars[j]]], check_pars[j], num_d)
-    if(!is.null(par_avail[[j]])) id_avail <- c(id_avail, j)
+    if(isTRUE(!is.null(par_avail[[j]]) && !any(is.na(par_avail[[j]])))) {
+      id_avail <- c(id_avail, j)
+    }
   }
   names(par_avail) <- check_pars[id_avail]
   return(par_avail)

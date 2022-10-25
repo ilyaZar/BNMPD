@@ -1,7 +1,17 @@
-# model_dim <-  c(NN = 2, TT = 80, DD = 3)
-
 model_dim <-  c(NN = 2, TT = 4, DD = 3)
-# model_dim <-  c(NN = 20, TT = 150, DD = 3)
+
+# model_dim <-  c(NN = 2, TT = 4, DD = 1)
+#
+# model_dim <-  c(NN = 1, TT = 4, DD = 3)
+# model_dim <-  c(NN = 1, TT = 4, DD = 1)
+#
+# model_dim <-  c(NN = 2, TT = 1, DD = 3)
+# model_dim <-  c(NN = 2, TT = 1, DD = 1)
+#
+# model_dim <-  c(NN = 1, TT = 1, DD = 1)
+
+# model_dim <-  c(NN = 2, TT = 80, DD = 3)
+# model_dim <-  c(NN = 20, TT = 150, DD = 3
 
 # model_dim <-  c(NN = 1, TT = 40, DD = 3)
 # model_dim <-  c(NN = 1, TT = 40, DD = 6)
@@ -45,51 +55,6 @@ par_trues <- BNMPD::generate_true_params(dim_model = model_dim,
                                          seed_taken = SEED_NR)
 
 BNMPD::generate_setup_init_json(model_dim, par_trues, "./test.json")
-#
-#
-# testjs1 <- jsonlite::fromJSON("./test.json")
-# testjs2 <- jsonlite::fromJSON("./test2.json")
-# all.equal(testjs1, testjs2)
-#
-# par_to_list <- function(name, lab, var, val) {
-#   # out <- list()
-#   list(lab =  lab,
-#         var =  var,
-#         val =  val)
-# }
-#
-#
-# test_list_json <- par_to_list(name = NULL,
-#                               lab =  "phi_{1}",
-#                               var =  "phi1",
-#                               val =  0.0)
-#
-# test_list_json <- list(phi = par_to_list(name = NULL,
-#                                    lab =  "phi_{1}",
-#                                    var =  "phi1",
-#                                    val =  0.0),
-#                        beta_z_lin = par_to_list(name = NULL,
-#                                                 lab =  c("beta_{z1}^{lin}",
-#                                                          "beta_{z2}^{lin}"),
-#                                                 var =  c("Z_1_1",
-#                                                          "Z_2_1"),
-#                                                 val =  c(-2.5, 3.0)))
-#
-# test_list_json <- list(phi = par_to_list(name = NULL,
-#                                          lab =  "phi_{1}",
-#                                          var =  "phi1",
-#                                          val =  0.0),
-#                        beta_z_lin = par_to_list(name = NULL,
-#                                                 lab =  c("beta_{z1}^{lin}",
-#                                                          "beta_{z2}^{lin}"),
-#                                                 var =  c("Z_1_1",
-#                                                          "Z_2_1"),
-#                                                 val =  par_trues$bet_u[[1]]))
-# jsonlite::write_json(test_list_json, "./test.json", digits = 7, pretty = TRUE)
-
-
-
-
 
 dirichlet_levels <- BNMPD::get_dirichlet_levels(DD = model_dim[3], NN = model_dim[1])
 

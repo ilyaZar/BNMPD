@@ -56,8 +56,8 @@ reverts back to zeros for the last third of the time}
 indicates, if \code{TRUE}, that the corresponding regressor type is to be
 generated in the following order:
 \itemize{
-\item{modelling_reg_types, component 1: }{includes z regressors}
-\item{modelling_reg_types, component 2: }{includes u regressors}
+\item{modelling_reg_types, component 1: }{includes z (linear) regressors}
+\item{modelling_reg_types, component 2: }{includes u (linear) regressors}
 \item{modelling_reg_types, component 3: }{includes z spline regressors}
 \item{modelling_reg_types, component 4: }{includes u spline regressors}
 }}

@@ -43,8 +43,8 @@
 #'   indicates, if \code{TRUE}, that the corresponding regressor type is to be
 #'   generated in the following order:
 #'   \itemize{
-#'     \item{modelling_reg_types, component 1: }{includes z regressors}
-#'     \item{modelling_reg_types, component 2: }{includes u regressors}
+#'     \item{modelling_reg_types, component 1: }{includes z (linear) regressors}
+#'     \item{modelling_reg_types, component 2: }{includes u (linear) regressors}
 #'     \item{modelling_reg_types, component 3: }{includes z spline regressors}
 #'     \item{modelling_reg_types, component 4: }{includes u spline regressors}
 #'   }
@@ -60,12 +60,12 @@ generate_data_t <- function(distribution,
   # browser()
   x <- matrix(nrow = TT, ncol = DD, 0)
 
-  if (modelling_reg_types[1]) {
+  if (modelling_reg_types[["z-linear-regressors"]]) {
     z <- list()
   } else {
     z <- NULL
   }
-  if (modelling_reg_types[2]) {
+  if (modelling_reg_types[["u-linear-regressors"]]) {
     u <- list()
   } else {
     u <- NULL
@@ -80,8 +80,8 @@ generate_data_t <- function(distribution,
     res <- generate_x_z_u(TT = TT,
                           phi_x = par_true[["phi"]][d],
                           sig_sq_x = par_true[["sig_sq"]][d],
-                          bet_z = par_true[["bet_z"]][[d]],
-                          bet_u = par_true[["bet_u"]][[d]],
+                          bet_z = par_true[["beta_z_lin"]][[d]],
+                          bet_u = par_true[["beta_u_lin"]][[d]],
                           modelling_reg_types = modelling_reg_types,
                           x_level = x_levels[d],
                           reg_sd = reg_sd_levels[d],
@@ -91,10 +91,10 @@ generate_data_t <- function(distribution,
                           policy_dummy   = options_include$policy[d],
                           zero_pattern   = options_include$include_zeros[d])
     x[, d] <- res$x
-    if (modelling_reg_types[1]) {
+    if (modelling_reg_types[["z-linear-regressors"]]) {
       z[[d]] <- res$z
     }
-    if (modelling_reg_types[2]) {
+    if (modelling_reg_types[["u-linear-regressors"]]) {
       u[[d]] <- res$u
     }
   }

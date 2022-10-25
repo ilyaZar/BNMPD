@@ -89,14 +89,14 @@ generate_data_t_n <- function(distribution,
   reg_types <- get_modelling_reg_types(names(par_true))
 
   x <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
-  z <- generate_z_u_container(par_true[["bet_z"]],
+  z <- generate_z_u_container(par_true[["beta_z_lin"]],
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "z",
-                              reg_types[1])
-  u <- generate_z_u_container(par_true[["bet_u"]],
+                              reg_types[["z-linear-regressors"]])
+  u <- generate_z_u_container(par_true[["beta_u_lin"]],
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "u",
-                              reg_types[2])
+                              reg_types[["u-linear-regressors"]])
   for (n in 1:NN) {
     par_true_current <- get_par_true_n(par_true, reg_types, n)
     out_data_tmp <- generate_data_t(distribution = distribution,
@@ -105,10 +105,10 @@ generate_data_t_n <- function(distribution,
                                     x_levels = x_levels[, n],
                                     options_include = opt1[[n]],
                                     modelling_reg_types = reg_types)
-    if (reg_types[1]) {
+    if (reg_types[["z-linear-regressors"]]) {
       z[, , n] <- out_data_tmp$z
     }
-    if (reg_types[2]) {
+    if (reg_types[["u-linear-regressors"]]) {
       u[, , n] <- out_data_tmp$u
     }
     x[, , n] <- out_data_tmp$x
@@ -140,10 +140,11 @@ generate_data_t_n <- function(distribution,
 #'   of return vector set to these variants)
 #'
 get_modelling_reg_types <- function(get_modelling_reg_types) {
-  correct_names <- c("bet_z", "bet_u", "bet_z_spl", "bet_u_spl")
+  correct_names <- c("beta_z_lin", "beta_u_lin",
+                     "beta_z_spl", "beta_u_spl")
   if (length(intersect(get_modelling_reg_types, correct_names)) == 0) {
     stop(paste0("The 'par_true' argument must have correct names: choose from",
-                "'bet_z', 'bet_u', 'bet_z_spl' or 'bet_u_spl'! "))
+                "'beta_z_lin', 'beta_u_lin', 'beta_z_spl' or 'beta_u_spl'! "))
   }
   out <- vector("logical", 4)
   out[1] <- correct_names[1] %in% get_modelling_reg_types
@@ -151,8 +152,8 @@ get_modelling_reg_types <- function(get_modelling_reg_types) {
   out[3] <- correct_names[3] %in% get_modelling_reg_types
   out[4] <- correct_names[5] %in% get_modelling_reg_types
 
-  names(out) <- c("z-regressors",
-                  "u-regressors",
+  names(out) <- c("z-linear-regressors",
+                  "u-linear-regressors",
                   "z-spline-regressors",
                   "u-spline-regressors")
   return(out)
@@ -302,9 +303,12 @@ generate_z_u_container <- function(pars, NN, TT, DD, cnt_name, reg_type) {
 get_par_true_n <- function(pars, reg_types, n) {
   pars_out <- list(sig_sq = pars[["sig_sq"]][, n],
                    phi = pars[["phi"]][, n])
-  if (reg_types[1]) pars_out$bet_z <- pars[["beta_z_lin"]]
-  if (reg_types[2]) pars_out$bet_u <- lapply(pars[["beta_u_lin"]],
-                                             `[`, i = , j = n)
+  if (reg_types[["z-linear-regressors"]]) {
+    pars_out$beta_z_lin <- pars[["beta_z_lin"]]
+  }
+  if (reg_types[["u-linear-regressors"]]) {
+    pars_out$beta_u_lin <- lapply(pars[["beta_u_lin"]], `[`, i = , j = n)
+  }
   return(pars_out)
 }
 #' Produce output container of the main simulation function
@@ -333,12 +337,12 @@ get_output_data_simul <- function(cnt_data,
   } else {
     stop("Unknown distribution attribute of data.")
   }
-  if (reg_types[1]) {
+  if (reg_types[["z-linear-regressors"]]) {
     out_data[[2]]$z <- cnt_z
   } else{
     out_data[[2]]$z <- NULL
   }
-  if (reg_types[2]) {
+  if (reg_types[["u-linear-regressors"]]) {
     out_data[[2]]$u <- cnt_u
   } else {
     out_data[[2]]$u <- NULL
