@@ -6,8 +6,6 @@
 #'   values (not the \code{num_counts} if a compound distributions i.e. just the
 #'   Dirichlet shares e.g.)
 #' @param x a numeric matrix of dimension \code{TTxDD}; simulated latent states
-#' @param x_log_scale logical; if \code{TRUE}, simulation of latent state
-#'   process is was performed on the log-scale
 #' @param x_levels a numeric vector of length \code{DD} giving the target
 #' Dirichlet levels i.e. latent state levels (stationary mean of the latent
 #' state process etc.)
@@ -24,7 +22,6 @@
 #' @return invisible return; pure side effects function that plots the data
 plot_data_per_n <- function(DD,
                             yraw, x,
-                            x_log_scale,
                             x_levels,
                             plot_measurements,
                             plot_states,
@@ -34,11 +31,16 @@ plot_data_per_n <- function(DD,
   if (plot_measurements && !plot_states) graphics::par(mfrow = c(2, 1))
   if (!plot_measurements && plot_states) graphics::par(mfrow = c(2, 1))
   if (plot_measurements) {
+    col_names <- c("(black)", "(red)", "(green)", "(blue)", "(turq.)", "(pink)")
     names_title <- "Measurement components"
     names_ylab  <- "measurements: y_t's"
-    names_xlab <- paste0("ya1_t (black),", " ya2_t (red),",
-                         " ya3_t (green),", " ya4_t (blue)",
-                         " ya5_t (turq.),", " and", " ya6_t (pink)")
+    names_xlab  <- paste0("y_", seq_len(DD), "_t")
+    names_xlab  <- paste0(names_xlab, col_names[1:DD])
+
+
+    # 1_t ,", " ya2_t ,",
+    #                      " ya3_t,", " ya4_t ",
+    #                      " ya5_t ,", " and", " ya6_t (")
     all_measurms <- yraw
     graphics::matplot(all_measurms,
                       type = "l",
@@ -51,20 +53,17 @@ plot_data_per_n <- function(DD,
                       type = "l",
                       lty = 1,
                       lwd = 1,
-                      main = paste0(names_title, " (fractions; N = ", cs, ")"),
+                      main = paste0(names_title, " (normalized; N = ", cs, ")"),
                       ylab = names_ylab,
                       xlab = names_xlab)
   }
   if (plot_states || plot_states_each_d) {
     names_title <- "True States"
     names_ylab  <- "states: xt's"
-    names_xlab  <- paste0("x1_t (black),", "x2_t (red),",
-                          "x3_t (green),", "x4_t (blue)",
-                          "x5_t (turq.)", "and", "x6_t (pink)")
+    names_xlab  <- paste0("x_", seq_len(DD), "_t")
+    names_xlab  <- paste0(names_xlab, col_names[1:DD])
+
     all_states <- x
-    if (x_log_scale) {
-      all_states <- log(all_states)
-    }
   }
   if (plot_states) {
     graphics::matplot(all_states,
@@ -78,7 +77,7 @@ plot_data_per_n <- function(DD,
                       type = "l",
                       lty = 2,
                       lwd = 1,
-                      main = paste0(names_title, " (fractions; N = ", cs, ")"),
+                      main = paste0(names_title, " (normalized; N = ", cs, ")"),
                       ylab = names_ylab,
                       xlab = names_xlab)
   }

@@ -17,11 +17,17 @@
 #' @param bet_u_spl regressor coefficients/parameters of latent state process;
 #'   random effects that refer to each individual cross sectional unit and are
 #'   non-linear i.e. splines
-#' @param x_level target levels i.e. stationary mean/level of latent states (
-#'   ensures that states at each multivariate component of the response
-#'   fluctuates around that particular level too)
-#' @param reg_sd standard deviations of the regressor values (tunable)
-#' @param bet_sd standard deviations of random coefficient value draws (tunable)
+#' @param options_reg_simul a list of 3 elements giving the options for
+#'   regressor simulation:
+#'   \itemize{
+#'   \item{\code{x_level:}}{target levels i.e. stationary mean/level of latent
+#'   states (ensures that states at each multivariate component of the response
+#'   fluctuates around that particular level too)}
+#'   \item{\code{reg_var_within:}}{variance of the regressor values within each
+#'   component (tunable)}
+#'   \item{\code{reg_var_among:}}{variance of random coefficient value draws
+#'   (tunable)}
+#'   }
 #' @param modelling_reg_types named logical vector of dimension 4 where each
 #'   component indicates, if \code{TRUE}, that the corresponding regressor type
 #'   is to be generated in the following order:
@@ -61,16 +67,16 @@ generate_x_z_u <- function(TT,
                            bet_u = NULL,
                            bet_z_spl = NULL,
                            bet_u_spl = NULL,
-                           x_level,
-                           reg_sd,
-                           bet_sd,
+                           options_reg_simul,
                            modelling_reg_types,
                            intercept_z,
                            intercept_u,
                            policy_dummy = FALSE,
                            zero_pattern = NULL,
                            drift = FALSE) {
-  # browser()
+  x_level <- options_reg_simul[["x_level"]]
+  x_sd_within  <- sqrt(options_reg_simul[["reg_var_within"]])
+  x_sd_among   <- sqrt(options_reg_simul[["reg_var_among"]])
   spl_lvl <- c(0.7, 0.3)
   dim_z <- length(bet_z)
   dim_u <- length(bet_u)
@@ -87,8 +93,8 @@ generate_x_z_u <- function(TT,
                            dim_reg = dim_z,
                            phi_x = phi_x,
                            x_level = x_level_split_z,
-                           reg_sd = reg_sd,
-                           bet_sd = bet_sd,
+                           x_sd_within = x_sd_within,
+                           x_sd_among = x_sd_among,
                            intercept = intercept_z,
                            policy_dummy = policy_dummy_z,
                            zero_pattern = NULL)
@@ -104,8 +110,8 @@ generate_x_z_u <- function(TT,
                            dim_reg = dim_u,
                            phi_x = phi_x,
                            x_level = x_level_split_u,
-                           reg_sd = reg_sd,
-                           bet_sd = bet_sd,
+                           x_sd_within = x_sd_within,
+                           x_sd_among = x_sd_among,
                            intercept = intercept_u,
                            policy_dummy = policy_dummy,
                            zero_pattern = NULL)
@@ -114,8 +120,8 @@ generate_x_z_u <- function(TT,
   }
   regs_all <- cbind(z, u)
   # END OF REGRESSOR SIMULATION: --------------------------------------------
-  # browser()
   out <- list()
+  # browser()
   out$x <- simulate_x(x_level, regs = regs_all,
                       phi_x, sig_sq_x,
                       bet_reg = c(bet_z, bet_u),
@@ -157,9 +163,10 @@ simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT) {
 #'   \code{bet_reg})
 #' @param phi_x autoregressive parameter
 #' @param x_level target level of the states to simulate
-#' @param reg_sd standard deviations for the regressor values
-#' @param reg_sd standard deviations for the regressor values
-#' @param bet_sd standard deviations for random coefficient value draws
+#' @param x_sd_within standard deviations for the regressor value simulation
+#'   within each time series
+#' @param x_sd_among standard deviations for the regressor value simulation
+#'   among regressor components (for a given cross section)
 #' @param intercept logical; if \code{TRUE}, then an intercept is included
 #' @param policy_dummy logical; if \code{TRUE}, then a policy dummy is included
 #' @param zero_pattern double with possible values 1, 2, 3 or 4:
@@ -178,24 +185,32 @@ simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT) {
 #'
 #' @return a matrix of regressors of dimension \code{TT} \eqn{x} \code{dim_bet}
 generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
-                              x_level, reg_sd, bet_sd,
-                              intercept,
-                              policy_dummy,
-                              zero_pattern = NULL) {
-  # browser()
+                              x_level, x_sd_within, x_sd_among,
+                              intercept, policy_dummy, zero_pattern = NULL) {
   dummy_to_use <- get_pattern_policy_zeros(policy_dummy, zero_pattern, TT)
 
-  reg_means <- stats::rnorm(max(dim_reg - 2, 0), mean = 0, sd = bet_sd)
+  reg_means <- stats::rnorm(max(dim_reg - 3, 0), mean = 0, sd = x_sd_among)
   if (!intercept && !policy_dummy) {
-    reg_means <- c(stats::rnorm(dim_reg - 1, mean = 0, sd = bet_sd),
+    num_add_sims <- max(min(2, dim_reg - 1), 0)
+    reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
                    reg_means)
   } else if (intercept && !policy_dummy) {
-    reg_means <- c(1, reg_means)
+    num_add_sims <- max(min(2, dim_reg - 2), 0)
+    reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
+                   reg_means)
+    if (dim_reg > 1) reg_means <- c(1, reg_means); message("Appr. simul. type1")
   } else if (!intercept && policy_dummy) {
-    reg_means <- c(0, reg_means)
+    num_add_sims <- max(min(2, dim_reg - 2), 0)
+    reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
+                   reg_means)
+    if (dim_reg > 1) reg_means <- c(0, reg_means); message("Appr. simul. type2")
   } else if (intercept && policy_dummy) {
-    if (dim_reg < 3) stop("Can't simulate intercept and policy_dummy for dim<3!")
-    reg_means <- c(1, 0, reg_means[-1])
+    if (dim_reg < 2) stop("Can't simulate intercept&policy_dummy for dim < 2!")
+    num_add_sims <- max(min(2, dim_reg - 3), 0)
+    reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
+                   reg_means)
+    if (dim_reg > 2) reg_means <- c(1, 0, reg_means); message("Approx. type3")
+    if (dim_reg > 1) reg_means <- c(1, reg_means); message("Approx. type4")
   }
   last_reg_mean <- x_level * (1 - phi_x)
   last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
@@ -205,7 +220,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
   reg_len       <- length(reg_means)
   regs          <- matrix(stats::rnorm(TT*reg_len,
                                        mean = reg_means,
-                                       sd = reg_sd),
+                                       sd = x_sd_within),
                           nrow = TT,
                           ncol = reg_len,
                           byrow = TRUE)

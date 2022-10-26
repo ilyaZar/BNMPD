@@ -207,9 +207,9 @@ generate_bet_u <- function(DD, NN,
     D0u <- vector("list", DD)
     for (d in 1:DD) {
       prior_vcm_u_scl_adj <- prior_vcm_u_scl * (0.01 + 1/num_re[d])
-      D0u[[d]] <- solve(diag(1:num_re[d] * prior_vcm_u_scl_adj,
-                             nrow = num_re[d]))
-      D0u[[d]] <- solve((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
+      D0u[[d]] <- solveme(diag(1:num_re[d] * prior_vcm_u_scl_adj,
+                               nrow = num_re[d]))
+      D0u[[d]] <- solveme((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
       true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
       # browser()
       for (n in 1:NN) {

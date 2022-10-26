@@ -80,19 +80,21 @@ generate_data_t_n <- function(distribution,
                                                   states = FALSE,
                                                   states_each_d = FALSE),
                               seed_no = NULL) {
+  # browser()
   check_distribution_args(distribution)
   opt1 <- get_opt_include(options_include, NN, DD)
 
   if (x_log_scale) x_levels <- log(x_levels)
   if (!is.null(seed_no)) set.seed(seed_no)
 
-  reg_types <- get_modelling_reg_types(names(par_true))
+  reg_types <- get_modelling_reg_types(par_true)
 
   x <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
   z <- generate_z_u_container(par_true[["beta_z_lin"]],
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "z",
                               reg_types[["z-linear-regressors"]])
+  # browser()
   u <- generate_z_u_container(par_true[["beta_u_lin"]],
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "u",
@@ -110,13 +112,14 @@ generate_data_t_n <- function(distribution,
     if (reg_types[["u-linear-regressors"]]) {
       u[, , n] <- out_data_tmp$u
     }
-    x[, , n] <- out_data_tmp$x
+    x[, , n] <- out_data_tmp$x_states
   }
   y <- get_measurements(x, x_log_scale, distribution)
   if (any(sapply(options_plot, isTRUE))) {
     for (n in 1:NN) {
-      plot_data_per_n(DD, yraw = y[["part1"]][, , n], x = x[, , n],
-                      x_log_scale = x_log_scale,
+      plot_data_per_n(DD,
+                      yraw = y[["part1"]][, , n, drop = FALSE],
+                      x = x[, , n, drop = FALSE],
                       x_levels = x_levels[, n],
                       plot_measurements = options_plot$plt_y,
                       plot_states       = options_plot$plt_x,
@@ -127,29 +130,29 @@ generate_data_t_n <- function(distribution,
   out_data <- get_output_data_simul(y, x, z, u, reg_types)
   return(out_data)
 }
-#' Deduces from vector of parameter names, which type of modelling to employ
+#' Deduces from vector of parameter names which type of modelling to employ
 #'
-#' @param get_modelling_reg_types a named list of parameter names; the list
-#'   of true parameter values is taken usually taken but empty named list
-#'   elements are also possible
+#' @param pars a character vector of parameter names
 #'
-#' @return a named, logical vector of dimension 4 given \code{TRUE} or
-#'   \code{FALSE} if (in this order) modeling of z-regressors, u-regressors, z
-#'   spline regressors or u spline regressors should be performed (with names
-#'   of return vector set to these variants)
+#' @return a named, logical vector of dimension 4 giving \code{TRUE} or
+#'   \code{FALSE} if (in this order) modeling of z-regressors, u-regressors
+#'   (both linear type), or z spline regressors or u spline regressors should be
+#'   performed (with names of return vector set to these variants)
 #'
-get_modelling_reg_types <- function(get_modelling_reg_types) {
+get_modelling_reg_types <- function(pars) {
   correct_names <- c("beta_z_lin", "beta_u_lin",
                      "beta_z_spl", "beta_u_spl")
-  if (length(intersect(get_modelling_reg_types, correct_names)) == 0) {
+  par_names <- names(pars)[sapply(pars, function(x) {!is.null(x)})]
+  par_names_taken <- setdiff(par_names, c("sig_sq", "phi", "vcm_u_lin"))
+  if (!all(par_names_taken %in% correct_names)) {
     stop(paste0("The 'par_true' argument must have correct names: choose from",
                 "'beta_z_lin', 'beta_u_lin', 'beta_z_spl' or 'beta_u_spl'! "))
   }
   out <- vector("logical", 4)
-  out[1] <- correct_names[1] %in% get_modelling_reg_types
-  out[2] <- correct_names[2] %in% get_modelling_reg_types
-  out[3] <- correct_names[3] %in% get_modelling_reg_types
-  out[4] <- correct_names[5] %in% get_modelling_reg_types
+  out[1] <- correct_names[1] %in% par_names_taken
+  out[2] <- correct_names[2] %in% par_names_taken
+  out[3] <- correct_names[3] %in% par_names_taken
+  out[4] <- correct_names[5] %in% par_names_taken
 
   names(out) <- c("z-linear-regressors",
                   "u-linear-regressors",

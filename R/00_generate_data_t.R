@@ -67,21 +67,18 @@ generate_data_t <- function(TT, DD,
     u <- NULL
   }
 
-  # reg_sd_levels <- c(0.0125, 0.1, 0.025, 0.1, 0.1, 0.1)
-  # reg_sd_levels <- rep(0.5, times = DD)
-  reg_sd_levels <- rep(0.05, times = DD)
-  bet_sd_level  <- 1
-
   for (d in 1:DD) {
+    opt_taken <- list(x_level = x_levels[d],
+                      # reg_var_within = 0.0025,
+                      reg_var_within = 2.0025,
+                      reg_var_among = 1)
     res <- generate_x_z_u(TT = TT,
                           phi_x = par_true[["phi"]][d],
                           sig_sq_x = par_true[["sig_sq"]][d],
                           bet_z = par_true[["beta_z_lin"]][[d]],
                           bet_u = par_true[["beta_u_lin"]][[d]],
                           modelling_reg_types = modelling_reg_types,
-                          x_level = x_levels[d],
-                          reg_sd = reg_sd_levels[d],
-                          bet_sd = bet_sd_level,
+                          options_reg_simul = opt_taken,
                           intercept_z = options_include$intercept$at_z[d],
                           intercept_u = options_include$intercept$at_u[d],
                           policy_dummy   = options_include$policy[d],
