@@ -37,11 +37,7 @@ plot_data_per_n <- function(DD,
     names_xlab  <- paste0("y_", seq_len(DD), "_t")
     names_xlab  <- paste0(names_xlab, col_names[1:DD])
 
-
-    # 1_t ,", " ya2_t ,",
-    #                      " ya3_t,", " ya4_t ",
-    #                      " ya5_t ,", " and", " ya6_t (")
-    all_measurms <- yraw
+    all_measurms <- matrix(yraw, ncol = DD)
     graphics::matplot(all_measurms,
                       type = "l",
                       lty = 1,
@@ -63,7 +59,7 @@ plot_data_per_n <- function(DD,
     names_xlab  <- paste0("x_", seq_len(DD), "_t")
     names_xlab  <- paste0(names_xlab, col_names[1:DD])
 
-    all_states <- x
+    all_states <- matrix(x, ncol = DD)
   }
   if (plot_states) {
     graphics::matplot(all_states,
