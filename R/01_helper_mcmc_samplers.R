@@ -470,15 +470,27 @@ sample_all_params.re <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
-sample_all_params.lin_spl <- function(pe, mm) {
+sample_all_params.lin_splZ <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
-sample_all_params.spl_re <- function(pe, mm) {
+sample_all_params.re_splZ <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
-sample_all_params.lin_spl_re <- function(pe, mm) {
+sample_all_params.lin_splU <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
+}
+sample_all_params.re_splU <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
+}
+sample_all_params.lin_re_splZ <- function(pe, mm) {
+  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
+  stop(msg)
+}
+sample_all_params.lin_re_splU <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }

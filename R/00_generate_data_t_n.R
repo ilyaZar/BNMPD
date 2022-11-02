@@ -339,6 +339,7 @@ get_output_data_simul <- function(cnt_data,
   } else {
     stop("Unknown distribution attribute of data.")
   }
+  attr(out_data[[1]], which = "model_type_obs") <- toupper(dist)
   if (reg_types[["z-linear-regressors"]]) {
     out_data[[2]]$z <- cnt_z
   } else{
@@ -350,6 +351,10 @@ get_output_data_simul <- function(cnt_data,
     out_data[[2]]$u <- NULL
   }
   out_data[[3]] <- cnt_states
+
+  lat_type_names <- c("lin", "re", "splZ", "splU")
+  lat_type_names <- paste0(lat_type_names[reg_types], collapse = "_")
+  attr(out_data[[3]], which = "model_type_lat") <- lat_type_names
   return(out_data)
 }
 get_measurements <- function(x_states, x_log_scale, distribution) {
@@ -406,11 +411,12 @@ get_measurements <- function(x_states, x_log_scale, distribution) {
       out_data[["part2"]][, n]   <- num_counts
     }
   }
+  browser()
   return(out_data)
 }
-#' Generates random samples from dirichlet distribution
+#' Generates random samples from Dirichlet distribution
 #'
-#' Generates random samples from dirichlet distribution; the dimension of the
+#' Generates random samples from Dirichlet distribution; the dimension of the
 #' Dirichlet distribution (i.e. the number of shares or fractions) is taken as
 #' the number of columns in the alpha-matrix; the number of samples are taken as
 #' the number of rows of the alpha matrix; hence, each row of \code{alpha}
@@ -419,7 +425,7 @@ get_measurements <- function(x_states, x_log_scale, distribution) {
 #'
 #' @param alpha a matrix of alpha parameters of a Dirichlet distribution
 #'
-#' @return a nxD dimensional matrix of Dirichlet draws
+#' @return a \code{n x D} dimensional matrix of Dirichlet draws
 my_rdirichlet <- function(alpha) {
 
   n <- nrow(alpha)

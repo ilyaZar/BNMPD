@@ -232,9 +232,9 @@ generate_bet_u <- function(DD, NN,
 }
 #' Write a yaml config file for a BNMPD-model class
 #'
-#' @param model_type a named or unnamed vector of two character specifying the
+#' @param model_type a named or unnamed vector of two characters specifying the
 #'   model type observations (e.g. 'DIRICHLET") and the model type latent states
-#'   i.e. "lin_reg" giving the specification of linear and random effect
+#'   i.e. "lin_re" giving the specification of linear and random effect
 #'   covariates in the latent state process
 #' @param dimensions a named numeric vector of three components: 'NN', 'TT',
 #'   'DD'
@@ -267,7 +267,7 @@ generate_yaml_model_defintion <- function(model_type,
                    time_series_used = time_series_to_list(dimensions))
   for (d in seq_len(dimensions[["DD"]])) {
     # browser()
-    name_list_elem <- paste0("D", ifelse(d<10, paste0(0, d), d))
+    name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
     out_list[[name_list_elem]] <- DD_to_list(regressor_specs, d)
   }
 

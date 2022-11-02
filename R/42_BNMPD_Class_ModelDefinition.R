@@ -154,7 +154,8 @@ ModelDef <- R6::R6Class("ModelDef",
                                                         private$.num_ts)
                           },
                           prs = function(to_parse, dim) {
-                            if (length(to_parse) != dim) {
+                            if (length(to_parse) != dim || grepl("paste",
+                                                                 to_parse)) {
                               msg <- paste0("Dimension error when parsing ... ",
                                             "check expression to parse or dim ",
                                             "in: model/model-definition/",

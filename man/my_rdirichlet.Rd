@@ -2,7 +2,7 @@
 % Please edit documentation in R/00_generate_data_t_n.R
 \name{my_rdirichlet}
 \alias{my_rdirichlet}
-\title{Generates random samples from dirichlet distribution}
+\title{Generates random samples from Dirichlet distribution}
 \usage{
 my_rdirichlet(alpha)
 }
@@ -10,10 +10,10 @@ my_rdirichlet(alpha)
 \item{alpha}{a matrix of alpha parameters of a Dirichlet distribution}
 }
 \value{
-a nxD dimensional matrix of Dirichlet draws
+a \code{n x D} dimensional matrix of Dirichlet draws
 }
 \description{
-Generates random samples from dirichlet distribution; the dimension of the
+Generates random samples from Dirichlet distribution; the dimension of the
 Dirichlet distribution (i.e. the number of shares or fractions) is taken as
 the number of columns in the alpha-matrix; the number of samples are taken as
 the number of rows of the alpha matrix; hence, each row of \code{alpha}

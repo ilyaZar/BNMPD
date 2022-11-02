@@ -404,15 +404,15 @@ ModelDat <- R6::R6Class("ModelDat",
                             init_bet_z <- initialize_par_list(inits,
                                                               "beta_z_lin",
                                                               "listof-vec")
-                            dim_u   <- get_dim_reg(inits, "beta_u_reg")
+                            dim_u   <- get_dim_reg(inits, "beta_u_lin")
                             dim_uet <- list(dim_u, rep(NN, times = DD))
                             init_bet_u <- initialize_par_list(inits,
-                                                              "beta_u_reg",
+                                                              "beta_u_lin",
                                                               "listof-mat",
                                                               dim_uet)
                             dim_u_vcm <- list(dim_u, dim_u)
                             init_vcm_bet_u <- initialize_par_list(inits,
-                                                                  "beta_u_vcm",
+                                                                  "vcm_u_lin",
                                                                   "listof-mat",
                                                                   dim_u_vcm)
 
@@ -437,6 +437,9 @@ ModelDat <- R6::R6Class("ModelDat",
                                                            all(y == 0)
                                                          })
                                                  })
+                            if (!is.matrix(zero_ind_nn)) {
+                              zero_ind_nn <- as.matrix(zero_ind_nn)
+                            }
                             avail_ind_nn <- apply(tmp_y, c(3),
                                                   function(x) {
                                                     apply(x, 2,
@@ -444,6 +447,9 @@ ModelDat <- R6::R6Class("ModelDat",
                                                             all(y != 0)
                                                           })
                                                   })
+                            if (!is.matrix(avail_ind_nn)) {
+                              avail_ind_nn <- as.matrix(avail_ind_nn)
+                            }
                             colnames(zero_ind_nn) <- private$.cs_var_val
                             rownames(zero_ind_nn) <- private$.var_y
                             # zero_ind_dd <- private$transform_zero_ind(zero_ind_nn)

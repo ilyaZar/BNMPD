@@ -1,0 +1,30 @@
+LOCAL-CGS:
+  num_cores: 6
+  cluster_type: PSOCK
+  num_particles: 12
+  pmcmc_iterations: 500
+  csmc_type: bpf
+CHEOPS-DEV:
+  num_cores: 24
+  cluster_type: MPI
+  num_particles: 2000
+  pmcmc_iterations: 1000
+  csmc_type: bpf
+CHEOPS-MPI:
+  num_cores: 48
+  cluster_type: MPI
+  num_particles: 2000
+  pmcmc_iterations: 1000
+  csmc_type: bpf
+CHEOPS-LCL:
+  num_cores: 6
+  cluster_type: MPI
+  num_particles: 2000
+  pmcmc_iterations: 1000
+  csmc_type: bpf
+CHEOPS-INT:
+  num_cores: 32
+  cluster_type: MPI
+  num_particles: 2000
+  pmcmc_iterations: 1000
+  csmc_type: bpf
