@@ -80,7 +80,6 @@ generate_data_t_n <- function(distribution,
                                                   states = FALSE,
                                                   states_each_d = FALSE),
                               seed_no = NULL) {
-  # browser()
   check_distribution_args(distribution)
   opt1 <- get_opt_include(options_include, NN, DD)
 
@@ -94,7 +93,6 @@ generate_data_t_n <- function(distribution,
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "z",
                               reg_types[["z-linear-regressors"]])
-  # browser()
   u <- generate_z_u_container(par_true[["beta_u_lin"]],
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "u",
@@ -140,21 +138,23 @@ generate_data_t_n <- function(distribution,
 #'   performed (with names of return vector set to these variants)
 #'
 get_modelling_reg_types <- function(pars) {
-  correct_names <- c("beta_z_lin", "beta_u_lin",
+  correct_names <- c("phi", "beta_z_lin", "beta_u_lin",
                      "beta_z_spl", "beta_u_spl")
   par_names <- names(pars)[sapply(pars, function(x) {!is.null(x)})]
-  par_names_taken <- setdiff(par_names, c("sig_sq", "phi", "vcm_u_lin"))
+  par_names_taken <- setdiff(par_names, c("sig_sq","vcm_u_lin"))
   if (!all(par_names_taken %in% correct_names)) {
     stop(paste0("The 'par_true' argument must have correct names: choose from",
                 "'beta_z_lin', 'beta_u_lin', 'beta_z_spl' or 'beta_u_spl'! "))
   }
-  out <- vector("logical", 4)
+  out <- vector("logical", 5)
   out[1] <- correct_names[1] %in% par_names_taken
   out[2] <- correct_names[2] %in% par_names_taken
   out[3] <- correct_names[3] %in% par_names_taken
-  out[4] <- correct_names[5] %in% par_names_taken
+  out[4] <- correct_names[4] %in% par_names_taken
+  out[5] <- correct_names[5] %in% par_names_taken
 
-  names(out) <- c("z-linear-regressors",
+  names(out) <- c("autoregression",
+                  "z-linear-regressors",
                   "u-linear-regressors",
                   "z-spline-regressors",
                   "u-spline-regressors")
@@ -352,7 +352,7 @@ get_output_data_simul <- function(cnt_data,
   }
   out_data[[3]] <- cnt_states
 
-  lat_type_names <- c("lin", "re", "splZ", "splU")
+  lat_type_names <- c("auto", "lin", "re", "splZ", "splU")
   lat_type_names <- paste0(lat_type_names[reg_types], collapse = "_")
   attr(out_data[[3]], which = "model_type_lat") <- lat_type_names
   return(out_data)

@@ -279,6 +279,7 @@ generate_simulation_study <- function(pth_to_project,
                                       meta_info = "prepend",
                                       data_simulation,
                                       data_simulation_meta) {
+  browser()
   model_type <- c(model_type_obs = attr(data_simulation$dataSim[["data"]],
                                         which = "model_type_obs"),
                   model_type_lat = attr(data_simulation$dataSim[["states"]],
@@ -330,6 +331,7 @@ generate_simulation_study <- function(pth_to_project,
                                 file.path(pth_top_lvl, "model",
                                           "model-definition",
                                           "model_definition.yaml"))
+  browser()
   generate_setup_init_json(data_simulation[["dim"]],
                            data_simulation[["trueParams"]],
                            file.path(pth_top_lvl, "model",

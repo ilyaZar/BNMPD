@@ -74,6 +74,7 @@ generate_x_z_u <- function(TT,
                            policy_dummy = FALSE,
                            zero_pattern = NULL,
                            drift = FALSE) {
+  if (!modelling_reg_types[["autoregression"]]) phi_x <- 0
   x_level <- options_reg_simul[["x_level"]]
   x_sd_within  <- sqrt(options_reg_simul[["reg_var_within"]])
   x_sd_among   <- sqrt(options_reg_simul[["reg_var_among"]])
@@ -131,6 +132,10 @@ generate_x_z_u <- function(TT,
   return(out)
 }
 simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT) {
+  if (is.null(regs) && is.null(bet_reg)) {
+    regs    <- matrix(0, nrow = TT + 1, ncol = 1)
+    bet_reg <- matrix(0, nrow = 1, ncol = 1)
+  }
   x <- rep(0, TT)
   xinit <- x_level
   x[1] <- f(x_tt = xinit,

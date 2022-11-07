@@ -11,9 +11,11 @@
 #'    \code{NULL}, then defaults are generated (see [get_default_sig_sq])
 #' @param phi a vector of length \code{DD} with elements between 0 and 1; if
 #'    \code{NULL}, then defaults are generated (see [get_default_phi])
-#' @param beta_z_lin a list of length \code{DD} with (possibly) varying number of
-#'    regressors; if \code{NULL}, then defaults are generated (see
-#'    [get_default_beta_z_lin])
+#' @param beta_z_lin a list of length \code{DD} with (possibly) varying number
+#'   of regressors; if \code{NULL}, then defaults are generated (see
+#'   [get_default_beta_z_lin])
+#' @param SIMUL_PHI logical; if \code{TRUE}, then autoregressive process of
+#'   order \code{num_auto_p} is generated
 #' @param SIMUL_Z_BETA logical; if \code{TRUE}, then standard continuous
 #'   (z-type) covariates are included
 #' @param SIMUL_U_BETA logical; if \code{TRUE}, then random effects (u-type
@@ -26,6 +28,7 @@
 #'   components, or a vector of length equal to the number of multivariate
 #'   components; currently not varying along the cross sectional units but
 #'   extension is possible)
+#' @param num_auto_p integer > 0 giving the order of autoregression
 #' @param seed_taken the seed used drawing random effects
 #'
 #' @return a list of four elements each giving the corresponding true parameters
@@ -35,13 +38,16 @@ generate_true_params <- function(dim_model,
                                  sig_sq = NULL,
                                  phi = NULL,
                                  beta_z_lin = NULL,
+                                 SIMUL_PHI,
                                  SIMUL_Z_BETA,
                                  SIMUL_U_BETA,
                                  num_u_regs = NULL,
                                  num_z_regs = NULL,
+                                 num_auto_p = 1,
                                  seed_taken) {
   check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
-                 missing(seed_taken) || missing(dim_model))
+                 missing(SIMUL_PHI) || missing(seed_taken) ||
+                   missing(dim_model))
   if (check_args) stop("Missing arguments")
   if (SIMUL_U_BETA && missing(num_u_regs)) stop("Number of REs not specified!")
   # 1. Data settings: -------------------------------------------------------
@@ -63,13 +69,17 @@ generate_true_params <- function(dim_model,
     tmp_sig_sq  <- get_default_sig_sq(DD)
     true_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
   }
-  if (!is.null(phi)) {
-    check_phi <- all(phi >= 0) && all(phi < 1) && all(length(phi) == DD)
-    if (!check_phi) stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
-    true_phi <- matrix(phi, nrow = DD, ncol = NN)
+  if (SIMUL_PHI) {
+    if (!is.null(phi)) {
+      check_phi <- all(phi >= 0) && all(phi < 1) && all(length(phi) == DD)
+      if (!check_phi) stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
+      true_phi <- matrix(phi, nrow = DD, ncol = NN)
+    } else {
+      tmp_phi  <- get_default_phi(DD)
+      true_phi <- matrix(tmp_phi, nrow = DD, ncol = NN)
+    }
   } else {
-    tmp_phi <- get_default_phi(DD)
-    true_phi <- matrix(tmp_phi, nrow = DD, ncol = NN)
+    true_phi <- NULL
   }
   if (SIMUL_Z_BETA) {
     if (!is.null(beta_z_lin)) {
@@ -325,7 +335,6 @@ cross_section_to_list <- function(dim) {
        cs_name_lab = "cross_section",
        cs_var_val =  tmp_cs_var_val,
        cs_var_lab =  tmp_cs_var_lab)
-
 }
 time_series_to_list <- function(dim) {
   tmp_ts_var_val <- paste0("seq(from = 1L, to = ", dim[["TT"]], "L, by = 1L)")
@@ -445,13 +454,15 @@ get_par_avail <- function(true_params, num_d) {
   check_pars <- c("phi", "beta_z_lin", "beta_u_lin", "sig_sq", "vcm_u_lin")
   num_pars <- length(check_pars)
   id_avail  <- NULL
-  par_avail <- list()
+  par_avail <- vector("list", num_pars)
   for (j in seq_len(num_pars)) {
     par_avail[[j]] <- get_par(true_params[[check_pars[j]]], check_pars[j], num_d)
     if(isTRUE(!is.null(par_avail[[j]]) && !any(is.na(par_avail[[j]])))) {
       id_avail <- c(id_avail, j)
     }
   }
+  browser()
+  par_avail <- par_avail[!sapply(par_avail, is.null)]
   names(par_avail) <- check_pars[id_avail]
   return(par_avail)
 }
