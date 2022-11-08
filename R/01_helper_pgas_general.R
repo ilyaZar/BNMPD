@@ -79,6 +79,7 @@ load_model = function(env_model, to_env) {
     num_counts <- env_model$data[[2]]
     env_model$num_counts <- num_counts
   }
+  order_p_tmp <- get_lag_order(env_model$model_type_lat)
   initialize_data_containers(env_model$par_init,
                              env_model$traj_init,
                              env_model$priors,
@@ -88,6 +89,7 @@ load_model = function(env_model, to_env) {
                              env_model$DD,
                              env_model$NN,
                              env_model$MM,
+                             order_p_tmp,
                              to_env = env_model)
   all_model_names <- ls(env_model, all.names = TRUE)
   use_model_names <- setdiff(all_model_names,
@@ -110,11 +112,17 @@ load_model = function(env_model, to_env) {
                      model_type_smc = env_model$model_type_smc)
   invisible(to_env)
 }
+get_lag_order <- function(x) {
+  check <- grepl("auto", x)
+  if (check) return(1)
+  return(0)
+}
 initialize_data_containers <- function(par_init,
                                        traj_init,
                                        priors,
                                        Z, U,
                                        TT, DD, NN, MM,
+                                       order_p,
                                        to_env) {
 
   initialize_dims(par_init, U, DD)
@@ -131,7 +139,11 @@ initialize_data_containers <- function(par_init,
   X       <- array(0, dim = c(TT, DD, MM, NN))
   # X2      <- array(0, dim = c(TT, DD, MM, NN))
   sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
-  phi_x    <- matrix(0, nrow = DD, ncol = MM)
+  if (!is.null(par_init[["init_phi"]])) {
+    phi_x <- matrix(0, nrow = DD, ncol = MM)
+  } else {
+    phi_x <- NULL
+  }
   bet_z    <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
   bet_u    <- array(0,  c(sum(dim_bet_u), MM, NN))
 
@@ -149,9 +161,9 @@ initialize_data_containers <- function(par_init,
   }
 
   Z_beta    <- array(0, c(TT, DD, NN))
-  regs_z    <- array(0, c(TT - 1, sum(dim_zet) + DD, NN))
+  regs_z    <- array(0, c(TT - 1, sum(dim_zet) + DD * order_p, NN))
   U_beta    <- array(0, c(TT, DD, NN))
-  regs_u    <- array(0, c(TT - 1, sum(dim_uet) + DD, NN))
+  regs_u    <- array(0, c(TT - 1, sum(dim_uet) + DD, NN)) # DD * order_p
   Regs_beta <- array(0, c(TT, DD, NN))
   # Initialize priors:
   prior_ig_a     <- priors[["prior_ig_a"]] + NN * (TT - 1) / 2
@@ -163,19 +175,26 @@ initialize_data_containers <- function(par_init,
     id_betu_tmp <- (id_bet_u[d] + 1):id_bet_u[d + 1]
     id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
     id_uet_tmp  <- (id_uet[d] + 1):id_uet[d + 1]
-    id_regs_z_tmp <- (id_zet[d] + 1 + 1 * d):(id_zet[d + 1] + 1 * d)
+
+    if (is.null(phi_x)) {
+      id_regs_z_tmp <- (id_zet[d] + 1 * d):(id_zet[d + 1] + 1 * d - 1)
+    } else {
+      id_regs_z_tmp <- (id_zet[d] + 1 + 1 * d):(id_zet[d + 1] + 1 * d)
+    }
     id_regs_u_tmp <- (id_uet[d] + 1 + 1 * d):(id_uet[d + 1] + 1 * d)
 
     sig_sq_x[d, 1] <- par_init[["init_sig_sq"]][d, 1]
-    phi_x[d, 1]    <- par_init[["init_phi"]][[d, 1]]
+    if (!is.null(par_init[["init_phi"]][[d, 1]])) {
+      phi_x[d, 1] <- par_init[["init_phi"]][[d, 1]]
+    }
+
     bet_z[id_betz_tmp, 1] <- par_init[["init_bet_z"]][[d]]
     prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + 1)
     prior_vcm_bet_u2[[d]] <- diag(1 / 1000, dim_bet_u[d])
     prior_vcm_bet_u1[d]   <- dim_bet_u[d] + 1
     dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u1[d]
     if (u_null) {
-      vcm_bet_u[[d]][, , 1] <- matrix(0,
-                                      nrow = dim_bet_u[d],
+      vcm_bet_u[[d]][, , 1] <- matrix(0, nrow = dim_bet_u[d],
                                       ncol = dim_bet_u[d])
     } else {
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_bet_u"]][[d]]

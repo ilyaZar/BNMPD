@@ -461,7 +461,6 @@ get_par_avail <- function(true_params, num_d) {
       id_avail <- c(id_avail, j)
     }
   }
-  browser()
   par_avail <- par_avail[!sapply(par_avail, is.null)]
   names(par_avail) <- check_pars[id_avail]
   return(par_avail)

@@ -11,9 +11,9 @@
 #'   "Dirichlet-Multinomial"
 #' @param NN number of cross sectional units
 #' @param TT number of time periods
-#' @param DD multivariate dimension of the measurements/responses (e.g. number of
-#'   shares/fractions for Dirichlet or Dirichlet-Multinomial, or the number of
-#'   categories for a Multinomial distribution
+#' @param DD multivariate dimension of the measurements/responses (e.g. number
+#'   of shares/fractions for Dirichlet or Dirichlet-Multinomial, or the number
+#'   of categories for a Multinomial distribution
 #' @param par_true list of true parameters that describe the latent state
 #'   process; as provided by the function [generate_true_params()]
 #' @param x_levels target "mean" levels of the states around which they
@@ -31,8 +31,8 @@
 #'      \item{\code{zeros: }}{numeric vector of dimension \code{DD} with
 #'      values 1, 2, 3 or 4:
 #'      \itemize{
-#'         \item{1: }{A dummy pattern that starts at the beginning with zeros and
-#'          jumps after half of the overall time period}
+#'         \item{1: }{A dummy pattern that starts at the beginning with zeros
+#'         and jumps after half of the overall time period}
 #'         \item{2: }{A dummy pattern that starts at the beginning with ones and
 #'         plummets to zeros after half of the overall time period}
 #'         \item{3: }{A dummy pattern that starts at the beginning with one,
@@ -492,13 +492,13 @@ my_rmultinomial <- function(probs, num_counts) {
 }
 #' Generates random samples from a Dirichlet-multinomial distribution
 #'
-#' Generates random samples from Dirichlet-dirichlet distribution; the dimension
-#' of the Dirichlet-multinomial distribution (i.e. the number of shares of
-#' fractions) is taken as the number of columns in the \code{alpha} matrix; the
-#' number of samples are taken as the rows of the \code{alpha} matrix; hence,
-#' each row of \code{alpha} corresponds to \code{D} \code{alpha} parameters for
-#' which a \code{D}-dimensional random draw is generated, and all these \code{n}
-#' draws are returned in matrix form.
+#' Generates random samples from Dirichlet-multinomial distribution; the
+#' dimension of the Dirichlet-multinomial distribution (i.e. the number of
+#' shares of fractions) is taken as the number of columns in the \code{alpha}
+#' matrix; the number of samples are taken as the rows of the \code{alpha}
+#' matrix; hence, each row of \code{alpha} corresponds to \code{D} \code{alpha}
+#' parameters for which a \code{D}-dimensional random draw is generated, and all
+#' these \code{n} draws are returned in matrix form.
 #'
 #' @param alpha alpha parameters of dirichlet distribution given as a matrix
 #' @param num_counts number of counts for the dirichlet shares/fractions
