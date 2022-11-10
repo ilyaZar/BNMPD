@@ -177,60 +177,74 @@ ModelDat <- R6::R6Class("ModelDat",
                             #
                             #
                             # Preparing regressor data:
-                            dim_zet <- sapply(private$.var_z,
-                                              length)
-                            check_dim_zet <- Reduce(function(x, y) {
-                              if (identical(x, y)) {
-                                return(x)
-                              } else {
-                                FALSE
+                            if (!is.null(private$.var_z)) {
+                              dim_zet <- sapply(private$.var_z,
+                                                length)
+                              check_dim_zet <- Reduce(function(x, y) {
+                                if (identical(x, y)) {
+                                  return(x)
+                                } else {
+                                  FALSE
+                                }
+                              },
+                              dim_zet)
+                              if (isFALSE(check_dim_zet)) {
+                                stop("Z-type regressor dims unequal. Reconsider!")
                               }
-                            },
-                            dim_zet)
-                            if (isFALSE(check_dim_zet)) {
-                              stop("Z-type regressor dims unequal. Reconsider!")
-                            }
-                            id_zet <- unname(c(0, cumsum(dim_zet)))
-                            Z <- array(NA_real_,
-                                       dim = c(private$.TT,
-                                               id_zet[private$.DD + 1],
-                                               private$.NN))
-                            for (d in 1:private$.DD) {
-                              for (i in 1:private$.NN) {
-                                data_slice_states   <- private$.data_subset_used %>%
-                                  dplyr::filter(.data[[private$.cs_name_var]] %in% private$.cs_var_val[i])
-                                tmp_Z <- dplyr::select(data_slice_states,
-                                                       private$.var_z[[d]])
-                                Z[, (id_zet[d] + 1):id_zet[d + 1], i] <- as.matrix(tmp_Z)
+                              id_zet <- unname(c(0, cumsum(dim_zet)))
+                              Z <- array(NA_real_,
+                                         dim = c(TT = private$.TT,
+                                                 DD = id_zet[private$.DD + 1],
+                                                 NN = private$.NN))
+                              for (d in 1:private$.DD) {
+                                for (i in 1:private$.NN) {
+                                  data_slice_states   <- private$.data_subset_used %>%
+                                    dplyr::filter(.data[[private$.cs_name_var]] %in% private$.cs_var_val[i])
+                                  tmp_Z <- dplyr::select(data_slice_states,
+                                                         private$.var_z[[d]])
+                                  Z[, (id_zet[d] + 1):id_zet[d + 1], i] <- as.matrix(tmp_Z)
+                                }
                               }
+                              dim(Z) <- unname(dim(Z))
+                              dim(Z) <- c(TT = dim(Z)[1],
+                                          DD = dim(Z)[2],
+                                          NN = dim(Z)[3])
+                            } else {
+                              Z <- NULL
                             }
-                            dim_uet <- sapply(private$.var_u,
-                                              length)
-                            check_dim_uet <- Reduce(function(x, y) {
-                              if (identical(x, y)) {
-                                return(x)
-                              } else {
-                                FALSE
+                            if (!is.null(private$.var_u)) {
+                              dim_uet <- sapply(private$.var_u, length)
+                              check_dim_uet <- Reduce(function(x, y) {
+                                if (identical(x, y)) {
+                                  return(x)
+                                } else {
+                                  FALSE
+                                }
+                              }, dim_uet)
+                              if (isFALSE(check_dim_uet)) {
+                                stop("U-type regressor dimensions unquel. Reconsider!")
                               }
-                            }, dim_uet)
-                            if (isFALSE(check_dim_uet)) {
-                              stop("U-type regressor dimensions unquel. Reconsider!")
-                            }
-                            id_uet <- unname(c(0, cumsum(dim_uet)))
-                            U <- array(NA_real_,
-                                       dim = c(private$.TT,
-                                               id_uet[private$.DD + 1],
-                                               private$.NN))
-                            for (d in 1:private$.DD) {
-                              for (i in 1:private$.NN) {
-                                data_slice_states   <- private$.data_subset_used %>%
-                                  dplyr::filter(.data[[private$.cs_name_var]] %in% private$.cs_var_val[i])
-                                tmp_U <- dplyr::select(data_slice_states,
-                                                       private$.var_u[[d]])
-                                U[, (id_uet[d] + 1):id_uet[d + 1], i] <- as.matrix(tmp_U)
+                              id_uet <- unname(c(0, cumsum(dim_uet)))
+                              U <- array(NA_real_,
+                                         dim = c(TT = private$.TT,
+                                                 DD = id_uet[private$.DD + 1],
+                                                 NN = private$.NN))
+                              for (d in 1:private$.DD) {
+                                for (i in 1:private$.NN) {
+                                  data_slice_states   <- private$.data_subset_used %>%
+                                    dplyr::filter(.data[[private$.cs_name_var]] %in% private$.cs_var_val[i])
+                                  tmp_U <- dplyr::select(data_slice_states,
+                                                         private$.var_u[[d]])
+                                  U[, (id_uet[d] + 1):id_uet[d + 1], i] <- as.matrix(tmp_U)
+                                }
                               }
+                              dim(U) <- unname(dim(U))
+                              dim(U) <- c(TT = dim(U)[1],
+                                          DD = dim(U)[2],
+                                          NN = dim(U)[3])
+                            } else {
+                              U <- NULL
                             }
-
                             private$.data_internal            <- list()
                             private$.data_internal$data       <- list()
                             private$.data_internal$data$`y_t` <- y_t
@@ -329,6 +343,11 @@ ModelDat <- R6::R6Class("ModelDat",
                               }
                               for(i in seq_len(DD)) {
                                 tmp_vals <- data_inits[[i]][[par_name]]$val
+                                if (is.null(tmp_vals)) {
+                                  tmp_vals <- NA_real_
+                                  dim_mat[[1]][i] <- 0
+                                  dim_mat[[2]][i] <- 0
+                                }
                                 out_init[[i]] <- matrix(tmp_vals,
                                                         nrow = dim_mat[[1]][i],
                                                         ncol = dim_mat[[2]][i])
@@ -364,7 +383,7 @@ ModelDat <- R6::R6Class("ModelDat",
                               err_msg <- paste0("Unequal number of params in: ",
                                                 reg_name,
                                                 ". See setup_inits.json file!")
-                              if (reg_name == "beta_u_reg") {
+                              if (reg_name == "beta_u_lin") {
                                 check_me <- all.equal(length(tmp_list$lab),
                                                       length(tmp_list$var))
                               } else {
@@ -395,9 +414,14 @@ ModelDat <- R6::R6Class("ModelDat",
                                                                    "sig_sq",
                                                                    "listof-vec")
                             init_phi <- matrix(0, nrow = DD, ncol = 1)
-                            init_phi[, 1] <- initialize_par_vec(inits,
-                                                                "phi",
-                                                                "listof-vec")
+                            tmp_inits <- initialize_par_vec(inits,
+                                                            "phi",
+                                                            "listof-vec")
+                            if (!is.null(tmp_inits)) {
+                              init_phi[, 1] <- tmp_inits
+                            } else {
+                              init_phi <- NULL
+                            }
 
                             dim_zet <- get_dim_reg(inits, "beta_z_lin")
 
@@ -438,7 +462,9 @@ ModelDat <- R6::R6Class("ModelDat",
                                                          })
                                                  })
                             if (!is.matrix(zero_ind_nn)) {
-                              zero_ind_nn <- as.matrix(zero_ind_nn)
+                              zero_ind_nn <- matrix(zero_ind_nn,
+                                                    nrow = dim(tmp_y)[2],
+                                                    ncol = dim(tmp_y)[3])
                             }
                             avail_ind_nn <- apply(tmp_y, c(3),
                                                   function(x) {
@@ -448,7 +474,9 @@ ModelDat <- R6::R6Class("ModelDat",
                                                           })
                                                   })
                             if (!is.matrix(avail_ind_nn)) {
-                              avail_ind_nn <- as.matrix(avail_ind_nn)
+                              avail_ind_nn <- matrix(avail_ind_nn,
+                                                     nrow = dim(tmp_y)[2],
+                                                     ncol = dim(tmp_y)[3])
                             }
                             colnames(zero_ind_nn) <- private$.cs_var_val
                             rownames(zero_ind_nn) <- private$.var_y

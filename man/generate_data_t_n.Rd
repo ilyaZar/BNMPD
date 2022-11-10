@@ -25,9 +25,9 @@ generate_data_t_n(
 
 \item{TT}{number of time periods}
 
-\item{DD}{multivariate dimension of the measurements/responses (e.g. number of
-shares/fractions for Dirichlet or Dirichlet-Multinomial, or the number of
-categories for a Multinomial distribution}
+\item{DD}{multivariate dimension of the measurements/responses (e.g. number
+of shares/fractions for Dirichlet or Dirichlet-Multinomial, or the number
+of categories for a Multinomial distribution}
 
 \item{par_true}{list of true parameters that describe the latent state
 process; as provided by the function \code{\link[=generate_true_params]{generate_true_params()}}}
@@ -49,8 +49,8 @@ component \code{d}}
 \item{\code{zeros: }}{numeric vector of dimension \code{DD} with
 values 1, 2, 3 or 4:
 \itemize{
-\item{1: }{A dummy pattern that starts at the beginning with zeros and
-jumps after half of the overall time period}
+\item{1: }{A dummy pattern that starts at the beginning with zeros
+and jumps after half of the overall time period}
 \item{2: }{A dummy pattern that starts at the beginning with ones and
 plummets to zeros after half of the overall time period}
 \item{3: }{A dummy pattern that starts at the beginning with one,

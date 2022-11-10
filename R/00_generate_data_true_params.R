@@ -378,7 +378,7 @@ generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
   check_args_to_generate_yaml_json(dimension)
   DD <- dimension[["DD"]]
 
-  true_params$phi    <- true_params$phi[, 1]
+  if (!is.null(true_params$phi)) true_params$phi <- true_params$phi[, 1]
   true_params$sig_sq <- true_params$sig_sq[, 1]
   list_json <- list()
   for(d in seq_len(DD)) {
@@ -438,14 +438,14 @@ get_par <- function(par_to_check, par_name, num_d) {
     # } else {
     #   return(par_to_check[num_d])
     # }
-    return(par_to_check[num_d])
+    if (!is.null(par_to_check)) return(par_to_check[num_d])
   } else if (par_name %in% c("beta_z_lin", "beta_u_lin", "vcm_u_lin")) {
     # if (is.null(par_to_check[[num_d]])) {
     #   return(NULL)
     # } else {
     #   return(par_to_check[[num_d]])
     # }
-    return(par_to_check[[num_d]])
+    if (!is.null(par_to_check)) return(par_to_check[[num_d]])
   } else {
     stop("Unknown parameter name.")
   }
@@ -456,12 +456,13 @@ get_par_avail <- function(true_params, num_d) {
   id_avail  <- NULL
   par_avail <- vector("list", num_pars)
   for (j in seq_len(num_pars)) {
-    par_avail[[j]] <- get_par(true_params[[check_pars[j]]], check_pars[j], num_d)
-    if(isTRUE(!is.null(par_avail[[j]]) && !any(is.na(par_avail[[j]])))) {
+    if(isTRUE(!is.null((true_params[[check_pars[j]]])))) {
+      par_avail[[j]] <- get_par(true_params[[check_pars[j]]],
+                                check_pars[j], num_d)
       id_avail <- c(id_avail, j)
     }
   }
-  par_avail <- par_avail[!sapply(par_avail, is.null)]
+  par_avail <- par_avail[id_avail]
   names(par_avail) <- check_pars[id_avail]
   return(par_avail)
 }

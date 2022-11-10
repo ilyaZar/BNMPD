@@ -15,11 +15,11 @@ my_rmult_diri(alpha, num_counts)
 a nxD dimensional matrix of Dirichlet-multinomial draws
 }
 \description{
-Generates random samples from Dirichlet-dirichlet distribution; the dimension
-of the Dirichlet-multinomial distribution (i.e. the number of shares of
-fractions) is taken as the number of columns in the \code{alpha} matrix; the
-number of samples are taken as the rows of the \code{alpha} matrix; hence,
-each row of \code{alpha} corresponds to \code{D} \code{alpha} parameters for
-which a \code{D}-dimensional random draw is generated, and all these \code{n}
-draws are returned in matrix form.
+Generates random samples from Dirichlet-multinomial distribution; the
+dimension of the Dirichlet-multinomial distribution (i.e. the number of
+shares of fractions) is taken as the number of columns in the \code{alpha}
+matrix; the number of samples are taken as the rows of the \code{alpha}
+matrix; hence, each row of \code{alpha} corresponds to \code{D} \code{alpha}
+parameters for which a \code{D}-dimensional random draw is generated, and all
+these \code{n} draws are returned in matrix form.
 }
