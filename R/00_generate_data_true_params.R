@@ -44,6 +44,7 @@ generate_true_params <- function(dim_model,
                                  num_u_regs = NULL,
                                  num_z_regs = NULL,
                                  num_auto_p = 1,
+                                 options = list(dwn_scl = 10),
                                  seed_taken) {
   check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
                  missing(SIMUL_PHI) || missing(seed_taken) ||
@@ -66,7 +67,7 @@ generate_true_params <- function(dim_model,
     if (!check_sig_sq) stop("'sig_sq' >0 and a vector of length DD ...\n")
     true_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
   } else {
-    tmp_sig_sq  <- get_default_sig_sq(DD)
+    tmp_sig_sq  <- get_default_sig_sq(DD, options$dwn_scl)
     true_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
   }
   if (SIMUL_PHI) {
@@ -120,8 +121,7 @@ generate_true_params <- function(dim_model,
 #' @param DD number of multivariate components
 #'
 #' @return a vector of length \code{DD}
-get_default_sig_sq <- function(DD) {
-  dwn_scl <- 10
+get_default_sig_sq <- function(DD, dwn_scl) {
   str_scl <- 2.1 / dwn_scl
   add_scl <- 1.1 / dwn_scl
   return(str_scl + add_scl * 0:(DD - 1))

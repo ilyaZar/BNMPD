@@ -13,15 +13,15 @@ sample_all_params.auto_lin <- function(pe, mm) {
     Xtmp <- as.matrix(pe$X[, d, mm - 1, ])
     Ztmp <- pe$Z[2:pe$TT, id_zet_tmp, ]
 
-    pe$sig_sq_x[d, mm] <- sample_sig_sq_x_lin(phi_x = pe$phi_x[d, mm - 1],
-                                              bet_z = pe$bet_z[id_betz_tmp,
-                                                               mm - 1],
-                                              X = Xtmp,
-                                              regs_z = Ztmp,
-                                              prior_ig = c(pe$prior_ig_a,
-                                                           pe$prior_ig_b),
-                                              iter_range_NN = dd_range_nn,
-                                              TT = pe$TT)
+    pe$sig_sq_x[d, mm] <- sample_sig_sq_x(phi_x = pe$phi_x[d, mm - 1],
+                                          bet_z = pe$bet_z[id_betz_tmp,
+                                                           mm - 1],
+                                          X = Xtmp,
+                                          regs_z = Ztmp,
+                                          prior_ig = c(pe$prior_ig_a,
+                                                       pe$prior_ig_b),
+                                          iter_range_NN = dd_range_nn,
+                                          TT = pe$TT)
     beta_sampled <- sample_bet_z_lin(sig_sq_x = pe$sig_sq_x[d, mm],
                                      X = Xtmp,
                                      regs_z = pe$regs_z,

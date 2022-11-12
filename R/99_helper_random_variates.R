@@ -35,7 +35,7 @@ rnorm_fast_n1 <- function(mu, Sigma, len) {
 #' @export
 solveme <- function(mat) {
   tol <- sqrt(.Machine$double.eps)
-  # mat_out <- solve(mat); meth <- "solve()"
+  # mat_out <- solve(mat); meth <- "solve(mat)"
   mat_out <- chol2inv(chol(mat)); meth <- "chol2inv(chol(mat))"
   if (!isSymmetric(mat_out, tol = tol, check.attributes = FALSE)) {
     warning(crayon::green("IZ: mat must be symmetric after call to: \n"),

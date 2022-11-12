@@ -55,15 +55,16 @@ sample_all_params.lin_re_splU <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
-compute_vcm_x_errors <- function(vcm_x_errors_rhs, Umat, vcm_bet_u, type) {
+compute_vcm_x_errors_inv <- function(sig_sq_x, Umat, vcm_bet_u, TT, type) {
   if (type == "lin_re") {
+    vcm_x_errors_rhs <- diag(rep(sig_sq_x, TT))
     vcm_x_errors_lhs <- Umat %*% vcm_bet_u %*% t(Umat)
     vcm_x_errors     <- vcm_x_errors_lhs + vcm_x_errors_rhs
-    vcm_x_errors     <- solveme(vcm_x_errors)
+    vcm_x_errors_inv <- solveme(vcm_x_errors)
+    return(vcm_x_errors_inv)
   } else if (type == "lin") {
-    vcm_x_errors <- solveme(vcm_x_errors_rhs)
+    return(diag(rep(sig_sq_x^(-1)), TT))
   } else {
     stop("Unknown type.")
   }
-  return(vcm_x_errors)
 }

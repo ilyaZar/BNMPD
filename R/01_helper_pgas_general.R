@@ -19,7 +19,6 @@
 get_regs_beta <- function(Z, U, id_uet, TT,
                           bet_z, bet_u, id_bet_u,
                           iter_range_NN) {
-  browser()
   NN <- length(iter_range_NN)
   Z_beta    <- matrix(0, nrow = TT, ncol = NN)
   U_beta    <- matrix(0, nrow = TT, ncol = NN)
@@ -81,7 +80,6 @@ load_model = function(env_model, to_env) {
     env_model$num_counts <- num_counts
   }
   order_p_tmp <- get_lag_order(env_model$model_type_lat)
-  browser()
   initialize_data_containers(env_model$par_init,
                              env_model$traj_init,
                              env_model$priors,

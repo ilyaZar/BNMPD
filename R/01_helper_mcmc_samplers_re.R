@@ -62,9 +62,9 @@ sample_bet_u <- function(sig_sq_x,
                          U,
                          iter_range_NN,
                          TT) {
-  out_mat         <- matrix(0, nrow = dim_bet_u, ncol = length(iter_range_NN))
-  vcm_x_errors     <- diag(rep(sig_sq_x, times = TT - 1))
-  vmc_x_errors_inv <- solveme(vcm_x_errors)
+  # browser()
+  out_mat          <- matrix(0, nrow = dim_bet_u, ncol = length(iter_range_NN))
+  vmc_x_errors_inv <- diag(rep(sig_sq_x^(-1), times = TT))
   vcm_bet_u_inv    <- solveme(vcm_bet_u)
 
   nn <- 1
@@ -72,16 +72,16 @@ sample_bet_u <- function(sig_sq_x,
     Omega_bet_u <- matrix(0, nrow = dim_bet_u, ncol = dim_bet_u)
     mu_bet_u    <- matrix(0, nrow = dim_bet_u, ncol = 1)
 
-    x_lhs <- X[2:TT, n]
-    x_rhs <- X[1:(TT - 1), n]
-    x_n   <- x_lhs - f(x_tt = x_rhs,
-                       regs  = regs_z[, , n],
-                       phi_x = phi_x,
-                       bet_reg = bet_z)
-    Umat <- matrix(U[, , n, drop = FALSE], nrow = TT - 1)
+    x_n   <- X[, n] - f(x_tt = rep(0, times = TT),
+                        regs  = regs_z[, , n],
+                        phi_x = 0,
+                        bet_reg = bet_z)
+    Umat <- matrix(U[, , n, drop = FALSE], nrow = TT)
     Omega_bet_u <- crossprod(Umat, vmc_x_errors_inv) %*% Umat + vcm_bet_u_inv
+    # Omega_bet_u2 <- crossprod(Umat, Umat)/sig_sq_x + vcm_bet_u_inv
     Omega_bet_u <- solveme(Omega_bet_u)
-    mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_inv) %*% x_n)
+    mu_bet_u   <- Omega_bet_u %*% (crossprod(Umat, x_n) / sig_sq_x)
+    # mu_bet_u2    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_inv) %*% x_n)
 
     out_mat[, nn] <- rnorm_fast_n1(mu = mu_bet_u,
                                    Sigma = Omega_bet_u,

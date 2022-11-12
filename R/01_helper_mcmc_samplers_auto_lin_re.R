@@ -129,14 +129,14 @@ sample_bet_z_auto_lin_re <- function(sig_sq_x,
                                      iter_range_NN,
                                      order_p = 1) {
   browser()
-  vcm_x_errors_rhs     <- diag(rep(sig_sq_x, times = TT - 1))
+  # vcm_x_errors_rhs     <- diag(rep(sig_sq_x, times = TT - 1))
   # vmc_x_errors_rhs_inv <- solveme(vcm_x_errors_rhs)
   # vcm_bet_u_inv        <- solveme(vcm_bet_u)
   omega_tmp_all <- 0
   mu_tmp_all    <- 0
   # if (m %in% (c(2,30))) browser()
-  x_lhs     <- X[1:(TT - 1), , drop = FALSE]
-  x_rhs_all <- X[2:TT, , drop = FALSE]
+  x_lhs     <- X[1:(TT - order_p), , drop = FALSE]
+  x_rhs_all <- X[(1 + order_p):TT, , drop = FALSE]
   browser()
   if (order_p == 1) regs_z[, id_reg_z[1] + 1,] <- x_lhs
   if (order_p == 0) regs_z <- regs_z[, -c(id_reg_z[1] + 1), ]
@@ -147,10 +147,12 @@ sample_bet_z_auto_lin_re <- function(sig_sq_x,
     # vcm_x_errors_lhs <- Umat %*% vcm_bet_u %*% t(Umat)
     # vcm_x_errors2     <- vcm_x_errors_lhs + vcm_x_errors_rhs
     # vcm_x_errors2     <- solveme(vcm_x_errors2)
-    vcm_x_errors    <- compute_vcm_x_errors(vcm_x_errors_rhs,
-                                            matrix(U[,, n, drop = FALSE],
-                                                   nrow = TT - 1),
-                                            vcm_bet_u, type = "lin_re")
+    vcm_x_errors    <- compute_vcm_x_errors_inv(sig_sq_x,
+                                                matrix(U[,, n, drop = FALSE],
+                                                       nrow = TT - order_p),
+                                                vcm_bet_u,
+                                                TT - order_p,
+                                                type = "lin_re")
 
     regs_tmp  <- regs_z[, (id_reg_z[1] + 1):id_reg_z[2], n]
     # omega_tmp <- crossprod(regs_tmp,
