@@ -122,6 +122,7 @@ save_simulated_data <- function(pth_to_write,
             row.names = FALSE)
   true_states <- data_sim$states
   save(true_states, file = file.path(pth_to_write, fn_true_states))
+  save(true_params, file = file.path(pth_to_write, "true_params.RData"))
   zero_states <- true_states
   zero_states[, , ] <- 0
   save(zero_states,  file = file.path(pth_to_write, fn_zero_states))

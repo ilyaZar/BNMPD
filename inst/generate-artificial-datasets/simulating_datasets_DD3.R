@@ -1,7 +1,8 @@
 # model_dim <-  c(NN = 2, TT = 4, DD = 3)
-model_dim <-  c(NN = 2, TT = 4, DD = 1)
-# model_dim <-  c(NN = 1, TT = 400, DD = 1)
-model_dim <-  c(NN = 50, TT = 50, DD = 1)
+# model_dim <-  c(NN = 5, TT = 20, DD = 1)
+# model_dim <-  c(NN = 5, TT = 50, DD = 1)
+model_dim <-  c(NN = 5, TT = 30, DD = 1)
+# model_dim <-  c(NN = 5, TT = 5000, DD = 1)
 
 # model_dim <-  c(NN = 2, TT = 4, DD = 1)
 #
@@ -19,32 +20,40 @@ model_dim <-  c(NN = 50, TT = 50, DD = 1)
 # model_dim <-  c(NN = 1, TT = 40, DD = 3)
 # model_dim <-  c(NN = 1, TT = 40, DD = 6)
 # model_dim <-  c(NN = 4, TT = 40, DD = 6)
+
+# model_dim <- c(NN = 1, TT = 20, DD = 1)
+# model_dim <- c(NN = 1, TT = 40, DD = 1)
+# model_dim <- c(NN = 1, TT = 60, DD = 1)
+# model_dim <- c(NN = 1, TT = 80, DD = 1)
+# model_dim <- c(NN = 1, TT = 100, DD = 1)
+# model_dim <- c(NN = 1, TT = 200, DD = 1)
+# model_dim <- c(NN = 1, TT = 500, DD = 1)
+# model_dim <- c(NN = 1, TT = 5000, DD = 1)
+
+# model_dim <-  c(NN = 1, TT = 4, DD = 1)
+# model_dim <-  c(NN = 2, TT = 4, DD = 1)
+
+SIMUL_PHI    <- FALSE # FALSE
 SIMUL_Z_BETA <- TRUE # FALSE
 SIMUL_U_BETA <- TRUE # FALSE
 # SIMUL_U_BETA <- FALSE
 NUM_BETA_Z <- 3 #2
-NUM_BETA_U <- 1# 3 #1
+NUM_BETA_U <- 2 # 3 #1
 SEED_NR <- 123
-fn_all <- BNMPD::get_file_names_simul_data(fn_data = "sim_data",
-                                           fn_true_states = "states_true",
-                                           fn_zero_states = "states_zero",
-                                           dim_model = model_dim,
-                                           SIMUL_Z_BETA = SIMUL_Z_BETA,
-                                           SIMUL_U_BETA = SIMUL_U_BETA,
-                                           num_z_regs = NUM_BETA_Z,
-                                           num_u_regs = NUM_BETA_U)
+
 par_trues <- BNMPD::generate_true_params(dim_model = model_dim,
                                          # sig_sq = c(0.001, 10, 1), # use defaults
                                          phi = rep(c(0.0, 0.0, 0.0, 0.0),
                                                    length.out = model_dim[["DD"]]),
                                          beta_z_lin = NULL,
+                                         SIMUL_PHI = SIMUL_PHI,
                                          SIMUL_Z_BETA = SIMUL_Z_BETA,
                                          SIMUL_U_BETA = SIMUL_U_BETA,
                                          num_z_regs = NUM_BETA_Z,
                                          num_u_regs = NUM_BETA_U,
+                                         num_auto_p = 1,
+                                         options = list(dwn_scl = 10),
                                          seed_taken = SEED_NR)
-
-# BNMPD::generate_setup_init_json(model_dim, par_trues, "./test.json")
 
 dirichlet_levels <- BNMPD::get_dirichlet_levels(DD = model_dim[3],
                                                 NN = model_dim[1])
@@ -66,47 +75,137 @@ dataSim <-  BNMPD::generate_data_t_n(distribution = "normal",
                                                          plt_x = TRUE,
                                                          plt_x_per_d = FALSE),
                                      seed_no = SEED_NR)
+# BNMPD::generate_simulation_study("./inst/simulation-studies",
+#                                  "MCMC_only",
+#                                  meta_info = "prepend",
+#                                  list(dataSim = dataSim,
+#                                       trueParams = par_trues,
+#                                       dim = model_dim),
+#                                  list(SIMUL_Z_BETA = SIMUL_Z_BETA,
+#                                       SIMUL_U_BETA = SIMUL_U_BETA,
+#                                       num_z_regs = NUM_BETA_Z,
+#                                       num_u_regs = NUM_BETA_U))
 
 tmp_comp_DD <- 1
 data_tmp <- BNMPD::subset_data_simul(dataSim, c("DD"), list(c(tmp_comp_DD)))
 split_NN <- rep(dimnames(dataSim$states)[[3]], each = dim(dataSim$states)[[1]])
 ynew <- matrix(data_tmp$states)
-Z <- apply(data_tmp$regs$z, 2, rbind)
-U <- apply(data_tmp$regs$u, 2, rbind)
-test_data <- data.frame(cs = split_NN, ts = rep(1:model_dim[["TT"]],
-                                                times = model_dim[["NN"]]),
-                        Y = ynew, z1 = Z[, 1], z2 = Z[, 2], z3 = Z[, 3],
-                        uRE1 = U[, 1])
-# library(plm)
-# out <- plm::plm(Y ~ z1+z2+z3 - 1, data = test_data, model = "within")
-# summary(out)
-# fe_out <- plm::fixef(out)
-# summary(fe_out)
-head(test_data)
+if(SIMUL_Z_BETA) Z <- apply(data_tmp$regs$z, 2, rbind)
+if(SIMUL_U_BETA) U <- apply(data_tmp$regs$u, 2, rbind)
+test_data <- data.frame(cs = split_NN,
+                        ts = rep(1:model_dim[["TT"]],
+                                 times = model_dim[["NN"]]),
+                        Y = ynew,
+                        z1 = Z[, 1], z2 = Z[, 2], z3 = Z[, 3],
+                        uRE1 = U[, 1], uRE2 = U[, 2]
+                        )
 library(MCMCpack)
-model2 <- MCMChregress(fixed=Y~z1+z2+z3 - 1, random=~uRE1 - 1, group="cs",
-                      data=test_data, burnin=1000, mcmc=15000, thin=1,verbose=1,
-                      seed=NA, beta.start=0, sigma2.start=1,
-                      Vb.start=1, mubeta=0, Vbeta=1.0E6,
-                      r=1, R=diag(c(1)), nu=0.001, delta=0.001)
-# Graphics
-pdf("Posteriors-MCMChregress1.pdf")
-plot(model2$mcmc)
-dev.off()
+burn <- 10
+num_mcmc <- 490
+num_tot  <- burn + num_mcmc
+# test <- MCMCregress(formula = Y ~ z1 + z2 + z3 - 1,
+#                     data = test_data,
+#                     burnin = burn, mcmc = num_mcmc)
+test <- MCMChregress(fixed = Y ~ z1 + z2 + z3 - 1,
+                     random = ~ uRE1 + uRE2 - 1,
+                     group="cs",
+                     data= test_data,
+                     burnin = burn, mcmc = num_mcmc,
+                     thin = 1,verbose = 1,
+                     seed = NA, beta.start = 0, sigma2.start = 1,
+                     Vb.start = 1, mubeta = 0, Vbeta = 1.0E6,
+                     r = NUM_BETA_U, R = diag(c(NUM_BETA_U)),
+                     nu = 0.001, delta = 0.001)
+dig_round <- 5
+round(matrix(c(mean(envir_par$bet_z[1, (burn + 1):num_tot]),
+         mean(envir_par$bet_z[2, (burn + 1):num_tot]),
+         mean(envir_par$bet_z[3, (burn + 1):num_tot]),
+         mean(envir_par$sig_sq_x[(burn + 1):num_tot]),
+         mean(envir_par$bet_u[1, (burn + 1):num_tot, 1]),
+         mean(envir_par$bet_u[1, (burn + 1):num_tot, 2]),
+         mean(envir_par$bet_u[1, (burn + 1):num_tot, 3]),
+         mean(envir_par$bet_u[1, (burn + 1):num_tot, 4]),
+         mean(envir_par$bet_u[1, (burn + 1):num_tot, 5]),
+         mean(envir_par$bet_u[2, (burn + 1):num_tot, 1]),
+         mean(envir_par$bet_u[2, (burn + 1):num_tot, 2]),
+         mean(envir_par$bet_u[2, (burn + 1):num_tot, 3]),
+         mean(envir_par$bet_u[2, (burn + 1):num_tot, 4]),
+         mean(envir_par$bet_u[2, (burn + 1):num_tot, 5]),
+         sd(envir_par$bet_z[1, (burn + 1):num_tot]),
+         sd(envir_par$bet_z[2, (burn + 1):num_tot]),
+         sd(envir_par$bet_z[3, (burn + 1):num_tot]),
+         sd(envir_par$sig_sq_x[(burn + 1):num_tot]),
+         sd(envir_par$bet_u[1, (burn + 1):num_tot, 1]),
+         sd(envir_par$bet_u[1, (burn + 1):num_tot, 2]),
+         sd(envir_par$bet_u[1, (burn + 1):num_tot, 3]),
+         sd(envir_par$bet_u[1, (burn + 1):num_tot, 4]),
+         sd(envir_par$bet_u[1, (burn + 1):num_tot, 5]),
+         sd(envir_par$bet_u[2, (burn + 1):num_tot, 1]),
+         sd(envir_par$bet_u[2, (burn + 1):num_tot, 2]),
+         sd(envir_par$bet_u[2, (burn + 1):num_tot, 3]),
+         sd(envir_par$bet_u[2, (burn + 1):num_tot, 4]),
+         sd(envir_par$bet_u[2, (burn + 1):num_tot, 5])), nrow = 14,
+       dimnames = list(c(paste0("z", 1:3), "sigma2",
+                         paste0("u1", 1:5), paste0("u2", 1:5)),
+                       c("mean", "sd"))), digits = dig_round)
+# round(summary(test)[[1]], digits = dig_round)
+round(summary(test[[1]])[[1]], digits = dig_round)
 
-# Summary
-summary_model2 <- summary(model2$mcmc)
-summary_model2[[1]]
-par_trues$beta_u_lin[[tmp_comp_DD]]
-par_trues$vcm_u_lin[[tmp_comp_DD]]
-# BNMPD::save_simulated_data(file.path(getwd(), "inst,
-#                                      generate-artificial-datasets"),
-#                            fn_all[["fn_data_set"]],
-#                            fn_all[["fn_true_val"]],
-#                            fn_all[["fn_zero_val"]],
-#                            data_sim = dataSim,
-#                            model_dim,
-#                            par_trues)
+round(rbind(quantile(envir_par$bet_z[1, (burn + 1):num_tot],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_z[2, (burn + 1):num_tot],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_z[3, (burn + 1):num_tot],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$sig_sq_x[(burn + 1):num_tot],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[1, (burn + 1):num_tot, 1],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[1, (burn + 1):num_tot, 2],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[1, (burn + 1):num_tot, 3],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[1, (burn + 1):num_tot, 4],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[1, (burn + 1):num_tot, 5],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[2, (burn + 1):num_tot, 1],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[2, (burn + 1):num_tot, 2],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[2, (burn + 1):num_tot, 3],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[2, (burn + 1):num_tot, 4],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975)),
+            quantile(envir_par$bet_u[2, (burn + 1):num_tot, 5],
+                     c(0.025, 0.25, 0.5, 0.75, 0.975))),
+      digits = dig_round)
+# round(summary(test)[[2]], digits = dig_round)
+round(summary(test[[1]])[[2]], digits = dig_round)
+# # library(plm)
+# # out <- plm::plm(Y ~ z1+z2+z3 - 1, data = test_data, model = "within")
+# # summary(out)
+# # fe_out <- plm::fixef(out)
+# # summary(fe_out)
+# head(test_data)
+# model2 <- MCMChregress(fixed=Y~z1+z2 - 1, random=~ - 1, group="cs",
+#                       data=test_data, burnin=1000, mcmc=15000, thin=1,verbose=1,
+#                       seed=NA, beta.start=0, sigma2.start=1,
+#                       Vb.start=1, mubeta=0, Vbeta=1.0E6,
+#                       r=0, R=diag(c(0)), nu=0.001, delta=0.001)
+#
+#
+# # Graphics
+# pdf("Posteriors-MCMChregress1.pdf")
+# plot(model2$mcmc)
+# dev.off()
+#
+# # Summary
+# summary_model2 <- summary(model2$mcmc)
+# summary_model2[[1]]
+# par_trues$beta_u_lin[[tmp_comp_DD]]
+# par_trues$vcm_u_lin[[tmp_comp_DD]]
+
 # library(MCMCpack)
 #
 #

@@ -28,7 +28,7 @@
 #'   components, or a vector of length equal to the number of multivariate
 #'   components; currently not varying along the cross sectional units but
 #'   extension is possible)
-#' @param num_auto_p integer > 0 giving the order of autoregression
+#' @param num_auto_p integer > 0 giving the order of auto-regression
 #' @param seed_taken the seed used drawing random effects
 #'
 #' @return a list of four elements each giving the corresponding true parameters

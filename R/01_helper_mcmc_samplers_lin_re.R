@@ -4,7 +4,6 @@
 #'
 #' @export
 sample_all_params.lin_re <- function(pe, mm) {
-  if (is.null(pe$phi_x)) pe$phi_x <- 0
   for (d in 1:pe$DD) {
     id_betz_tmp <- (pe$id_bet_z[d] + 1):pe$id_bet_z[d + 1]
     id_betu_tmp <- (pe$id_bet_u[d] + 1):pe$id_bet_u[d + 1]
@@ -34,19 +33,16 @@ sample_all_params.lin_re <- function(pe, mm) {
                                                   pe$dof_vcm_bet_u[d],
                                                   pe$prior_vcm_bet_u2[[d]],
                                                   dd_range_nn)
-    # pe$vcm_bet_u[[d]][, , mm] <- matrix(c(9.065234, 3.529893,
-    #                                       3.529893, 3.007517),
-    #                                     nrow = 2)
+
     pe$bet_u[id_betu_tmp, mm,
-             dd_range_nn] <- sample_bet_u(pe$sig_sq_x[d, mm],
-                                          pe$phi_x,
-                                          pe$bet_z[id_betz_tmp,
-                                                   mm - 1],
-                                          pe$vcm_bet_u[[d]][, , mm],
-                                          pe$dim_bet_u[d],
-                                          Xtmp, Ztmp, Utmp,
-                                          dd_range_nn,
-                                          pe$TT)
+             dd_range_nn] <- sample_bet_u_lin_re(pe$sig_sq_x[d, mm],
+                                                 pe$bet_z[id_betz_tmp,
+                                                          mm - 1],
+                                                 pe$vcm_bet_u[[d]][, , mm],
+                                                 pe$dim_bet_u[d],
+                                                 Xtmp, Ztmp, Utmp,
+                                                 dd_range_nn,
+                                                 pe$TT)
     beta_sampled <- sample_bet_z_lin_re(sig_sq_x = pe$sig_sq_x[d, mm],
                                         vcm_bet_u = pe$vcm_bet_u[[d]][, , mm],
                                         X = Xtmp,
@@ -56,7 +52,7 @@ sample_all_params.lin_re <- function(pe, mm) {
                                         id_reg_z = c(pe$id_reg_z[d],
                                                      pe$id_reg_z[d + 1]),
                                         dim_bet_z = pe$dim_bet_z[d],
-                                        prior_vcm_bet_z = pe$prior_vcm_bet_z[[d]],
+                                        prior_vcm_bet_z=pe$prior_vcm_bet_z[[d]],
                                         iter_range_NN = dd_range_nn)
     # browser()
     pe$bet_z[id_betz_tmp, mm] <- beta_sampled
@@ -94,16 +90,13 @@ sample_sig_sq_x_lin_re <- function(bet_z,
                                    prior_ig,
                                    iter_range_NN,
                                    TT) {
-  # browser()
   err_sig_sq_x_all <- 0
   for(n in iter_range_NN) {
     bet_u_n <- bet_u[ , , n]
     tmp_regs <- cbind(regs_z[, , n], regs_u[, , n])
-    err_sig_sq_x <- X[, n, drop = FALSE] - f(x_tt = rep(0, times = TT),
-                                           regs  = tmp_regs,
-                                           phi_x = 0,
-                                           bet_reg = c(bet_z, bet_u_n))
-    err_sig_sq_x_all <- err_sig_sq_x_all + crossprod(err_sig_sq_x)
+    err_sig_sq_x <- X[, n, drop = FALSE] - regs_z[, , n] %*% bet_z -
+      regs_u[, , n] %*% bet_u_n
+    err_sig_sq_x_all <- err_sig_sq_x_all + sum(err_sig_sq_x^2)
   }
   out <- 1/stats::rgamma(n = 1,
                          prior_ig[1],
@@ -130,32 +123,25 @@ sample_bet_z_lin_re <- function(sig_sq_x,
                                 dim_bet_z,
                                 prior_vcm_bet_z,
                                 iter_range_NN) {
-  # browser()
   omega_tmp_all <- 0
   mu_tmp_all    <- 0
   for (n in iter_range_NN) {
-    # regs_z[, id_reg_z[1] + 1, n] <- x_lhs[, n]
-    # Umat             <- matrix(U[,, n, drop = FALSE], nrow = TT - 1)
-    # vcm_x_errors_lhs <- Umat %*% vcm_bet_u %*% t(Umat)
-    # vcm_x_errors2     <- vcm_x_errors_lhs + vcm_x_errors_rhs
-    # vcm_x_errors2     <- solveme(vcm_x_errors2)
-    vcm_x_errors_inv <- compute_vcm_x_errors_inv(sig_sq_x,
-                                                 matrix(U[,, n, drop = FALSE],
-                                                        nrow = TT),
-                                                 vcm_bet_u, TT, type = "lin_re")
-
-    # browser()
     regs_tmp  <- regs_z[, (id_reg_z[1] + 1):id_reg_z[2], n]
-    omega_tmp <- crossprod(regs_tmp,
-                           vcm_x_errors_inv) %*% regs_tmp
+    omega_tmp <- compute_vcm_WBinv(sig_sq_x = sig_sq_x,
+                                   matLHS = regs_tmp,
+                                   U = matrix(U[,,n, drop = FALSE], nrow = TT),
+                                   C = vcm_bet_u,
+                                   matRHS = regs_tmp)
     omega_tmp_all <- omega_tmp_all + omega_tmp
-    mu_tmp <- crossprod(regs_tmp, vcm_x_errors_inv) %*%  X[, n, drop = FALSE]
+    mu_tmp <- compute_vcm_WBinv(sig_sq_x = sig_sq_x,
+                                matLHS = regs_tmp,
+                                U = matrix(U[,,n, drop = FALSE], nrow = TT),
+                                C = vcm_bet_u,
+                                matRHS = X[, n, drop = FALSE])
     mu_tmp_all <- mu_tmp_all + mu_tmp
   }
-  # browser()
   Omega_bet <- solveme(omega_tmp_all + prior_vcm_bet_z)
   mu_bet    <- Omega_bet %*% mu_tmp_all
   out <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z)
-  # out   <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
   return(out)
 }

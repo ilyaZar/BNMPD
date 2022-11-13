@@ -36,7 +36,7 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
                                                   dd_range_nn)
     # pe$vcm_bet_u[[d]][, , mm] <- c(0.2771419, 0.02868432, 0.07917361)[d]
     pe$bet_u[id_betu_tmp, mm,
-             dd_range_nn] <- sample_bet_u(pe$sig_sq_x[d, mm],
+             dd_range_nn] <- sample_bet_u_auto_lin_re(pe$sig_sq_x[d, mm],
                                           pe$phi_x[d, mm - 1],
                                           pe$bet_z[id_betz_tmp,
                                                    mm - 1],

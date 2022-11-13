@@ -50,6 +50,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .ModelDat = NULL,
                             .ModelOut = NULL,
                             .states_init = NULL,
+                            .states_true = NULL,
+                            .params_true = NULL,
                             get_setup_metadata_pf = function() {
                               private$.Settings$get_settings_set()
                             },
@@ -239,11 +241,20 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   2000th iteration of the first batch is taken as
                             #'   the initial value for the second run - batch
                             #'   2001-4000 and so on)
+                            #' @param path_to_states_true either \code{NULL},
+                            #'   which is the default that indicates that no
+                            #'   "true" states are available
+                            #' @param path_to_params_true either \code{NULL},
+                            #'   which is the default that indicates that no
+                            #'   "true" parameters are available or a path to
+                            #'   the true parameters in a simulation setting
                             #'
                             #' @examples
                             #' \dontrun{`ModelBNMPD$new(getwd())`}
                             initialize = function(path_to_project,
-                                                  path_to_states_init = NULL) {
+                                                  path_to_states_init = NULL,
+                                                  path_to_states_true = NULL,
+                                                  path_to_params_true = NULL) {
                               if (!is.null(path_to_states_init)) {
                                 store_ls_tmp1 <- ls()
                                 load(path_to_states_init)
@@ -254,6 +265,29 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 assign("states_init",
                                        eval(parse(text = name_states_init)))
                                 private$.states_init <- states_init
+                                rm(list = name_states_init)
+                              }
+                              if (!is.null(path_to_states_true)) {
+                                store_ls_tmp1 <- ls()
+                                load(path_to_states_true)
+                                store_ls_tmp2 <- ls()
+                                name_states_true <- setdiff(store_ls_tmp2,
+                                                            c(store_ls_tmp1,
+                                                              "store_ls_tmp1"))
+                                assign("states_true",
+                                       eval(parse(text = name_states_true)))
+                                private$.states_true <- states_true
+                              }
+                              if (!is.null(path_to_params_true)) {
+                                store_ls_tmp1 <- ls()
+                                load(path_to_params_true)
+                                store_ls_tmp2 <- ls()
+                                name_params_true <- setdiff(store_ls_tmp2,
+                                                            c(store_ls_tmp1,
+                                                              "store_ls_tmp1"))
+                                assign("params_true",
+                                       eval(parse(text = name_params_true)))
+                                private$.params_true <- params_true
                               }
                               private$.pth_to_proj <- path_to_project
 
@@ -387,6 +421,26 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               }
                               return(out)
                             },
+                            #' @description Returns true state values
+                            #'
+                            #' @details either \code{NULL} when none were passed
+                            #'   or a matrix of true values as produced by
+                            #'   [BNMPD::generate_data_t_n] and written to .csv
+                            #'   via [BNMPD::generate_simulation_study]
+                            #'
+                            get_true_states = function() {
+                              return(private$.states_true)
+                            },
+                            #' @description Returns true parameter values
+                            #'
+                            #' @details either \code{NULL} when none were passed
+                            #'   or a list of true values as produced by
+                            #'   [BNMPD::generate_true_params] and written to
+                            #'   .RData via [BNMPD::generate_simulation_study]
+                            #'
+                            get_true_params = function() {
+                              return(private$.params_true)
+                            },
                             #' @description Print "raw" data set.
                             #'
                             #' @details Call to internal \code{DataSet}-class
@@ -486,6 +540,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               self$load_modeldata_internal()$
                                 load_modeldata_prior_setup()$
                                 load_modeldata_inits_setup()$
+                                load_true_states()$
+                                load_true_params()$
                                 load_modeldata_dimensions()$
                                 load_modeldata_meta()$
                                 load_settings()
@@ -506,6 +562,29 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   PGAS function for inference.
                             load_modeldata_internal = function() {
                               out <- private$.ModelDat$get_model_data_internal()
+                              private$copy_env(parent.frame(), out)
+                              invisible(self)
+                            },
+                            #' @description Loads true states into environment
+                            #'
+                            #' @details Call to internal \code{ModelDat}-class
+                            #'   member that loads the internal data used by the
+                            #'   PGAS function for inference.
+                            load_true_states = function() {
+                              out <- private$.states_true
+                              out <- list2env(list(true_states = out))
+                              private$copy_env(parent.frame(), out)
+                              invisible(self)
+                            },
+                            #' @description Prints the current settings to the
+                            #'   screen.
+                            #'
+                            #' @details Call to internal \code{ModelDat}-class
+                            #'   member that loads the internal data used by the
+                            #'   PGAS function for inference.
+                            load_true_params = function() {
+                              out <- private$.params_true
+                              out <- list2env(list(true_params = out))
                               private$copy_env(parent.frame(), out)
                               invisible(self)
                             },

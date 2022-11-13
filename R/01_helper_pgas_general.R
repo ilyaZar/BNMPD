@@ -67,7 +67,6 @@ generate_environment_parallel <- function(envir_current,
   }
 }
 load_model = function(env_model, to_env) {
-
   # to_env <- parent.frame()
   nn_list_dd <- lapply(env_model$avail_indicator_nn, function(x) x - 1)
   dd_list_nn <- env_model$avail_indicator_dd

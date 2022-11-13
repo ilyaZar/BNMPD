@@ -68,3 +68,14 @@ compute_vcm_x_errors_inv <- function(sig_sq_x, Umat, vcm_bet_u, TT, type) {
     stop("Unknown type.")
   }
 }
+compute_vcm_WBinv <- function(sig_sq_x, matLHS, U, C, matRHS) {
+  wb_part1 <- crossprod(matLHS, matRHS)/sig_sq_x
+
+  wb_tmp1 <- crossprod(matLHS, U)
+  wb_tmp2 <- solveme(solveme(C) + crossprod(U, U)/sig_sq_x)
+  wb_tmp3 <- crossprod(U, matRHS)
+
+  wb_part2 <- 1/(sig_sq_x^2) * wb_tmp1 %*% wb_tmp2 %*% wb_tmp3
+
+  return(wb_part1 - wb_part2)
+}
