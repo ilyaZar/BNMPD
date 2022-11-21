@@ -12,7 +12,7 @@
 #'   \code{envir_par <- new.env(parent =rlang::env_parents(environment())[[1]])}
 #'   which is somewhat cleaner (e.g. this environment does not contain itself).
 #'   However, the seed generation differs so compatibility with older
-#'   pgas-functions requires the 'testing' version and the same seed to lead the
+#'   PGAS-functions requires the 'testing' version and the same seed to lead the
 #'   exact same results. The 'clean_run' version should be preferable for real
 #'   PGAS runs on the cluster where the seed will differ anyway. Both versions
 #'   should lead the same results as the seed will not matter asymptotically
@@ -24,12 +24,12 @@
 #'      \item{\code{seed_pgas_init: }}{set in the very first PGAS run, i.e.
 #'      when \code{pgas_init()} is run}
 #'    }
-#' @param run_type either 'pmcmc' for particle Gibbs or 'mcmc' for a plain MCMC
+#' @param run_type either 'PMCMC' for particle Gibbs or 'MCMC' for a plain MCMC
 #'   sampler where true states are taken as conditioning trajectory
 #'
-#' @return a list object of class "pmcmc" or "mcmc" depending on \code{run_type}
+#' @return a list object of class "PMCMC" or "MCMC" depending on \code{run_type}
 #'   with components being: all MCMC parameter draws and all drawn state
-#'   trajectories (smc outuput)
+#'   trajectories (SMC output)
 #' @export
 pgas_d <- function(pgas_model,
                    settings_type = "clean_run",

@@ -46,7 +46,7 @@ sample_all_params.lin <- function(pe, mm) {
 #' latent state process and drawn from the inverse Gamma. This version is
 #' adjusted to only incorporate linear regressors and not random effects.
 #'
-#' @inheritParams sample_sig_sq_x_auto_lin_re
+#' @inheritParams sample_sig_sq_x_alr
 #' @export
 sample_sig_sq_x_lin <- function(bet_z,
                                 X,

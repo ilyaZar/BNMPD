@@ -59,7 +59,6 @@ sample_bet_u_lin_re <- function(sig_sq_x,
                                 iter_range_NN,
                                 TT) {
   out_mat          <- matrix(0, nrow = dim_bet_u, ncol = length(iter_range_NN))
-  vmc_x_errors_inv <- diag(rep(sig_sq_x^(-1), times = TT))
   vcm_bet_u_inv    <- solveme(vcm_bet_u)
 
   nn <- 1
@@ -69,6 +68,7 @@ sample_bet_u_lin_re <- function(sig_sq_x,
 
     x_n   <- X[,n] - regs_z[,,n] %*% bet_z
     Umat <- matrix(U[, , n, drop = FALSE], nrow = TT)
+    # vmc_x_errors_inv <- diag(rep(sig_sq_x^(-1), times = TT))
     # Omega_bet_u2 <- crossprod(Umat, vmc_x_errors_inv) %*% Umat + vcm_bet_u_inv
     # Omega_bet_u2 <- solveme(Omega_bet_u2)
     # mu_bet_u2    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_inv) %*% x_n)
@@ -80,53 +80,30 @@ sample_bet_u_lin_re <- function(sig_sq_x,
                                    dim_bet_u)
     nn <- nn + 1
   }
-  # browser()
   return(out_mat)
 }
-#' Draws a (particle) Gibbs sample of the random effects
-#'
-#' The covariance matrix of random effects is per component \code{d} of the
-#' DD-dimensional latent state process and drawn from the inverse Wishart.
-#'
-#' @param sig_sq_x m'th sample of standard deviation parameter in a component
-#'   \code{d} of latent state process
-#' @param phi_x m'th sample of auto-regressive parameter of the state component
-#   \code{d}
-#' @param bet_z m'th sample of beta coefficient of the state component \code{d}
-#' @param vcm_bet_u covariance matrix of the random effects
-#' @param dim_bet_u dimension of the beta_u regressors
-#' @param X state matrix sliced over PGAS component \code{m} and state component
-#'   \code{d}
-#' @param regs_z Z regressors sliced over corresponding \code{d} component
-#' @param U random effects regressors
-#' @param iter_range_NN iteration range i.e. the cross sectional components
-#'   that are actually contributing to \code{d}
-#' @param TT time series length
-#'
-#' @return a list of \code{length(iter_range_NN)} containing one sample of the
-#'   \code{beta_u} coefficients
-#' @export
-sample_bet_u_auto_lin_re <- function(sig_sq_x,
-                                     phi_x,
-                                     bet_z,
-                                     vcm_bet_u,
-                                     dim_bet_u,
-                                     X,
-                                     regs_z,
-                                     U,
-                                     iter_range_NN,
-                                     TT) {
+sample_bet_u_alr <- function(sig_sq_x,
+                             phi_x,
+                             bet_z,
+                             vcm_bet_u,
+                             dim_bet_u,
+                             X,
+                             regs_z,
+                             U,
+                             iter_range_NN,
+                             TT) {
   out_mat          <- matrix(0, nrow = dim_bet_u, ncol = length(iter_range_NN))
-  vmc_x_errors_inv <- diag(rep(sig_sq_x^(-1), times = TT))
   vcm_bet_u_inv    <- solveme(vcm_bet_u)
 
   nn <- 1
+  xtt <- X[1:(TT - 1), , drop = FALSE]
   for (n in iter_range_NN) {
     Omega_bet_u <- matrix(0, nrow = dim_bet_u, ncol = dim_bet_u)
     mu_bet_u    <- matrix(0, nrow = dim_bet_u, ncol = 1)
 
-    x_n   <- X[,n] - (x_tt = rep(0, times = TT) * phi_x + regs_z[,,n] %*% bet_z)
-    Umat <- matrix(U[, , n, drop = FALSE], nrow = TT)
+    x_n   <- X[2:TT, n, drop = FALSE] - (xtt[, n] * phi_x + regs_z[, , n] %*% bet_z)
+    Umat <- matrix(U[, , n, drop = FALSE], nrow = TT - 1)
+    # vmc_x_errors_inv <- diag(rep(sig_sq_x^(-1), times = TT))
     # Omega_bet_u2 <- crossprod(Umat, vmc_x_errors_inv) %*% Umat + vcm_bet_u_inv
     # Omega_bet_u2 <- solveme(Omega_bet_u2)
     # mu_bet_u2    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_inv) %*% x_n)
@@ -138,6 +115,5 @@ sample_bet_u_auto_lin_re <- function(sig_sq_x,
                                    dim_bet_u)
     nn <- nn + 1
   }
-  # browser()
   return(out_mat)
 }

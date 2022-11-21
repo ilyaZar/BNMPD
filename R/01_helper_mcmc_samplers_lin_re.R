@@ -77,7 +77,7 @@ sample_all_params.lin_re <- function(pe, mm) {
 #' latent state process and drawn from the inverse Gamma. This version is
 #' adjusted to incorporate linear regressors as well as random effects.
 #'
-#' @inheritParams sample_sig_sq_x_auto_lin_re
+#' @inheritParams sample_sig_sq_x_alr
 #'
 #' @return one sample from the inverse gamma distribution for the standard
 #'   deviation parameter
@@ -109,7 +109,9 @@ sample_sig_sq_x_lin_re <- function(bet_z,
 #' The covariance matrix of random effects is per component \code{d} of the
 #' DD-dimensional latent state process and drawn from the inverse Wishart.
 #'
-#' @param inheritParams sample_bet_z_auto_lin_re
+#' @param inheritParams sample_bet_z_alr
+#' @param id_reg_z a vector of 2; Z regressor id for components \code{d} and
+#'   \code{d + 1}
 #'
 #' @return a sample
 #' @export
