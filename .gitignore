@@ -23,4 +23,6 @@
 /literature/*
 /results/*
 /tests-own/*
+/inst/simulation-studies/*
+/inst/generate-artificial-datasets/*
 ./04-results/*
