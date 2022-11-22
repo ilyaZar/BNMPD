@@ -47,7 +47,6 @@ generate_true_params <- function(dim_model,
                                  order_p_vec = rep(1, times = dim_model[["DD"]]),
                                  options = list(dwn_scl = 10),
                                  seed_taken) {
-  browser()
   check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
                  missing(SIMUL_PHI) || missing(seed_taken) ||
                    missing(dim_model))
@@ -64,48 +63,14 @@ generate_true_params <- function(dim_model,
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
   # 2. Set up parameter values: ---------------------------------------------
-  if (!is.null(sig_sq)) {
-    check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
-    if (!check_sig_sq) stop("'sig_sq' >0 and a vector of length DD ...\n")
-    true_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
-  } else {
-    tmp_sig_sq  <- get_default_sig_sq(DD, options$dwn_scl)
-    true_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
-  }
+  true_sig_sq <- set_simul_vals_sig_sq_x(sig_sq, DD, NN, options$dwn_scl)
+  true_phi    <- set_simul_vals_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
+  true_bet_z  <- set_simul_vals_bet_z(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs)
+  tmp_u       <- set_simul_vals_bet_vcm_u(SIMUL_U_BETA, DD, NN,
+                                          num_u_regs, seed_taken)
+  true_bet_u <- tmp_u[["true_bet_u"]]
+  true_D0u_u <- tmp_u[["true_D0u_u"]]
 
-  true_phi <- set_simul_vals_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
-
-
-  if (SIMUL_Z_BETA) {
-    if (!is.null(beta_z_lin)) {
-      check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
-      if (!check_bet_z) stop("'beta_z_lin' not a list or not of length = DD...")
-      true_bet_z <- beta_z_lin
-    } else {
-      if (is.null(num_z_regs)) stop("Num. of 'beta_z_lin' regressors required.")
-      true_bet_z <- get_default_beta_z_lin(DD, num = num_z_regs)
-    }
-  } else {
-    true_bet_z <- NULL
-  }
-  if (SIMUL_U_BETA) {
-    if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
-    num_reg_seq <- if (length(num_u_regs) == 1) {
-      num_reg_seq <- rep(num_u_regs, times = DD)
-    } else if (length(num_u_regs) == DD) {
-      num_reg_seq <- num_u_regs
-    } else {
-      stop(paste0("Number of random effects must be length, in which case it",
-                  "gets recycled, or DD!"))
-    }
-    true_out_u <- BNMPD::generate_bet_u(DD, NN, TRUE, num_reg_seq,
-                                        seed_no = seed_taken)
-    true_bet_u <- true_out_u[[1]]
-    true_D0u_u <- true_out_u[[2]]
-  } else {
-    true_bet_u <- NULL
-    true_D0u_u <- NULL
-  }
   par_trues <- list(sig_sq = true_sig_sq,
                     phi = true_phi,
                     beta_z_lin = true_bet_z,
@@ -124,7 +89,6 @@ generate_true_params <- function(dim_model,
 #'   autoregressions, number of cross section and per component \code{d}.
 #' @export
 set_simul_vals_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
-  browser()
   if (SIMUL_PHI) {
     if (!is.null(phi)) {
       if (length(phi) != DD) {
@@ -139,13 +103,87 @@ set_simul_vals_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
         out_phi[[d]] <- matrix(phi[[d]], nrow = order_p_vec[d], ncol = NN)
       }
     } else {
-      tmp_phi  <- get_default_phi(DD, NN, order_p_vec)
-      out_phi <- matrix(tmp_phi, nrow = DD, ncol = NN)
+      out_phi  <- get_default_phi(DD, NN, order_p_vec)
     }
   } else {
     out_phi <- NULL
   }
   return(out_phi)
+}
+#' Sets true values (default or user supplied) for parameter sig_sq_x
+#'
+#' @inheritParams generate_true_params
+#' @inheritParams set_simul_vals_phi
+#'
+#' @return a matrix of dimension \code{DD x NN} of true parameter values for
+#'   sig_sq_x
+set_simul_vals_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
+  if (!is.null(sig_sq)) {
+    check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
+    if (!check_sig_sq) stop("'sig_sq' >0 and a vector of length DD ...\n")
+    out_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
+  } else {
+    tmp_sig_sq  <- get_default_sig_sq(DD, dwn_scl)
+    out_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
+  }
+  rownames(out_sig_sq) <- paste0("D", 1:DD)
+  colnames(out_sig_sq) <- paste0("N", 1:NN)
+  return(out_sig_sq)
+}
+#' Sets true values (default or user supplied) for parameter bet_z
+#'
+#' @inheritParams generate_true_params
+#' @inheritParams set_simul_vals_phi
+#'
+#' @return a list of length \code{DD} each element being a vector of the
+#'   corresponding number of regressors
+set_simul_vals_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs) {
+  if (SIMUL_Z_BETA) {
+    if (!is.null(beta_z_lin)) {
+      check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
+      if (!check_bet_z) stop("'beta_z_lin' not a list or not of length = DD...")
+      out_bet_z <- beta_z_lin
+    } else {
+      if (is.null(num_z_regs)) stop("Num. of 'beta_z_lin' regressors required.")
+      out_bet_z <- get_default_beta_z_lin(DD, num = num_z_regs)
+    }
+  } else {
+    out_bet_z <- NULL
+  }
+  return(out_bet_z)
+}
+#' Sets true values (default or user supplied) for parameter bet_u
+#'
+#' @inheritParams generate_true_params
+#' @inheritParams set_simul_vals_phi
+#'
+#' @return a list of two elements for bet_u and vcm_bet_u each again a list of
+#'   dimension \code{DD} with first element being a matrix of dimension
+#'   \code{num_u_regs x NN} (matrix of true random effects) and the second
+#'   matrix \code{num_u_regs x num_u_regs} (covariance matrix for random
+#'   effects)
+#' @export
+set_simul_vals_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
+                                     num_u_regs, seed_taken) {
+  if (SIMUL_U_BETA) {
+    if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
+    num_reg_seq <- if (length(num_u_regs) == 1) {
+      num_reg_seq <- rep(num_u_regs, times = DD)
+    } else if (length(num_u_regs) == DD) {
+      num_reg_seq <- num_u_regs
+    } else {
+      stop(paste0("Number of random effects must be length, in which case it",
+                  "gets recycled, or DD!"))
+    }
+    true_out_u <- BNMPD::generate_bet_u(DD, NN, TRUE, num_reg_seq,
+                                        seed_no = seed_taken)
+    true_bet_u <- true_out_u[[1]]
+    true_D0u_u <- true_out_u[[2]]
+  } else {
+    true_bet_u <- NULL
+    true_D0u_u <- NULL
+  }
+  return(list(true_bet_u = true_bet_u, true_D0u_u = true_D0u_u))
 }
 #' Get default values for true \code{sig_sq} parameters in simulation
 #'
@@ -166,7 +204,6 @@ get_default_sig_sq <- function(DD, dwn_scl) {
 #' @return a list of length \code{DD} with elements being matrices of dimension
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
 get_default_phi <- function(DD, NN, order_p_vec) {
-  browser()
   if (any(order_p_vec > 4)) stop("Need more default phis ...")
   possible_phis <- matrix(c(0.35, 0.55, 0.75, 0.95,
                             0.85, 0.65, 0.45, 0.25,
@@ -270,7 +307,11 @@ generate_bet_u <- function(DD, NN,
       D0u[[d]] <- solveme(diag(1:num_re[d] * prior_vcm_u_scl_adj,
                                nrow = num_re[d]))
       D0u[[d]] <- solveme((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
+      colnames(D0u[[d]]) <- paste0("U", 1:num_re[d])
+      rownames(D0u[[d]]) <- paste0("U", 1:num_re[d])
       true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
+      colnames(true_bet_u[[d]]) <- paste0("N", 1:NN)
+      rownames(true_bet_u[[d]]) <- paste0("U", 1:num_re[d])
       # browser()
       for (n in 1:NN) {
         true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
