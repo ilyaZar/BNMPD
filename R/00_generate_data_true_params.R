@@ -15,7 +15,7 @@
 #'   of regressors; if \code{NULL}, then defaults are generated (see
 #'   [get_default_beta_z_lin])
 #' @param SIMUL_PHI logical; if \code{TRUE}, then autoregressive process of
-#'   order \code{num_auto_p} is generated
+#'   order \code{order_p_vec} is generated
 #' @param SIMUL_Z_BETA logical; if \code{TRUE}, then standard continuous
 #'   (z-type) covariates are included
 #' @param SIMUL_U_BETA logical; if \code{TRUE}, then random effects (u-type
@@ -28,7 +28,8 @@
 #'   components, or a vector of length equal to the number of multivariate
 #'   components; currently not varying along the cross sectional units but
 #'   extension is possible)
-#' @param num_auto_p integer > 0 giving the order of auto-regression
+#' @param order_p_vec a vector of length DD with integers > 0 giving the order of
+#'   auto-regression per component d
 #' @param seed_taken the seed used drawing random effects
 #'
 #' @return a list of four elements each giving the corresponding true parameters
@@ -43,9 +44,10 @@ generate_true_params <- function(dim_model,
                                  SIMUL_U_BETA,
                                  num_u_regs = NULL,
                                  num_z_regs = NULL,
-                                 num_auto_p = 1,
+                                 order_p_vec = rep(1, times = dim_model[["DD"]]),
                                  options = list(dwn_scl = 10),
                                  seed_taken) {
+  browser()
   check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
                  missing(SIMUL_PHI) || missing(seed_taken) ||
                    missing(dim_model))
@@ -70,18 +72,10 @@ generate_true_params <- function(dim_model,
     tmp_sig_sq  <- get_default_sig_sq(DD, options$dwn_scl)
     true_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
   }
-  if (SIMUL_PHI) {
-    if (!is.null(phi)) {
-      check_phi <- all(phi >= 0) && all(phi < 1) && all(length(phi) == DD)
-      if (!check_phi) stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
-      true_phi <- matrix(phi, nrow = DD, ncol = NN)
-    } else {
-      tmp_phi  <- get_default_phi(DD)
-      true_phi <- matrix(tmp_phi, nrow = DD, ncol = NN)
-    }
-  } else {
-    true_phi <- NULL
-  }
+
+  true_phi <- set_simul_vals_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
+
+
   if (SIMUL_Z_BETA) {
     if (!is.null(beta_z_lin)) {
       check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
@@ -98,8 +92,11 @@ generate_true_params <- function(dim_model,
     if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
     num_reg_seq <- if (length(num_u_regs) == 1) {
       num_reg_seq <- rep(num_u_regs, times = DD)
-    } else {
+    } else if (length(num_u_regs) == DD) {
       num_reg_seq <- num_u_regs
+    } else {
+      stop(paste0("Number of random effects must be length, in which case it",
+                  "gets recycled, or DD!"))
     }
     true_out_u <- BNMPD::generate_bet_u(DD, NN, TRUE, num_reg_seq,
                                         seed_no = seed_taken)
@@ -116,9 +113,44 @@ generate_true_params <- function(dim_model,
                     vcm_u_lin = true_D0u_u)
   return(true_params = par_trues)
 }
+#' Sets true values (default or user supplied) for parameter phi
+#'
+#' @inheritParams generate_true_params
+#' @param DD number of multivariate components
+#' @param NN number of cross sectional units
+#'
+#' @return a list of length \code{DD} with each element being a matrix of
+#'   dimension \code{order_p_vec[d] x NN} that stores the phi's per number of
+#'   autoregressions, number of cross section and per component \code{d}.
+#' @export
+set_simul_vals_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
+  browser()
+  if (SIMUL_PHI) {
+    if (!is.null(phi)) {
+      if (length(phi) != DD) {
+        stop("Phi params must be passed as a list of length DD!")
+      }
+      out_phi <- vector("list", DD)
+      for (d in 1:DD) {
+        check_phi <- all(phi[[d]] >= 0) && all(phi[[d]] < 1)
+        if (!check_phi) {
+          stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
+        }
+        out_phi[[d]] <- matrix(phi[[d]], nrow = order_p_vec[d], ncol = NN)
+      }
+    } else {
+      tmp_phi  <- get_default_phi(DD, NN, order_p_vec)
+      out_phi <- matrix(tmp_phi, nrow = DD, ncol = NN)
+    }
+  } else {
+    out_phi <- NULL
+  }
+  return(out_phi)
+}
 #' Get default values for true \code{sig_sq} parameters in simulation
 #'
 #' @param DD number of multivariate components
+#' @param dwn_scl control parameter that scales variance upwards/downwards
 #'
 #' @return a vector of length \code{DD}
 get_default_sig_sq <- function(DD, dwn_scl) {
@@ -128,11 +160,29 @@ get_default_sig_sq <- function(DD, dwn_scl) {
 }
 #' Get default values for true \code{phi} parameters in simulation
 #'
-#' @inheritParams get_default_sig_sq
+#' @inheritParams generate_true_params
+#' @inheritParams set_simul_vals_phi
 #'
-#' @return a vector of length \code{DD}
-get_default_phi <- function(DD) {
-  return(rep(c(0.35, 0.55, 0.75, 0.95), length.out = DD))
+#' @return a list of length \code{DD} with elements being matrices of dimension
+#'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
+get_default_phi <- function(DD, NN, order_p_vec) {
+  browser()
+  if (any(order_p_vec > 4)) stop("Need more default phis ...")
+  possible_phis <- matrix(c(0.35, 0.55, 0.75, 0.95,
+                            0.85, 0.65, 0.45, 0.25,
+                            0.45, 0.35, 0.25, 0.35,
+                            0.75, 0.85, 0.55, 0.45),
+                          nrow = 4, ncol = 4)
+  possible_phis <- rbind(possible_phis, possible_phis, possible_phis)
+  out_phi <- vector("list", DD)
+  for (d in seq_len(DD)) {
+    tmp_phis <- possible_phis[d, 1:order_p_vec[d]]
+    tmp_phis <- matrix(tmp_phis, nrow = order_p_vec[d], ncol = NN)
+    rownames(tmp_phis) <- paste0("p", 1:order_p_vec[d])
+    colnames(tmp_phis) <- paste0("NN", 1:NN)
+    out_phi[[d]] <- tmp_phis
+  }
+  return(out_phi)
 }
 #' Get default values for true \code{beta_z_lin} parameters in simulation
 #'
