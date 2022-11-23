@@ -136,6 +136,8 @@ save_simulated_data <- function(pth_to_write,
 #' @param fn_zero_states  character giving the filename of the states set all to
 #'   zero (saved in \code{.RData}-format)
 #' @param dim_model numeric vector of 3 elements: \code{NN x TT x DD}
+#' @param SIMUL_PHI logical; if \code{TRUE} autoregressive processes are
+#'   simulated which is reflected in the naming of simulated data sets
 #' @param SIMUL_Z_BETA logical; if \code{TRUE} Z-type regressors are simulated
 #'   which is reflected in the naming of simulated data sets
 #' @param SIMUL_U_BETA logical; if \code{TRUE} U-type regressors (i.e. random
@@ -147,6 +149,8 @@ save_simulated_data <- function(pth_to_write,
 #' @param num_u_regs numeric vector giving number of U-type regressors; parsed
 #'   as comma-seperated sequence of numbers i.e. for \code{num_u_regs = 1:3} we
 #'   get "withRE,1,2,3" in the file names
+#' @param order_p an integer vector giving the autoregressive order for each d
+#'   in \code{1,...,DD}
 #'
 #' @return a list of 3:
 #'    \itemize{
@@ -159,13 +163,21 @@ get_file_names_simul_data <- function(fn_data,
                                       fn_true_states,
                                       fn_zero_states,
                                       dim_model,
+                                      SIMUL_PHI,
                                       SIMUL_Z_BETA,
                                       SIMUL_U_BETA,
                                       num_z_regs,
-                                      num_u_regs) {
+                                      num_u_regs,
+                                      order_p) {
   tmp_fn <- paste0("NN", dim_model[1],
                    "_TT", dim_model[2],
                    "_DD", dim_model[3])
+  if (SIMUL_PHI) {
+    tmp_fn <- paste0(tmp_fn, "_", "withAUTO", paste0(",", order_p,
+                                                     collapse = ""))
+  } else {
+    tmp_fn <- paste0(tmp_fn, "_", "noAUTO")
+  }
   if (SIMUL_Z_BETA) {
     tmp_fn <- paste0(tmp_fn, "_", "withLIN", paste0(",", num_z_regs,
                                                     collapse = ""))
@@ -316,15 +328,16 @@ generate_simulation_study <- function(pth_to_project,
                            "interpretation",
                            "summary")))
   lapply(pth_tmp, dir.create)
-
   fn_all <- get_file_names_simul_data(fn_data = "sim_data",
                                       fn_true_states = "states_true",
                                       fn_zero_states = "states_zero",
                                       dim_model = data_simulation[["dim"]],
+                                      data_simulation_meta[["SIMUL_PHI"]],
                                       data_simulation_meta[["SIMUL_Z_BETA"]],
                                       data_simulation_meta[["SIMUL_U_BETA"]],
                                       data_simulation_meta[["num_z_regs"]],
-                                      data_simulation_meta[["num_u_regs"]])
+                                      data_simulation_meta[["num_u_regs"]],
+                                      data_simulation_meta[["order_p"]])
   generate_yaml_model_defintion(model_type,
                                 dimensions = data_simulation[["dim"]],
                                 data_simulation_meta,

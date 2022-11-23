@@ -53,7 +53,6 @@ generate_data_t <- function(TT, DD,
                             x_levels,
                             options_include,
                             modelling_reg_types) {
-  # browser()
   x <- matrix(nrow = TT, ncol = DD, 0)
 
   if (modelling_reg_types[["z-linear-regressors"]]) {
@@ -73,7 +72,7 @@ generate_data_t <- function(TT, DD,
                       reg_var_within = 2.0025,
                       reg_var_among = 1)
     res <- generate_x_z_u(TT = TT,
-                          phi_x = par_true[["phi"]][d],
+                          phi_x = par_true[["phi"]][[d]],
                           sig_sq_x = par_true[["sig_sq"]][d],
                           bet_z = par_true[["beta_z_lin"]][[d]],
                           bet_u = par_true[["beta_u_lin"]][[d]],

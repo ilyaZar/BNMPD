@@ -205,10 +205,10 @@ get_default_sig_sq <- function(DD, dwn_scl) {
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
 get_default_phi <- function(DD, NN, order_p_vec) {
   if (any(order_p_vec > 4)) stop("Need more default phis ...")
-  possible_phis <- matrix(c(0.35, 0.55, 0.75, 0.95,
-                            0.85, 0.65, 0.45, 0.25,
-                            0.45, 0.35, 0.25, 0.35,
-                            0.75, 0.85, 0.55, 0.45),
+  possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
+                            0.25, 0.20, 0.35, 0.25,
+                            0.35, 0.20, 0.20, 0.15,
+                            0.15, 0.10, 0.10, 0.15),
                           nrow = 4, ncol = 4)
   possible_phis <- rbind(possible_phis, possible_phis, possible_phis)
   out_phi <- vector("list", DD)
@@ -385,20 +385,22 @@ check_args_to_generate_yaml_json <- function(dim = NULL, regspc = NULL) {
   }
   if (!is.null(regspc)) {
     stopifnot(`Argument 'regressor_specs' is not a list ` = is.list(regspc))
-    check_names <- all(unique(names(regspc)) %in% c("SIMUL_Z_BETA",
+    check_names <- all(unique(names(regspc)) %in% c("SIMUL_PHI",
+                                                    "SIMUL_Z_BETA",
                                                     "SIMUL_U_BETA",
                                                     "num_z_regs",
-                                                    "num_u_regs"))
+                                                    "num_u_regs",
+                                                    "order_p"))
     stopifnot(`Arg. 'regressor_specs' has wrong names` = check_names)
     check_types <- all(unlist(lapply(regspc, typeof)) %in% c("logical",
                                                              "logical",
+                                                             "logical",
                                                              "double",
-                                                             "double" ))
+                                                             "double",
+                                                             "double"))
     stopifnot(`Arg. 'regressor_specs' has wrong element types.` = check_types)
   }
 }
-
-
 model_type_to_list <- function(mod) {
   if (is.null(names(mod))) {
     msg <- paste0("Arg. model_type is unnamed: ",
@@ -469,7 +471,7 @@ generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
   check_args_to_generate_yaml_json(dimension)
   DD <- dimension[["DD"]]
 
-  if (!is.null(true_params$phi)) true_params$phi <- true_params$phi[, 1]
+  # if (!is.null(true_params$phi)) true_params$phi <- true_params$phi[, 1]
   true_params$sig_sq <- true_params$sig_sq[, 1]
   list_json <- list()
   for(d in seq_len(DD)) {
@@ -488,8 +490,13 @@ generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
 }
 par_to_list <- function(par_val, par_name, num_d) {
   if (par_name == "phi") {
-    lab <- paste0("phi_{", num_d,"}")
-    var <- paste0(par_name, num_d)
+    if (length(par_val) < 2) {
+      num_comp <- NULL
+    } else {
+      num_comp <- seq_len(length(par_val))
+    }
+    lab <- paste0("phi_{", num_comp, ",", num_d,"}")
+    var <- paste0(par_name, "_", num_comp, "_", num_d)
     val <- par_val
   }
   if (par_name == "beta_z_lin") {
@@ -523,19 +530,11 @@ par_to_list <- function(par_val, par_name, num_d) {
        val =  val)
 }
 get_par <- function(par_to_check, par_name, num_d) {
-  if (par_name %in% c("sig_sq", "phi")) {
-    # if (is.na(par_to_check[num_d])) {
-    #   return(NA)
-    # } else {
-    #   return(par_to_check[num_d])
-    # }
+  if (par_name == "sig_sq") {
     if (!is.null(par_to_check)) return(par_to_check[num_d])
-  } else if (par_name %in% c("beta_z_lin", "beta_u_lin", "vcm_u_lin")) {
-    # if (is.null(par_to_check[[num_d]])) {
-    #   return(NULL)
-    # } else {
-    #   return(par_to_check[[num_d]])
-    # }
+  } else if (par_name == "phi") {
+    if (!is.null(par_to_check)) return(par_to_check[[num_d]][, 1])
+  } else if (par_name %in% c("phi", "beta_z_lin", "beta_u_lin", "vcm_u_lin")) {
     if (!is.null(par_to_check)) return(par_to_check[[num_d]])
   } else {
     stop("Unknown parameter name.")

@@ -304,7 +304,7 @@ generate_z_u_container <- function(pars, NN, TT, DD, cnt_name, reg_type) {
 #' @return subset of true parameter container for current cross sectional unit
 get_par_true_n <- function(pars, reg_types, n) {
   pars_out <- list(sig_sq = pars[["sig_sq"]][, n],
-                   phi = pars[["phi"]][, n])
+                   phi = lapply(pars[["phi"]], `[`, i = , j = n))
   if (reg_types[["z-linear-regressors"]]) {
     pars_out$beta_z_lin <- pars[["beta_z_lin"]]
   }

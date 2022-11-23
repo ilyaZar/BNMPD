@@ -74,6 +74,7 @@ generate_x_z_u <- function(TT,
                            policy_dummy = FALSE,
                            zero_pattern = NULL,
                            drift = FALSE) {
+  order_p <- length(phi_x)
   if (!modelling_reg_types[["autoregression"]]) phi_x <- 0
   x_level <- options_reg_simul[["x_level"]]
   x_sd_within  <- sqrt(options_reg_simul[["reg_var_within"]])
@@ -126,29 +127,39 @@ generate_x_z_u <- function(TT,
   out$x <- simulate_x(x_level, regs = regs_all,
                       phi_x, sig_sq_x,
                       bet_reg = c(bet_z, bet_u),
-                      TT)
+                      TT, order_p)
   out$z <- z
   out$u <- u
   return(out)
 }
-simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT) {
+simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT, order_p) {
   if (is.null(regs) && is.null(bet_reg)) {
     regs    <- matrix(0, nrow = TT + 1, ncol = 1)
     bet_reg <- matrix(0, nrow = 1, ncol = 1)
   }
   x <- rep(0, TT)
   xinit <- x_level
+  iter  <- 1
   x[1] <- f(x_tt = xinit,
             regs = regs[1, ],
-            phi_x = phi_x,
+            phi_x = phi_x[1],
             bet_reg = bet_reg)
-  x[1] <- x[1] + sqrt(sig_sq_x)*stats::rnorm(n = 1)
+  x[1] <- x[1] + sqrt(sig_sq_x) * stats::rnorm(n = 1)
+  while (iter < order_p) {
+    iter    <- iter + 1
+    x[iter] <- f(x_tt = c(x[(iter - 1):1], xinit),
+                 regs = regs[iter, ],
+                 phi_x = phi_x[1:iter],
+                 bet_reg = bet_reg)
+    x[iter] <- x[iter] + sqrt(sig_sq_x) * stats::rnorm(n = 1)
+  }
 
-  for (t in 1:TT) {
+  for (t in iter:TT) {
     if (t < TT) {
-      x[t + 1] <- f(x_tt = x[t], regs = regs[t + 1, ],
+      x[t + 1] <- f(x_tt = x[t:(t - order_p + 1)],
+                    regs = regs[t + 1, ],
                     phi_x = phi_x, bet_reg = bet_reg)
-      x[t + 1] <- x[t + 1] + sqrt(sig_sq_x)*stats::rnorm(n = 1)
+      x[t + 1] <- x[t + 1] + sqrt(sig_sq_x) * stats::rnorm(n = 1)
     }
   }
   return(x)
@@ -192,6 +203,7 @@ simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT) {
 generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                               x_level, x_sd_within, x_sd_among,
                               intercept, policy_dummy, zero_pattern = NULL) {
+  order_p <- length(phi_x)
   dummy_to_use <- get_pattern_policy_zeros(policy_dummy, zero_pattern, TT)
 
   reg_means <- stats::rnorm(max(dim_reg - 3, 0), mean = 0, sd = x_sd_among)
@@ -217,7 +229,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
     if (dim_reg > 2) reg_means <- c(1, 0, reg_means); message("Approx. type3")
     if (dim_reg > 1) reg_means <- c(1, reg_means); message("Approx. type4")
   }
-  last_reg_mean <- x_level * (1 - phi_x)
+  last_reg_mean <- x_level * (1 - sum(phi_x))
   last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
   last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
   reg_means     <- c(reg_means, last_reg_mean)
@@ -279,7 +291,7 @@ get_pattern_policy_zeros <- function(policy_dummy, zero_pattern, TT) {
 #'   transitions (conditional means)
 f <- function(x_tt, regs, phi_x, bet_reg) {
   # xt <- phi_x*xtt
-  x_t <- phi_x*x_tt + regs %*% bet_reg
+  x_t <- sum(phi_x*x_tt) + regs %*% bet_reg
   # x_t <- phi_x*x_tt + z %*% bet_z + u %*% bet_u
 
   # xt <- phi_x*xtt + 8*cos(1.2*t)
