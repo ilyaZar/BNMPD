@@ -17,6 +17,7 @@ ModelDef <- R6::R6Class("ModelDef",
                         portable = FALSE,
                         private = list(
                           .pth_to_md = NULL,
+                          .pth_to_ps = NULL,
                           .model_raw = NULL,
                           .model_prnt = NULL,
                           .project_id = NULL,
@@ -367,8 +368,12 @@ ModelDef <- R6::R6Class("ModelDef",
                           #'
                           #' @param pth_to_md character string giving the path
                           #'   to the model definition files.
-                          initialize = function(pth_to_md) {
+                          #' @param pth_to_ps character string giving the path
+                          #'   to the poroject settings.
+                          initialize = function(pth_to_md,
+                                                pth_to_ps) {
                             private$.pth_to_md <- pth_to_md
+                            private$.pth_to_ps <- pth_to_ps
                             self$update_model_definition()
                             private$generate_BFLT()
                           },
@@ -386,7 +391,11 @@ ModelDef <- R6::R6Class("ModelDef",
                             private$.model_raw  <- md_tmp
                             private$.model_type_obs <- md_tmp$model_type_obs
                             private$.model_type_lat <- md_tmp$model_type_lat
-                            private$.project_id <- md_tmp$project_id
+
+                            ps_tmp <- yaml::read_yaml(private$.pth_to_ps)
+                            private$.project_id <- paste0(ps_tmp$project_no,
+                                                          "_",
+                                                          ps_tmp$project_name)
                             private$set_model_dims()
                             private$set_var_lab()
                             private$set_cs_ts()

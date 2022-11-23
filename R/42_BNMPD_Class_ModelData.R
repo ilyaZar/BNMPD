@@ -413,21 +413,16 @@ ModelDat <- R6::R6Class("ModelDat",
                             init_sig_sq[, 1] <- initialize_par_vec(inits,
                                                                    "sig_sq",
                                                                    "listof-vec")
-                            init_phi <- matrix(0, nrow = DD, ncol = 1)
-                            tmp_inits <- initialize_par_vec(inits,
+
+                            init_phi <- initialize_par_list(inits,
                                                             "phi",
                                                             "listof-vec")
-                            if (!is.null(tmp_inits)) {
-                              init_phi[, 1] <- tmp_inits
-                            } else {
-                              init_phi <- NULL
-                            }
 
                             dim_zet <- get_dim_reg(inits, "beta_z_lin")
-
                             init_bet_z <- initialize_par_list(inits,
                                                               "beta_z_lin",
                                                               "listof-vec")
+
                             dim_u   <- get_dim_reg(inits, "beta_u_lin")
                             dim_uet <- list(dim_u, rep(NN, times = DD))
                             init_bet_u <- initialize_par_list(inits,

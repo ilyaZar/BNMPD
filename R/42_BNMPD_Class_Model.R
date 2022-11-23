@@ -28,6 +28,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .pth_to_setting1 = "model/settings",
                             .pth_to_setting2 = "model/settings",
                             .pth_to_modeldef = "model/model-definition",
+                            .pth_to_projsets = "model/settings",
                             .pth_to_priorset = "model/model-definition",
                             .pth_to_initsset = "model/model-definition",
                             .pth_to_modelout = "model/output",
@@ -35,6 +36,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             # Paths to files inside dirs: hard-coded, changeable
                             ### I. files inside ./model/model-definition:
                             .fn_mddef = "model_definition.yaml",
+                            .fn_psset = "settings_project.yaml",
                             .fn_prset = "setup_priors.json",
                             .fn_inits = "setup_inits.json",
                             ### II. files inside ./model/settings:
@@ -89,13 +91,15 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                      private$.pth_to_modeldef,
                                                      private$.pth_to_priorset,
                                                      private$.pth_to_initsset,
-                                                     private$.pth_to_modelout))
+                                                     private$.pth_to_modelout,
+                                                     private$.pth_to_projsets))
                               private$.pth_to_data     <- pth_jnd[1]
                               private$.pth_to_settings <- pth_jnd[2]
                               private$.pth_to_modeldef <- pth_jnd[3]
                               private$.pth_to_priorset <- pth_jnd[4]
                               private$.pth_to_initsset <- pth_jnd[5]
                               private$.pth_to_modelout <- pth_jnd[6]
+                              private$.pth_to_projsets <- pth_jnd[7]
                               invisible(NULL)
                             },
                             ## @description update private file-path fields of
@@ -106,6 +110,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             update_all_file_pths = function() {
                               private$.pth_to_modeldef <- file.path(private$.pth_to_modeldef,
                                                                     private$.fn_mddef)
+                              private$.pth_to_projsets <- file.path(private$.pth_to_projsets,
+                                                                    private$.fn_psset)
                               private$.pth_to_setting1 <- file.path(private$.pth_to_settings,
                                                                     private$.fn_pfsmp)
                               private$.pth_to_setting2 <- file.path(private$.pth_to_settings,
@@ -114,6 +120,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                                     private$.fn_prset)
                               private$.pth_to_initsset <- file.path(private$.pth_to_initsset,
                                                                     private$.fn_inits)
+                              private$.pth_to_p
                               invisible(NULL)
                             },
                             update_file_pth_mdout = function() {
@@ -295,18 +302,21 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$validate_dirs(private$.pth_to_proj,
                                                     private$.pth_to_data,
                                                     private$.pth_to_settings,
-                                                    private$.pth_to_modeldef)
+                                                    private$.pth_to_modeldef,
+                                                    private$.pth_to_projsets)
                               private$update_all_file_pths()
                               private$validate_files(private$.pth_to_setting1,
                                                      private$.pth_to_setting2,
                                                      private$.pth_to_modeldef,
                                                      private$.pth_to_priorset,
-                                                     private$.pth_to_initsset)
+                                                     private$.pth_to_initsset,
+                                                     private$.pth_to_projsets)
 
                               private$.DataSet  <- DataSet$new(private$.pth_to_data)
                               private$.Settings <- Settings$new(private$.pth_to_setting1)
                               cat("Settings successful\n")
-                              private$.ModelDef <- ModelDef$new(private$.pth_to_modeldef)
+                              private$.ModelDef <- ModelDef$new(private$.pth_to_modeldef,
+                                                                private$.pth_to_projsets)
                               cat("ModelDef successful\n")
                               private$.ModelDat <- ModelDat$new(private$.pth_to_priorset,
                                                                 private$.pth_to_initsset,
@@ -620,8 +630,9 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               out <- list()
                               out$avail_indicator_nn <- tmp$avail_ind_nn
                               out$avail_indicator_dd <- tmp$avail_ind_dd
-                              out$model_type_obs <- tmp2[1]
-                              out$model_type_lat <- tmp2[2]
+                              out$model_proj_id  <- tmp2[1]
+                              out$model_type_obs <- tmp2[2]
+                              out$model_type_lat <- tmp2[3]
                               out$model_type_smc <- tmp3[["csmc_type"]]
                               out <- list2env(as.list(out))
                               private$copy_env(parent.frame(), out)
