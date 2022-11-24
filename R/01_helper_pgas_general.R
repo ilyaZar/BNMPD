@@ -66,7 +66,7 @@ generate_environment_parallel <- function(envir_current,
     return(envir_used)
   }
 }
-load_model = function(env_model, to_env) {
+load_model <- function(env_model, to_env) {
   # to_env <- parent.frame()
   nn_list_dd <- lapply(env_model$avail_indicator_nn, function(x) x - 1)
   dd_list_nn <- env_model$avail_indicator_dd
@@ -78,7 +78,7 @@ load_model = function(env_model, to_env) {
     num_counts <- env_model$data[[2]]
     env_model$num_counts <- num_counts
   }
-  order_p_tmp <- get_lag_order(env_model$model_type_lat)
+  order_p_tmp <- get_lag_order(env_model)
   initialize_data_containers(env_model$par_init,
                              env_model$traj_init,
                              env_model$priors,
@@ -112,8 +112,16 @@ load_model = function(env_model, to_env) {
   invisible(to_env)
 }
 get_lag_order <- function(x) {
-  check <- grepl("auto", x)
-  if (check) return(1)
+  auto_check <- x$model_type_lat
+  check <- grepl("auto", auto_check)
+  if (check) {
+    tmp_orders <- sapply(x$par_init$init_phi, length)
+    order_p <- unique(tmp_orders)
+    if (length(order_p) != 1) {
+      stop("Different autoregressive orders for d = 1,...,D not yet supported!")
+    }
+    return(order_p)
+  }
   return(0)
 }
 initialize_data_containers <- function(par_init,
@@ -123,7 +131,7 @@ initialize_data_containers <- function(par_init,
                                        TT, DD, NN, MM,
                                        order_p,
                                        to_env) {
-  initialize_dims(par_init, U, DD)
+  initialize_dims(par_init, U, DD, order_p)
   u_null <- TRUE
   if (!is.null(U)) u_null <- FALSE
   z_null <- TRUE
@@ -134,7 +142,7 @@ initialize_data_containers <- function(par_init,
   # X2      <- array(0, dim = c(TT, DD, MM, NN))
   sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
   if (!is.null(par_init[["init_phi"]])) {
-    phi_x <- matrix(0, nrow = DD, ncol = MM)
+    phi_x <- matrix(0, nrow = order_p * DD, ncol = MM)
   } else {
     phi_x <- NULL
   }
@@ -183,6 +191,7 @@ initialize_data_containers <- function(par_init,
   for (d in 1:DD) {
     id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
     id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
+    id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
     if (!u_null) {
       id_betu_tmp <- (id_bet_u[d] + 1):id_bet_u[d + 1]
       id_uet_tmp  <- (id_uet[d] + 1):id_uet[d + 1]
@@ -196,7 +205,7 @@ initialize_data_containers <- function(par_init,
       }
     } else {
       if (!z_null) {
-        id_regs_z_tmp <- (id_zet[d] + 1 + 1 * d):(id_zet[d + 1] + 1 * d)
+        id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
       }
       if (!u_null) {
         id_regs_u_tmp <- (id_uet[d] + 1 + 1 * d):(id_uet[d + 1] + 1 * d)
@@ -204,13 +213,11 @@ initialize_data_containers <- function(par_init,
     }
 
     sig_sq_x[d, 1] <- par_init[["init_sig_sq"]][d, 1]
-    if (!is.null(par_init[["init_phi"]][[d, 1]])) {
-      phi_x[d, 1] <- par_init[["init_phi"]][[d, 1]]
-    }
-
+    phi_x[id_phi_tmp, 1] <- par_init[["init_phi"]][[d]]
     bet_z[id_betz_tmp, 1] <- par_init[["init_bet_z"]][[d]]
-    if (!is.null(par_init[["init_phi"]][[d, 1]])) {
-      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + 1)
+
+    if (!is.null(par_init[["init_phi"]][[d]])) {
+      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + order_p)
     } else {
       prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d])
     }
@@ -258,8 +265,8 @@ initialize_data_containers <- function(par_init,
     }
   }
   # to_env  <- parent.frame()
-  vec_obj <- c("dim_bet_z", "dim_bet_u",
-               "id_bet_z", "id_zet", "id_reg_z",
+  vec_obj <- c("dim_bet_z", "dim_bet_u", "order_p",
+               "id_bet_z", "id_zet", "id_reg_z", "id_phi",
                "prior_vcm_bet_z",
                "prior_ig_a",
                "prior_ig_b",
@@ -277,7 +284,39 @@ initialize_data_containers <- function(par_init,
   }
   invisible(to_env)
 }
-initialize_dims <- function(par_init, U, DD) {
+initialize_dims <- function(par_init, U, DD, order_p) {
+  dim_bet_z <- sapply(par_init[["init_bet_z"]], length, simplify = TRUE)
+  if (!is.null(U)) {
+    dim_bet_u <- sapply(par_init[["init_bet_u"]], nrow)
+  } else {
+    dim_bet_u <- rep(2, times = DD)
+  }
+  dim_zet <- dim_bet_z
+  dim_uet <- dim_bet_u
+  dim_phi <- rep(order_p, times = DD)
+
+  id_bet_z  <- c(0, cumsum(dim_bet_z))
+  id_zet    <- c(0, cumsum(dim_bet_z))
+  id_bet_u  <- c(0, cumsum(dim_bet_u))
+  id_uet    <- c(0, cumsum(dim_bet_u))
+  id_phi    <- c(0, cumsum(dim_phi))
+
+  if (!is.null(par_init[["phi"]])) {
+    id_reg_z  <- c(0, cumsum(dim_bet_z + 1))
+  } else {
+    id_reg_z  <- c(0, cumsum(dim_bet_z))
+  }
+
+  to_env  <- parent.frame()
+  vec_obj <- c("dim_bet_z", "dim_bet_u", "dim_zet", "dim_uet", "id_phi",
+               "id_bet_z", "id_bet_u", "id_zet", "id_uet", "id_reg_z")
+  from_env <- environment()
+  for(n in vec_obj) {
+    assign(n, get(n, from_env), to_env)
+  }
+  invisible(to_env)
+}
+initialize_dims2 <- function(par_init, U, DD) {
   dim_bet_z <- sapply(par_init[["init_bet_z"]],
                       length,
                       simplify = TRUE)

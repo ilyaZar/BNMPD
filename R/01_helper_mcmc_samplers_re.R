@@ -91,18 +91,20 @@ sample_bet_u_alr <- function(sig_sq_x,
                              regs_z,
                              U,
                              iter_range_NN,
-                             TT) {
+                             TT,
+                             order_p) {
   out_mat          <- matrix(0, nrow = dim_bet_u, ncol = length(iter_range_NN))
   vcm_bet_u_inv    <- solveme(vcm_bet_u)
 
   nn <- 1
-  xtt <- X[1:(TT - 1), , drop = FALSE]
+  x_lhs <- X[(order_p + 1):TT, , drop = FALSE]
+  x_rhs <- get_x_rhs(X, order_p, TT)
   for (n in iter_range_NN) {
     Omega_bet_u <- matrix(0, nrow = dim_bet_u, ncol = dim_bet_u)
     mu_bet_u    <- matrix(0, nrow = dim_bet_u, ncol = 1)
 
-    x_n   <- X[2:TT, n, drop = FALSE] - (xtt[, n] * phi_x + regs_z[, , n] %*% bet_z)
-    Umat <- matrix(U[, , n, drop = FALSE], nrow = TT - 1)
+    x_n   <- x_lhs[, n] - (x_rhs[, , n] %*% phi_x + regs_z[, , n] %*% bet_z)
+    Umat <- matrix(U[, , n, drop = FALSE], nrow = TT - order_p)
     # vmc_x_errors_inv <- diag(rep(sig_sq_x^(-1), times = TT))
     # Omega_bet_u2 <- crossprod(Umat, vmc_x_errors_inv) %*% Umat + vcm_bet_u_inv
     # Omega_bet_u2 <- solveme(Omega_bet_u2)
