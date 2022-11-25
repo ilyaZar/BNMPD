@@ -68,10 +68,7 @@ sample_bet_u_lin_re <- function(sig_sq_x,
 
     x_n   <- X[,n] - regs_z[,,n] %*% bet_z
     Umat <- matrix(U[, , n, drop = FALSE], nrow = TT)
-    # vmc_x_errors_inv <- diag(rep(sig_sq_x^(-1), times = TT))
-    # Omega_bet_u2 <- crossprod(Umat, vmc_x_errors_inv) %*% Umat + vcm_bet_u_inv
-    # Omega_bet_u2 <- solveme(Omega_bet_u2)
-    # mu_bet_u2    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_inv) %*% x_n)
+
     Omega_bet_u <- solveme(crossprod(Umat, Umat)/sig_sq_x + vcm_bet_u_inv)
     mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, x_n) / sig_sq_x)
 
@@ -105,10 +102,7 @@ sample_bet_u_alr <- function(sig_sq_x,
 
     x_n   <- x_lhs[, n] - (x_rhs[, , n] %*% phi_x + regs_z[, , n] %*% bet_z)
     Umat <- matrix(U[, , n, drop = FALSE], nrow = TT - order_p)
-    # vmc_x_errors_inv <- diag(rep(sig_sq_x^(-1), times = TT))
-    # Omega_bet_u2 <- crossprod(Umat, vmc_x_errors_inv) %*% Umat + vcm_bet_u_inv
-    # Omega_bet_u2 <- solveme(Omega_bet_u2)
-    # mu_bet_u2    <- Omega_bet_u %*% (crossprod(Umat, vmc_x_errors_inv) %*% x_n)
+
     Omega_bet_u <- solveme(crossprod(Umat, Umat)/sig_sq_x + vcm_bet_u_inv)
     mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, x_n) / sig_sq_x)
 

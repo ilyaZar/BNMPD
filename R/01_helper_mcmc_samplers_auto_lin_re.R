@@ -67,7 +67,7 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
     pe$phi_x[id_phi_tmp, mm] <- beta_sampled[1:order_p]
     pe$bet_z[id_betz_tmp, mm] <- beta_sampled[-(1:order_p)]
 
-    pe$Regs_beta[, d, ] <- get_regs_beta(Z  = pe$Z[, id_zet_tmp, ],
+    pe$Regs_beta[, d, ] <- get_regs_beta(Z  = pe$Z[, id_zet_tmp, , drop = FALSE],
                                          U = pe$U,
                                          id_uet = c(pe$id_uet[d],
                                                     pe$id_uet[d + 1]),
@@ -118,11 +118,6 @@ sample_bet_z_alr <- function(sig_sq_x,
                              order_p = 1) {
   omega_tmp_all <- 0
   mu_tmp_all    <- 0
-  # x_lhs     <- X[1:(TT - order_p), , drop = FALSE]
-  # x_rhs_all <- X[(1 + order_p):TT, , drop = FALSE]
-  # x_lhs <- X[(order_p + 1):TT, , drop = FALSE]
-  # if (order_p == 1) regs_z[, order_p, ] <- x_lhs
-  # if (order_p > 1 ) stop("Not yet implemented!")
 
   x_rhs_all <- get_x_rhs(X, order_p, TT)
   regs_z[, 1:order_p, ] <- x_rhs_all
