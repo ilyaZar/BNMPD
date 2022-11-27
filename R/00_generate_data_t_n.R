@@ -7,8 +7,8 @@
 #' function of regressors and latent states where the regressors and latent
 #' states can vary over time and cross section.
 #'
-#' @param distribution specifies the distribution; "Dirichlet", "Multinomial" or
-#'   "Dirichlet-Multinomial"
+#' @param distribution specifies the distribution; "dirichlet", "multinomial" or
+#'   "dirichlet-multinomial"
 #' @param NN number of cross sectional units
 #' @param TT number of time periods
 #' @param DD multivariate dimension of the measurements/responses (e.g. number
@@ -411,7 +411,6 @@ get_measurements <- function(x_states, x_log_scale, distribution) {
       out_data[["part2"]][, n]   <- num_counts
     }
   }
-  browser()
   return(out_data)
 }
 #' Generates random samples from Dirichlet distribution
