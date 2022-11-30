@@ -105,12 +105,12 @@ ModelDef <- R6::R6Class("ModelDef",
                             private$.var_y <- y_list
                             private$.lab_y <- y_labs
                             if (check_z_avail) {
-                              private$.var_z <- z_list
                               private$.lab_z <- lapply(z_list, names)
+                              private$.var_z <- lapply(z_list, unname)
                             }
                             if (check_u_avail) {
                               private$.lab_u <- lapply(u_list, names)
-                              private$.var_u <- u_list
+                              private$.var_u <- lapply(u_list, unname)
                             }
                           },
                           check_reg_avail = function(model_raw,

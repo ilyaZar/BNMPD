@@ -235,19 +235,19 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   necessary to construct a class instance
                             #' @param path_to_states_init either \code{NULL},
                             #'   which is the default and for which
-                            #'   [BNMPD::ModelDat()] tries to construct initial latent
-                            #'   state values from raw data set (measurements),
-                            #'   or a character to the `.RData`-file that stores
-                            #'   the initialization values: these values can be
-                            #'   the true values from a simulation study or,
-                            #'   most often, taken from a previous PGAS-output
-                            #'   i.e. the last PMCMC-iteration to re-initialize
-                            #'   the estimation process at these values (
-                            #'   typically PGAS-runs are performed in batches of
-                            #'   say \code{10x2000} iterations so e.g. the
-                            #'   2000th iteration of the first batch is taken as
-                            #'   the initial value for the second run - batch
-                            #'   2001-4000 and so on)
+                            #'   [BNMPD::ModelDat()] tries to construct initial
+                            #'   latent state values from raw data set
+                            #'   (measurements), or a character to the
+                            #'   `.RData`-file that stores the initialization
+                            #'   values: these values can be the true values
+                            #'   from a simulation study or, most often, taken
+                            #'   from a previous PGAS-output i.e. the last
+                            #'   PMCMC-iteration to re-initialize the estimation
+                            #'   process at these values ( typically PGAS-runs
+                            #'   are performed in batches of say \code{10x2000}
+                            #'   iterations so e.g. the 2000th iteration of the
+                            #'   first batch is taken as the initial value for
+                            #'   the second run - batch 2001-4000 and so on)
                             #' @param path_to_states_true either \code{NULL},
                             #'   which is the default that indicates that no
                             #'   "true" states are available
@@ -383,6 +383,102 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             get_data_internal = function() {
                               private$.ModelDat$get_model_data_internal()
                             },
+                            #' @description Returns label names and parameters
+                            #'   as required by
+                            #'   [pmcmcDiagnostics::analyse_mcmc_convergence2()]
+                            #'
+                            #' @details pass return value to above function as
+                            #'   argument \code{model_meta}
+                            get_par_label_names = function() {
+                              tmp_pars <- private$.params_true
+                              tmp_pars <- which(sapply(tmp_pars,
+                                                       function(x) {
+                                                         !is.null(x)
+                                                       }
+                                                       )
+                                                )
+                              tmp_pars <- names(tmp_pars)
+
+                              dims <- private$.ModelDef$get_dimension()
+                              NN_tmp <- dims[1]
+                              DD_tmp <- dims[3]
+                              if ("sig_sq" %in% tmp_pars) {
+                                sig_sq <- paste0("sig_sq_x_", 1:DD_tmp)
+                              } else {
+                                sig_sq <- NULL
+                              }
+                              if ("phi" %in% tmp_pars) {
+                                order_p <- get_order_p()
+                                phi <- paste0(paste0("phi_x_", 1:order_p),
+                                                    rep(1:DD_tmp, each = order_p))
+                              } else {
+                                phi <- NULL
+                              }
+                              if ("beta_z_lin" %in% tmp_pars) {
+                                var_bet_z <-private$.ModelDef$get_var_z()
+                                lab_bet_z <-private$.ModelDef$get_lab_z()
+                              } else {
+                                var_bet_z <- NULL
+                                lab_bet_z <- NULL
+                              }
+                              if ("beta_u_lin" %in% tmp_pars) {
+                                bet_u_var <-private$.ModelDef$get_var_u()
+                                bet_u_lab <-private$.ModelDef$get_lab_u()
+                                num_re_tmp <- length(bet_u_var[[1]])
+                                lab_bet_u <- character(0)
+                                var_bet_u <- character(0)
+                                for(d in 1:DD_tmp) {
+                                  lab_bet_u <- c(lab_bet_u,
+                                                 unlist(lapply(bet_u_lab[[d]],
+                                                               function(x){
+                                                                 paste0(x, "_", 1:NN_tmp)
+                                                               }
+                                                 )
+                                                 )
+                                  )
+                                  var_bet_u <- c(var_bet_u,
+                                                 unlist(lapply(bet_u_var[[d]],
+                                                               function(x){
+                                                                 paste0(x, "_", 1:NN_tmp)
+                                                               }
+                                                 )
+                                                 )
+                                  )
+                                }
+                              } else {
+                                lab_bet_u <- NULL
+                                var_bet_u <- NULL
+                              }
+                              if ("vcm_u_lin" %in% tmp_pars) {
+                                vcm_bet_u <- paste0(rep(paste0("vcm_bet_u_",
+                                                               1:DD_tmp),
+                                                        each = 4),
+                                                    rep(1:(num_re_tmp^2),
+                                                        times = DD_tmp))
+                              } else {
+                                vcm_bet_u <- NULL
+                              }
+                              lab_names <- list(sig_sq_x = sig_sq,
+                                                phi_x = phi,
+                                                bet_z = lab_bet_z,
+                                                bet_u = lab_bet_u,
+                                                vcm_bet_u = vcm_bet_u)
+                              par_names <- list(sig_sq_x = sig_sq,
+                                                phi_x = phi,
+                                                bet_z = var_bet_z,
+                                                bet_u = var_bet_u,
+                                                vcm_bet_u = vcm_bet_u)
+                              idtaken   <- which(sapply(lab_names,
+                                                        function(x){
+                                                          !is.null(x)
+                                                        }
+                                                        )
+                                                 )
+                              lab_names <- lab_names[idtaken]
+                              par_names <- par_names[idtaken]
+                              return(list(lab_names = lab_names,
+                                          par_names = par_names))
+                            },
                             #' @description Returns model metadata.
                             #'
                             #' @details Call to internal \code{ModelDef}-class
@@ -450,6 +546,21 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'
                             get_true_params = function() {
                               return(private$.params_true)
+                            },
+                            #' @description Returns autoregressive order
+                            #'
+                            #' @details either 0, if no autoregressive state
+                            #'   processes in the model or an integer >= 1
+                            #'
+                            get_order_p = function() {
+                              tmp <- private$.ModelDat$get_model_inits_start()
+                              tmp <- tmp[[1]]$init_phi
+                              if (is.null(tmp)) {
+                                tmp <- 0
+                              } else {
+                                tmp <- length(tmp[[1]])
+                              }
+                              tmp
                             },
                             #' @description Print "raw" data set.
                             #'
