@@ -12,31 +12,31 @@ sample_all_params.lin <- function(pe, mm) {
     Xtmp <- as.matrix(pe$X[, d, mm - 1, ])
     Ztmp <- pe$Z[, id_zet_tmp, , drop = FALSE]
 
-    pe$sig_sq_x[d, mm] <- sample_sig_sq_x_lin(bet_z = pe$bet_z[id_betz_tmp,
-                                                               mm - 1],
-                                              X = Xtmp,
-                                              regs_z = Ztmp,
-                                              prior_ig = c(pe$prior_ig_a,
-                                                           pe$prior_ig_b),
-                                              iter_range_NN = dd_range_nn,
-                                              TT = pe$TT)
-    beta_sampled <- sample_bet_z_lin(sig_sq_x = pe$sig_sq_x[d, mm],
-                                     X = Xtmp,
-                                     regs_z = Ztmp,
-                                     TT = pe$TT,
-                                     id_reg_z = c(pe$id_reg_z[d],
-                                                  pe$id_reg_z[d + 1]),
-                                     dim_bet_z = pe$dim_bet_z[d],
-                                     prior_vcm_bet_z = pe$prior_vcm_bet_z[[d]],
-                                     iter_range_NN = dd_range_nn)
+    pe$sig_sq_x[d, mm] <- sample_sig_sq_x_l(bet_z = pe$bet_z[id_betz_tmp,
+                                                             mm - 1],
+                                            X = Xtmp,
+                                            regs_z = Ztmp,
+                                            prior_ig = c(pe$prior_ig_a,
+                                                         pe$prior_ig_b),
+                                            iter_range_NN = dd_range_nn,
+                                            TT = pe$TT)
+    beta_sampled <- sample_bet_z_l(sig_sq_x = pe$sig_sq_x[d, mm],
+                                   X = Xtmp,
+                                   regs_z = Ztmp,
+                                   TT = pe$TT,
+                                   id_reg_z = c(pe$id_reg_z[d],
+                                                pe$id_reg_z[d + 1]),
+                                   dim_bet_z = pe$dim_bet_z[d],
+                                   prior_vcm_bet_z = pe$prior_vcm_bet_z[[d]],
+                                   iter_range_NN = dd_range_nn)
 
     pe$bet_z[id_betz_tmp, mm] <- beta_sampled
 
-    pe$Regs_beta[, d, ] <- get_regs_beta_lin(Z  = pe$Z[, id_zet_tmp, ,
-                                                       drop = FALSE],
-                                             TT = pe$TT,
-                                             pe$bet_z[id_betz_tmp, mm],
-                                             iter_range_NN = 1:pe$NN)
+    pe$Regs_beta[, d, ] <- get_regs_beta_l(Z  = pe$Z[, id_zet_tmp, ,
+                                                     drop = FALSE],
+                                           TT = pe$TT,
+                                           pe$bet_z[id_betz_tmp, mm],
+                                           iter_range_NN = 1:pe$NN)
   }
   cat("MCMC iteration number:", mm, "\n")
 }
@@ -48,12 +48,12 @@ sample_all_params.lin <- function(pe, mm) {
 #'
 #' @inheritParams sample_sig_sq_x_alr
 #' @export
-sample_sig_sq_x_lin <- function(bet_z,
-                                X,
-                                regs_z,
-                                prior_ig,
-                                iter_range_NN,
-                                TT) {
+sample_sig_sq_x_l <- function(bet_z,
+                              X,
+                              regs_z,
+                              prior_ig,
+                              iter_range_NN,
+                              TT) {
   err_sig_sq_x_all <- 0
   for(n in iter_range_NN) {
     tmp_regs <- regs_z[, , n]
@@ -61,7 +61,7 @@ sample_sig_sq_x_lin <- function(bet_z,
                               regs  = tmp_regs,
                               phi_x = 0,
                               bet_reg = bet_z)
-    err_sig_sq_x_all <- err_sig_sq_x_all + crossprod(err_sig_sq_x)
+    err_sig_sq_x_all <- err_sig_sq_x_all + sum(err_sig_sq_x^2)
   }
   out <- 1/stats::rgamma(n = 1,
                          prior_ig[1],
@@ -76,17 +76,16 @@ sample_sig_sq_x_lin <- function(bet_z,
 #'
 #' @return a sample
 #' @export
-sample_bet_z_lin <- function(sig_sq_x,
-                             X,
-                             regs_z,
-                             TT,
-                             id_reg_z,
-                             dim_bet_z,
-                             prior_vcm_bet_z,
-                             iter_range_NN,
-                             order_p = 1) {
-  browser()
-  vcm_x_errors     <- diag(rep(sig_sq_x^(-1), times = TT))
+sample_bet_z_l <- function(sig_sq_x,
+                           X,
+                           regs_z,
+                           TT,
+                           id_reg_z,
+                           dim_bet_z,
+                           prior_vcm_bet_z,
+                           iter_range_NN,
+                           order_p = 1) {
+  # vcm_x_errors     <- diag(rep(sig_sq_x^(-1), times = TT))
   # vcm_x_errors2    <- compute_vcm_x_errors(vcm_x_errors_rhs, NULL,
   #                                          NULL, TT= TT, type = "lin")
   omega_tmp_all <- 0
