@@ -27,10 +27,6 @@ sample_all_params.spl <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
-sample_all_params.re <- function(pe, mm) {
-  msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
-  stop(msg)
-}
 sample_all_params.lin_splZ <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
@@ -54,28 +50,4 @@ sample_all_params.lin_re_splZ <- function(pe, mm) {
 sample_all_params.lin_re_splU <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
-}
-compute_vcm_x_errors_inv <- function(sig_sq_x, Umat, vcm_bet_u, TT, type) {
-  if (type == "lin_re") {
-    vcm_x_errors_rhs <- diag(rep(sig_sq_x, TT))
-    vcm_x_errors_lhs <- Umat %*% vcm_bet_u %*% t(Umat)
-    vcm_x_errors     <- vcm_x_errors_lhs + vcm_x_errors_rhs
-    vcm_x_errors_inv <- solveme(vcm_x_errors)
-    return(vcm_x_errors_inv)
-  } else if (type == "lin") {
-    return(diag(rep(sig_sq_x^(-1)), TT))
-  } else {
-    stop("Unknown type.")
-  }
-}
-compute_vcm_WBinv <- function(sig_sq_x, matLHS, U, C, matRHS) {
-  wb_part1 <- crossprod(matLHS, matRHS)/sig_sq_x
-
-  wb_tmp1 <- crossprod(matLHS, U)
-  wb_tmp2 <- solveme(solveme(C) + crossprod(U, U)/sig_sq_x)
-  wb_tmp3 <- crossprod(U, matRHS)
-
-  wb_part2 <- 1/(sig_sq_x^2) * wb_tmp1 %*% wb_tmp2 %*% wb_tmp3
-
-  return(wb_part1 - wb_part2)
 }

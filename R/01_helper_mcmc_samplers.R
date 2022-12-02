@@ -72,20 +72,12 @@ get_regs_beta_l <- function(Z, TT, bet_z, iter_range_NN) {
 get_regs_beta_r <- function(U, id_uet, TT,
                             bet_u, id_bet_u,
                             iter_range_NN) {
-  # browser()
   NN <- length(iter_range_NN)
-  # Z_beta    <- matrix(0, nrow = TT, ncol = NN)
   U_beta    <- matrix(0, nrow = TT, ncol = NN)
   Regs_beta <- matrix(0, nrow = TT, ncol = NN)
-  # browser()
   for (n in iter_range_NN) {
-    # Z_tmp <- Z[, , n]
     U_tmp <- matrix(U[, (id_uet[1] + 1):id_uet[2], n, drop = FALSE], nrow = TT)
     bet_u_tmp <- matrix(bet_u[(id_bet_u[1] + 1):id_bet_u[2], , n, drop = FALSE])
-
-    # Z_beta[, n]    <- Z_tmp %*% bet_z
-    # U_beta[, n]    <- U_tmp %*% bet_u_tmp
-    # Regs_beta[, n] <- Z_beta[, n] + U_beta[, n]
     Regs_beta[, n] <- U_tmp %*% bet_u_tmp
   }
   return(Regs_beta)
@@ -112,4 +104,28 @@ check_stationarity <- function(vals, order) {
     check <- all((1 - sum(abs(vals[1:order]))) < 0.01 || sum(abs(vals[1:order])) > 1)
   }
   return(check)
+}
+compute_vcm_x_errors_inv <- function(sig_sq_x, Umat, vcm_bet_u, TT, type) {
+  if (type == "lin_re") {
+    vcm_x_errors_rhs <- diag(rep(sig_sq_x, TT))
+    vcm_x_errors_lhs <- Umat %*% vcm_bet_u %*% t(Umat)
+    vcm_x_errors     <- vcm_x_errors_lhs + vcm_x_errors_rhs
+    vcm_x_errors_inv <- solveme(vcm_x_errors)
+    return(vcm_x_errors_inv)
+  } else if (type == "lin") {
+    return(diag(rep(sig_sq_x^(-1)), TT))
+  } else {
+    stop("Unknown type.")
+  }
+}
+compute_vcm_WBinv <- function(sig_sq_x, matLHS, U, C, matRHS) {
+  wb_part1 <- crossprod(matLHS, matRHS)/sig_sq_x
+
+  wb_tmp1 <- crossprod(matLHS, U)
+  wb_tmp2 <- solveme(solveme(C) + crossprod(U, U)/sig_sq_x)
+  wb_tmp3 <- crossprod(U, matRHS)
+
+  wb_part2 <- 1/(sig_sq_x^2) * wb_tmp1 %*% wb_tmp2 %*% wb_tmp3
+
+  return(wb_part1 - wb_part2)
 }

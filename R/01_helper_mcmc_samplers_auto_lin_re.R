@@ -12,7 +12,8 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
     id_zet_tmp  <- (pe$id_zet[d] + 1):pe$id_zet[d + 1]
     id_uet_tmp  <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]
 
-    id_regs_z_tmp <- (pe$id_reg_z[d] + d * order_p - 1):(pe$id_reg_z[d + 1] + order_p * d)
+    # id_regs_z_tmp <- (pe$id_reg_z[d] + 1 + (d - 1) * order_p):(pe$id_reg_z[d + 1] + order_p * d)
+    id_regs_z_tmp <- (pe$id_reg_z[d] + 1):(pe$id_reg_z[d + 1])
 
     dd_range_nn <- pe$dd_list_nn[[d]]
     Xtmp <- as.matrix(pe$X[, d, mm - 1, ])
@@ -67,6 +68,7 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
     pe$phi_x[id_phi_tmp, mm] <- beta_sampled[1:order_p]
     pe$bet_z[id_betz_tmp, mm] <- beta_sampled[-(1:order_p)]
 
+    # browser()
     pe$Regs_beta[, d, ] <- get_regs_beta(Z  = pe$Z[, id_zet_tmp, , drop = FALSE],
                                          U = pe$U,
                                          id_uet = c(pe$id_uet[d],
@@ -104,7 +106,8 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
 #' @param order_p integer; autoregressive lag order where \code{order_p = 0}
 #'   reduces the sampling to a standard (non-dynamic) linear regression model
 #'
-#' @return a sample
+#' @return a sample from \code{(phi_{1}, phi_{2}, ..., phi_{p}, bet_z{1d},
+#'    bet_z{2d},...bet_z{kd})} for a given \code{d = 1, ..., DD}.
 #' @export
 sample_bet_z_alr <- function(sig_sq_x,
                              vcm_bet_u,
@@ -115,7 +118,7 @@ sample_bet_z_alr <- function(sig_sq_x,
                              dim_bet_z,
                              prior_vcm_bet_z,
                              iter_range_NN,
-                             order_p = 1) {
+                             order_p) {
   omega_tmp_all <- 0
   mu_tmp_all    <- 0
 
@@ -145,23 +148,15 @@ sample_bet_z_alr <- function(sig_sq_x,
   while (check_stationarity(out[1:order_p], order_p)) {
     # out <- MASS::mvrnorm(n = 1, mu = mu_bet, Sigma = Omega_bet)
     out <- rnorm_fast_n1(mu = mu_bet, Sigma = Omega_bet, dim_bet_z + order_p)
-    browser()
   }
   return(out)
-}
-check_stationarity <- function(vals, order) {
-  if (order == 1) {
-    check <- all((1 - abs(vals[1])) < 0.01 || abs(vals[1]) > 1)
-  } else {
-    check <- all((1 - sum(abs(vals[1:order]))) < 0.01 || sum(abs(vals[1:order])) > 1)
-  }
-  return(check)
 }
 #' Draws a (particle) Gibbs sample of the std. deviation parameter
 #'
 #' The standard deviation is per component \code{d} of the DD-dimensional
 #' latent state process and drawn from the inverse Gamma. This version is
-#' adjusted to incorporate linear regressors as well as random effects.
+#' adjusted to incorporate linear regressors, autoregressive state processes,
+#'  as well as random effects.
 #'
 #' @param phi_x m'th sample of auto-regressive parameter of the state component
 #'   \code{d}
@@ -198,10 +193,11 @@ sample_sig_sq_x_alr <- function(phi_x,
   x_rhs <- get_x_rhs(X, order_p, TT)
 
   for(n in iter_range_NN) {
-    bet_u_n <- bet_u[ , , n]
-    tmp_regs <- cbind(regs_z[, , n], regs_u[, , n])
-    err_sig_sq_x <- x_lhs[, n] - (x_rhs[, , n]  %*% phi_x +
-                                  tmp_regs %*% c(bet_z, bet_u_n))
+    x_rhs_tmp        <- matrix(x_rhs[, , n, drop = FALSE],
+                               nrow = TT - order_p, ncol = order_p)
+    tmp_bet          <- c(bet_z, bet_u[ , , n])
+    tmp_reg          <- cbind(regs_z[, , n], regs_u[, , n])
+    err_sig_sq_x     <- x_lhs[, n] - (x_rhs_tmp %*% phi_x + tmp_reg %*% tmp_bet)
     err_sig_sq_x_all <- err_sig_sq_x_all + sum(err_sig_sq_x ^ 2)
   }
   out <- 1/stats::rgamma(n = 1,
@@ -209,16 +205,48 @@ sample_sig_sq_x_alr <- function(phi_x,
                          prior_ig[2] + err_sig_sq_x_all/2)
   return(out)
 }
-get_x_rhs <- function(X, order_p, TT) {
-  if (order_p == 1) {
-    x_rhs <- X[1:(TT - order_p), , drop = FALSE]
-  } else if (order_p > 1) {
-    x_rhs <- array(0, dim = c(TT - order_p, order_p, dim(X)[2]))
-    for (p in 1:order_p) {
-      x_rhs[, p, ] <- X[(order_p - p + 1):(TT - p), , drop = FALSE]
-    }
+#' Sampling of random effects
+#'
+#' The underlying model contains latent state processes of order p and
+#' linear z-type regressors.
+#'
+#' @inheritParams sample_bet_z_alr
+#' @inheritParams sample_sig_sq_x_alr
+#'
+#' @return a sample of random effects of dimension \code{dim_bet_u x NN}
+#' @export
+sample_bet_u_alr <- function(sig_sq_x,
+                             phi_x,
+                             bet_z,
+                             vcm_bet_u,
+                             dim_bet_u,
+                             X,
+                             regs_z,
+                             U,
+                             iter_range_NN,
+                             TT,
+                             order_p) {
+  out_mat          <- matrix(0, nrow = dim_bet_u, ncol = length(iter_range_NN))
+  vcm_bet_u_inv    <- solveme(vcm_bet_u)
+
+  nn <- 1
+  x_lhs <- X[(order_p + 1):TT, , drop = FALSE]
+  x_rhs <- get_x_rhs(X, order_p, TT)
+  for (n in iter_range_NN) {
+    x_rhs_tmp <- matrix(x_rhs[, , n], nrow = TT - order_p, ncol = order_p)
+    Omega_bet_u <- matrix(0, nrow = dim_bet_u, ncol = dim_bet_u)
+    mu_bet_u    <- matrix(0, nrow = dim_bet_u, ncol = 1)
+
+    x_n   <- x_lhs[, n] - (x_rhs_tmp %*% phi_x + regs_z[, , n] %*% bet_z)
+    Umat <- matrix(U[, , n, drop = FALSE], nrow = TT - order_p)
+
+    Omega_bet_u <- solveme(crossprod(Umat, Umat)/sig_sq_x + vcm_bet_u_inv)
+    mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, x_n) / sig_sq_x)
+
+    out_mat[, nn] <- rnorm_fast_n1(mu = mu_bet_u,
+                                   Sigma = Omega_bet_u,
+                                   dim_bet_u)
+    nn <- nn + 1
   }
-  tmp_dim <- unname(dim(x_rhs))
-  dim(x_rhs) <- c(TT = tmp_dim[1], order_p = tmp_dim[2], NN = tmp_dim[3])
-  return(x_rhs)
+  return(out_mat)
 }
