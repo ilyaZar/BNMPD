@@ -1,63 +1,3 @@
-#' Multiplication of regressor matrix with coefficient vector
-#'
-#' Multiplication of regressor matrices Z and U with corresponding coefficient
-#' vectors and adding up. The result needs to be passed to the SMC sampler. This
-#' is the version for linear and random effect type regressors.
-#'
-#' @param Z Z regressor matrix sliced at corresponding component \code{d}
-#' @param U U regressor matrix sliced at corresponding component \code{d}
-#' @param id_uet id of \code{d}-component random effects regressor matrix
-#' @param bet_z m'th sample of beta coefficient of the state component \code{d}
-#' @param bet_u m'th sample of beta coefficient of the state component \code{d}
-#' @param id_bet_u id of \code{d}-component random effects
-#' @param iter_range_NN iteration range i.e. the cross sectional components
-#'   that are actually contributing to \code{d}
-#'
-#' @return a vector of dimension \code{TT x NN}, containing the corresponding
-#'   multiplication result for the d'th component
-#' @export
-get_regs_beta <- function(Z, U, id_uet, TT,
-                          bet_z, bet_u, id_bet_u,
-                          iter_range_NN) {
-  NN <- length(iter_range_NN)
-  Z_beta    <- matrix(0, nrow = TT, ncol = NN)
-  U_beta    <- matrix(0, nrow = TT, ncol = NN)
-  Regs_beta <- matrix(0, nrow = TT, ncol = NN)
-  # browser()
-  for (n in iter_range_NN) {
-    Z_tmp <- Z[, , n]
-    U_tmp <- matrix(U[, (id_uet[1] + 1):id_uet[2], n, drop = FALSE], nrow = TT)
-    bet_u_tmp <- matrix(bet_u[(id_bet_u[1] + 1):id_bet_u[2], , n, drop = FALSE])
-
-    Z_beta[, n]    <- Z_tmp %*% bet_z
-    U_beta[, n]    <- U_tmp %*% bet_u_tmp
-    Regs_beta[, n] <- Z_beta[, n] + U_beta[, n]
-  }
-  return(Regs_beta)
-}
-#' Multiplication of regressor matrix with coefficient vector
-#'
-#' Multiplication of regressor matrices Z with corresponding coefficient
-#' vectors and adding up (this is the linear-regressor only type version). The
-#' result needs to be passed to the SMC sampler.
-#'
-#' @inheritParams get_regs_beta_lin
-#'
-#' @return a vector of dimension \code{TT x NN}, containing the corresponding
-#'   multiplication result for the d'th component
-#' @export
-get_regs_beta_lin <- function(Z, TT, bet_z, iter_range_NN) {
-  NN <- length(iter_range_NN)
-  Z_beta    <- matrix(0, nrow = TT, ncol = NN)
-  Regs_beta <- matrix(0, nrow = TT, ncol = NN)
-  # browser()
-  for (n in iter_range_NN) {
-    Z_tmp <- Z[, , n]
-
-    Regs_beta[, n] <- Z_tmp %*% bet_z
-  }
-  return(Regs_beta)
-}
 generate_environment_parallel <- function(envir_current,
                                           type = NULL) {
   if(type == "testing") return(envir_current)
@@ -131,40 +71,54 @@ initialize_data_containers <- function(par_init,
                                        TT, DD, NN, MM,
                                        order_p,
                                        to_env) {
-  initialize_dims(par_init, U, DD, order_p)
   u_null <- TRUE
   if (!is.null(U)) u_null <- FALSE
   z_null <- TRUE
   if (!is.null(Z)) z_null <- FALSE
+  phi_null <- TRUE
+  if (!is.null(par_init[["init_phi"]][[1]])) phi_null <- FALSE
 
-  out_cpf <- matrix(0, nrow = TT, ncol = DD)
-  X       <- array(0, dim = c(TT, DD, MM, NN))
+  initialize_dims(par_init, u_null, z_null, phi_null, DD, order_p)
+
+  out_cpf           <- matrix(0, nrow = TT, ncol = DD)
+  X                 <- array(0, dim = c(TT, DD, MM, NN))
+  Regs_beta         <- array(0, c(TT, DD, NN))
+  vcm_x_errors_rhs  <- vector("list", DD)
+  sig_sq_x          <- matrix(0, nrow = DD, ncol = MM)
   # X2      <- array(0, dim = c(TT, DD, MM, NN))
-  sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
-  if (!is.null(par_init[["init_phi"]])) {
+  if (!phi_null) {
     phi_x <- matrix(0, nrow = order_p * DD, ncol = MM)
   } else {
     phi_x <- NULL
   }
-  bet_z    <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
+  if (!z_null) {
+    bet_z    <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
+    prior_vcm_bet_z   <- vector("list", DD)
+
+    Z_beta    <- array(0, c(TT, DD, NN))
+    regs_z    <- array(0, c(TT - order_p, sum(dim_zet) + DD * order_p, NN))
+  } else if (z_null && !phi_null) {
+    bet_z <- NULL
+    prior_vcm_bet_z   <- vector("list", DD)
+  } else {
+    bet_z <- NULL
+    prior_vcm_bet_z <- NULL
+  }
   if (!u_null) {
     bet_u    <- array(0, c(sum(dim_bet_u), MM, NN))
     tmp_dim <- unname(dim(bet_u))
     dim(bet_u) <- c(dim_u = tmp_dim[1],
                     MM = tmp_dim[2],
                     NN = tmp_dim[3])
-  }
-
-  prior_vcm_bet_z   <- vector("list", DD)
-  vcm_x_errors_rhs  <- vector("list", DD)
-  if (!u_null) {
     prior_vcm_bet_u1  <- numeric(DD)
     prior_vcm_bet_u2  <- vector("list", DD)
     dof_vcm_bet_u     <- numeric(DD)
     vcm_bet_u         <- vector("list", DD)
     vcm_x_errors_lhs  <- vector("list", DD)
-  }
 
+    U_beta    <- array(0, c(TT, DD, NN))
+    regs_u    <- array(0, c(TT - order_p, sum(dim_uet) + DD * order_p, NN))
+  }
   for (d in 1:DD) {
     vcm_x_errors_rhs[[d]] <- matrix(0, nrow = TT - order_p, ncol = TT - order_p)
     if (!u_null) {
@@ -172,63 +126,41 @@ initialize_data_containers <- function(par_init,
       vcm_bet_u[[d]]        <- array(0, c(dim_bet_u[d], dim_bet_u[d], MM))
     }
   }
-
-  Z_beta    <- array(0, c(TT, DD, NN))
-  regs_z    <- array(0, c(TT - order_p, sum(dim_zet) + DD * order_p, NN))
-
-  if (!u_null) {
-    U_beta    <- array(0, c(TT, DD, NN))
-    regs_u    <- array(0, c(TT - order_p,
-                            sum(dim_uet) + DD * order_p,
-                            NN))
-  }
-  Regs_beta <- array(0, c(TT, DD, NN))
   # Initialize priors:
   prior_ig_a     <- priors[["prior_ig_a"]] + NN * (TT - order_p) / 2
   prior_ig_b     <- priors[["prior_ig_b"]]
   ## I. Initialize states to deterministic starting values,
   ## Initialize parameters and regressor values
+  ## PER COMPONENT d,...,DD and for each d, per cross section n,..., NN
   for (d in 1:DD) {
-    id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
-    id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
-    id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
+    if (!z_null) {
+      id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
+      id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
+      id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
+      bet_z[id_betz_tmp, 1] <- par_init[["init_bet_z"]][[d]]
+      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + order_p)
+    } else if (z_null && !phi_null) {
+      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, order_p)
+    }
     if (!u_null) {
       id_betu_tmp <- (id_bet_u[d] + 1):id_bet_u[d + 1]
       id_uet_tmp  <- (id_uet[d] + 1):id_uet[d + 1]
-    }
-    if (is.null(phi_x)) {
-      if (!z_null) {
-        id_regs_z_tmp <- (id_zet[d] + 1):(id_zet[d + 1])
-      }
-      if (!u_null) {
+      if (phi_null) {
         id_regs_u_tmp <-  (id_uet[d] + 1):(id_uet[d + 1])
-      }
-    } else {
-      if (!z_null) {
-        id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
-      }
-      if (!u_null) {
+      } else {
         id_regs_u_tmp <- (id_uet[d] + 1 + 1 * d):(id_uet[d + 1] + 1 * d)
       }
-    }
-
-    sig_sq_x[d, 1] <- par_init[["init_sig_sq"]][d, 1]
-    phi_x[id_phi_tmp, 1] <- par_init[["init_phi"]][[d]]
-    bet_z[id_betz_tmp, 1] <- par_init[["init_bet_z"]][[d]]
-
-    if (!is.null(par_init[["init_phi"]][[d]])) {
-      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + order_p)
-    } else {
-      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d])
-    }
-    if (!u_null) {
       prior_vcm_bet_u2[[d]] <- diag(1 / 1000, dim_bet_u[d])
       prior_vcm_bet_u1[d]   <- dim_bet_u[d]
       dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u1[d]
 
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_bet_u"]][[d]]
     }
-
+    if (!phi_null) {
+      id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
+      phi_x[id_phi_tmp, 1] <- par_init[["init_phi"]][[d]]
+    }
+    sig_sq_x[d, 1] <- par_init[["init_sig_sq"]][d, 1]
     for (n in 1:NN) {
       if (all.equal(dim(traj_init), as.integer(c(TT, DD, NN)),
                     check.attributes = FALSE)) {
@@ -238,8 +170,12 @@ initialize_data_containers <- function(par_init,
         X[ , d, 1, n]  <- traj_init[d, n]
       }
       # X2[ , d, 1, n] <- traj_init[d, n]
-
-      regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
+      if (!z_null) {
+        regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
+        Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
+        betz2 <- bet_z[id_betz_tmp, 1]
+        Z_beta[, d, n] <- Zmat2 %*% betz2
+      }
       if (!u_null) {
         bet_u[id_betu_tmp, 1, n] <- par_init[["init_bet_u"]][[d]][, n]
         regs_u[, id_regs_u_tmp, n] <- U[(order_p + 1):TT, id_uet_tmp, n]
@@ -248,35 +184,36 @@ initialize_data_containers <- function(par_init,
                          drop = FALSE], nrow = TT - order_p)
         vcm_x_errors_lhs[[d]][, , n] <- Umat %*% vcm_bet_u[[d]][, , 1] %*% t(Umat)
         # try(isSymmetric(vcm_x_errors_lhs[[d]][, , n]))
-      }
-
-      Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
-      betz2 <- bet_z[id_betz_tmp, 1]
-      Z_beta[, d, n] <- Zmat2 %*% betz2
-
-      if (!u_null) {
         Umat2 <- matrix(U[, id_uet_tmp, n, drop = FALSE], nrow = TT)
         betu2 <- matrix(bet_u[id_betu_tmp, 1, n, drop = FALSE])
         U_beta[, d, n] <- Umat2 %*% betu2
+      }
+      if (!u_null && !z_null) {
         Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
-      } else {
+      } else  if (!z_null && u_null) {
         Regs_beta[, d, n] <- Z_beta[, d, n]
+      } else if (!u_null && z_null) {
+        Regs_beta[, d, n] <- U_beta[, d, n]
       }
     }
   }
   # to_env  <- parent.frame()
-  vec_obj <- c("dim_bet_z", "dim_bet_u", "order_p",
-               "id_bet_z", "id_zet", "id_reg_z", "id_phi",
-               "prior_vcm_bet_z",
+  vec_obj <- c("order_p",
                "prior_ig_a",
                "prior_ig_b",
-               "regs_z",
-               "X", "out_cpf", "sig_sq_x", "phi_x", "Regs_beta",
-               "bet_z")
+               "X", "out_cpf", "sig_sq_x", "Regs_beta")
+  if (!z_null) {
+    vec_obj <- c(vec_obj, "dim_bet_z", "id_bet_z", "id_zet", "id_reg_z",
+                 "prior_vcm_bet_z",  "regs_z", "bet_z")
+  }
   if (!u_null) {
-    vec_obj <- c(vec_obj, "U", "id_bet_u", "id_uet",
+    vec_obj <- c(vec_obj, "U", "dim_bet_u", "id_bet_u", "id_uet",
                  "dof_vcm_bet_u", "prior_vcm_bet_u2",
                  "vcm_bet_u", "bet_u")
+  }
+  if (!phi_null) {
+    vec_obj <- c(vec_obj,  "id_phi", "phi_x")
+    if (z_null) vec_obj <- c(vec_obj,  "id_phi", "prior_vcm_bet_z")
   }
   from_env <- environment()
   for(n in vec_obj) {
@@ -284,32 +221,36 @@ initialize_data_containers <- function(par_init,
   }
   invisible(to_env)
 }
-initialize_dims <- function(par_init, U, DD, order_p) {
-  dim_bet_z <- sapply(par_init[["init_bet_z"]], length, simplify = TRUE)
-  if (!is.null(U)) {
+initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
+  vec_obj  <- character(0)
+  if (!z_null) {
+    dim_bet_z <- sapply(par_init[["init_bet_z"]], length, simplify = TRUE)
+    dim_zet   <- dim_bet_z
+    id_bet_z  <- c(0, cumsum(dim_bet_z))
+    id_zet    <- c(0, cumsum(dim_bet_z))
+    if (!phi_null) {
+      id_reg_z  <- c(0, cumsum(dim_bet_z + order_p))
+    } else {
+      id_reg_z  <- c(0, cumsum(dim_bet_z))
+    }
+    vec_obj <- c(vec_obj, "dim_bet_z", "dim_zet",
+                 "id_bet_z", "id_zet", "id_reg_z")
+  }
+  if (!u_null) {
     dim_bet_u <- sapply(par_init[["init_bet_u"]], nrow)
-  } else {
-    dim_bet_u <- rep(2, times = DD)
+    dim_uet   <- dim_bet_u
+    id_bet_u  <- c(0, cumsum(dim_bet_u))
+    id_uet    <- c(0, cumsum(dim_bet_u))
+    vec_obj   <- c(vec_obj, "dim_bet_u", "dim_uet", "id_bet_u", "id_uet")
+  } # else {
+  #   dim_bet_u <- rep(2, times = DD)
+  # }
+  if(!phi_null) {
+    dim_phi <- rep(order_p, times = DD)
+    id_phi  <- c(0, cumsum(dim_phi))
+    vec_obj <- c(vec_obj, "id_phi")
   }
-  dim_zet <- dim_bet_z
-  dim_uet <- dim_bet_u
-  dim_phi <- rep(order_p, times = DD)
-
-  id_bet_z  <- c(0, cumsum(dim_bet_z))
-  id_zet    <- c(0, cumsum(dim_bet_z))
-  id_bet_u  <- c(0, cumsum(dim_bet_u))
-  id_uet    <- c(0, cumsum(dim_bet_u))
-  id_phi    <- c(0, cumsum(dim_phi))
-
-  if (!is.null(par_init[["phi"]])) {
-    id_reg_z  <- c(0, cumsum(dim_bet_z + 1))
-  } else {
-    id_reg_z  <- c(0, cumsum(dim_bet_z))
-  }
-
-  to_env  <- parent.frame()
-  vec_obj <- c("dim_bet_z", "dim_bet_u", "dim_zet", "dim_uet", "id_phi",
-               "id_bet_z", "id_bet_u", "id_zet", "id_uet", "id_reg_z")
+  to_env   <- parent.frame()
   from_env <- environment()
   for(n in vec_obj) {
     assign(n, get(n, from_env), to_env)
@@ -348,105 +289,4 @@ initialize_dims2 <- function(par_init, U, DD) {
     assign(n, get(n, from_env), to_env)
   }
   invisible(to_env)
-}
-pgas_init <- function(pe, mm) {
-  if (pe$model_type_obs == "DIRICHLET") {
-    if(pe$model_type_smc == "bpf") {
-      pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
-      pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
-      if(!is.null(pe$settings_seed$seed_pgas_init)) {
-        parallel::clusterSetRNGStream(pe$cl,
-                                      iseed = pe$settings_seed$seed_pgas_init)
-      }
-      out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
-                                        BNMPD::cbpf_as_d_cpp_par,
-                                        pe$nn_list_dd,
-                                        pe$N, pe$TT, pe$DD, pe$y,
-                                        pe$Regs_beta,
-                                        pe$sig_sq_x[, mm],
-                                        pe$phi_x[, mm],
-                                        pe$X[ , , mm, ])
-      out_cpf <- unlist(out_cpf, recursive = FALSE)
-      if (!all.equal(as.numeric(names(out_cpf)), 0:(pe$NN - 1))) {
-        stop("Cluster does not compute trajectories in order!")
-      }
-      for (n in 1:pe$NN) {
-        pe$X[ , , mm, n] <- out_cpf[[n]]
-      }
-    }
-    # seq_rs_seed_sequential <- seq(from = 1, to = NN, by = NN/num_cores)
-    # for (n in 1:pe$NN) {
-    # if (n %in% seq_rs_seed_sequential) {
-    #   set.seed(123)
-    # }
-    # out_cpf3 <- cbpf_as_d_cpp_par(id_par_vec = n,
-    #                               nn_list_dd,
-    #                               N = N, TT = TT, DD = DD,
-    #                               y_all = y,
-    #                               regs_beta_all = Regs_beta[, , ],
-    #                               sig_sq_x = sig_sq_x[, 1],
-    #                               phi_x = phi_x[, 1],
-    #                               x_r_all = X[ , , 1, ])
-    # out_cpf <- cbpf_as_d_cpp(nn_list_dd[[n]],
-    #                          N = N, TT = TT, DD = DD,
-    #                          y = y[, , n],
-    #                          Regs_beta = Regs_beta[, , n],
-    #                          sig_sq_x = sig_sq_x[, 1],
-    #                          phi_x = phi_x[, 1],
-    #                          x_r = X[ , , 1, n])
-    # out_cpf2 <- cbpf_as_d_r(nn_list_dd[[n]] + 1,
-    #                         N = N, TT = TT, DD = DD,
-    #                         y = y[, , n],
-    #                         Regs_beta =  Regs_beta[, , n],
-    #                         sig_sq_x = sig_sq_x[, 1],
-    #                         phi_x = phi_x[, 1],
-    #                         x_r = X[ , , 1, n])
-    # print(n)
-    # out_cpf <- true_states[ , , n]
-    #   }
-    #   for (d in 1:DD) {
-    #     pe$X[ , d, mm, n] <- out_cpf[, d]
-    #   }
-    #   # print(identical(X[ , , 1, ], X2[ , , 1, ]))
-  }
-  cat("cSMC iteration number:", mm, "\n")
-}
-pgas_run <- function(pe, mm) {
-  if (pe$model_type_obs == "DIRICHLET") {
-    if(pe$model_type_smc == "bpf") {
-      out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
-                                        BNMPD::cbpf_as_d_cpp_par,
-                                        pe$nn_list_dd,
-                                        pe$N, pe$TT, pe$DD, pe$y,
-                                        pe$Regs_beta,
-                                        pe$sig_sq_x[, mm],
-                                        pe$phi_x[, mm],
-                                        pe$X[ , , mm - 1, ])
-      out_cpf <- unlist(out_cpf, recursive = FALSE)
-      for (n in 1:pe$NN) {
-        pe$X[ , , mm, n] <- out_cpf[[n]]
-      }
-    }
-  }
-  cat("cSMC iteration number:", mm, "\n")
-  # } else {
-  #   for (n in 1:NN) {
-  # if (n %in% seq_rs_seed_sequential) {
-  #   set.seed(123)
-  # }
-  # browser()
-  # out_cpf <- cbpf_as_d_cpp(nn_list_dd[[n]],
-  #                          N = N, TT = TT, DD = DD,
-  #                          y = y[, , n],
-  #                          Regs_beta = Regs_beta[, , n],
-  #                          sig_sq_x = sig_sq_x[, mm],
-  #                          phi_x = phi_x[, mm],
-  #                          x_r = X[ , , mm - 1, n])
-  # out_cpf <- true_states[ , , n]
-  #     for (d in 1:DD) {
-  #       pe$X[ , d, mm, n] <- out_cpf[, d]
-  #     }
-  #   }
-  # }
-  # print(identical(X[ , , m, ], X2[ , , m, ]))
 }

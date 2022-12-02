@@ -24,7 +24,7 @@
 #' get_dirichlet_levels(DD = 3, NN = 4)
 get_dirichlet_levels <- function(DD, NN,
                                  tuning_parameters = list(seq_start = 0.3,
-                                                          seq_step = 0.1,
+                                                          seq_step = 0.05,
                                                           seq_rep = 2,
                                                           seq_scale = 100)) {
   seq_start <- tuning_parameters$seq_start
@@ -67,7 +67,16 @@ save_simulated_data <- function(pth_to_write,
                                 data_sim,
                                 dim_model,
                                 true_params) {
+  pth_data        <- file.path(pth_to_write, fn_data_set)
+  pth_true_states <- file.path(pth_to_write, fn_true_states)
+  pth_zero_states <- file.path(pth_to_write, fn_zero_states)
+  pth_true_params <- file.path(pth_to_write, "true_params.RData")
   SIMUL_U_BETA <- !is.null(data_sim$regs$u)
+  SIMUL_Z_BETA <- !is.null(data_sim$regs$z)
+  true_states <- data_sim$states
+  zero_states <- true_states
+  zero_states[, , ] <- 0
+
   NN <- dim_model[1] # Cross sectional length
   cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
       crayon::green("to "), crayon::red(NN), crayon::green("!"))
@@ -78,54 +87,83 @@ save_simulated_data <- function(pth_to_write,
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!"))
 
-  seq_regs_z <- lapply(true_params$beta_z_lin, length)
-  num_regs_z <- sum(unlist(seq_regs_z))
-  seq_regs_u <- lapply(true_params$beta_u_lin, nrow)
-  num_regs_u <- sum(unlist(seq_regs_u))
+  tmp_list <- get_names_num_simulated(true_params, DD, SIMUL_Z_BETA, SIMUL_U_BETA)
+  num_regs_z <- tmp_list$num$num_regs_z
+  num_regs_u <- tmp_list$num$num_regs_u
+  names_z_reg <- tmp_list$names$names_z_reg
+  names_u_reg <- tmp_list$names$names_u_reg
 
   ncol_out <- DD + num_regs_z + num_regs_u
   data_out <- matrix(0, nrow = TT * NN, ncol = ncol_out)
   data_out <- as.data.frame(data_out)
 
-  names_z_reg <- paste0(paste0(paste0("Z_", sapply(lapply(seq_regs_z,
-                                                          function(x) {
-                                                            seq_len(x)}),
-                                                   as.character)), "_"),
-                        rep(1:DD, unlist(seq_regs_z)))
-  if (SIMUL_U_BETA) {
-    names_u_reg <- paste0(paste0(paste0("U_", sapply(lapply(seq_regs_u,
-                                                            function(x) {
-                                                              seq_len(x)}),
-                                                     as.character)), "_"),
-                          rep(1:DD, unlist(seq_regs_u)))
-  } else {
-    names_u_reg <- NULL
-  }
   names(data_out) <- c(paste0("Y", 1:DD), names_z_reg, names_u_reg)
   vals_cs  <- as.character(paste0("cs_", rep(seq_len(NN), each = TT)))
   vals_ts  <- rep(1:TT, times = NN)
   cs_ts    <-tibble::tibble(CS = vals_cs, TS = vals_ts)
   data_out <- dplyr::bind_cols(cs_ts, data_out)
+
+  offset_col <- 2
+  id_col_y <- 1:DD + offset_col
+  if (SIMUL_Z_BETA) id_col_z <- DD + 1:(num_regs_z) + offset_col
+  if (SIMUL_U_BETA) id_col_u <- DD + num_regs_z + 1:(num_regs_u) + offset_col
   for(n in 1:NN) {
     id_rows <- TT*(n - 1) + (1:TT)
-    offset_col <- 2
-    id_col_y <- 1:DD + offset_col
-    id_col_z <- DD + 1:(num_regs_z) + offset_col
-    id_col_u <- DD + num_regs_z + 1:(num_regs_u) + offset_col
     data_out[id_rows, id_col_y] <- data_sim$data$yraw[, , n]
-    data_out[id_rows, id_col_z] <- data_sim$regs$z[, , n]
+    if (SIMUL_Z_BETA) {
+      data_out[id_rows, id_col_z] <- data_sim$regs$z[, , n]
+    }
     if (SIMUL_U_BETA) {
       data_out[id_rows, id_col_u] <- data_sim$regs$u[, , n]
     }
   }
-  write.csv(data_out, file = file.path(pth_to_write, fn_data_set),
-            row.names = FALSE)
-  true_states <- data_sim$states
-  save(true_states, file = file.path(pth_to_write, fn_true_states))
-  save(true_params, file = file.path(pth_to_write, "true_params.RData"))
-  zero_states <- true_states
-  zero_states[, , ] <- 0
-  save(zero_states,  file = file.path(pth_to_write, fn_zero_states))
+  write.csv(data_out, file = pth_data, row.names = FALSE)
+  save(true_states, file = pth_true_states)
+  save(true_params, file = pth_true_params)
+  save(zero_states, file = pth_zero_states)
+}
+get_names_num_simulated <- function(true_params, DD, SIMUL_Z, SIMUL_U) {
+  if (SIMUL_Z) {
+    tmp_list    <- get_name_num(type = "reg_z", true_params$beta_z_lin, DD)
+    num_regs_z  <- tmp_list$num
+    names_z_reg <- tmp_list$names
+  } else {
+    num_regs_z  <- 0
+    names_z_reg <- NULL
+  }
+  if (SIMUL_U) {
+    tmp_list    <- get_name_num(type = "reg_u", true_params$beta_u_lin, DD)
+    num_regs_u  <- tmp_list$num
+    names_u_reg <- tmp_list$names
+  } else {
+    num_regs_u  <- 0
+    names_u_reg <- NULL
+  }
+  out <- list(names = list(names_z_reg = names_z_reg,
+                           names_u_reg = names_u_reg),
+              num = list(num_regs_z = num_regs_z,
+                         num_regs_u = num_regs_u))
+  return(out)
+}
+get_name_num <- function(type, par, DD) {
+  if (type == "reg_z") {
+    seq_regs <- lapply(par, length)
+    tmp_name <- paste0(paste0(paste0("Z_", sapply(lapply(seq_regs,
+                                                            function(x) {
+                                                              seq_len(x)}),
+                                                     as.character)), "_"),
+                          rep(1:DD, unlist(seq_regs)))
+  }
+  if (type == "reg_u") {
+    seq_regs <- lapply(par, nrow)
+    tmp_name <- paste0(paste0(paste0("U_", sapply(lapply(seq_regs,
+                                                            function(x) {
+                                                              seq_len(x)}),
+                                                     as.character)), "_"),
+                          rep(1:DD, unlist(seq_regs)))
+  }
+  list(num = sum(unlist(seq_regs)),
+       names = tmp_name)
 }
 #' Generates consistent file names for simulation study
 #'
@@ -173,7 +211,7 @@ get_file_names_simul_data <- function(fn_data,
                    "_TT", dim_model[2],
                    "_DD", dim_model[3])
   if (SIMUL_PHI) {
-    tmp_fn <- paste0(tmp_fn, "_", "withAUTO", paste0(",", order_p,
+    tmp_fn <- paste0(tmp_fn, "_", "withAUTO", paste0(",", unique(order_p),
                                                      collapse = ""))
   } else {
     tmp_fn <- paste0(tmp_fn, "_", "noAUTO")

@@ -450,11 +450,12 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 var_bet_u <- NULL
                               }
                               if ("vcm_u_lin" %in% tmp_pars) {
-                                vcm_bet_u <- paste0(rep(paste0("vcm_bet_u_",
-                                                               1:DD_tmp),
-                                                        each = 4),
-                                                    rep(1:(num_re_tmp^2),
-                                                        times = DD_tmp))
+                                vcm_elements <- paste0("vcm_bet_u_",
+                                                       rep(1:(num_re_tmp^2),
+                                                           times = DD_tmp))
+                                vcm_bet_u <- paste0(vcm_elements,
+                                                    rep(1:DD_tmp,
+                                                        each = (num_re_tmp^2)))
                               } else {
                                 vcm_bet_u <- NULL
                               }
@@ -476,8 +477,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                  )
                               lab_names <- lab_names[idtaken]
                               par_names <- par_names[idtaken]
-                              return(list(lab_names = lab_names,
-                                          par_names = par_names))
+                              return(list(par_lab_names = lab_names,
+                                          par_val_names = par_names))
                             },
                             #' @description Returns model metadata.
                             #'
