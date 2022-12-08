@@ -14,41 +14,58 @@
 #' @param beta_z_lin a list of length \code{DD} with (possibly) varying number
 #'   of regressors; if \code{NULL}, then defaults are generated (see
 #'   [get_default_beta_z_lin])
-#' @param SIMUL_PHI logical; if \code{TRUE}, then autoregressive process of
-#'   order \code{order_p_vec} is generated
-#' @param SIMUL_Z_BETA logical; if \code{TRUE}, then standard continuous
-#'   (z-type) covariates are included
-#' @param SIMUL_U_BETA logical; if \code{TRUE}, then random effects (u-type
-#'    regressors) are simulated based on the argument \code{seed_taken}
-#' @param num_z_regs integer giving the number of z-type regressors (either
-#'   the same number for all multivariate components, or a vector of length
-#'   equal to the number of multivariate components)
-#' @param num_u_regs integer giving the number of random effects per cross
+#' @param settings_pars a list with named elements of the form:
+#'   \itemize{
+#'   \item{SIMUL_PHI: }{logical; if \code{TRUE}, then autoregressive process of
+#'   order \code{order_p_vec} is generated}
+#'   \item{SIMUL_Z_BETA: }{logical; if \code{TRUE}, then standard continuous
+#'   (z-type) covariates are included}
+#'    \item{SIMUL_U_BETA: }{logical; if \code{TRUE}, then random effects (u-type
+#'    regressors) are simulated based on the argument \code{seed_taken}}
+#'   \item{num_z_regs: }{integer giving the number of z-type regressors (either the
+#'   same number for all multivariate components, or a vector of length equal to
+#'   the number of multivariate components)}
+#'      \item{num_u_regs: }{integer giving the number of random effects per cross
 #'   section to simulate (either the same number for all multivariate
 #'   components, or a vector of length equal to the number of multivariate
 #'   components; currently not varying along the cross sectional units but
-#'   extension is possible)
-#' @param order_p_vec a vector of length DD with integers > 0 giving the order of
-#'   auto-regression per component d
+#'   extension is possible)}
+#'      \item{order_p_vec: }{a vector of length DD with integers > 0 giving the order of
+#'   auto-regression per component d}
+#'   }
+#' @param options a list with settings for true parameter generation with first
+#'   component being a \code{dwn_scl} value for the variance parameter
+#'   \code{sigma} and the second an optional list with two logical vectors of
+#'   length DD indicating whether the corresponding component (either at z or u)
+#'   should have an intercept
 #' @param seed_taken the seed used drawing random effects
 #'
-#' @return a list of four elements each giving the corresponding true parameters
-#'    container for the model size/dimension
+#' @return an object of class "\code{trueParams}" which is a list of three: true
+#'   parameter values, meta information such as model dimension, the seed under
+#'   which the true parameters are generated, and the logical indicators that
+#'   describe which parameters to generate and their lengths
 #' @export
 generate_true_params <- function(dim_model,
                                  sig_sq = NULL,
                                  phi = NULL,
                                  beta_z_lin = NULL,
-                                 SIMUL_PHI,
-                                 SIMUL_Z_BETA,
-                                 SIMUL_U_BETA,
-                                 num_u_regs = NULL,
-                                 num_z_regs = NULL,
-                                 order_p_vec = rep(1, times = dim_model[["DD"]]),
-                                 options = list(dwn_scl = 10),
+                                 settings_pars = list(SIMUL_PHI = TRUE,
+                                                      SIMUL_Z_BETA = TRUE,
+                                                      SIMUL_U_BETA = TRUE,
+                                                      num_z_regs = 3,
+                                                      num_u_regs = 2,
+                                                      order_p_vec = 1),
+                                 options = list(dwn_scl = 10,
+                                                intercepts = NULL),
                                  seed_taken) {
+  SIMUL_PHI    <- settings_pars$SIMUL_PHI
+  SIMUL_Z_BETA <- settings_pars$SIMUL_Z_BETA
+  SIMUL_U_BETA <- settings_pars$SIMUL_U_BETA
+  num_z_regs   <- settings_pars$num_z_regs
+  num_u_regs   <- settings_pars$num_u_regs
+  order_p_vec  <- settings_pars$order_p_vec
   check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
-                 missing(SIMUL_PHI) || missing(seed_taken) ||
+                   missing(SIMUL_PHI) || missing(seed_taken) ||
                    missing(dim_model))
   if (check_args) stop("Missing arguments")
   if (SIMUL_U_BETA && missing(num_u_regs)) stop("Number of REs not specified!")
@@ -65,9 +82,12 @@ generate_true_params <- function(dim_model,
   # 2. Set up parameter values: ---------------------------------------------
   true_sig_sq <- set_simul_vals_sig_sq_x(sig_sq, DD, NN, options$dwn_scl)
   true_phi    <- set_simul_vals_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
-  true_bet_z  <- set_simul_vals_bet_z(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs)
+  true_bet_z  <- set_simul_vals_bet_z(SIMUL_Z_BETA, beta_z_lin,
+                                      DD, num_z_regs,
+                                      options$intercepts$at_z)
   tmp_u       <- set_simul_vals_bet_vcm_u(SIMUL_U_BETA, DD, NN,
-                                          num_u_regs, seed_taken)
+                                          num_u_regs, seed_taken,
+                                          options$intercepts$at_u)
   true_bet_u <- tmp_u[["true_bet_u"]]
   true_D0u_u <- tmp_u[["true_D0u_u"]]
 
@@ -76,6 +96,10 @@ generate_true_params <- function(dim_model,
                     beta_z_lin = true_bet_z,
                     beta_u_lin = true_bet_u,
                     vcm_u_lin = true_D0u_u)
+  class(par_trues) <- "trueParams"
+  attr(par_trues, which = "meta_info") <- list(MODEL_DIM = dim_model,
+                                               PAR_SETTINGS = settings_pars,
+                                               SEED_NR = seed_taken)
   return(true_params = par_trues)
 }
 #' Sets true values (default or user supplied) for parameter phi
@@ -90,6 +114,11 @@ generate_true_params <- function(dim_model,
 #' @export
 set_simul_vals_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
   if (SIMUL_PHI) {
+    if (length(order_p_vec) == 1) {
+      order_p_vec <- rep(order_p_vec, times = DD)
+    } else if (length(order_p_vec) != DD) {
+      stop("Autoregressive order_p must be either length 1 or DD!")
+    }
     if (!is.null(phi)) {
       if (length(phi) != DD) {
         stop("Phi params must be passed as a list of length DD!")
@@ -137,7 +166,8 @@ set_simul_vals_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
 #'
 #' @return a list of length \code{DD} each element being a vector of the
 #'   corresponding number of regressors
-set_simul_vals_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs) {
+set_simul_vals_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs,
+                                 intercepts) {
   if (SIMUL_Z_BETA) {
     if (!is.null(beta_z_lin)) {
       check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
@@ -145,7 +175,7 @@ set_simul_vals_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs) {
       out_bet_z <- beta_z_lin
     } else {
       if (is.null(num_z_regs)) stop("Num. of 'beta_z_lin' regressors required.")
-      out_bet_z <- get_default_beta_z_lin(DD, num = num_z_regs)
+      out_bet_z <- get_default_beta_z_lin(DD, num = num_z_regs, intercepts)
     }
   } else {
     out_bet_z <- NULL
@@ -164,7 +194,8 @@ set_simul_vals_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs) {
 #'   effects)
 #' @export
 set_simul_vals_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
-                                     num_u_regs, seed_taken) {
+                                     num_u_regs, seed_taken,
+                                     intercepts) {
   if (SIMUL_U_BETA) {
     if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
     num_reg_seq <- if (length(num_u_regs) == 1) {
@@ -231,27 +262,19 @@ get_default_phi <- function(DD, NN, order_p_vec) {
 #' @return a list of length \code{DD}, with number of elements = \code{num}, or,
 #'   if \code{num} is a vector of length \code{DD}, \code{num[d]}, for
 #'   \code{d=1,...,DD}
-get_default_beta_z_lin <- function(DD, num) {
+get_default_beta_z_lin <- function(DD, num, intercepts) {
   num_reg_len <- length(num)
-  tmp1 <- c(-2.5, 3)     # tmp values large, first component negative
-  tmp2 <- c(2, -4)       # tmp values large, first component positive
-  tmp3 <- c(-0.4, 0.7)   # tmp values small, first component negative
-  tmp4 <- c(0.85, -0.35) # tmp values small, first component positive
+  tmp1 <- c(0.025, - 0.04)  # tmp values large, first component negative
+  tmp2 <- c(0.027, -0.035)    # tmp values large, first component positive
+  tmp3 <- c(0.03, -0.03)   # tmp values small, first component negative
+  tmp4 <- c(0.032, -0.015) # tmp values small, first component positive
   if (num_reg_len == 1) {
-    # tmp1 <- tmp1 + rnorm(num, 0, c(0, 0, 1, 1)[1:num])
-    # tmp2 <- tmp2 + rnorm(num, 0, c(0, 0, 1, 1)[1:num])
-    # tmp3 <- tmp3 + rnorm(num, 0, c(0, 0, 1, 1)[1:num])
-    # tmp4 <- tmp4 + rnorm(num, 0, c(0, 0, 1, 1)[1:num])
     tmp_neg_pos_large <- rep(tmp1, length.out = num)
     tmp_pos_neg_large <- rep(tmp2, length.out = num)
     tmp_neg_pos_small <- rep(tmp3, length.out = num)
     tmp_pos_neg_small <- rep(tmp4, length.out = num)
 
   } else if (num_reg_len == DD) {
-    # tmp1 <- tmp1 + rnorm(num, 0, c(0, 0, 1, 1)[1:num[1]])
-    # tmp2 <- tmp2 + rnorm(num, 0, c(0, 0, 1, 1)[1:num[1]])
-    # tmp3 <- tmp3 + rnorm(num, 0, c(0, 0, 1, 1)[1:num[1]])
-    # tmp4 <- tmp4 + rnorm(num, 0, c(0, 0, 1, 1)[1:num[1]])
     tmp_neg_pos_large <- rep(tmp1, length.out = num[1])
     tmp_pos_neg_large <- rep(tmp2, length.out = num[2])
     tmp_neg_pos_small <- rep(tmp3, length.out = num[3])
@@ -263,7 +286,18 @@ get_default_beta_z_lin <- function(DD, num) {
                     tmp_pos_neg_large,
                     tmp_neg_pos_small,
                     tmp_pos_neg_small)
-  return(rep(list_vals, length.out = DD))
+  list_vals <- rep(list_vals, length.out = DD)
+  list_vals <- scale_up_intercept(list_vals, 100, intercepts)
+  return(list_vals)
+}
+scale_up_intercept <- function(vals_list, scl_up, intercept_ids) {
+  DD <- length(intercept_ids)
+  scl <- rep(1, times = DD)
+  scl[intercept_ids] <- scl_up
+  for (d in 1:DD) {
+    vals_list[[d]][1] <- vals_list[[d]][1] * scl[d]
+  }
+  return(vals_list)
 }
 #' Generates random effects per cross sectional unit (e.g. US-state)
 #'
@@ -292,9 +326,9 @@ get_default_beta_z_lin <- function(DD, num) {
 #'
 #' @export
 generate_bet_u <- function(DD, NN,
-                           from_IW = FALSE,
+                           from_IW,
                            num_re,
-                           prior_vcm_u_scl = 10,
+                           prior_vcm_u_scl = 0.5,
                            seed_no = 42) {
   true_bet_u <- vector("list", DD)
   if (from_IW) {
@@ -303,19 +337,17 @@ generate_bet_u <- function(DD, NN,
     n0u <- num_re + 1
     D0u <- vector("list", DD)
     for (d in 1:DD) {
-      prior_vcm_u_scl_adj <- prior_vcm_u_scl * (0.01 + 1/num_re[d])
-      D0u[[d]] <- solveme(diag(1:num_re[d] * prior_vcm_u_scl_adj,
-                               nrow = num_re[d]))
+      D0u[[d]] <- get_hyper_prior_vcm(prior_vcm_u_scl, num_re[d])
       D0u[[d]] <- solveme((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
       colnames(D0u[[d]]) <- paste0("U", 1:num_re[d])
       rownames(D0u[[d]]) <- paste0("U", 1:num_re[d])
       true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
       colnames(true_bet_u[[d]]) <- paste0("N", 1:NN)
       rownames(true_bet_u[[d]]) <- paste0("U", 1:num_re[d])
-      # browser()
       for (n in 1:NN) {
         true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
-                                              mu = rep(0, times = num_re[d]),
+                                              # mu = c(2, rep(0.5, times = num_re[d] - 1)),
+                                              mu = c(1, rep(0.5, times = num_re[d] - 1)),
                                               Sigma = D0u[[d]])
       }
     }
@@ -330,6 +362,13 @@ generate_bet_u <- function(DD, NN,
     }
     return(true_bet_u = true_bet_u)
   }
+}
+get_hyper_prior_vcm <- function(prior_vcm_u_scl, num_re) {
+  prior_vcm_u_scl_adj <- prior_vcm_u_scl * (1 + 1/num_re)
+  out_mat <- matrix(-1.0, nrow = num_re, ncol = num_re)
+  diag(out_mat) <- rep(8.0, times = num_re) * prior_vcm_u_scl_adj
+  # solveme(out_mat)
+  out_mat
 }
 #' Write a yaml config file for a BNMPD-model class
 #'
@@ -471,7 +510,6 @@ generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
   check_args_to_generate_yaml_json(dimension)
   DD <- dimension[["DD"]]
 
-  # if (!is.null(true_params$phi)) true_params$phi <- true_params$phi[, 1]
   true_params$sig_sq <- true_params$sig_sq[, 1]
   list_json <- list()
   for(d in seq_len(DD)) {
@@ -490,11 +528,7 @@ generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
 }
 par_to_list <- function(par_val, par_name, num_d) {
   if (par_name == "phi") {
-    if (length(par_val) < 2) {
-      num_comp <- NULL
-    } else {
-      num_comp <- seq_len(length(par_val))
-    }
+    num_comp <- seq_len(length(par_val))
     lab <- paste0("phi_{", num_comp, ",", num_d,"}")
     var <- paste0(par_name, "_", num_comp, "_", num_d)
     val <- par_val

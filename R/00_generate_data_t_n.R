@@ -7,18 +7,16 @@
 #' function of regressors and latent states where the regressors and latent
 #' states can vary over time and cross section.
 #'
+#' @param par_true an object of class "\code{trueParams}" which is a list of
+#'   true parameter values and meta information such as model dimension, the
+#'   seed under which the true parameters are generated, the logical indicators
+#'   that describe which parameters to generate and their lengths, as provided
+#'   by the function [generate_true_params()]
 #' @param distribution specifies the distribution; "dirichlet", "multinomial" or
 #'   "dirichlet-multinomial"
-#' @param NN number of cross sectional units
-#' @param TT number of time periods
-#' @param DD multivariate dimension of the measurements/responses (e.g. number
-#'   of shares/fractions for Dirichlet or Dirichlet-Multinomial, or the number
-#'   of categories for a Multinomial distribution
-#' @param par_true list of true parameters that describe the latent state
-#'   process; as provided by the function [generate_true_params()]
 #' @param x_levels target "mean" levels of the states around which they
 #'   fluctuate
-#' @param x_log_scale logical; if \code{TRUE}, \code{x_levels} are taken as logs
+#' @param X_LOG_SCALE logical; if \code{TRUE}, \code{x_levels} are taken as logs
 #'   and the random number generation for the states is performed in logs
 #' @param options_include a list of options for various effects:
 #'   \itemize{
@@ -68,11 +66,10 @@
 #'   }
 #'
 #' @export
-generate_data_t_n <- function(distribution,
-                              NN, TT, DD,
-                              par_true,
+generate_data_t_n <- function(par_true,
+                              distribution,
                               x_levels,
-                              x_log_scale,
+                              X_LOG_SCALE,
                               options_include = list(intercept = NULL,
                                                      policy = NULL,
                                                      zeros = NULL),
@@ -80,10 +77,18 @@ generate_data_t_n <- function(distribution,
                                                   states = FALSE,
                                                   states_each_d = FALSE),
                               seed_no = NULL) {
+  stopifnot(`par_true must be object of class trueParams` =
+              class(par_true) == "trueParams")
+
+  meta_info_tmp <- attr(par_true, "meta_info")$MODEL_DIM
+  NN <- meta_info_tmp[["NN"]]
+  TT <- meta_info_tmp[["TT"]]
+  DD <- meta_info_tmp[["DD"]]
+
   check_distribution_args(distribution)
   opt1 <- get_opt_include(options_include, NN, DD)
 
-  if (x_log_scale) x_levels <- log(x_levels)
+  if (X_LOG_SCALE) x_levels <- log(x_levels)
   if (!is.null(seed_no)) set.seed(seed_no)
 
   reg_types <- get_modelling_reg_types(par_true)
@@ -112,7 +117,7 @@ generate_data_t_n <- function(distribution,
     }
     x[, , n] <- out_data_tmp$x_states
   }
-  y <- get_measurements(x, x_log_scale, distribution)
+  y <- get_measurements(x, X_LOG_SCALE, distribution)
   if (any(sapply(options_plot, isTRUE))) {
     for (n in 1:NN) {
       plot_data_per_n(DD,
@@ -330,7 +335,6 @@ get_output_data_simul <- function(cnt_data,
                                   reg_types) {
   dist <- attr(cnt_data, which = "distribution")
   out_data <- vector("list", 3)
-  names(out_data) <- c("data", "regs", "states")
   if (dist %in% c("dirichlet", "normal")) {
     out_data[[1]] <- list(yraw = cnt_data[["part1"]])
   } else if (dist == "multinomial" || dist == "dirichlet-mult") {
@@ -355,9 +359,10 @@ get_output_data_simul <- function(cnt_data,
   lat_type_names <- c("auto", "lin", "re", "splZ", "splU")
   lat_type_names <- paste0(lat_type_names[reg_types], collapse = "_")
   attr(out_data[[3]], which = "model_type_lat") <- lat_type_names
+  names(out_data) <- c("data", "regs", "states")
   return(out_data)
 }
-get_measurements <- function(x_states, x_log_scale, distribution) {
+get_measurements <- function(x_states, X_LOG_SCALE, distribution) {
   tmp_dim <- dim(x_states)
   TT <- tmp_dim[1]
   DD <- tmp_dim[2]
@@ -376,10 +381,10 @@ get_measurements <- function(x_states, x_log_scale, distribution) {
                     part2 = data_part2)
   attr(out_data, which = "distribution") <- distribution
 
-  if (sum(any(x_states <= 0)) & x_log_scale == FALSE) {
+  if (sum(any(x_states <= 0)) & X_LOG_SCALE == FALSE) {
     stop("some state process (x1_t, x2_t, ... or xD_t) not positive!")
   }
-  if (x_log_scale) {
+  if (X_LOG_SCALE) {
     x <- exp(x_states)
   }
   if (distribution == "normal") {
