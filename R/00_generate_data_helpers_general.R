@@ -24,9 +24,9 @@
 #' get_dirichlet_levels(DD = 3, NN = 4)
 get_dirichlet_levels <- function(DD, NN,
                                  tuning_parameters = list(seq_start = 0.3,
-                                                          seq_step = 0.05,
+                                                          seq_step = 0.025,
                                                           seq_rep = 2,
-                                                          seq_scale = 100)) {
+                                                          seq_scale = 1e3)) {
   seq_start <- tuning_parameters$seq_start
   seq_step  <- tuning_parameters$seq_step
   seq_rep   <- tuning_parameters$seq_rep
@@ -38,7 +38,7 @@ get_dirichlet_levels <- function(DD, NN,
   tuned_vec <- tuned_vec[1:DD]
   tuned_vec <- tuned_vec/sum(tuned_vec)
 
-  matrix(tuned_vec * 100,
+  matrix(tuned_vec * tuning_parameters$seq_scale,
          nrow = DD,
          ncol = NN)
 
@@ -66,11 +66,13 @@ save_simulated_data <- function(pth_to_write,
                                 fn_zero_states,
                                 data_sim,
                                 dim_model,
-                                true_params) {
+                                true_params,
+                                defl_params) {
   pth_data        <- file.path(pth_to_write, fn_data_set)
   pth_true_states <- file.path(pth_to_write, fn_true_states)
   pth_zero_states <- file.path(pth_to_write, fn_zero_states)
   pth_true_params <- file.path(pth_to_write, "true_params.RData")
+  pth_defl_params <- file.path(pth_to_write, "defl_params.RData")
   SIMUL_U_BETA <- !is.null(data_sim$regs$u)
   SIMUL_Z_BETA <- !is.null(data_sim$regs$z)
   true_states <- data_sim$states
@@ -87,7 +89,8 @@ save_simulated_data <- function(pth_to_write,
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!"))
 
-  tmp_list <- get_names_num_simulated(true_params, DD, SIMUL_Z_BETA, SIMUL_U_BETA)
+  tmp_list <- get_names_num_simulated(true_params, DD,
+                                      SIMUL_Z_BETA, SIMUL_U_BETA)
   num_regs_z <- tmp_list$num$num_regs_z
   num_regs_u <- tmp_list$num$num_regs_u
   names_z_reg <- tmp_list$names$names_z_reg
@@ -121,6 +124,7 @@ save_simulated_data <- function(pth_to_write,
   save(true_states, file = pth_true_states)
   save(true_params, file = pth_true_params)
   save(zero_states, file = pth_zero_states)
+  save(defl_params, file = pth_defl_params)
 }
 get_names_num_simulated <- function(true_params, DD, SIMUL_Z, SIMUL_U) {
   if (SIMUL_Z) {
@@ -167,28 +171,14 @@ get_name_num <- function(type, par, DD) {
 }
 #' Generates consistent file names for simulation study
 #'
+#' @param fn_main_part character giving base part of the name, see
+#'   [get_file_name_main]
 #' @param fn_data character giving the filename of the simulated data set
 #'   (saved in \code{.csv}-format)
 #' @param fn_true_states character giving the filename of the simulated true
 #'   states (saved in \code{.RData}-format)
 #' @param fn_zero_states  character giving the filename of the states set all to
 #'   zero (saved in \code{.RData}-format)
-#' @param dim_model numeric vector of 3 elements: \code{NN x TT x DD}
-#' @param SIMUL_PHI logical; if \code{TRUE} autoregressive processes are
-#'   simulated which is reflected in the naming of simulated data sets
-#' @param SIMUL_Z_BETA logical; if \code{TRUE} Z-type regressors are simulated
-#'   which is reflected in the naming of simulated data sets
-#' @param SIMUL_U_BETA logical; if \code{TRUE} U-type regressors (i.e. random
-#'   effects) are simulated which is reflected in the naming of simulated data
-#'   sets
-#' @param num_z_regs numeric vector giving number of Z-type regressors; parsed
-#'   as comma-seperated sequence of numbers i.e. for \code{num_z_regs = 1:3} we
-#'   get "withLIN,1,2,3" in the file names
-#' @param num_u_regs numeric vector giving number of U-type regressors; parsed
-#'   as comma-seperated sequence of numbers i.e. for \code{num_u_regs = 1:3} we
-#'   get "withRE,1,2,3" in the file names
-#' @param order_p an integer vector giving the autoregressive order for each d
-#'   in \code{1,...,DD}
 #'
 #' @return a list of 3:
 #'    \itemize{
@@ -197,16 +187,34 @@ get_name_num <- function(type, par, DD) {
 #'    \item\code{fn_data_set}: file name for zero state values
 #'    }
 #' @export
-get_file_names_simul_data <- function(fn_data,
+get_file_names_simul_data <- function(fn_main_part,
+                                      fn_data,
                                       fn_true_states,
-                                      fn_zero_states,
-                                      dim_model,
-                                      SIMUL_PHI,
-                                      SIMUL_Z_BETA,
-                                      SIMUL_U_BETA,
-                                      num_z_regs,
-                                      num_u_regs,
-                                      order_p) {
+                                      fn_zero_states) {
+
+  fn_data_set <- paste0(fn_data, "_", fn_main_part, ".csv")
+  fn_true_val <- paste0(fn_true_states, "_", fn_main_part, ".RData")
+  fn_zero_val <- paste0(fn_zero_states, "_", fn_main_part, ".RData")
+  return(list(fn_data_set = fn_data_set,
+              fn_true_val = fn_true_val,
+              fn_zero_val = fn_zero_val))
+}
+#' Generate main part of a file name
+#'
+#' @param dim_model numeric vector of 3 elements: \code{NN x TT x DD}
+#' @param par_settings list of parameter settings as returned via attributes of
+#'   any object from class \code{trueParams} (see [generate_true_params()] for
+#'   details)
+#'
+#' @return main part for file names
+get_file_name_main <- function(dim_model,
+                               par_settings) {
+  SIMUL_PHI    <-par_settings[["SIMUL_PHI"]]
+  SIMUL_Z_BETA <-par_settings[["SIMUL_Z_BETA"]]
+  SIMUL_U_BETA <-par_settings[["SIMUL_U_BETA"]]
+  num_z_regs   <-par_settings[["num_z_regs"]]
+  num_u_regs   <-par_settings[["num_u_regs"]]
+  order_p      <-par_settings[["order_p"]]
   tmp_fn <- paste0("NN", dim_model[1],
                    "_TT", dim_model[2],
                    "_DD", dim_model[3])
@@ -228,12 +236,7 @@ get_file_names_simul_data <- function(fn_data,
   } else {
     tmp_fn <- paste0(tmp_fn, "_", "noRE")
   }
-  fn_data_set <- paste0(fn_data, "_", tmp_fn, ".csv")
-  fn_true_val <- paste0(fn_true_states, "_", tmp_fn, ".RData")
-  fn_zero_val <- paste0(fn_zero_states, "_", tmp_fn, ".RData")
-  return(list(fn_data_set = fn_data_set,
-              fn_true_val = fn_true_val,
-              fn_zero_val = fn_zero_val))
+  return(tmp_fn)
 }
 #' Subset simulated data from [generate_data_t_n()]
 #'
@@ -296,55 +299,56 @@ subset_data_simul <- function(data, names_dim, id_seq) {
 }
 #' Generate directories and files for simulation study
 #'
-#' @param pth_to_project character giving path to where the project (top level
-#'   directory is to be created)
-#'
-#' @param project_name character; name of the simulation study used as top-level
-#'   directory and in project information
-#' @param meta_info either \code{prepend} or \code{append}, defaults to the
-#'   former and appends \code{project_name} by measurement type and model
-#'   dimensions
 #' @param data_simulation a named list of three elements:
 #'   \itemize{
 #'   \item{\code{data:}}{ the data set as generated by [generate_data_t_n()]}
 #'   \item{\code{trueParams:}}{ true parameter values as generated by
 #'                              [generate_true_params()]}
-#'   \item{\code{dim:}}{ a named numeric vector ("NN", "TT", "DD")
-#'   giving the dimensions of the model}
 #'   }
-#' @param data_simulation_meta a named list of four elements:
-#'   \itemize{
-#'   \item{\code{SIMUL_Z_BETA:}}{ logical; if \code{TRUE} z-regressors have been
-#'   simulated}
-#'   \item{\code{SIMUL_U_BETA:}}{ logical; if \code{TRUE} u-regressors have been
-#'   simulated}
-#'   \item{\code{num_z_regs:}}{ number of z-type regressors or \code{NULL}}
-#'   \item{\code{num_z_regs:}}{ number of u-type regressors or \code{NULL}}
-#'   }
+#' @param INIT_AT a character: either "trues" or "default" to write
+#'   initialization values at true or default values (an identity matrix for the
+#'   VCM of bet_u_lin e.g. but the beta_z/beta_u set to 0).
+#' @param pth_to_project character giving path to where the project (top level
+#'   directory is to be created)
+#' @param project_name character; name of the simulation study used as top-level
+#'   directory and in project information
+#' @param proj_name_meta either \code{prepend} or \code{append}, defaults to the
+#'   former and prepends \code{project_name} by measurement type and model
+#'   dimensions
 #'
 #' @return side effect function generating directories and files for simulation
 #'   study and copying data/template files into corresponding directories
 #' @export
-generate_simulation_study <- function(pth_to_project,
+generate_simulation_study <- function(data_simulation,
+                                      INIT_AT = "true",
+                                      pth_to_project,
                                       project_name,
-                                      meta_info = "prepend",
-                                      data_simulation,
-                                      data_simulation_meta) {
+                                      proj_name_meta = "prepend") {
+  stopifnot(`INIT_AT must be eihter 'trues' or 'default'.` =
+              INIT_AT %in% c("true", "default"))
+  meta_info_tmp <- attr(data_simulation$trueParams, "meta_info")
+  zero_params   <- get_zero_or_defaults(data_simulation$trueParams)
+  used_params   <- if (INIT_AT == "true") {
+    used_params <- data_simulation[["trueParams"]]
+  } else {
+    used_params <- zero_params
+  }
+
   model_type <- c(model_type_obs = attr(data_simulation$dataSim[["data"]],
                                         which = "model_type_obs"),
                   model_type_lat = attr(data_simulation$dataSim[["states"]],
                                         which = "model_type_lat"))
-  tmp_name <- paste0(paste0(names(data_simulation$dim),
-                            data_simulation$dim), collapse = "_")
+  base_name <- get_file_name_main(dim_model =  meta_info_tmp$MODEL_DIM,
+                                  par_settings = meta_info_tmp$PAR_SETTINGS)
   tmp_name <- paste0(model_type[["model_type_obs"]],
-                     "_", tmp_name, "_",
+                     "_", base_name, "_",
                      model_type[["model_type_lat"]])
-  if (meta_info == "prepend") {
+  if (proj_name_meta == "prepend") {
     project_name <- paste0(tmp_name, "_", project_name)
-  } else if  (meta_info == "append") {
+  } else if  (proj_name_meta == "append") {
     project_name <- paste0(project_name, "_", tmp_name)
   } else {
-    stop("Unknown value for arg 'meta_info'; use either 'prepend' or 'append'.")
+    stop("Unknown value for 'proj_name_meta'; use either 'prepend' or 'append'")
   }
   pth_top_lvl <- file.path(pth_to_project, project_name)
   stopifnot(`Project directory already exists!` = !dir.exists(pth_top_lvl))
@@ -366,24 +370,17 @@ generate_simulation_study <- function(pth_to_project,
                            "interpretation",
                            "summary")))
   lapply(pth_tmp, dir.create)
-  fn_all <- get_file_names_simul_data(fn_data = "sim_data",
+  fn_all <- get_file_names_simul_data(fn_main_part = base_name,
+                                      fn_data = "sim_data",
                                       fn_true_states = "states_true",
-                                      fn_zero_states = "states_zero",
-                                      dim_model = data_simulation[["dim"]],
-                                      data_simulation_meta[["SIMUL_PHI"]],
-                                      data_simulation_meta[["SIMUL_Z_BETA"]],
-                                      data_simulation_meta[["SIMUL_U_BETA"]],
-                                      data_simulation_meta[["num_z_regs"]],
-                                      data_simulation_meta[["num_u_regs"]],
-                                      data_simulation_meta[["order_p"]])
+                                      fn_zero_states = "states_zero")
   generate_yaml_model_defintion(model_type,
-                                dimensions = data_simulation[["dim"]],
-                                data_simulation_meta,
+                                dim_model = meta_info_tmp$MODEL_DIM,
+                                par_settings = meta_info_tmp$PAR_SETTINGS,
                                 file.path(pth_top_lvl, "model",
                                           "model-definition",
                                           "model_definition.yaml"))
-  generate_setup_init_json(data_simulation[["dim"]],
-                           data_simulation[["trueParams"]],
+  generate_setup_init_json(meta_info_tmp$MODEL_DIM, used_params,
                            file.path(pth_top_lvl, "model",
                                      "model-definition",
                                      "setup_inits.json"))
@@ -392,12 +389,53 @@ generate_simulation_study <- function(pth_to_project,
                       fn_all[["fn_true_val"]],
                       fn_all[["fn_zero_val"]],
                       data_sim = data_simulation[["dataSim"]],
-                      dim_model = data_simulation[["dim"]],
-                      true_params = data_simulation[["trueParams"]])
-  copy_meta_files(pth_top_lvl)
+                      dim_model = meta_info_tmp$MODEL_DIM,
+                      true_params =  data_simulation[["trueParams"]],
+                      defl_params = zero_params)
+  copy_meta_files(pth_top_lvl, project_name)
   return(invisible(pth_to_project))
 }
-copy_meta_files <- function(pth_to_project) {
+get_zero_or_defaults <- function(true_params) {
+  stopifnot(`true_params is not an object of class 'trueParams'.` =
+              class(true_params) == "trueParams")
+  zero_params <- true_params
+  if (!is.null(true_params[["sig_sq"]])) {
+    zero_params[["sig_sq"]][] <- 1
+  }
+  if (!is.null(true_params[["phi"]])) {
+    zero_params[["phi"]] <- 0
+  }
+  if (!is.null(true_params[["beta_z_lin"]])) {
+    browser()
+    zero_params[["beta_z_lin"]][] <- lapply(zero_params[["beta_z_lin"]],
+                                            function(x) {y <- x; y[] <- 0; y})
+  }
+  if (!is.null(true_params[["beta_u_lin"]])) {
+    zero_params[["beta_u_lin"]][] <- lapply(zero_params[["beta_u_lin"]],
+                                            function(x) {y <- x; y[] <- 0; y})
+  }
+  if (!is.null(true_params[["vcm_u_lin"]])) {
+    zero_params[["vcm_u_lin"]][] <- lapply(zero_params[["vcm_u_lin"]],
+                                           function(x) {
+                                             y <- x;
+                                             y[] <- 0;
+                                             diag(y) <- 1;
+                                             y}
+                                           )
+  }
+
+  return(zero_params)
+}
+copy_meta_files <- function(pth_to_project, project_name) {
+  if (grepl("NORMAL", project_name)) {
+    file.copy(from = "./inst/meta-sources/main_run_T01.R",
+              to = file.path(pth_to_project,
+                             paste0("main_run_", project_name, ".R")))
+  } else {
+    file.copy(from = "./inst/meta-sources/main_run_T02.R",
+              to = file.path(pth_to_project,
+                             paste0("main_run_", project_name, ".R")))
+  }
   file.copy(from = "./inst/meta-sources/setup_priors.json",
             to = file.path(pth_to_project, "model", "model-definition"))
   file.copy(from = "./inst/meta-sources/settings_plattform&sampler.yaml",

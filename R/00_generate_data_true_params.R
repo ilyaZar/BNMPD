@@ -41,9 +41,21 @@
 #' @param seed_taken the seed used drawing random effects
 #'
 #' @return an object of class "\code{trueParams}" which is a list of three: true
-#'   parameter values, meta information such as model dimension, the seed under
-#'   which the true parameters are generated, and the logical indicators that
-#'   describe which parameters to generate and their lengths
+#'   parameter values as a list, meta information such as model dimension, the
+#'   logical indicators that describe which parameters to generate and their
+#'   number:
+#'   \itemize{
+#'   \item{\code{SIMUL_PHI:}}{ logical; if \code{TRUE} autoregressive latent
+#'   laten states have been simulated}
+#'   \item{\code{SIMUL_Z_BETA:}}{ logical; if \code{TRUE} z-regressors have been
+#'   simulated}
+#'   \item{\code{SIMUL_U_BETA:}}{ logical; if \code{TRUE} u-regressors have been
+#'   simulated}
+#'   \item{\code{num_z_regs:}}{ number of z-type regressors or \code{NULL}}
+#'   \item{\code{num_z_regs:}}{ number of u-type regressors or \code{NULL}}
+#'   \item{\code{order_p_vec:}}{ an integer vector giving the autoregressive
+#'   lag order for each \code{d} in \code{1,...,DD}}
+#'   }
 #' @export
 generate_true_params <- function(dim_model,
                                  sig_sq = NULL,
@@ -372,43 +384,39 @@ get_hyper_prior_vcm <- function(prior_vcm_u_scl, num_re) {
 }
 #' Write a yaml config file for a BNMPD-model class
 #'
+#' @inheritParams get_file_name_main
 #' @param model_type a named or unnamed vector of two characters specifying the
 #'   model type observations (e.g. 'DIRICHLET") and the model type latent states
 #'   i.e. "lin_re" giving the specification of linear and random effect
 #'   covariates in the latent state process
-#' @param dimensions a named numeric vector of three components: 'NN', 'TT',
-#'   'DD'
-#' @param regressor_specs a list of four:
-#'   \itemize{
-#'   \item{\code{SIMUL_Z_BETA: }}{logical; if \code{TRUE}, then Z-type regressors
-#'    are written to yaml-config}
-#'   \item{\code{SIMUL_U_BETA: }}{logical; if \code{TRUE}, then U-type regressors
-#'    are written to yaml-config}
-#'   \item{\code{num_z_regs: }}{numeric giving the number of z-regressors}
-#'   \item{\code{num_u_regs: }}{numeric giving the number of u-regressors}
-#'    }
 #' @param pth_to_yaml path to yaml file to write to (including file-name and
 #'   '.yaml' extension)
 #'
 #' @return side effect function that writes a 'yaml'-config file to path
 #' @export
 generate_yaml_model_defintion <- function(model_type,
-                                          dimensions,
-                                          regressor_specs,
+                                          dim_model,
+                                          par_settings,
                                           pth_to_yaml) {
-  check_args_to_generate_yaml_json(dimensions, regressor_specs)
-  tmp_nms <- names(dimensions)
-  dimensions <- as.integer(dimensions)
-  names(dimensions) <- tmp_nms
+  SIMUL_PHI    <-par_settings[["SIMUL_PHI"]]
+  SIMUL_Z_BETA <-par_settings[["SIMUL_Z_BETA"]]
+  SIMUL_U_BETA <-par_settings[["SIMUL_U_BETA"]]
+  num_z_regs   <-par_settings[["num_z_regs"]]
+  num_u_regs   <-par_settings[["num_u_regs"]]
+  order_p      <-par_settings[["order_p"]]
+  check_args_to_generate_yaml_json(dim_model, par_settings)
+  tmp_nms <- names(dim_model)
+  dim_model <- as.integer(dim_model)
+  names(dim_model) <- tmp_nms
   out_list <- list(model_type_obs = model_type_to_list(model_type)[1],
                    model_type_lat = model_type_to_list(model_type)[2],
-                   dimension = dimensions_to_list(dimensions),
-                   cross_section_used = cross_section_to_list(dimensions),
-                   time_series_used = time_series_to_list(dimensions))
-  for (d in seq_len(dimensions[["DD"]])) {
+                   dimension = dimensions_to_list(dim_model),
+                   cross_section_used = cross_section_to_list(dim_model),
+                   time_series_used = time_series_to_list(dim_model))
+  for (d in seq_len(dim_model[["DD"]])) {
     # browser()
     name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
-    out_list[[name_list_elem]] <- DD_to_list(regressor_specs, d)
+    out_list[[name_list_elem]] <- DD_to_list(par_settings, d)
   }
 
   yaml::write_yaml(out_list, file = pth_to_yaml)
@@ -423,21 +431,21 @@ check_args_to_generate_yaml_json <- function(dim = NULL, regspc = NULL) {
     stopifnot(`Arg. 'dimensions' not of length 3.` = check_dim)
   }
   if (!is.null(regspc)) {
-    stopifnot(`Argument 'regressor_specs' is not a list ` = is.list(regspc))
+    stopifnot(`Argument 'par_settings' is not a list ` = is.list(regspc))
     check_names <- all(unique(names(regspc)) %in% c("SIMUL_PHI",
                                                     "SIMUL_Z_BETA",
                                                     "SIMUL_U_BETA",
                                                     "num_z_regs",
                                                     "num_u_regs",
-                                                    "order_p"))
-    stopifnot(`Arg. 'regressor_specs' has wrong names` = check_names)
+                                                    "order_p_vec"))
+    stopifnot(`Arg. 'par_settings' has wrong names` = check_names)
     check_types <- all(unlist(lapply(regspc, typeof)) %in% c("logical",
                                                              "logical",
                                                              "logical",
                                                              "double",
                                                              "double",
                                                              "double"))
-    stopifnot(`Arg. 'regressor_specs' has wrong element types.` = check_types)
+    stopifnot(`Arg. 'par_settings' has wrong element types.` = check_types)
   }
 }
 model_type_to_list <- function(mod) {
@@ -506,9 +514,9 @@ get_reg_to_sublist <- function(num, d_tmp, name) {
 #'
 #' @return pure side-effect function that generates the \code{json}-file
 #' @export
-generate_setup_init_json <- function(dimension, true_params, pth_to_json) {
-  check_args_to_generate_yaml_json(dimension)
-  DD <- dimension[["DD"]]
+generate_setup_init_json <- function(dim_model, true_params, pth_to_json) {
+  check_args_to_generate_yaml_json(dim_model)
+  DD <- dim_model[["DD"]]
 
   true_params$sig_sq <- true_params$sig_sq[, 1]
   list_json <- list()
