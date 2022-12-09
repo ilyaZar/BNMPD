@@ -5,37 +5,29 @@
 \title{Generates multivariate (non-linear) panel data for various models.}
 \usage{
 generate_data_t_n(
+  par_trues,
   distribution,
-  NN,
-  TT,
-  DD,
-  par_true,
   x_levels,
-  x_log_scale,
+  X_LOG_SCALE,
   options_include = list(intercept = NULL, policy = NULL, zeros = NULL),
   options_plot = list(measurements = FALSE, states = FALSE, states_each_d = FALSE),
   seed_no = NULL
 )
 }
 \arguments{
-\item{distribution}{specifies the distribution; "Dirichlet", "Multinomial" or
-"Dirichlet-Multinomial"}
+\item{par_trues}{an object of class "\code{trueParams}" which is a list of
+true parameter values and meta information such as model dimension, the
+seed under which the true parameters are generated, the logical indicators
+that describe which parameters to generate and their lengths, as provided
+by the function \code{\link[=generate_true_params]{generate_true_params()}}}
 
-\item{NN}{number of cross sectional units}
-
-\item{TT}{number of time periods}
-
-\item{DD}{multivariate dimension of the measurements/responses (e.g. number
-of shares/fractions for Dirichlet or Dirichlet-Multinomial, or the number
-of categories for a Multinomial distribution}
-
-\item{par_true}{list of true parameters that describe the latent state
-process; as provided by the function \code{\link[=generate_true_params]{generate_true_params()}}}
+\item{distribution}{specifies the distribution; "dirichlet", "multinomial" or
+"dirichlet-multinomial"}
 
 \item{x_levels}{target "mean" levels of the states around which they
 fluctuate}
 
-\item{x_log_scale}{logical; if \code{TRUE}, \code{x_levels} are taken as logs
+\item{X_LOG_SCALE}{logical; if \code{TRUE}, \code{x_levels} are taken as logs
 and the random number generation for the states is performed in logs}
 
 \item{options_include}{a list of options for various effects:
@@ -79,7 +71,7 @@ each component}
 for reproducibility purposes, set \code{NULL} if not required}
 }
 \value{
-a named list of three elements:
+a named list of two elements, the first one being a list of three:
 \itemize{
 \item{\code{data: }}{a list of at most two elements (if \code{distribution}
 is of type Dirichlet , the second element is \code{NULL}, but otherwise has
@@ -87,6 +79,9 @@ the total number of counts e.g. in a Dirichlet-multinomial model)}
 \item{\code{regs: }}{list of regressors with two elements: 'z' and 'u'}
 \item{\code{states: }}{simulated latent states}
 }
+and the second being the first argument i.e. an instance of class
+\code{trueParams} that is used to generate simulated data (from the
+corresponding true parameter values as stored in this object)
 }
 \description{
 The measurements (responses, dependent variables) have a Dirichlet,

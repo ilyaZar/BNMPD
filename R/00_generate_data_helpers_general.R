@@ -201,14 +201,19 @@ get_file_names_simul_data <- function(fn_main_part,
 }
 #' Generate main part of a file name
 #'
-#' @param dim_model numeric vector of 3 elements: \code{NN x TT x DD}
+#' @param dim_model numeric vector of 3 elements: \code{NN x TT x DD} (can be
+#'   taken from attributes of any object from class \code{trueParams},
+#'   see [generate_true_params()] and below)
 #' @param par_settings list of parameter settings as returned via attributes of
 #'   any object from class \code{trueParams} (see [generate_true_params()] for
 #'   details)
+#' @param seed_no integer giving the seed number under which the trueParams
+#'   object and simulateis obtained
 #'
 #' @return main part for file names
 get_file_name_main <- function(dim_model,
-                               par_settings) {
+                               par_settings,
+                               seed_no) {
   SIMUL_PHI    <-par_settings[["SIMUL_PHI"]]
   SIMUL_Z_BETA <-par_settings[["SIMUL_Z_BETA"]]
   SIMUL_U_BETA <-par_settings[["SIMUL_U_BETA"]]
@@ -236,6 +241,7 @@ get_file_name_main <- function(dim_model,
   } else {
     tmp_fn <- paste0(tmp_fn, "_", "noRE")
   }
+  tmp_fn <- paste0(tmp_fn, "_", "SEED", seed_no)
   return(tmp_fn)
 }
 #' Subset simulated data from [generate_data_t_n()]
@@ -312,9 +318,6 @@ subset_data_simul <- function(data, names_dim, id_seq) {
 #'   directory is to be created)
 #' @param project_name character; name of the simulation study used as top-level
 #'   directory and in project information
-#' @param proj_name_meta either \code{prepend} or \code{append}, defaults to the
-#'   former and prepends \code{project_name} by measurement type and model
-#'   dimensions
 #'
 #' @return side effect function generating directories and files for simulation
 #'   study and copying data/template files into corresponding directories
@@ -322,34 +325,38 @@ subset_data_simul <- function(data, names_dim, id_seq) {
 generate_simulation_study <- function(data_simulation,
                                       INIT_AT = "true",
                                       pth_to_project,
-                                      project_name,
-                                      proj_name_meta = "prepend") {
-  stopifnot(`INIT_AT must be eihter 'trues' or 'default'.` =
+                                      project_name = list(prepend = NULL,
+                                                          append = NULL)) {
+  stopifnot(`INIT_AT must be eihter 'true' or 'default'.` =
               INIT_AT %in% c("true", "default"))
-  meta_info_tmp <- attr(data_simulation$trueParams, "meta_info")
-  zero_params   <- get_zero_or_defaults(data_simulation$trueParams)
-  used_params   <- if (INIT_AT == "true") {
-    used_params <- data_simulation[["trueParams"]]
+  stopifnot(`project_name must be named list` =
+              names(project_name) %in% c("prepend", "append"))
+  dataSim <- data_simulation$simulatedDataBNMPD
+  trueParams <- data_simulation$trueParams
+  meta_info_tmp <- attr(trueParams, "meta_info")
+  zeroParams   <- get_zero_or_defaults(trueParams)
+  usedParams   <- if (INIT_AT == "true") {
+    usedParams <- trueParams
   } else {
-    used_params <- zero_params
+    usedParams <-zeroParams
   }
 
-  model_type <- c(model_type_obs = attr(data_simulation$dataSim[["data"]],
+  model_type <- c(model_type_obs = attr(dataSim[["data"]],
                                         which = "model_type_obs"),
-                  model_type_lat = attr(data_simulation$dataSim[["states"]],
+                  model_type_lat = attr(dataSim[["states"]],
                                         which = "model_type_lat"))
   base_name <- get_file_name_main(dim_model =  meta_info_tmp$MODEL_DIM,
-                                  par_settings = meta_info_tmp$PAR_SETTINGS)
+                                  par_settings = meta_info_tmp$PAR_SETTINGS,
+                                  seed_no = meta_info_tmp$SEED_NO)
   tmp_name <- paste0(model_type[["model_type_obs"]],
-                     "_", base_name, "_",
-                     model_type[["model_type_lat"]])
-  if (proj_name_meta == "prepend") {
-    project_name <- paste0(tmp_name, "_", project_name)
-  } else if  (proj_name_meta == "append") {
-    project_name <- paste0(project_name, "_", tmp_name)
-  } else {
-    stop("Unknown value for 'proj_name_meta'; use either 'prepend' or 'append'")
-  }
+                     "_", base_name)
+                     # "_", base_name, "_",
+                     # model_type[["model_type_lat"]])
+  # tmp_prepend <- project_name$prepend
+  # tmp_append  <- project_name$append
+  project_name <- paste0(c(project_name$prepend, tmp_name, project_name$append),
+                         collapse = "_")
+
   pth_top_lvl <- file.path(pth_to_project, project_name)
   stopifnot(`Project directory already exists!` = !dir.exists(pth_top_lvl))
   dir.create(pth_top_lvl)
@@ -380,7 +387,7 @@ generate_simulation_study <- function(data_simulation,
                                 file.path(pth_top_lvl, "model",
                                           "model-definition",
                                           "model_definition.yaml"))
-  generate_setup_init_json(meta_info_tmp$MODEL_DIM, used_params,
+  generate_setup_init_json(meta_info_tmp$MODEL_DIM, usedParams,
                            file.path(pth_top_lvl, "model",
                                      "model-definition",
                                      "setup_inits.json"))
@@ -388,10 +395,10 @@ generate_simulation_study <- function(data_simulation,
                       file.path("datasets", fn_all[["fn_data_set"]]),
                       fn_all[["fn_true_val"]],
                       fn_all[["fn_zero_val"]],
-                      data_sim = data_simulation[["dataSim"]],
+                      data_sim = dataSim,
                       dim_model = meta_info_tmp$MODEL_DIM,
-                      true_params =  data_simulation[["trueParams"]],
-                      defl_params = zero_params)
+                      true_params =  trueParams,
+                      defl_params = zeroParams)
   copy_meta_files(pth_top_lvl, project_name)
   return(invisible(pth_to_project))
 }
