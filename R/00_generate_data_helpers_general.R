@@ -350,10 +350,6 @@ generate_simulation_study <- function(data_simulation,
                                   seed_no = meta_info_tmp$SEED_NO)
   tmp_name <- paste0(model_type[["model_type_obs"]],
                      "_", base_name)
-                     # "_", base_name, "_",
-                     # model_type[["model_type_lat"]])
-  # tmp_prepend <- project_name$prepend
-  # tmp_append  <- project_name$append
   project_name <- paste0(c(project_name$prepend, tmp_name, project_name$append),
                          collapse = "_")
 
@@ -387,10 +383,9 @@ generate_simulation_study <- function(data_simulation,
                                 file.path(pth_top_lvl, "model",
                                           "model-definition",
                                           "model_definition.yaml"))
-  generate_setup_init_json(meta_info_tmp$MODEL_DIM, usedParams,
-                           file.path(pth_top_lvl, "model",
-                                     "model-definition",
-                                     "setup_inits.json"))
+  generate_setup_init_json(usedParams,file.path(pth_top_lvl, "model",
+                                                "model-definition",
+                                                "setup_inits.json"))
   save_simulated_data(file.path(pth_top_lvl, "model", "input"),
                       file.path("datasets", fn_all[["fn_data_set"]]),
                       fn_all[["fn_true_val"]],
@@ -400,6 +395,10 @@ generate_simulation_study <- function(data_simulation,
                       true_params =  trueParams,
                       defl_params = zeroParams)
   copy_meta_files(pth_top_lvl, project_name)
+  update_settings_project_yaml(file.path(pth_to_project, project_name, "model",
+                                         "settings", "settings_project.yaml"),
+                               proj_no = NULL, proj_name = project_name,
+                               notes = NULL)
   return(invisible(pth_to_project))
 }
 get_zero_or_defaults <- function(true_params) {

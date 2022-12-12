@@ -324,6 +324,42 @@ ModelDat <- R6::R6Class("ModelDat",
                             options(warn = 0)
                             return(init)
                           },
+                          get_params_init = function(pth, NN, DD) {
+                            inits <- jsonlite::fromJSON(pth)
+                            init_sig_sq <- matrix(0, nrow = DD, ncol = 1)
+                            init_sig_sq[, 1] <- initialize_par_vec(inits,
+                                                                   "sig_sq",
+                                                                   "listof-vec")
+
+                            init_phi <- initialize_par_list(inits,
+                                                            "phi",
+                                                            "listof-vec")
+
+                            dim_zet <- get_dim_reg(inits, "beta_z_lin")
+                            init_bet_z <- initialize_par_list(inits,
+                                                              "beta_z_lin",
+                                                              "listof-vec")
+
+                            dim_u   <- get_dim_reg(inits, "beta_u_lin")
+                            dim_uet <- list(dim_u, rep(NN, times = DD))
+                            init_bet_u <- initialize_par_list(inits,
+                                                              "beta_u_lin",
+                                                              "listof-mat",
+                                                              dim_uet)
+                            dim_u_vcm <- list(dim_u, dim_u)
+                            init_vcm_bet_u <- initialize_par_list(inits,
+                                                                  "vcm_u_lin",
+                                                                  "listof-mat",
+                                                                  dim_u_vcm)
+
+                            par_init <- list()
+                            par_init$init_sig_sq    <- init_sig_sq
+                            par_init$init_phi       <- init_phi
+                            par_init$init_bet_z     <- init_bet_z
+                            par_init$init_bet_u     <- init_bet_u
+                            par_init$init_vcm_bet_u <- init_vcm_bet_u
+                            return(par_init)
+                          },
                           initialize_param_vals = function(data_inits,
                                                            par_name,
                                                            type = NULL,
@@ -401,47 +437,17 @@ ModelDat <- R6::R6Class("ModelDat",
                             return(num_regs)
                           },
                           initialize_data_inits_start = function(states_init) {
-                            inits <- jsonlite::fromJSON(private$.pth_to_inits)
-                            private$.data_inits_start <- list()
-                            NN  <- private$.data_dimensions$NN
-                            TT  <- private$.data_dimensions$TT
-                            DD  <- private$.data_dimensions$DD
+                            # NN  <- private$.data_dimensions$NN
+                            # TT  <- private$.data_dimensions$TT
+                            # DD  <- private$.data_dimensions$DD
 
                             state_inits <- private$get_states_init(states_init)
+                            param_inits <- private$get_params_init(private$.pth_to_inits,
+                                                                   NN = private$.data_dimensions$NN,
+                                                                   DD = private$.data_dimensions$DD)
 
-                            init_sig_sq <- matrix(0, nrow = DD, ncol = 1)
-                            init_sig_sq[, 1] <- initialize_par_vec(inits,
-                                                                   "sig_sq",
-                                                                   "listof-vec")
-
-                            init_phi <- initialize_par_list(inits,
-                                                            "phi",
-                                                            "listof-vec")
-
-                            dim_zet <- get_dim_reg(inits, "beta_z_lin")
-                            init_bet_z <- initialize_par_list(inits,
-                                                              "beta_z_lin",
-                                                              "listof-vec")
-
-                            dim_u   <- get_dim_reg(inits, "beta_u_lin")
-                            dim_uet <- list(dim_u, rep(NN, times = DD))
-                            init_bet_u <- initialize_par_list(inits,
-                                                              "beta_u_lin",
-                                                              "listof-mat",
-                                                              dim_uet)
-                            dim_u_vcm <- list(dim_u, dim_u)
-                            init_vcm_bet_u <- initialize_par_list(inits,
-                                                                  "vcm_u_lin",
-                                                                  "listof-mat",
-                                                                  dim_u_vcm)
-
-                            par_init <- list()
-                            par_init$init_sig_sq    <- init_sig_sq
-                            par_init$init_phi       <- init_phi
-                            par_init$init_bet_z     <- init_bet_z
-                            par_init$init_bet_u     <- init_bet_u
-                            par_init$init_vcm_bet_u <- init_vcm_bet_u
-                            private$.data_inits_start$par_init  <- par_init
+                            private$.data_inits_start <- list()
+                            private$.data_inits_start$par_init  <- param_inits
                             private$.data_inits_start$traj_init <- state_inits
                           },
                           initialize_data_meta = function() {
@@ -637,6 +643,9 @@ ModelDat <- R6::R6Class("ModelDat",
                           #'   in a PGAS run.
                           #' @details see the inits-settings file for details.
                           get_model_inits_start = function() {
+                            private$.data_inits_start$par_init  <- private$get_params_init(private$.pth_to_inits,
+                                                                                           NN = private$.data_dimensions$NN,
+                                                                                           DD = private$.data_dimensions$DD)
                             private$.data_inits_start
                           }
                         ))

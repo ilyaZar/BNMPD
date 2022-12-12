@@ -54,6 +54,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             .states_init = NULL,
                             .states_true = NULL,
                             .params_true = NULL,
+                            .params_init = NULL,
                             get_setup_metadata_pf = function() {
                               private$.Settings$get_settings_set()
                             },
@@ -224,6 +225,27 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                   stop(err2, call. = FALSE)
                               }
                               invisible(NULL)
+                            },
+                            update_modelDat = function() {
+                              ModelDat$new(private$.pth_to_priorset,
+                                           private$.pth_to_initsset,
+                                           private$.DataSet$get_data_set(),
+                                           list(var_y = private$.ModelDef$get_var_y(),
+                                                lab_y = private$.ModelDef$get_lab_y()),
+                                           list(var_z = private$.ModelDef$get_var_z(),
+                                                lab_z = private$.ModelDef$get_lab_z()),
+                                           list(var_u = private$.ModelDef$get_var_u(),
+                                                lab_u = private$.ModelDef$get_lab_u()),
+                                           list(cs_name_var = private$.ModelDef$get_cs_name_var(),
+                                                cs_name_lab = private$.ModelDef$get_cs_name_lab(),
+                                                cs_var_val  = private$.ModelDef$get_cs_var_val(),
+                                                cs_var_lab  = private$.ModelDef$get_cs_var_lab()),
+                                           list(ts_name_var = private$.ModelDef$get_ts_name_var(),
+                                                ts_name_lab = private$.ModelDef$get_ts_name_lab(),
+                                                ts_var_val  = private$.ModelDef$get_ts_var_val(),
+                                                ts_var_lab  = private$.ModelDef$get_ts_var_lab()),
+                                           private$.ModelDef$get_dimension(),
+                                           private$.states_init)
                             }
                           ),
                           public = list(
@@ -251,6 +273,11 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @param path_to_states_true either \code{NULL},
                             #'   which is the default that indicates that no
                             #'   "true" states are available
+                            #' @param path_to_params_init path to initialization
+                            #'   object (\code{.RData}-file); if \code{NULL},
+                            #'   then initialization uses the \code{.json}-file
+                            #'   as written by hand, otherwise the \code{.RData}
+                            #'   file is written to the \code{.json}-init file
                             #' @param path_to_params_true either \code{NULL},
                             #'   which is the default that indicates that no
                             #'   "true" parameters are available or a path to
@@ -261,41 +288,21 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             initialize = function(path_to_project,
                                                   path_to_states_init = NULL,
                                                   path_to_states_true = NULL,
+                                                  path_to_params_init = NULL,
                                                   path_to_params_true = NULL) {
                               if (!is.null(path_to_states_init)) {
-                                store_ls_tmp1 <- ls()
-                                load(path_to_states_init)
-                                store_ls_tmp2 <- ls()
-                                name_states_init <- setdiff(store_ls_tmp2,
-                                                            c(store_ls_tmp1,
-                                                              "store_ls_tmp1"))
-                                assign("states_init",
-                                       eval(parse(text = name_states_init)))
-                                private$.states_init <- states_init
-                                rm(list = name_states_init)
+                                tmp <- load(path_to_states_init)
+                                private$.states_init <- eval(parse(text = tmp))
                               }
                               if (!is.null(path_to_states_true)) {
-                                store_ls_tmp1 <- ls()
-                                load(path_to_states_true)
-                                store_ls_tmp2 <- ls()
-                                name_states_true <- setdiff(store_ls_tmp2,
-                                                            c(store_ls_tmp1,
-                                                              "store_ls_tmp1"))
-                                assign("states_true",
-                                       eval(parse(text = name_states_true)))
-                                private$.states_true <- states_true
+                                tmp <- load(path_to_states_true)
+                                private$.states_true <- eval(parse(text = tmp))
                               }
                               if (!is.null(path_to_params_true)) {
-                                store_ls_tmp1 <- ls()
-                                load(path_to_params_true)
-                                store_ls_tmp2 <- ls()
-                                name_params_true <- setdiff(store_ls_tmp2,
-                                                            c(store_ls_tmp1,
-                                                              "store_ls_tmp1"))
-                                assign("params_true",
-                                       eval(parse(text = name_params_true)))
-                                private$.params_true <- params_true
+                                tmp <- load(path_to_params_true)
+                                private$.params_true <- eval(parse(text = tmp))
                               }
+
                               private$.pth_to_proj <- path_to_project
 
                               private$update_all_dir_pths()
@@ -311,6 +318,11 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                      private$.pth_to_priorset,
                                                      private$.pth_to_initsset,
                                                      private$.pth_to_projsets)
+                              if (!is.null(path_to_params_init)) {
+                                tmp <- load(path_to_params_init)
+                                generate_setup_init_json(eval(parse(text=tmp)),
+                                                         private$.pth_to_initsset)
+                              }
 
                               private$.DataSet  <- DataSet$new(private$.pth_to_data)
                               private$.Settings <- Settings$new(private$.pth_to_setting1)
@@ -318,30 +330,10 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$.ModelDef <- ModelDef$new(private$.pth_to_modeldef,
                                                                 private$.pth_to_projsets)
                               cat("ModelDef successful\n")
-                              private$.ModelDat <- ModelDat$new(private$.pth_to_priorset,
-                                                                private$.pth_to_initsset,
-                                                                private$.DataSet$get_data_set(),
-                                                                list(var_y = private$.ModelDef$get_var_y(),
-                                                                     lab_y = private$.ModelDef$get_lab_y()),
-                                                                list(var_z = private$.ModelDef$get_var_z(),
-                                                                     lab_z = private$.ModelDef$get_lab_z()),
-                                                                list(var_u = private$.ModelDef$get_var_u(),
-                                                                     lab_u = private$.ModelDef$get_lab_u()),
-                                                                list(cs_name_var = private$.ModelDef$get_cs_name_var(),
-                                                                     cs_name_lab = private$.ModelDef$get_cs_name_lab(),
-                                                                     cs_var_val  = private$.ModelDef$get_cs_var_val(),
-                                                                     cs_var_lab  = private$.ModelDef$get_cs_var_lab()),
-                                                                list(ts_name_var = private$.ModelDef$get_ts_name_var(),
-                                                                     ts_name_lab = private$.ModelDef$get_ts_name_lab(),
-                                                                     ts_var_val  = private$.ModelDef$get_ts_var_val(),
-                                                                     ts_var_lab  = private$.ModelDef$get_ts_var_lab()),
-                                                                private$.ModelDef$get_dimension(),
-                                                                private$.states_init)
+                              private$.ModelDat <- update_modelDat()
                               cat("ModelDat successful\n")
                               private$.ModelOut <- ModelOut$new(private$.pth_to_modelout,
-                                                                private$.ModelDat$get_model_inits_start(),
-                                                                list(reg_names_Z = private$.ModelDef$get_var_z(),
-                                                                     reg_names_U = private$.ModelDef$get_var_u()))
+                                                                private$.ModelDat$get_model_inits_start())
                               cat("ModelOut successful\n")
                               private$.History <- History$new(private$.pth_to_history,
                                                               private$.Settings$get_settings_set(),
@@ -390,7 +382,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @details pass return value to above function as
                             #'   argument \code{model_meta}
                             get_par_label_names = function() {
-                              tmp_pars <- private$.params_true
+                              tmp_pars <- private$.params_init
                               tmp_pars <- which(sapply(tmp_pars,
                                                        function(x) {
                                                          !is.null(x)
@@ -563,6 +555,23 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               }
                               tmp
                             },
+                            #' @description Sets initialization parameters.
+                            #'
+                            #' @details path to \code{.RData}-file storing an
+                            #'   object of class \code{trueParams} which is used
+                            #'   internally to overwrite the initialization-json
+                            #'   file to the new parameter setting;
+                            #'   alternatively, the json file can be changed
+                            #'   manually; pure side-effect function
+                            #' @param pth_to_inits character giving the path to
+                            #'   the initialization object
+                            #'
+                            set_param_inits = function(pth_to_inits) {
+                              tmp <- load(pth_to_inits)
+                              generate_setup_init_json(eval(parse(text=tmp)),
+                                                       private$.pth_to_initsset)
+                              private$.ModelDat <- update_modelDat()
+                            },
                             #' @description Print "raw" data set.
                             #'
                             #' @details Call to internal \code{DataSet}-class
@@ -705,6 +714,18 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   member that loads the internal data used by the
                             #'   PGAS function for inference.
                             load_true_params = function() {
+                              out <- private$.params_true
+                              out <- list2env(list(true_params = out))
+                              private$copy_env(parent.frame(), out)
+                              invisible(self)
+                            },
+                            #' @description Prints the current settings to the
+                            #'   screen.
+                            #'
+                            #' @details Call to internal \code{ModelDat}-class
+                            #'   member that loads the internal data used by the
+                            #'   PGAS function for inference.
+                            load_init_params = function() {
                               out <- private$.params_true
                               out <- list2env(list(true_params = out))
                               private$copy_env(parent.frame(), out)
