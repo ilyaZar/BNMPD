@@ -324,7 +324,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             options(warn = 0)
                             return(init)
                           },
-                          get_params_init = function(pth, NN, DD) {
+                          get_params_init = function(params_init, pth, NN, DD) {
+                            if (!is.null(params_init)) return(params_init)
+
                             inits <- jsonlite::fromJSON(pth)
                             init_sig_sq <- matrix(0, nrow = DD, ncol = 1)
                             init_sig_sq[, 1] <- initialize_par_vec(inits,
@@ -352,12 +354,15 @@ ModelDat <- R6::R6Class("ModelDat",
                                                                   "listof-mat",
                                                                   dim_u_vcm)
 
-                            par_init <- list()
-                            par_init$init_sig_sq    <- init_sig_sq
-                            par_init$init_phi       <- init_phi
-                            par_init$init_bet_z     <- init_bet_z
-                            par_init$init_bet_u     <- init_bet_u
-                            par_init$init_vcm_bet_u <- init_vcm_bet_u
+                            par_init <- vector("list", 5)
+                            par_init[[1]] <- init_sig_sq
+                            if (!is.null(init_phi)) par_init[[2]] <- init_phi
+                            if (!is.null(init_bet_z)) par_init[[3]] <- init_bet_z
+                            if (!is.null(init_bet_u)) par_init[[4]] <- init_bet_u
+                            if (!is.null(init_vcm_bet_u)) par_init[[5]] <- init_vcm_bet_u
+                            names(par_init) <- c("init_sig_sq", "init_phi",
+                                                 "init_bet_z", "init_bet_u",
+                                                 "init_vcm_bet_u")
                             return(par_init)
                           },
                           initialize_param_vals = function(data_inits,
@@ -369,7 +374,10 @@ ModelDat <- R6::R6Class("ModelDat",
 
                             if (type == "listof-vec") {
                               for(i in seq_len(DD)) {
-                                out_init[[i]] <- data_inits[[i]][[par_name]]$val
+                                tmp_vals <-  data_inits[[i]][[par_name]]$val
+                                if (!is.null(tmp_vals)) {
+                                  out_init[[i]] <- tmp_vals
+                                }
                               }
                             }
                             if (type == "listof-mat") {
@@ -389,6 +397,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                                         ncol = dim_mat[[2]][i])
                               }
                             }
+                            if (all(sapply(out_init, is.null))) out_init <- NULL
                             return(out_init)
                           },
                           initialize_par_vec = function(data_inits,
@@ -436,13 +445,12 @@ ModelDat <- R6::R6Class("ModelDat",
                             }
                             return(num_regs)
                           },
-                          initialize_data_inits_start = function(states_init) {
-                            # NN  <- private$.data_dimensions$NN
-                            # TT  <- private$.data_dimensions$TT
-                            # DD  <- private$.data_dimensions$DD
+                          initialize_data_inits_start = function(states_init,
+                                                                 params_init) {
 
                             state_inits <- private$get_states_init(states_init)
-                            param_inits <- private$get_params_init(private$.pth_to_inits,
+                            param_inits <- private$get_params_init(params_init,
+                                                                   private$.pth_to_inits,
                                                                    NN = private$.data_dimensions$NN,
                                                                    DD = private$.data_dimensions$DD)
 
@@ -577,7 +585,8 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$initialize_data_used()
                             private$initialize_data_internal()
                             private$initialize_data_priors()
-                            private$initialize_data_inits_start(states_init)
+                            private$initialize_data_inits_start(states_init,
+                                                                NULL)
                             private$initialize_data_meta()
                           },
                           # get_model_data_raw = function() {
@@ -643,9 +652,14 @@ ModelDat <- R6::R6Class("ModelDat",
                           #'   in a PGAS run.
                           #' @details see the inits-settings file for details.
                           get_model_inits_start = function() {
-                            private$.data_inits_start$par_init  <- private$get_params_init(private$.pth_to_inits,
+                            private$.data_inits_start$par_init  <- private$get_params_init(private$.data_inits_start$par_init,
+                                                                                           private$.pth_to_inits,
                                                                                            NN = private$.data_dimensions$NN,
                                                                                            DD = private$.data_dimensions$DD)
                             private$.data_inits_start
+                          },
+                          update_md_inits = function(states_init, params_init) {
+                            private$initialize_data_inits_start(states_init,
+                                                                params_init)
                           }
                         ))

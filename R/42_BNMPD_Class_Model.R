@@ -145,12 +145,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$.model_part <- private$get_num_part()
                             },
                             update_ModelOut = function(type) {
-                              private$.ModelOut$update_model_output()
                               private$.model_part <- private$get_num_part()
-                              if (private$get_num_mdout() > 0) {
-                                tmp_inits <- private$.ModelOut$get_inits()
-                                private$.ModelDat$update_md_inits(tmp_inits)
-                              }
                               tmp_type_obs <- private$.model_type_obs
                               tmp_type_lat <- private$.model_type_lat
                               if (type == "initialization") {
@@ -165,6 +160,12 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                               crayon::red(private$.model_part),
                                               " complete!\n")
                               } else if (type == "intermediate") {
+                                private$.ModelOut$update_model_output()
+                                if (private$get_num_mdout() > 0) {
+                                  tmp <- private$.ModelOut$get_model_inits_mdout()
+                                  private$.ModelDat$update_md_inits(tmp$traj_init,
+                                                                    tmp$par_init)
+                                }
                                 msg <- paste0("Updating output of model No.: ",
                                               crayon::green(private$.project_id),
                                               " (response ",
@@ -320,7 +321,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                      private$.pth_to_projsets)
                               if (!is.null(path_to_params_init)) {
                                 tmp <- load(path_to_params_init)
-                                generate_setup_init_json(eval(parse(text=tmp)),
+                                private$.params_init <- eval(parse(text = tmp))
+                                generate_setup_init_json(eval(parse(text =tmp)),
                                                          private$.pth_to_initsset)
                               }
 
@@ -514,7 +516,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   \code{get_num_mdout() > 0}.
                             get_modeldata_inits_setup = function() {
                               if (private$get_num_mdout() > 0) {
-                                out <- private$.ModelDat$get_model_inits_mdout()
+                                out <- private$.ModelOut$get_model_inits_mdout()
                               } else {
                                 out <- private$.ModelDat$get_model_inits_start()
                               }
@@ -568,7 +570,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'
                             set_param_inits = function(pth_to_inits) {
                               tmp <- load(pth_to_inits)
-                              generate_setup_init_json(eval(parse(text=tmp)),
+                              private$.params_init <- eval(parse(text = tmp))
+                              generate_setup_init_json(eval(parse(text = tmp)),
                                                        private$.pth_to_initsset)
                               private$.ModelDat <- update_modelDat()
                             },
@@ -811,8 +814,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$copy_env(parent.frame(), out)
                               invisible(self)
                             },
-                            # load_pgas_model_out = function() {
-                            # },
                             #' @description  Saves output from a PGAS run to
                             #'   model class.
                             #'
