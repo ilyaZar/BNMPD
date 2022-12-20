@@ -19,16 +19,23 @@ ModelOut <- R6::R6Class("ModelOut",
                             # check if dims of outputs (but not mcmc length) are all equal
                             browser()
                             # output_list <- list(...)
-                            num_outputs <- length(output_list)
-                            num_output_elements <- length(output_list[[1]])
-                            joined_output <- vector("list", num_outputs)
-                            for (i in 1:(num_outputs - 1)) {
-                              for (j in 1:num_output_elements) {
-                                joined_out[[i]] <- cbind(output_list[[i]][[j]],
-                                                         output_list[[i + 1]][[j]])
+                            num_pars <- length(output_list[[1]])
+                            nme_pars <- names(output_list[[1]])
+
+                            joined_out <- output_list[[1]]
+                            for (i in 2:(private$.num_out)) {
+                             joined_out[[j]] <- join_sig_sq(joined_out,
+                                                            output_list[[i]])
+                             joined_out[[j]] <- join_phi(joined_out,
+                                                         output_list[[i]])
+                             joined_out[[j]] <- join_bet_z(joined_out,
+                                                           output_list[[i]])
+                             joined_out[[j]] <- join_bet_u(joined_out,
+                                                           output_list[[i]])
+                             joined_out[[j]] <- join_bet_u_vcm(joined_out,
+                                                               output_list[[i]])
                               }
-                            }
-                            return(joined_output)
+                            return(joined_out)
                           },
                           update_output_meta = function(pth_to_output) {
 
