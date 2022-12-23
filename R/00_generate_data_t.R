@@ -68,9 +68,12 @@ generate_data_t <- function(TT, DD,
 
   for (d in 1:DD) {
     opt_taken <- list(x_level = x_levels[d],
-                      # reg_var_within = 0.0025,
-                      reg_var_within = 2.0025,
-                      reg_var_among = 1)
+                      # reg_var_within = 0.00025,
+                      # reg_var_among = 0.1
+                      # reg_var_within = 2.0025,
+                      reg_var_within = 2.25,
+                      reg_var_among = 0.25
+                      )
     res <- generate_x_z_u(TT = TT,
                           phi_x = par_true[["phi"]][[d]],
                           sig_sq_x = par_true[["sig_sq"]][d],

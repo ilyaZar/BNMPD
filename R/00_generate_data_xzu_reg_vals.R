@@ -74,8 +74,8 @@ generate_x_z_u <- function(TT,
                            policy_dummy = FALSE,
                            zero_pattern = NULL,
                            drift = FALSE) {
+  if (!modelling_reg_types[["autoregression"]]) phi_x <- 0;
   order_p <- length(phi_x)
-  if (!modelling_reg_types[["autoregression"]]) phi_x <- 0
   x_level <- options_reg_simul[["x_level"]]
   x_sd_within  <- sqrt(options_reg_simul[["reg_var_within"]])
   x_sd_among   <- sqrt(options_reg_simul[["reg_var_among"]])
@@ -84,17 +84,20 @@ generate_x_z_u <- function(TT,
   dim_u <- length(bet_u)
   # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
   if (modelling_reg_types[["z-linear-regressors"]]) {
-    x_level_split_z <- ifelse(modelling_reg_types[["z-linear-regressors"]],
-                              x_level * spl_lvl[1],
-                              x_level)
-    policy_dummy_z  <- ifelse(modelling_reg_types[["u-linear-regressors"]],
-                              FALSE,
-                              policy_dummy)
+    # x_level_split_z <- ifelse(modelling_reg_types[["u-linear-regressors"]],
+    #                           x_level * spl_lvl[1],
+    #                           x_level)
+    # policy_dummy_z  <- ifelse(modelling_reg_types[["u-linear-regressors"]],
+    #                           FALSE,
+    #                           policy_dummy)
+    lvl_split_z <- get_sub_level_x(modelling_reg_types[["u-linear-regressors"]],
+                                   level_split = spl_lvl[1],
+                                   level_target = x_level,
+                                   phi_x)
     z <- generate_reg_vals(TT = TT,
                            bet_reg = bet_z,
                            dim_reg = dim_z,
-                           phi_x = phi_x,
-                           x_level = x_level_split_z,
+                           x_level = lvl_split_z,
                            x_sd_within = x_sd_within,
                            x_sd_among = x_sd_among,
                            intercept = intercept_z,
@@ -104,14 +107,17 @@ generate_x_z_u <- function(TT,
     z <- NULL
   }
   if (modelling_reg_types[["u-linear-regressors"]]) {
-    x_level_split_u <- ifelse(modelling_reg_types[["z-linear-regressors"]],
-                              x_level * spl_lvl[2],
-                              x_level)
+    # x_level_split_u <- ifelse(modelling_reg_types[["z-linear-regressors"]],
+    #                           x_level * spl_lvl[2],
+    #                           x_level)
+    lvl_split_u <- get_sub_level_x(modelling_reg_types[["z-linear-regressors"]],
+                                   level_split = spl_lvl[2],
+                                   level_target = x_level,
+                                   phi_x)
     u <- generate_reg_vals(TT = TT,
                            bet_reg = bet_u,
                            dim_reg = dim_u,
-                           phi_x = phi_x,
-                           x_level = x_level_split_u,
+                           x_level = lvl_split_u,
                            x_sd_within = x_sd_within,
                            x_sd_among = x_sd_among,
                            intercept = intercept_u,
@@ -131,6 +137,14 @@ generate_x_z_u <- function(TT,
   out$z <- z
   out$u <- u
   return(out)
+}
+
+get_sub_level_x <- function(other_regtype, level_split,
+                            level_target, phi) {
+  x_level_tmp <- ifelse(other_regtype,
+                        level_target * level_split,
+                        level_target)
+  x_level_tmp / (1-sum(phi))
 }
 simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT, order_p) {
   if (is.null(regs) && is.null(bet_reg)) {
@@ -177,7 +191,6 @@ simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT, order_p) {
 #'   \code{u_spl} (\code{bet_u_spl})
 #' @param dim_reg overall dimension including all regressors (i.e. length of
 #'   \code{bet_reg})
-#' @param phi_x autoregressive parameter
 #' @param x_level target level of the states to simulate
 #' @param x_sd_within standard deviations for the regressor value simulation
 #'   within each time series
@@ -200,39 +213,50 @@ simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT, order_p) {
 #'   }
 #'
 #' @return a matrix of regressors of dimension \code{TT} \eqn{x} \code{dim_bet}
-generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
+generate_reg_vals <- function(TT, bet_reg, dim_reg,
                               x_level, x_sd_within, x_sd_among,
                               intercept, policy_dummy, zero_pattern = NULL) {
-  order_p <- length(phi_x)
+  # order_p <- length(phi_x)
   dummy_to_use <- get_pattern_policy_zeros(policy_dummy, zero_pattern, TT)
 
-  reg_means <- stats::rnorm(max(dim_reg - 3, 0), mean = 0, sd = x_sd_among)
+  # reg_means <- stats::rnorm(max(dim_reg - 3, 0), mean = 0, sd = x_sd_among)
   if (!intercept && !policy_dummy) {
-    num_add_sims <- max(min(2, dim_reg - 1), 0)
-    reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
-                   reg_means)
+    weights <- rep(1/dim_reg, times = dim_reg) #(abs(bet_reg)/sum(abs(bet_reg)))
+    reg_means <- x_level * weights * sign(bet_reg)
+    reg_means <- reg_means / bet_reg
+    # num_add_sims <- max(min(2, dim_reg - 1), 0)
+    # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
+    #                reg_means)
   } else if (intercept && !policy_dummy) {
-    num_add_sims <- max(min(2, dim_reg - 2), 0)
-    reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
-                   reg_means)
-    if (dim_reg > 1) reg_means <- c(1, reg_means); message("Appr. simul. type1")
+    bet_tmp <- bet_reg[-1]
+    dim_tmp <- length(bet_tmp)
+    x_lvl_tmp <- x_level - bet_reg[-1]
+    weights <- rep(1/dim_tmp, times = dim_tmp) #(abs(bet_tmp)/sum(abs(bet_tmp)))
+    reg_means <- x_lvl_tmp * weights * sign(bet_tmp)
+    reg_means <- reg_means / bet_reg
+    # num_add_sims <- max(min(2, dim_reg - 2), 0)
+    # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
+    #                reg_means)
+    # if (dim_reg > 1) reg_means <- c(1, reg_means); message("Appr. simul. type1")
   } else if (!intercept && policy_dummy) {
-    num_add_sims <- max(min(2, dim_reg - 2), 0)
-    reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
-                   reg_means)
-    if (dim_reg > 1) reg_means <- c(0, reg_means); message("Appr. simul. type2")
+    stop("Not yet implemented.")
+    # num_add_sims <- max(min(2, dim_reg - 2), 0)
+    # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
+    #                reg_means)
+    # if (dim_reg > 1) reg_means <- c(0, reg_means); message("Appr. simul. type2")
   } else if (intercept && policy_dummy) {
-    if (dim_reg < 2) stop("Can't simulate intercept&policy_dummy for dim < 2!")
-    num_add_sims <- max(min(2, dim_reg - 3), 0)
-    reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
-                   reg_means)
-    if (dim_reg > 2) reg_means <- c(1, 0, reg_means); message("Approx. type3")
-    if (dim_reg > 1) reg_means <- c(1, reg_means); message("Approx. type4")
+    stop("Not yet implemented.")
+    # if (dim_reg < 2) stop("Can't simulate intercept&policy_dummy for dim < 2!")
+    # num_add_sims <- max(min(2, dim_reg - 3), 0)
+    # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
+    #                reg_means)
+    # if (dim_reg > 2) reg_means <- c(1, 0, reg_means); message("Approx. type3")
+    # if (dim_reg > 1) reg_means <- c(1, reg_means); message("Approx. type4")
   }
-  last_reg_mean <- x_level * (1 - sum(phi_x))
-  last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
-  last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
-  reg_means     <- c(reg_means, last_reg_mean)
+  # last_reg_mean <- x_level * (1 - sum(phi_x))
+  # last_reg_mean <- last_reg_mean - sum(reg_means * bet_reg[-dim_reg])
+  # last_reg_mean <- last_reg_mean/bet_reg[dim_reg]
+  # reg_means     <- c(reg_means, last_reg_mean)
 
   reg_len       <- length(reg_means)
   regs          <- matrix(stats::rnorm(TT*reg_len,
@@ -243,8 +267,8 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg, phi_x,
                           byrow = TRUE)
 
   if (intercept && !policy_dummy) regs[, 1]   <- 1
-  if (!intercept && policy_dummy) regs[, 1]   <- policy_dummy
-  if (intercept && policy_dummy)  regs[, 1:2] <- c(1, policy_dummy)
+  if (!intercept && policy_dummy) stop("Not yet implemented.") # regs[, 1] <- policy_dummy
+  if (intercept && policy_dummy)  stop("Not yet implemented.") # regs[, 1:2] <- c(1, policy_dummy)
 
   return(regs)
 }

@@ -514,7 +514,7 @@ get_reg_to_sublist <- function(num, d_tmp, name) {
 #'
 #' @return pure side-effect function that generates the \code{json}-file
 #' @export
-generate_setup_init_json <- function(dim_model, params_used, pth_to_json) {
+generate_setup_init_json <- function(params_used, pth_to_json) {
   params_used$sig_sq <- params_used$sig_sq[, 1]
   DD <- length(params_used$sig_sq)
 
@@ -596,4 +596,18 @@ get_par_avail <- function(params_used, num_d) {
   par_avail <- par_avail[id_avail]
   names(par_avail) <- check_pars[id_avail]
   return(par_avail)
+}
+update_settings_project_yaml <- function(pth, proj_no, proj_name, notes) {
+  tmp_proj_yaml <- yaml::read_yaml(pth)
+  if (!is.null(proj_no)) {
+    tmp_proj_yaml$project_name <- proj_no
+  }
+  if (!is.null(proj_name)) {
+    tmp_proj_yaml$project_name <- proj_name
+  }
+  if (!is.null(notes)) {
+    tmp_proj_yaml$project_notes <- notes
+  }
+  yaml::write_yaml(tmp_proj_yaml, file = pth)
+  return(invisible(pth))
 }
