@@ -197,6 +197,11 @@ initialize_data_containers <- function(par_init,
       }
     }
   }
+  dim(X) <- unname(dim(X))
+  dim(X) <- c(TT = dim(X)[1],
+              DD = dim(X)[2],
+              MM = dim(X)[3],
+              NN = dim(X)[4])
   # to_env  <- parent.frame()
   vec_obj <- c("order_p",
                "prior_ig_a",

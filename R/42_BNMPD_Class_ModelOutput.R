@@ -43,6 +43,7 @@ ModelOut <- R6::R6Class("ModelOut",
                             cbind(sig_sq_x1, sig_sq_x2)
                           },
                           jn_phi_x = function(phi_x1, phi_x2) {
+                            if (is.null(phi_x1) || is.null(phi_x2)) return(NULL)
                             DD_tmp <- length(phi_x1)
                             out_phi <- vector("list", DD_tmp)
                             for (d in 1:DD_tmp) {
@@ -51,12 +52,15 @@ ModelOut <- R6::R6Class("ModelOut",
                             return(out_phi)
                           },
                           jn_bet_z = function(bet_z1, bet_z2) {
+                            if (is.null(bet_z1) || is.null(bet_z2)) return(NULL)
                             cbind(bet_z1, bet_z2)
                           },
                           jn_bet_u = function(bet_u1, bet_u2) {
+                            if (is.null(bet_u1) || is.null(bet_u2)) return(NULL)
                             abind::abind(bet_u1, bet_u2, along = 2)
                           },
                           jn_vcm_bet_u = function(vcm1, vcm2) {
+                            if (is.null(vcm1) || is.null(vcm2)) return(NULL)
                             DD_tmp <- length(vcm1)
                             out_vcm <- vector("list", DD_tmp)
                             for (d in 1:DD_tmp) {
