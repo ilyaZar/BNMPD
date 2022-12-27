@@ -557,6 +557,17 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               }
                               tmp
                             },
+                            #' @description Returns joined model outputs
+                            #'
+                            #' @details returns model outputs joined either by
+                            #'   parts or by iteration from saved outputs under
+                            #'   \code{./model/output/...}
+                            #'
+                            get_model_output = function(range_iter = NULL,
+                                                        range_parts = NULL) {
+                              private$.ModelOut$get_model_output(range_iter,
+                                                                 range_parts)
+                            },
                             #' @description Sets initialization parameters.
                             #'
                             #' @details path to \code{.RData}-file storing an

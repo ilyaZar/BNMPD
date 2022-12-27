@@ -17,7 +17,6 @@ ModelOut <- R6::R6Class("ModelOut",
                             # check if number of elements in outputs are all equal
                             # check if names of outputs are all equal
                             # check if dims of outputs (but not mcmc length) are all equal
-                            browser()
                             # outs <- list(...)
                             num_pars <- length(outs[[1]])
                             nme_pars <- names(outs[[1]])
@@ -36,14 +35,21 @@ ModelOut <- R6::R6Class("ModelOut",
                                                         outs[[i]]$bet_u)
                               jnd_out$vcm_bet_u <- jn_vcm(jnd_out$vcm_bet_u,
                                                           outs[[i]]$vcm_bet_u)
+                              jnd_out$x <- jn_states(jnd_out$x,
+                                                     outs[[i]]$x)
                             }
-                             return(jnd_out)
+                            for (tmp_names in names(jnd_out)) {
+                              if(all(is.na(jnd_out[tmp_names]))) {
+                                jnd_out[tmp_names] <- list(NULL)
+                              }
+                            }
+                            return(jnd_out)
                           },
                           jn_sig_sq = function(sig_sq_x1, sig_sq_x2) {
                             cbind(sig_sq_x1, sig_sq_x2)
                           },
                           jn_phi_x = function(phi_x1, phi_x2) {
-                            if (is.null(phi_x1) || is.null(phi_x2)) return(NULL)
+                            if (is.null(phi_x1) || is.null(phi_x2)) return(NA)
                             DD_tmp <- length(phi_x1)
                             out_phi <- vector("list", DD_tmp)
                             for (d in 1:DD_tmp) {
@@ -52,15 +58,15 @@ ModelOut <- R6::R6Class("ModelOut",
                             return(out_phi)
                           },
                           jn_bet_z = function(bet_z1, bet_z2) {
-                            if (is.null(bet_z1) || is.null(bet_z2)) return(NULL)
+                            if (is.null(bet_z1) || is.null(bet_z2)) return(NA)
                             cbind(bet_z1, bet_z2)
                           },
                           jn_bet_u = function(bet_u1, bet_u2) {
-                            if (is.null(bet_u1) || is.null(bet_u2)) return(NULL)
+                            if (is.null(bet_u1) || is.null(bet_u2)) return(NA)
                             abind::abind(bet_u1, bet_u2, along = 2)
                           },
-                          jn_vcm_bet_u = function(vcm1, vcm2) {
-                            if (is.null(vcm1) || is.null(vcm2)) return(NULL)
+                          jn_vcm = function(vcm1, vcm2) {
+                            if (is.null(vcm1) || is.null(vcm2)) return(NA)
                             DD_tmp <- length(vcm1)
                             out_vcm <- vector("list", DD_tmp)
                             for (d in 1:DD_tmp) {
@@ -71,7 +77,77 @@ ModelOut <- R6::R6Class("ModelOut",
                             return(out_vcm)
                           },
                           jn_states = function(x1, x2) {
-                            abind::abind(jnd_out$x1, jnd_out$x2, along = 3)
+                            abind::abind(x1, x2, along = 3)
+                          },
+                          get_range_out = function(out_all, range_parts) {
+                            browser()
+                            range_all <- seq_len(private$.num_out)
+                            if (!all(range_parts %in% range_all)) {
+                              stop("`range_parts` out of bounds ...")
+                            }
+                            tmp <- out_all[range_parts]
+                            out_parts <- private$join_outputs(tmp)
+                            return(out_parts)
+                          },
+                          get_iter_out = function(out_all, range_iter) {
+                            browser()
+                            range_iter_all <- seq_len(ncol(out_all$sig_sq_x))
+                            if (!all(range_iter %in% range_iter_all)) {
+                              stop("'range_iter' out of bounds (> MM or <0).")
+                            }
+                            out <- out_all
+                            out$sig_sq_x  <- private$sl_sig_sq(out$sig_sq_x,
+                                                               range_iter)
+                            out$phi_x   <- private$sl_phi_x(out$phi_x,
+                                                            range_iter)
+                            out$bet_z   <- private$sl_bet_z(out$bet_z,
+                                                            range_iter)
+                            out$bet_u   <- private$sl_bet_u(out$bet_u,
+                                                            range_iter)
+                            out$vcm_bet_u <- private$sl_vcm(out$vcm_bet_u,
+                                                            range_iter)
+                            out$x <- private$sl_states(out$x, range_iter)
+                            for (tmp_names in names(out)) {
+                              if(all(is.na(out[tmp_names]))) {
+                                out[tmp_names] <- list(NULL)
+                              }
+                            }
+                            return(out)
+                          },
+                          sl_sig_sq = function(sig_sq_x, iter_range) {
+                            browser()
+                            sig_sq_x[, iter_range, drop = FALSE]
+                          },
+                          sl_phi_x = function(phi_x, iter_range) {
+                            if (is.null(phi_x)) return(NA)
+                            DD_tmp <- length(phi_x)
+                            out_phi <- vector("list", DD_tmp)
+                            for (d in 1:DD_tmp) {
+                              out_phi[[d]] <- phi_x[[d]][, iter_range,
+                                                         drop = FALSE]
+                            }
+                            return(out_phi)
+                          },
+                          sl_bet_z = function(bet_z, iter_range) {
+                            if (is.null(bet_z)) return(NA)
+                            bet_z[, iter_range, drop = FALSE]
+                          },
+                          sl_bet_u = function(bet_u, iter_range) {
+                            browser()
+                            if (is.null(bet_u)) return(NA)
+                            bet_u[, iter_range, , drop = FALSE]
+                          },
+                          sl_vcm = function(vcm, iter_range) {
+                            if (is.null(vcm)) return(NA)
+                            DD_tmp <- length(vcm)
+                            out_vcm <- vector("list", DD_tmp)
+                            for (d in 1:DD_tmp) {
+                              out_vcm[[d]] <- vcm[, , iter_range, drop = FALSE]
+                            }
+                            return(out_vcm)
+                          },
+                          sl_states = function(x,iter_range) {
+                            x[, , iter_range, , drop = FALSE]
                           },
                           update_output_meta = function(pth_to_output) {
 
@@ -84,6 +160,10 @@ ModelOut <- R6::R6Class("ModelOut",
                             private$.pth_to_md_outs <- tmp_fn_list
                             private$.pth_to_md_out_last <- tail(tmp_fn_list, 1)
                             self$get_model_output()
+                            # self$get_model_output(range_iter  = 2:9)
+                            # self$get_model_output(range_parts = 2:3)
+                            # self$get_model_output(range_iter  = 2:9,
+                            #                       range_parts = 2:3)
                           },
                           update_init_traj_param = function(num_bet_z,
                                                             num_bet_u) {
@@ -224,44 +304,32 @@ ModelOut <- R6::R6Class("ModelOut",
                           },
                           get_model_output = function(range_iter = NULL,
                                                       range_parts = NULL) {
-                            if (is.null(range_iter) && is.null(range_iter)) {
-                              browser()
-                              tmp1 <- vector("list", private$.num_out)
-                              tmp2 <- vector("list", private$.num_out)
-                              for (i in 1:private$.num_out) {
-                                tmp1[[i]] <- load(private$.pth_to_md_outs[[i]])
-                                tmp2[[i]] <- eval(parse(text = paste0("`",
-                                                                      tmp1[[i]],
-                                                                      "`")))
-                              }
-                              out_all <- private$join_outputs(tmp2)
-                              return(out_all)
+                            browser()
+                            if (!is.null(range_iter) && !is.null(range_parts)) {
+                              msg <- paste0("Can not have both arguments, ",
+                                            "'range_iter' and 'range_parts' ",
+                                            "set to non-NULL.")
+                              stop(msg)
                             }
+                            tmp1 <- vector("list", private$.num_out)
+                            tmp2 <- vector("list", private$.num_out)
+                            for (i in 1:private$.num_out) {
+                              tmp1[[i]] <- load(private$.pth_to_md_outs[[i]])
+                              tmp2[[i]] <- eval(parse(text = paste0("`",
+                                                                    tmp1[[i]],
+                                                                    "`")))
+                            }
+                            out_all <- private$join_outputs(tmp2)
+                            if (is.null(range_iter) && is.null(range_iter)) {
+                              return(out_all)
+                            } else if (!is.null(range_iter) &&
+                                       is.null(range_parts)) {
+                              out <- private$get_iter_out(out_all, range_iter)
+                            } else if (is.null(range_iter) &&
+                                       !is.null(range_parts)) {
+                              out <- private$get_range_out(tmp2, range_parts)
+                            }
+                            return(out)
                           }
-                          #   ,
-                          #   read_output = function(num_out_range = NULL,
-                          #                          mcmc_range = NULL) {
-                          #     if (!(missing(num_out_range) && missing(mcmc_range))) {
-                          #       msg <- paste0("Either PGAS output numbers",
-                          #                     "or MCMC iteratations required.")
-                          #       stop(msg)
-                          #     }
-                          #     if (missing(num_out_range)) {
-                          #       # check iter for correct ranges
-                          #     }
-                          #     checkme <- all(seq(min(num_out_range),
-                          #                        max(num_out_range), 1) == num_out_range)
-                          #     stopifnot("Output range not permitted." = checkme)
-
-                          #     outputs <- new.env()
-                          #     for (i in num_out_range) {
-                          #       load(private$.pth_to_md_outs[[i]], outputs)
-                          #     }
-                          #     out <- do.call(private$join_outputs,
-                          #                    args = lapply(ls(outputs), as.name),
-                          #                    envir = outputs)
-                          #     return(out)
-                          #   },
-                          #   print_output_summary = function() {}
                         )
 )
