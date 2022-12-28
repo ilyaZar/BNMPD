@@ -652,12 +652,24 @@ ModelDat <- R6::R6Class("ModelDat",
                           #'   in a PGAS run.
                           #' @details see the inits-settings file for details.
                           get_model_inits_start = function() {
-                            private$.data_inits_start$par_init  <- private$get_params_init(private$.data_inits_start$par_init,
-                                                                                           private$.pth_to_inits,
-                                                                                           NN = private$.data_dimensions$NN,
-                                                                                           DD = private$.data_dimensions$DD)
+                            private$.data_inits_start$par_init <- private$get_params_init(private$.data_inits_start$par_init,
+                                                                                          private$.pth_to_inits,
+                                                                                          NN = private$.data_dimensions$NN,
+                                                                                          DD = private$.data_dimensions$DD)
                             private$.data_inits_start
                           },
+                          #' Getter for initialization values
+                          #'
+                          #' @description Initializes parameters and state
+                          #'   values (i.e. retrieves them)
+                          #' @details so be called by [ModelBNMPD]
+                          #'
+                          #' @param states_init initial states (see private
+                          #'   method \code{initialize_data_inits_start}) for
+                          #'   details
+                          #' @param params_init initial params (see private
+                          #'   method \code{initialize_data_inits_start}) for
+                          #'   details
                           update_md_inits = function(states_init, params_init) {
                             private$initialize_data_inits_start(states_init,
                                                                 params_init)

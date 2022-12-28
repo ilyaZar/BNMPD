@@ -64,6 +64,16 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             get_num_part = function() {
                               private$.ModelOut$get_num_outs() + 1
                             },
+                            get_order_p = function() {
+                              tmp <- private$.ModelDat$get_model_inits_start()
+                              tmp <- tmp[[1]]$init_phi
+                              if (is.null(tmp)) {
+                                tmp <- 0
+                              } else {
+                                tmp <- length(tmp[[1]])
+                              }
+                              tmp
+                            },
                             copy_envs = function(to_env = NULL, ...) {
                               if (is.null(to_env)) to_env <- new.env()
                               from_env <- list(...)
@@ -402,7 +412,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 sig_sq <- NULL
                               }
                               if ("phi" %in% tmp_pars) {
-                                order_p <- get_order_p()
+                                order_p <- private$get_order_p()
                                 phi <- paste0(paste0("phi_x_", 1:order_p),
                                                     rep(1:DD_tmp, each = order_p))
                               } else {
@@ -542,26 +552,16 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             get_true_params = function() {
                               return(private$.params_true)
                             },
-                            #' @description Returns autoregressive order
-                            #'
-                            #' @details either 0, if no autoregressive state
-                            #'   processes in the model or an integer >= 1
-                            #'
-                            get_order_p = function() {
-                              tmp <- private$.ModelDat$get_model_inits_start()
-                              tmp <- tmp[[1]]$init_phi
-                              if (is.null(tmp)) {
-                                tmp <- 0
-                              } else {
-                                tmp <- length(tmp[[1]])
-                              }
-                              tmp
-                            },
                             #' @description Returns joined model outputs
                             #'
                             #' @details returns model outputs joined either by
                             #'   parts or by iteration from saved outputs under
                             #'   \code{./model/output/...}
+                            #'
+                            #' @param range_iter integer sequence as defined in
+                            #'   \code{ModelOutput$get_model_output()}[ModelOutput]
+                            #' @param range_parts integer sequence as defined in
+                            #'   \code{ModelOutput$get_model_output()}[ModelOutput]
                             #'
                             get_model_output = function(range_iter = NULL,
                                                         range_parts = NULL) {

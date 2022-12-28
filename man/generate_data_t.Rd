@@ -30,10 +30,11 @@ they fluctuate}
 \item{\code{include_intercept: }}{logical vector of dimension \code{DD}; if
 \code{TRUE} include an intercept at the cross sectional unit for component
 \code{d}}
-\item{\code{include_policy: }}{logical vector of dimension \code{DD}; if \code{TRUE}
-include a policy dummy at the cross sectional unit for component \code{d}}
-\item{\code{include_zeros: }}{numeric vector of dimension \code{DD} with values 1,
-2, 3 or 4:
+\item{\code{include_policy: }}{logical vector of dimension \code{DD}; if
+\code{TRUE} include a policy dummy at the cross sectional unit for
+component \code{d}}
+\item{\code{include_zeros: }}{numeric vector of dimension \code{DD} with
+values 1, 2, 3 or 4:
 \itemize{
 \item{1: }{A dummy pattern that starts at the beginning with zeros and
 jumps after half of the overall time period}

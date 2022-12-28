@@ -22,9 +22,10 @@ ModelOut <- R6::R6Class("ModelOut",
                             nme_pars <- names(outs[[1]])
 
                             jnd_out <- outs[[1]]
-                            if (private$.num_out == 0) return(NULL)
-                            if (private$.num_out == 1) return(jnd_out)
-                            for (i in 2:(private$.num_out)) {
+                            nums    <- length(outs)
+                            if (nums == 0) return(NULL)
+                            if (nums == 1) return(jnd_out)
+                            for (i in 2:(nums)) {
                               jnd_out$sig_sq_x <- jn_sig_sq(jnd_out$sig_sq_x,
                                                             outs[[i]]$sig_sq_x)
                               jnd_out$phi_x <- jn_phi_x(jnd_out$phi_x,
@@ -80,17 +81,19 @@ ModelOut <- R6::R6Class("ModelOut",
                             abind::abind(x1, x2, along = 3)
                           },
                           get_range_out = function(out_all, range_parts) {
-                            browser()
                             range_all <- seq_len(private$.num_out)
                             if (!all(range_parts %in% range_all)) {
-                              stop("`range_parts` out of bounds ...")
+                              msg <- paste0("`range_parts` out of bounds; ",
+                                            "see ./model/output on the number",
+                                            "of parts that can be used for a ",
+                                            "join.")
+                              stop(msg)
                             }
                             tmp <- out_all[range_parts]
                             out_parts <- private$join_outputs(tmp)
                             return(out_parts)
                           },
                           get_iter_out = function(out_all, range_iter) {
-                            browser()
                             range_iter_all <- seq_len(ncol(out_all$sig_sq_x))
                             if (!all(range_iter %in% range_iter_all)) {
                               stop("'range_iter' out of bounds (> MM or <0).")
@@ -115,7 +118,6 @@ ModelOut <- R6::R6Class("ModelOut",
                             return(out)
                           },
                           sl_sig_sq = function(sig_sq_x, iter_range) {
-                            browser()
                             sig_sq_x[, iter_range, drop = FALSE]
                           },
                           sl_phi_x = function(phi_x, iter_range) {
@@ -133,7 +135,6 @@ ModelOut <- R6::R6Class("ModelOut",
                             bet_z[, iter_range, drop = FALSE]
                           },
                           sl_bet_u = function(bet_u, iter_range) {
-                            browser()
                             if (is.null(bet_u)) return(NA)
                             bet_u[, iter_range, , drop = FALSE]
                           },
@@ -142,7 +143,8 @@ ModelOut <- R6::R6Class("ModelOut",
                             DD_tmp <- length(vcm)
                             out_vcm <- vector("list", DD_tmp)
                             for (d in 1:DD_tmp) {
-                              out_vcm[[d]] <- vcm[, , iter_range, drop = FALSE]
+                              out_vcm[[d]] <- vcm[[d]][, , iter_range,
+                                                       drop = FALSE]
                             }
                             return(out_vcm)
                           },
@@ -159,7 +161,7 @@ ModelOut <- R6::R6Class("ModelOut",
 
                             private$.pth_to_md_outs <- tmp_fn_list
                             private$.pth_to_md_out_last <- tail(tmp_fn_list, 1)
-                            self$get_model_output()
+                            # self$get_model_output()
                             # self$get_model_output(range_iter  = 2:9)
                             # self$get_model_output(range_parts = 2:3)
                             # self$get_model_output(range_iter  = 2:9,
@@ -212,9 +214,7 @@ ModelOut <- R6::R6Class("ModelOut",
                                                                            num_mcmc,
                                                                            DD)
                             id_to_NULL <- sapply(par_inits, function(x) {
-                              all(is.na(x))
-                              }
-                              )
+                              all(is.na(x))})
                             par_inits[id_to_NULL] <- list(NULL)
 
                             return(par_inits)
@@ -304,7 +304,6 @@ ModelOut <- R6::R6Class("ModelOut",
                           },
                           get_model_output = function(range_iter = NULL,
                                                       range_parts = NULL) {
-                            browser()
                             if (!is.null(range_iter) && !is.null(range_parts)) {
                               msg <- paste0("Can not have both arguments, ",
                                             "'range_iter' and 'range_parts' ",
@@ -320,7 +319,7 @@ ModelOut <- R6::R6Class("ModelOut",
                                                                     "`")))
                             }
                             out_all <- private$join_outputs(tmp2)
-                            if (is.null(range_iter) && is.null(range_iter)) {
+                            if (is.null(range_iter) && is.null(range_parts)) {
                               return(out_all)
                             } else if (!is.null(range_iter) &&
                                        is.null(range_parts)) {
