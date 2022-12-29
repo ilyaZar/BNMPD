@@ -159,16 +159,20 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               tmp_type_obs <- private$.model_type_obs
                               tmp_type_lat <- private$.model_type_lat
                               if (type == "initialization") {
-                                msg <- paste0("Initialization of model No.: ",
+                                msg <- paste0(crayon::red(
+                                  "Initialization of model:"),
+                                              "\n - ",
                                               crayon::green(private$.project_id),
-                                              " (response ",
-                                              "type ",
+                                              "\n",
+                                              " - response type ",
                                               crayon::blue(tmp_type_obs),
                                               " and regressor type ",
                                               crayon::blue(tmp_type_lat),
-                                              "), and part No.: ",
-                                              crayon::red(private$.model_part),
-                                              " complete!\n")
+                                              "\n",
+                                              " - part No. ",
+                                              crayon::blue(private$.model_part),
+                                              "\n",
+                                              crayon::green("COMPLETE!\n"))
                               } else if (type == "intermediate") {
                                 private$.ModelOut$update_model_output()
                                 if (private$get_num_mdout() > 0) {
@@ -176,16 +180,20 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                   private$.ModelDat$update_md_inits(tmp$traj_init,
                                                                     tmp$par_init)
                                 }
-                                msg <- paste0("Updating output of model No.: ",
+                                msg <- paste0(crayon::red(
+                                  "Updating output of model:"),
+                                              "\n - ",
                                               crayon::green(private$.project_id),
-                                              " (response ",
-                                              "type ",
+                                              "\n",
+                                              " - response type ",
                                               crayon::blue(tmp_type_obs),
                                               " and regressor type ",
                                               crayon::blue(tmp_type_lat),
-                                              "), and prepare part No.: ",
-                                              crayon::red(private$.model_part),
-                                              " for PGAS run!\n")
+                                              "\n",
+                                              " - part No. ",
+                                              crayon::blue(private$.model_part),
+                                              "\n",
+                                              crayon::green(" for PGAS run!\n"))
                               }
                               cat(msg)
                             },
