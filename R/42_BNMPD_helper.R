@@ -65,7 +65,7 @@ get_paths_modelBNMPD_results <- function(pth_main) {
 
   out <- list()
   out$pth_plots <- pth_plots
-  out$pth_talbe <- pth_table
+  out$pth_table <- pth_table
   out$fnm_table <- fnm_table
   out$fnm_plots <- fnm_plots
   return(out)
