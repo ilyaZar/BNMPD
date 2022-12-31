@@ -44,6 +44,11 @@ ModelOut <- R6::R6Class("ModelOut",
                                 jnd_out[tmp_names] <- list(NULL)
                               }
                             }
+                            jnd_out$meta_info$MM <- sum(sapply(outs,
+                                                               function(x) {
+                                                                 x$meta_info$MM}
+                                                               )
+                                                        )
                             return(jnd_out)
                           },
                           jn_sig_sq = function(sig_sq_x1, sig_sq_x2) {
@@ -115,6 +120,7 @@ ModelOut <- R6::R6Class("ModelOut",
                                 out[tmp_names] <- list(NULL)
                               }
                             }
+                            out$meta_info$MM <- length(range_iter)
                             return(out)
                           },
                           sl_sig_sq = function(sig_sq_x, iter_range) {
@@ -161,11 +167,6 @@ ModelOut <- R6::R6Class("ModelOut",
 
                             private$.pth_to_md_outs <- tmp_fn_list
                             private$.pth_to_md_out_last <- tail(tmp_fn_list, 1)
-                            # self$get_model_output()
-                            # self$get_model_output(range_iter  = 2:9)
-                            # self$get_model_output(range_parts = 2:3)
-                            # self$get_model_output(range_iter  = 2:9,
-                            #                       range_parts = 2:3)
                           },
                           update_init_traj_param = function(num_bet_z,
                                                             num_bet_u) {
