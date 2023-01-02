@@ -207,13 +207,14 @@ get_file_names_simul_data <- function(fn_main_part,
 #' @param par_settings list of parameter settings as returned via attributes of
 #'   any object from class \code{trueParams} (see [generate_true_params()] for
 #'   details)
-#' @param seed_no integer giving the seed number under which the trueParams
-#'   object and simulateis obtained
+#' @param seed_nos integer vector with two components giving the seed number
+#'   under which the trueParams object (first entry) and simulated data (second
+#'   entry) is obtained
 #'
 #' @return main part for file names
 get_file_name_main <- function(dim_model,
                                par_settings,
-                               seed_no) {
+                               seed_nos) {
   SIMUL_PHI    <-par_settings[["SIMUL_PHI"]]
   SIMUL_Z_BETA <-par_settings[["SIMUL_Z_BETA"]]
   SIMUL_U_BETA <-par_settings[["SIMUL_U_BETA"]]
@@ -241,13 +242,15 @@ get_file_name_main <- function(dim_model,
   } else {
     tmp_fn <- paste0(tmp_fn, "_", "noRE")
   }
-  tmp_fn <- paste0(tmp_fn, "_", "SEED", seed_no)
+  tmp_fn <- paste0(tmp_fn,
+                   "_", "parSEED", seed_nos[1],
+                   "_", "simSEED", seed_nos[2])
   return(tmp_fn)
 }
 #' Subset simulated data from [generate_data_t_n()]
 #'
 #' The output from [generate_data_t_n()] is a list with all data components
-#' simulated, so this function returns the same structure but subseted
+#' simulated, so this function returns the same structure but subsetted
 #' accordingly.
 #'
 #' @param data the data set as given by the output from [generate_data_t_n()]
@@ -334,6 +337,10 @@ generate_simulation_study <- function(data_simulation,
   dataSim <- data_simulation$simulatedDataBNMPD
   trueParams <- data_simulation$trueParams
   meta_info_tmp <- attr(trueParams, "meta_info")
+
+  seeds_both <- c(par_seed = meta_info_tmp$SEED_NO,
+                  sim_seed = attr(dataSim, which = "SEED_NO"))
+
   zeroParams   <- get_zero_or_defaults(trueParams)
   usedParams   <- if (INIT_AT == "true") {
     usedParams <- trueParams
@@ -347,7 +354,7 @@ generate_simulation_study <- function(data_simulation,
                                         which = "model_type_lat"))
   base_name <- get_file_name_main(dim_model =  meta_info_tmp$MODEL_DIM,
                                   par_settings = meta_info_tmp$PAR_SETTINGS,
-                                  seed_no = meta_info_tmp$SEED_NO)
+                                  seed_no = seeds_both)
   tmp_name <- paste0(model_type[["model_type_obs"]],
                      "_", base_name)
   project_name <- paste0(c(project_name$prepend, tmp_name, project_name$append),
