@@ -20,6 +20,8 @@ model <- BNMPD::ModelBNMPD$new(path_to_project = pths_in$pth_project,
 pgas_model <- model$load_modeldata_runtime_pgas()
 out <- pgas_d(pgas_model, sim_type = "pmcmc", mod_type = "simulation",
               settings_seed = list(seed_all_init = 123))
+model$save_pgas_model_out(out)
+out_all <- model$get_model_output()
 
 meta_labels_names <- model$get_par_label_names()
 set_plt <- list(plot_view = FALSE,
@@ -34,7 +36,7 @@ set_tbl <- list(table_view = TRUE,
                 table_path = pths_ou$pth_table,
                 table_prec = 8)
 
-out_diagnostics <- analyse_mcmc_convergence2(out,
+out_diagnostics <- analyse_mcmc_convergence2(out_all,
                                              model_meta = meta_labels_names,
                                              settings_plots = set_plt,
                                              settings_table = set_tbl)
