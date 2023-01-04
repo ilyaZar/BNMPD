@@ -235,8 +235,11 @@ set_simul_vals_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
 #'
 #' @return a vector of length \code{DD}
 get_default_sig_sq <- function(DD, dwn_scl) {
-  str_scl <- 2.1 / dwn_scl
-  add_scl <- 1.1 / dwn_scl
+  str_scl <- 3.1 / dwn_scl
+  add_scl <- 0.1 / dwn_scl
+
+  # str_scl <- 2.1 / dwn_scl
+  # add_scl <- 1.1 / dwn_scl
   return(str_scl + add_scl * 0:(DD - 1))
 }
 #' Get default values for true \code{phi} parameters in simulation
@@ -248,10 +251,15 @@ get_default_sig_sq <- function(DD, dwn_scl) {
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
 get_default_phi <- function(DD, NN, order_p_vec) {
   if (any(order_p_vec > 4)) stop("Need more default phis ...")
-  possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
-                            0.25, 0.20, 0.35, 0.25,
-                            0.35, 0.20, 0.20, 0.15,
-                            0.15, 0.10, 0.10, 0.15),
+  # possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
+  #                           0.25, 0.20, 0.35, 0.25,
+  #                           0.35, 0.20, 0.20, 0.15,
+  #                           0.15, 0.10, 0.10, 0.15),
+  #                         nrow = 4, ncol = 4)
+  possible_phis <- matrix(c(0.50, 0.50, 0.50, 0.50,
+                            0.50, 0.50, 0.50, 0.50,
+                            0.50, 0.50, 0.50, 0.50,
+                            0.50, 0.50, 0.50, 0.50),
                           nrow = 4, ncol = 4)
   possible_phis <- rbind(possible_phis, possible_phis, possible_phis)
   out_phi <- vector("list", DD)
@@ -276,10 +284,10 @@ get_default_phi <- function(DD, NN, order_p_vec) {
 #'   \code{d=1,...,DD}
 get_default_beta_z_lin <- function(DD, num, intercepts) {
   num_reg_len <- length(num)
-  tmp1 <- c(0.025, - 0.04)  # tmp values large, first component negative
-  tmp2 <- c(0.027, -0.035)    # tmp values large, first component positive
-  tmp3 <- c(0.03, -0.03)   # tmp values small, first component negative
-  tmp4 <- c(0.032, -0.015) # tmp values small, first component positive
+  tmp1 <- c(0.125, - 0.14)  # tmp values large, first component negative
+  tmp2 <- c(0.127, -0.135)    # tmp values large, first component positive
+  tmp3 <- c(0.13, -0.13)   # tmp values small, first component negative
+  tmp4 <- c(0.132, -0.115) # tmp values small, first component positive
   if (num_reg_len == 1) {
     tmp_neg_pos_large <- rep(tmp1, length.out = num)
     tmp_pos_neg_large <- rep(tmp2, length.out = num)
@@ -575,7 +583,7 @@ get_par <- function(par_to_check, par_name, num_d) {
     if (!is.null(par_to_check)) return(par_to_check[num_d])
   } else if (par_name == "phi") {
     if (!is.null(par_to_check)) return(par_to_check[[num_d]][, 1])
-  } else if (par_name %in% c("phi", "beta_z_lin", "beta_u_lin", "vcm_u_lin")) {
+  } else if (par_name %in% c("beta_z_lin", "beta_u_lin", "vcm_u_lin")) {
     if (!is.null(par_to_check)) return(par_to_check[[num_d]])
   } else {
     stop("Unknown parameter name.")
