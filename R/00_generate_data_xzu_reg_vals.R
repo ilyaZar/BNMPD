@@ -101,7 +101,7 @@ generate_x_z_u <- function(TT,
                            x_sd_within = x_sd_within,
                            x_sd_among = x_sd_among,
                            intercept = intercept_z,
-                           policy_dummy = policy_dummy_z,
+                           policy_dummy = policy_dummy,
                            zero_pattern = NULL)
   } else {
     z <- NULL
