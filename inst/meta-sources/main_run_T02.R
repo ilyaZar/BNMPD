@@ -11,7 +11,7 @@ pths_ou  <- BNMPD::get_paths_modelBNMPD_results(pth_model)
 model <- BNMPD::ModelBNMPD$new(path_to_project = pths_in$pth_project,
                                path_to_states_init = pths_in$pth_states_true,
                                path_to_states_true = pths_in$pth_states_true,
-                               path_to_params_init = pths_in$pth_params_defl,
+                               path_to_params_init = pths_in$pth_params_true,
                                path_to_params_true = pths_in$pth_params_true)
 
 # model$set_param_inits(pths_in$pth_params_defl)
