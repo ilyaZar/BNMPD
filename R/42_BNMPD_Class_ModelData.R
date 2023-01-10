@@ -52,7 +52,6 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_raw <- data_set
                           },
                           initialize_data_used = function() {
-                            # browser()
                             y_use  <- unname(private$.var_y)
                             z_use  <- unique(unlist(private$.var_z))
                             u_use  <- unique(unlist(private$.var_u))
@@ -259,7 +258,6 @@ ModelDat <- R6::R6Class("ModelDat",
                           initialize_var_names = function(info_y,
                                                           info_z,
                                                           info_u) {
-                            # browser()
                             private$.var_y <- info_y$var_y
                             private$.var_z <- info_z$var_z
                             private$.var_u <- info_u$var_u
@@ -311,7 +309,6 @@ ModelDat <- R6::R6Class("ModelDat",
                             init <- array(0, c(TT, DD, NN))
                             options(warn = 2)
                             for (i in 1:NN) {
-                              # if (i == 11) browser()
                               for (d in 1:DD) {
                                 init_tmp <- abs(y_t[, d, i])
                                 if(all(init_tmp == 0)) {
