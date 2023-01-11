@@ -47,21 +47,17 @@ ModelOut <- R6::R6Class("ModelOut",
                             jnd_out$meta_info$MM <- sum(sapply(outs,
                                                                function(x) {
                                                                  x$meta_info$MM}
-                                                               )
-                                                        )
+                            )
+                            )
                             return(jnd_out)
                           },
                           jn_sig_sq = function(sig_sq_x1, sig_sq_x2) {
+                            if (is.null(sig_sq_x1) || is.null(sig_sq_x2)) return(NA)
                             cbind(sig_sq_x1, sig_sq_x2)
                           },
                           jn_phi_x = function(phi_x1, phi_x2) {
                             if (is.null(phi_x1) || is.null(phi_x2)) return(NA)
-                            DD_tmp <- length(phi_x1)
-                            out_phi <- vector("list", DD_tmp)
-                            for (d in 1:DD_tmp) {
-                              out_phi[[d]] <- cbind(phi_x1[[d]], phi_x2[[d]])
-                            }
-                            return(out_phi)
+                            cbind(phi_x1, phi_x2)
                           },
                           jn_bet_z = function(bet_z1, bet_z2) {
                             if (is.null(bet_z1) || is.null(bet_z2)) return(NA)
@@ -170,7 +166,8 @@ ModelOut <- R6::R6Class("ModelOut",
                           },
                           update_init_traj_param = function(num_bet_z,
                                                             num_bet_u) {
-                            if (length(num_bet_z) == 0 || num_bet_z == 0) {
+                            if (length(num_bet_z) == 0 ||
+                                (length(num_bet_z) == 1 && num_bet_z == 0)) {
                               num_bet_z <- NULL
                             }
                             if (length(num_bet_u) == 0 ||
@@ -231,23 +228,25 @@ ModelOut <- R6::R6Class("ModelOut",
                           get_init_bet_z_lin = function(bet_z, num_mcmc, DD,
                                                         num_bet_z) {
                             if (is.null(bet_z)) return(NA_real_)
-                              dim_zet <- unname(num_bet_z)
-                              dim_zet_id <- c(0, cumsum(dim_zet))
-                              init_bet_z     <- vector("list", DD)
+                            dim_zet    <- unname(num_bet_z)
+                            dim_zet_id <- c(0, cumsum(dim_zet))
+                            init_bet_z <- vector("list", DD)
 
-                              for (d in 1:DD) {
-                                tmp_range <- seq(from = dim_zet_id[d] + 1,
-                                                 to = dim_zet_id[d + 1],
-                                                 by = 1)
-                                init_bet_z[[d]] <- bet_z[tmp_range, num_mcmc]
-                              }
+                            for (d in 1:DD) {
+                              tmp_range <- seq(from = dim_zet_id[d] + 1,
+                                               to = dim_zet_id[d + 1],
+                                               by = 1)
+                              init_bet_z[[d]] <- bet_z[tmp_range, num_mcmc]
+                            }
+                            init_bet_z
                           },
                           get_init_bet_u_lin = function(bet_u, num_mcmc,
                                                         DD, NN, num_bet_u) {
                             if (is.null(bet_u)) return(NA_real_)
-                            dim_uet <- unname(num_bet_u)
+                            dim_uet    <- unname(num_bet_u)
                             dim_uet_id <- c(0, cumsum(dim_uet))
-                            init_bet_u     <- vector("list", DD)
+                            init_bet_u <- vector("list", DD)
+
                             for (d in 1:DD) {
                               init_bet_u[[d]] <- matrix(0, nrow = dim_uet[d],
                                                         ncol = NN)
@@ -263,12 +262,12 @@ ModelOut <- R6::R6Class("ModelOut",
                           },
                           get_init_vcm_bet_u = function(vcm, num_mcmc, DD) {
                             if (is.null(vcm)) return(NA_real_)
-                              init_vcm_bet_u <- vector("list", DD)
-                              for (d in 1:DD) {
-                                tmp_vcm <- vcm[[d]]
-                                init_vcm_bet_u[[d]] <- tmp_vcm[, , num_mcmc]
-                              }
-                              init_vcm_bet_u
+                            init_vcm_bet_u <- vector("list", DD)
+                            for (d in 1:DD) {
+                              tmp_vcm <- vcm[[d]]
+                              init_vcm_bet_u[[d]] <- tmp_vcm[, , num_mcmc]
+                            }
+                            init_vcm_bet_u
                           }
                         ),
                         public = list(
@@ -301,7 +300,7 @@ ModelOut <- R6::R6Class("ModelOut",
                             if (private$.num_out > 0) {
                               private$update_init_traj_param(private$.num_bet_z,
                                                              private$.num_bet_u)
-                              }
+                            }
                           },
                           get_model_output = function(range_iter = NULL,
                                                       range_parts = NULL) {

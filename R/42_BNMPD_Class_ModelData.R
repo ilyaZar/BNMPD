@@ -304,7 +304,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             NN  <- private$.NN
                             DD  <- private$.DD
 
-                            zero_lower_bound <- 0.001
+                            # zero_lower_bound <- 0.001
                             scl <- rep(1, times = DD)
                             init <- array(0, c(TT, DD, NN))
                             options(warn = 2)
@@ -313,6 +313,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                 init_tmp <- abs(y_t[, d, i])
                                 if(all(init_tmp == 0)) {
                                   init[, d, i] <- init_tmp
+                                  # init[, d, i] <- zero_lower_bound
                                 } else {
                                   init[, d, i] <- tryCatch(log(init_tmp/scl[d]))
                                 }
