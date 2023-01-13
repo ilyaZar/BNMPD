@@ -55,6 +55,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             y_use  <- unname(private$.var_y)
                             z_use  <- unique(unlist(private$.var_z))
                             u_use  <- unique(unlist(private$.var_u))
+                            zu_use <- union(z_use, u_use)
                             cs_lab <- private$.cs_name_lab
                             cs_var <- private$.cs_name_var
                             cs_val <- private$.cs_var_val
@@ -91,19 +92,19 @@ ModelDat <- R6::R6Class("ModelDat",
                               stop(msg_err)
                             }
 
+                            lab_unif_zu <- union(unique(unlist(private$.var_z)),
+                                                 unique(unlist(private$.var_u)))
                             data_labels <- c(cs_lab,
                                              ts_lab,
                                              private$.lab_y,
-                                             unique(unlist(private$.lab_z)),
-                                             unique(unlist(private$.lab_u)))
+                                             lab_unif_zu)
                             data_to_use   <- private$.data_raw %>%
                               dplyr::filter(.data[[cs_var]] %in% cs_val) %>%
                               dplyr::filter(.data[[ts_var]] %in% ts_val) %>%
                               dplyr::select(.data[[cs_var]],
                                             .data[[ts_var]],
                                             tidyselect::all_of(c(y_use,
-                                                                 z_use,
-                                                                 u_use))) %>%
+                                                                 zu_use))) %>%
                               tibble::tibble() %>%
                               sjlabelled::set_label(label = data_labels)
                             check_unbalanced(data_to_use)
@@ -129,8 +130,7 @@ ModelDat <- R6::R6Class("ModelDat",
                               stop(msg)
                             }
                             check <- c(length(y_use),
-                                       length(z_use),
-                                       length(u_use))
+                                       length(zu_use))
                             check <- 2 + sum(check)
                             if(check != ncol(data_to_use)) {
                               msg <- paste0("Possible missmatch between ",

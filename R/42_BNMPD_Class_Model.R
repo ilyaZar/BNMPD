@@ -402,7 +402,11 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @details pass return value to above function as
                             #'   argument \code{model_meta}
                             get_par_label_names = function() {
-                              tmp_pars <- private$.params_init
+                              if (is.null(private$.params_init)) {
+                                tmp_pars <- private$.ModelDat$get_model_inits_start()[["par_init"]]
+                              } else {
+                                tmp_pars <- private$.params_init
+                              }
                               tmp_pars <- which(sapply(tmp_pars,
                                                        function(x) {
                                                          !is.null(x)
@@ -414,26 +418,26 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               dims <- private$.ModelDef$get_dimension()
                               NN_tmp <- dims[1]
                               DD_tmp <- dims[3]
-                              if ("sig_sq" %in% tmp_pars) {
+                              if (any(grepl("sig_sq", tmp_pars))) {
                                 sig_sq <- paste0("sig_sq_x_", 1:DD_tmp)
                               } else {
                                 sig_sq <- NULL
                               }
-                              if ("phi" %in% tmp_pars) {
+                              if (any(grepl("phi", tmp_pars))) {
                                 order_p <- private$get_order_p()
                                 phi <- paste0(paste0("phi_x_", 1:order_p),
                                                     rep(1:DD_tmp, each = order_p))
                               } else {
                                 phi <- NULL
                               }
-                              if ("beta_z_lin" %in% tmp_pars) {
+                              if (any(grepl("z", tmp_pars))) {
                                 var_bet_z <-private$.ModelDef$get_var_z()
                                 lab_bet_z <-private$.ModelDef$get_lab_z()
                               } else {
                                 var_bet_z <- NULL
                                 lab_bet_z <- NULL
                               }
-                              if ("beta_u_lin" %in% tmp_pars) {
+                              if (any(grepl("u", tmp_pars))) {
                                 bet_u_var <-private$.ModelDef$get_var_u()
                                 bet_u_lab <-private$.ModelDef$get_lab_u()
                                 num_re_tmp <- length(bet_u_var[[1]])
@@ -461,7 +465,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 lab_bet_u <- NULL
                                 var_bet_u <- NULL
                               }
-                              if ("vcm_u_lin" %in% tmp_pars) {
+                              if (any(grepl("vcm", tmp_pars))) {
                                 vcm_elements <- paste0("vcm_bet_u_",
                                                        rep(1:(num_re_tmp^2),
                                                            times = DD_tmp))
@@ -833,15 +837,24 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$copy_env(parent.frame(), out)
                               invisible(self)
                             },
-                            #' @description  Saves output from a PGAS run to
+                            #' @description Saves output from a PGAS run to
                             #'   model class.
                             #'
                             #' @param out_pgas as returned from PGAS function
-                            save_pgas_model_out = function(out_pgas) {
+                            #' @param out_name character string giving file name
+                            #'   to save output to (optional)
+                            save_pgas_model_out = function(out_pgas,
+                                                           out_name = NULL) {
                               tmp_fn <- private$update_file_pth_mdout()
                               assign(tmp_fn, out_pgas)
-                              tmp_pth <- file.path(paste0(private$.fn_mdout,
-                                                          ".RData"))
+
+                              if (is.null(out_name)) {
+                                tmp_pth <- file.path(paste0(private$.fn_mdout,
+                                                            ".RData"))
+                              } else {
+                                tmp_pth <- file.path(dirname(private$.fn_mdout),
+                                                     paste0(out_name, ".RData"))
+                              }
                               save(list = tmp_fn, file = tmp_pth)
 
                               private$update_project_meta()

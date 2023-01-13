@@ -38,6 +38,11 @@ ModelOut <- R6::R6Class("ModelOut",
                                                           outs[[i]]$vcm_bet_u)
                               jnd_out$x <- jn_states(jnd_out$x,
                                                      outs[[i]]$x)
+                              cat(paste(crayon::yellow("Joining parts:"),
+                                        crayon::blue(i - 1),
+                                        "and",
+                                        crayon::blue(i),
+                                        crayon::yellow("...\n")))
                             }
                             for (tmp_names in names(jnd_out)) {
                               if(all(is.na(jnd_out[tmp_names]))) {
@@ -317,12 +322,16 @@ ModelOut <- R6::R6Class("ModelOut",
                               tmp2[[i]] <- eval(parse(text = paste0("`",
                                                                     tmp1[[i]],
                                                                     "`")))
+                              cat(paste(crayon::yellow("Loading output part:"),
+                                        crayon::blue(i),
+                                        "! \n"))
                             }
-                            out_all <- private$join_outputs(tmp2)
                             if (is.null(range_iter) && is.null(range_parts)) {
+                              out_all <- private$join_outputs(tmp2)
                               return(out_all)
                             } else if (!is.null(range_iter) &&
                                        is.null(range_parts)) {
+                              out_all <- private$join_outputs(tmp2)
                               out <- private$get_iter_out(out_all, range_iter)
                             } else if (is.null(range_iter) &&
                                        !is.null(range_parts)) {
