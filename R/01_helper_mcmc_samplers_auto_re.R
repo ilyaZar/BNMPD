@@ -155,9 +155,7 @@ sample_bet_z_ar <- function(sig_sq_x,
 #'
 #' @inheritParams sample_bet_u_alr
 #'
-#' @return
-#'
-#' @examples
+#' @return a sample
 sample_bet_u_ar <- function(sig_sq_x,
                             phi_x,
                             vcm_bet_u,

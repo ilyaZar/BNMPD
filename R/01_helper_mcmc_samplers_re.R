@@ -66,7 +66,9 @@ sample_sig_sq_x_r <- function(bet_u,
                               TT) {
   err_sig_sq_x_all <- 0
   for(n in iter_range_NN) {
-    err_sig_sq_x <- X[, n, drop = FALSE] - (regs_u[, , n] %*%  bet_u[ , , n])
+    tmp_regs <- matrix(regs_u[, , n], nrow = TT)
+    tmp_bets <- matrix(bet_u[, , n], nrow = ncol(tmp_regs))
+    err_sig_sq_x <- X[, n, drop = FALSE] - (tmp_regs %*%  tmp_bets)
     err_sig_sq_x_all <- err_sig_sq_x_all + sum(err_sig_sq_x ^ 2)
   }
   out <- 1/stats::rgamma(n = 1,
@@ -81,9 +83,7 @@ sample_sig_sq_x_r <- function(bet_u,
 #'
 #' @inheritParams sample_bet_u_alr
 #'
-#' @return
-#'
-#' @examples
+#' @return a sample
 sample_bet_u_r <- function(sig_sq_x,
                            vcm_bet_u,
                            dim_bet_u,

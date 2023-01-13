@@ -12,7 +12,6 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
     id_zet_tmp  <- (pe$id_zet[d] + 1):pe$id_zet[d + 1]
     id_uet_tmp  <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]
 
-    # id_regs_z_tmp <- (pe$id_reg_z[d] + 1 + (d - 1) * order_p):(pe$id_reg_z[d + 1] + order_p * d)
     id_regs_z_tmp <- (pe$id_reg_z[d] + 1):(pe$id_reg_z[d + 1])
 
     dd_range_nn <- pe$dd_list_nn[[d]]
