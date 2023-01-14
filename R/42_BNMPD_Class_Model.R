@@ -62,7 +62,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$.ModelOut$get_num_outs()
                             },
                             get_num_part = function() {
-                              private$.ModelOut$get_num_outs() + 1
+                              tmp <- private$.ModelOut$get_num_outs() + 1
+                              formatC(tmp, width = 3, format = "d", flag = "0")
                             },
                             get_order_p = function() {
                               tmp <- private$.ModelDat$get_model_inits_start()
@@ -860,19 +861,5 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$update_project_meta()
                               private$update_ModelOut(type = "intermediate")
                             }
-                            # part_ID <- "01"
-                            # project_ID   <- "05"
-                            # path_main <- "./04-results/empirical-panel/cumcap-levels/05-NN31-MM2000-cumcap"
-                            # project_name <- paste0("out_", project_ID, "_LOCAL_part_", part_ID)
-                            # load(file.path(path_main, "data/input/IN_part_00_data.RData"))
-                            # load(file.path(path_main, "data/input", paste0("IN_part_", part_ID, ".RData")))
-
-                            #mpi.exit()
-                            # assign(project_name, out_tmp)
-                            # path_out <- file.path(path_main, "data/output", paste0(project_name, ".RData"))
-                            # save(list = project_name, file = path_out)
-                            #
-                            #
-                            #
                           )
 )

@@ -318,12 +318,14 @@ ModelOut <- R6::R6Class("ModelOut",
                             tmp1 <- vector("list", private$.num_out)
                             tmp2 <- vector("list", private$.num_out)
                             for (i in 1:private$.num_out) {
-                              tmp1[[i]] <- load(private$.pth_to_md_outs[[i]])
+                              tmpfn <- private$.pth_to_md_outs[[i]]
+                              tmp1[[i]] <- load(tmpfn)
                               tmp2[[i]] <- eval(parse(text = paste0("`",
                                                                     tmp1[[i]],
                                                                     "`")))
                               cat(paste(crayon::yellow("Loading output part:"),
-                                        crayon::blue(i),
+                                        crayon::blue(i), "-",
+                                        crayon::green(basename(tmpfn)),
                                         "! \n"))
                             }
                             if (is.null(range_iter) && is.null(range_parts)) {
