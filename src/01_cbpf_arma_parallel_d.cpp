@@ -5,18 +5,18 @@
 //' random numbers (see the use of arma::randn()). Used within a PGAS procedure
 //' e.g. called via \code{pgas_arma()}.
 //'
-//' @param id_parallelize parallelization ID as an \code{IntegerVector}: determines
-//'   along which cross sectional components to compute: this is passed from the
-//'   \code{x}-argument of \code{paralllel::clusterApply()}, called within the
-//'   PGAS code, to this function so it knows along which cross sectional units
-//'   it has to slice the data: \code{y_all, regs_beta_all, x_r_all}; see
-//'   arguments below
+//' @param id_parallelize parallelization ID as an \code{IntegerVector}:
+//'   determines along which cross sectional components to run the cSMC
+//'   samplers: this is passed from the \code{x}-argument of
+//'   \code{paralllel::clusterApply()}, called within the PGAS code, to this
+//'   function so it knows along which cross sectional units it has to slice the
+//'   data \code{y_all, regs_beta_all, x_r_all}
 //' @param nn_list_dd a list of length \code{NN} with indices of multivariate
 //'    components (a subset of \code{d=1,...,DD}) used for state filtering
 //' @param N number of particles
 //' @param TT time series dimension
 //' @param DD multivariate dimension (number of dirichlet categories)
-//' @param y_all measurements: dirichlet-multinomial counts
+//' @param y_all measurements: dirichlet fractions
 //' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
 //'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
 //' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
@@ -107,14 +107,14 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     double sdd = 0;
     arma::vec eval_f(N);
     arma::mat mean_diff(N, DD, arma::fill::zeros);
-    // output containter for final results: (conditional) particle filter output
+    // output container for final results: (conditional) particle filter output
     arma::mat x_out(TT, DD, arma::fill::zeros);
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////////// I. INITIALIZATION (t = 0) ////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     // Sampling initial particles from prior
     for(auto d : dd_range) {
-      mmu = arma::as_scalar(Regs_beta.submat(0, d, 0, d))/(1.0 - phi_x(d));;
+      mmu = arma::as_scalar(Regs_beta.submat(0, d, 0, d))/(1.0 - phi_x(d));
       sdd = sqrt(sig_sq_x(d)/(1.0 - pow(phi_x(d), 2)));
       xa.submat(id_x(d), 0, id_x(d + 1) - 1, 0) = sample_init_prtcls(mmu, sdd, N);
     }

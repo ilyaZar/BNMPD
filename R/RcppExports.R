@@ -376,18 +376,18 @@ cbpf_as_m_cpp <- function(N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r) {
 #' random numbers (see the use of arma::randn()). Used within a PGAS procedure
 #' e.g. called via \code{pgas_arma()}.
 #'
-#' @param id_parallelize parallelization ID as an \code{IntegerVector}: determines
-#'   along which cross sectional components to compute: this is passed from the
-#'   \code{x}-argument of \code{paralllel::clusterApply()}, called within the
-#'   PGAS code, to this function so it knows along which cross sectional units
-#'   it has to slice the data: \code{y_all, regs_beta_all, x_r_all}; see
-#'   arguments below
+#' @param id_parallelize parallelization ID as an \code{IntegerVector}:
+#'   determines along which cross sectional components to run the cSMC
+#'   samplers: this is passed from the \code{x}-argument of
+#'   \code{paralllel::clusterApply()}, called within the PGAS code, to this
+#'   function so it knows along which cross sectional units it has to slice the
+#'   data \code{y_all, regs_beta_all, x_r_all}
 #' @param nn_list_dd a list of length \code{NN} with indices of multivariate
 #'    components (a subset of \code{d=1,...,DD}) used for state filtering
 #' @param N number of particles
 #' @param TT time series dimension
 #' @param DD multivariate dimension (number of dirichlet categories)
-#' @param y_all measurements: dirichlet-multinomial counts
+#' @param y_all measurements: dirichlet fractions
 #' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
 #'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
 #' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
@@ -410,22 +410,22 @@ cbpf_as_d_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, regs
 #' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
 #' e.g. called via \code{pgas_arma()}.
 #'
-#' @param id_par_vec parallelization ID as an \code{IntegerVector}: determines
-#'   along which cross sectional component to compute: this is passed from the
-#'   \code{x}-argument of \code{paralllel::clusterApply()}, called within the
-#'   PGAS code, to this function so it knows along for which cross sectional
-#'   unit it has to slice the data: \code{y_all, num_counts_all, Regs_beta_all,
-#'   x_r_all}; see arguments below
+#' @param id_parallelize parallelization ID as an \code{IntegerVector}:
+#'   determines along which cross sectional components to run the cSMC
+#'   samplers: this is passed from the \code{x}-argument of
+#'   \code{paralllel::clusterApply()}, called within the PGAS code, to this
+#'   function so it knows along which cross sectional unit it has to slice the
+#'   data \code{y_all, num_counts_all, regs_beta_all, x_r_all}
+#' @param nn_list_dd a list of length \code{NN} with indices of multivariate
+#'    components (a subset of \code{d=1,...,DD}) used for state filtering
 #' @param N number of particles
 #' @param TT time series dimension
-#' @param DD multivariate dimension (number of dirichlet-multinomial
-#'   categories)
+#' @param DD multivariate dimension (number of dirichlet-mult. categories)
 #' @param y_all measurements: dirichlet-multinomial counts
 #' @param num_counts_all measurements: dirichlet-multinomial total counts per
 #'   time period (\code{T}-dimensional vector)
-#' @param Regs_beta_all  result of regressor values i.e. z_{t} (matrix)
-#'   multiplied by parameters/coefficients (vector) over ALL \code{d=1...DD}
-#'   components
+#' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
+#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
 #' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 #' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
 #'   latent state process
@@ -436,8 +436,8 @@ cbpf_as_d_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, regs
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_dm_cpp_par <- function(id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_dm_cpp_par`, id_par_vec, N, TT, DD, y_all, num_counts_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_dm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_dm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC (BPF) for the Mult. model

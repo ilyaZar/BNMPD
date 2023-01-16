@@ -13,6 +13,8 @@ ModelDat <- R6::R6Class("ModelDat",
                           .pth_to_priors = NULL,
                           .pth_to_inits = NULL,
                           .data_raw = NULL,
+                          .COUNTS_TRUE = FALSE,
+                          .count_name = "num_counts",
                           .data_subset_used = NULL,
                           .data_internal = NULL,
                           .data_dimensions  = NULL,
@@ -50,9 +52,20 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           initialize_data_raw = function(data_set) {
                             private$.data_raw <- data_set
+                            if (any(private$.count_name %in% names(data_set))) {
+                              private$.COUNTS_TRUE <- TRUE
+                            }
                           },
                           initialize_data_used = function() {
-                            y_use  <- unname(private$.var_y)
+                            if (private$.COUNTS_TRUE) {
+                              y_use  <- c(unname(private$.var_y),
+                                          private$.count_name)
+                              y_lab <- c(private$.lab_y,
+                                         private$.count_name)
+                            } else {
+                              y_use  <- unname(private$.var_y)
+                              y_lab <- private$.lab_y
+                            }
                             z_use  <- unique(unlist(private$.var_z))
                             u_use  <- unique(unlist(private$.var_u))
                             zu_use <- union(z_use, u_use)
@@ -96,7 +109,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                                  unique(unlist(private$.var_u)))
                             data_labels <- c(cs_lab,
                                              ts_lab,
-                                             private$.lab_y,
+                                             y_lab,
                                              lab_unif_zu)
                             data_to_use   <- private$.data_raw %>%
                               dplyr::filter(.data[[cs_var]] %in% cs_val) %>%
@@ -169,7 +182,11 @@ ModelDat <- R6::R6Class("ModelDat",
                               y_t[, , i] <- as.matrix(tmp_y)
                             }
                             y_t <- replace(y_t, y_t < 0 , abs(y_t[y_t < 0]))
-                            # num_counts <- apply(y_t, 3, rowSums)
+                            if (private$.COUNTS_TRUE) {
+                              num_counts <- matrix(private$.data_subset_used[[private$.count_name]],
+                                                   nrow = private$.TT,
+                                                   ncol = private$.NN)
+                            }
                             #
                             #
                             #
@@ -247,6 +264,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_internal            <- list()
                             private$.data_internal$data       <- list()
                             private$.data_internal$data$`y_t` <- y_t
+                            if (private$.COUNTS_TRUE) {
+                              private$.data_internal$data$`num_counts` <- num_counts
+                            }
                             private$.data_internal$`Z`        <- Z
                             private$.data_internal$`U`        <- U
                             private$.data_internal$NN         <- private$.NN
