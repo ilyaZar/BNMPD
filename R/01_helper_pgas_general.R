@@ -1,10 +1,54 @@
 generate_environment_parallel <- function(envir_current,
-                                          type = NULL) {
-  if(type == "testing") return(envir_current)
+                                          type = NULL,
+                                          seed = NULL) {
+  if(type == "testing") {
+    if (!is.null(seed)) {
+      envir_current$settings_seed <- seed
+    }
+    return(envir_current)
+  }
   if(type == "clean_run") {
     envir_used <- new.env(parent = rlang::env_parents(environment())[[1]])
+    if (!is.null(seed)) {
+      envir_used$settings_seed <- seed
+    }
     return(envir_used)
   }
+}
+get_smc_internal <- function(obs_type, smc_type) {
+  grep_smc <- NULL
+  if (smc_type == "bpf") {
+    grep_smc <- "cbpf_"
+  }
+  if (obs_type == "DIRICHLET") {
+    grep_smc <- paste0(grep_smc, "as_d_cpp_par")
+  } else if (obs_type == "DIRICHLET-MULT") {
+    grep_smc <- paste0(grep_smc, "as_dm_cpp_par")
+  }
+  grep_smc <- paste0("BNMPD:::", grep_smc)
+  return(eval(parse(text = grep_smc)))
+}
+get_args_list_smc_internal <- function(pe, mm) {
+  smc_internal <- get_smc_internal(obs_type = pe$model_type_obs,
+                                   smc_type = pe$model_type_smc)
+  out <- list(cl = pe$cl, x = pe$task_indices,
+              fun = smc_internal,
+              nn_list_dd = pe$nn_list_dd,
+              N = pe$N, TT = pe$TT, DD = pe$DD,
+              y_all = pe$y,
+              regs_beta_all = pe$Regs_beta,
+              sig_sq_x = pe$sig_sq_x[, mm],
+              phi_x = pe$phi_x[, mm],
+              x_r_all = pe$X[ , , mm, ])
+  if (pe$model_type_obs == "DIRICHLET-MULT") out$num_counts <- pe$num_counts
+  return(out)
+}
+update_args_list_smc_internal <- function(pe, args_list, mm) {
+  args_list$regs_beta_all <- pe$Regs_beta
+  args_list$sig_sq_x      <- pe$sig_sq_x[, mm]
+  args_list$phi_x         <- pe$phi_x[, mm]
+  args_list$x_r_all       <- pe$X[ , , mm - 1, ]
+  return(args_list)
 }
 load_model <- function(env_model, to_env) {
   # to_env <- parent.frame()
@@ -294,4 +338,16 @@ initialize_dims2 <- function(par_init, U, DD) {
     assign(n, get(n, from_env), to_env)
   }
   invisible(to_env)
+}
+prepare_cluster <- function(pe, mm = 1) {
+  pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
+  pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
+  if(!is.null(pe$settings_seed$seed_pgas_init)) {
+    parallel::clusterSetRNGStream(pe$cl,
+                                  iseed = pe$settings_seed$seed_pgas_init)
+  }
+  get_args_list_smc_internal(pe, mm)
+}
+progress_print <- function(iter) {
+  cat("cSMC iteration number:", iter, "\n")
 }

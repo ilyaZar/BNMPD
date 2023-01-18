@@ -43,10 +43,12 @@ pgas <- function(pgas_model,
   if(!is.null(settings_seed)) set.seed(settings_seed$seed_all_init)
   # Initialize environment for parallel execution
   envir_par <- generate_environment_parallel(environment(),
-                                             type = settings_type)
+                                             type = settings_type,
+                                             seed = settings_seed)
   # Initialize data containers and copy to environment used for parallel runs
   load_model(env_model = pgas_model,
              to_env = envir_par)
+  arg_list_cluster_smc <- prepare_cluster(pe = envir_par, mm = 1)
   if (mod_type == "empirical") {
     true_states <- NA_real_
     true_params <- NA_real_
@@ -57,12 +59,12 @@ pgas <- function(pgas_model,
   # Run (P)MCMC loop
   if (sim_type == "pmcmc") {
     # 0. run cBPF and use output as first conditioning trajectory
-    pgas_init(envir_par, mm = 1)
+    pgas_init(pe = envir_par, pc = arg_list_cluster_smc, mm = 1)
     for (m in 2:envir_par$MM) {
       # I. Run GIBBS part
       sample_all_params(envir_par, mm = m)
       # II. Run cBPF-AS part
-      pgas_run(envir_par,  mm = m)
+      pgas_run(pe = envir_par, pc = arg_list_cluster_smc, mm = m)
     }
   }
   if (sim_type == "mcmc") {
@@ -97,91 +99,25 @@ pgas <- function(pgas_model,
   class(out) <- sim_type
   return(out)
 }
-pgas_init <- function(pe, mm) {
-  if (pe$model_type_obs == "DIRICHLET") {
-    if(pe$model_type_smc == "bpf") {
-      pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
-      pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
-      if(!is.null(pe$settings_seed$seed_pgas_init)) {
-        parallel::clusterSetRNGStream(pe$cl,
-                                      iseed = pe$settings_seed$seed_pgas_init)
-      }
-      out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
-                                        BNMPD::cbpf_as_d_cpp_par,
-                                        pe$nn_list_dd,
-                                        pe$N, pe$TT, pe$DD, pe$y,
-                                        pe$Regs_beta,
-                                        pe$sig_sq_x[, mm],
-                                        pe$phi_x[, mm],
-                                        pe$X[ , , mm, ])
-      out_cpf <- unlist(out_cpf, recursive = FALSE)
-      if (!all.equal(as.numeric(names(out_cpf)), 0:(pe$NN - 1))) {
-        stop("Cluster does not compute trajectories in order!")
-      }
-      for (n in 1:pe$NN) {
-        pe$X[ , , mm, n] <- out_cpf[[n]]
-      }
-    }
+pgas_init <- function(pe, pc, mm) {
+  out_cpf <- do.call(parallel::clusterApply, pc)
+
+  out_cpf <- unlist(out_cpf, recursive = FALSE)
+  if (!all.equal(as.numeric(names(out_cpf)), 0:(pe$NN - 1))) {
+    stop("Cluster does not compute trajectories in order!")
   }
-  if (pe$model_type_obs == "DIRICHLET-MULT") {
-    if(pe$model_type_smc == "bpf") {
-      pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
-      pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
-      if(!is.null(pe$settings_seed$seed_pgas_init)) {
-        parallel::clusterSetRNGStream(pe$cl,
-                                      iseed = pe$settings_seed$seed_pgas_init)
-      }
-      out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
-                                        BNMPD::cbpf_as_dm_cpp_par,
-                                        pe$nn_list_dd,
-                                        pe$N, pe$TT, pe$DD, pe$y, pe$num_counts,
-                                        pe$Regs_beta,
-                                        pe$sig_sq_x[, mm],
-                                        pe$phi_x[, mm],
-                                        pe$X[ , , mm, ])
-      out_cpf <- unlist(out_cpf, recursive = FALSE)
-      if (!all.equal(as.numeric(names(out_cpf)), 0:(pe$NN - 1))) {
-        stop("Cluster does not compute trajectories in order!")
-      }
-      for (n in 1:pe$NN) {
-        pe$X[ , , mm, n] <- out_cpf[[n]]
-      }
-    }
+  for (n in 1:pe$NN) {
+    pe$X[ , , mm, n] <- out_cpf[[n]]
   }
-  cat("cSMC iteration number:", mm, "\n")
+  progress_print(mm)
 }
-pgas_run <- function(pe, mm) {
-  if (pe$model_type_obs == "DIRICHLET") {
-    if(pe$model_type_smc == "bpf") {
-      out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
-                                        BNMPD::cbpf_as_d_cpp_par,
-                                        pe$nn_list_dd,
-                                        pe$N, pe$TT, pe$DD, pe$y,
-                                        pe$Regs_beta,
-                                        pe$sig_sq_x[, mm],
-                                        pe$phi_x[, mm],
-                                        pe$X[ , , mm - 1, ])
-      out_cpf <- unlist(out_cpf, recursive = FALSE)
-      for (n in 1:pe$NN) {
-        pe$X[ , , mm, n] <- out_cpf[[n]]
-      }
-    }
+pgas_run <- function(pe, pc, mm) {
+  tmp_arg_list <- update_args_list_smc_internal(pe, pc, mm)
+  out_cpf <- do.call(parallel::clusterApply, tmp_arg_list)
+
+  out_cpf <- unlist(out_cpf, recursive = FALSE)
+  for (n in 1:pe$NN) {
+    pe$X[ , , mm, n] <- out_cpf[[n]]
   }
-  if (pe$model_type_obs == "DIRICHLET-MULT") {
-    if(pe$model_type_smc == "bpf") {
-      out_cpf <- parallel::clusterApply(pe$cl, x = pe$task_indices,
-                                        BNMPD::cbpf_as_dm_cpp_par,
-                                        pe$nn_list_dd,
-                                        pe$N, pe$TT, pe$DD, pe$y, pe$num_counts,
-                                        pe$Regs_beta,
-                                        pe$sig_sq_x[, mm],
-                                        pe$phi_x[, mm],
-                                        pe$X[ , , mm - 1, ])
-      out_cpf <- unlist(out_cpf, recursive = FALSE)
-      for (n in 1:pe$NN) {
-        pe$X[ , , mm, n] <- out_cpf[[n]]
-      }
-    }
-  }
-  cat("cSMC iteration number:", mm, "\n")
+  progress_print(mm)
 }
