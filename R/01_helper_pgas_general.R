@@ -351,3 +351,14 @@ prepare_cluster <- function(pe, mm = 1) {
 progress_print <- function(iter) {
   cat("cSMC iteration number:", iter, "\n")
 }
+update_states <- function(pe, cbpf_output, mm, CHECK_CL_ORDER = FALSE) {
+  cbpf_output <- unlist(cbpf_output, recursive = FALSE)
+  if (CHECK_CL_ORDER) {
+    if (!identical(as.integer(names(cbpf_output)), 0:(pe$NN - 1))) {
+      stop("Cluster does not return trajectories in correct order!")
+    }
+  }
+  for (n in 1:pe$NN) {
+    pe$X[ , , mm, n] <- cbpf_output[[n]]
+  }
+}

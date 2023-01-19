@@ -99,25 +99,16 @@ pgas <- function(pgas_model,
   class(out) <- sim_type
   return(out)
 }
-pgas_init <- function(pe, pc, mm) {
-  out_cpf <- do.call(parallel::clusterApply, pc)
+pgas_init <- function(pe, pc, mm = 1) {
+  out_cpf       <- do.call(parallel::clusterApply, pc)
+  update_states <- update_states(pe, out_cpf, mm, CHECK_CL_ORDER = TRUE)
 
-  out_cpf <- unlist(out_cpf, recursive = FALSE)
-  if (!all.equal(as.numeric(names(out_cpf)), 0:(pe$NN - 1))) {
-    stop("Cluster does not compute trajectories in order!")
-  }
-  for (n in 1:pe$NN) {
-    pe$X[ , , mm, n] <- out_cpf[[n]]
-  }
   progress_print(mm)
 }
 pgas_run <- function(pe, pc, mm) {
-  tmp_arg_list <- update_args_list_smc_internal(pe, pc, mm)
-  out_cpf <- do.call(parallel::clusterApply, tmp_arg_list)
+  cl_arg_lsit   <- update_args_list_smc_internal(pe, pc, mm)
+  out_cpf       <- do.call(parallel::clusterApply, cl_arg_lsit)
+  update_states <- update_states(pe, out_cpf, mm, CHECK_CL_ORDER = FALSE)
 
-  out_cpf <- unlist(out_cpf, recursive = FALSE)
-  for (n in 1:pe$NN) {
-    pe$X[ , , mm, n] <- out_cpf[[n]]
-  }
   progress_print(mm)
 }
