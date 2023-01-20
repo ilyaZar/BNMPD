@@ -36,30 +36,18 @@ pgas <- function(pgas_model,
                  settings_seed = NULL,
                  sim_type = "pmcmc",
                  mod_type = "empirical") {
-  stopifnot(`Unknown settings_type: ` = settings_type %in% c("clean_run",
-                                                             "testing"))
-  stopifnot(`Unknown sim_type: ` = sim_type %in% c("pmcmc", "mcmc"))
-  stopifnot(`Unknown mod_type: ` = mod_type %in% c("empirical", "simulation"))
-  if(!is.null(settings_seed)) set.seed(settings_seed$seed_all_init)
+  check_settings_input(settings_type, sim_type, mod_type)
   # Initialize environment for parallel execution
   envir_par <- generate_environment_parallel(environment(),
                                              type = settings_type,
                                              seed = settings_seed)
   # Initialize data containers and copy to environment used for parallel runs
-  load_model(env_model = pgas_model,
-             to_env = envir_par)
-  arg_list_cluster_smc <- prepare_cluster(pe = envir_par, mm = 1)
-  if (mod_type == "empirical") {
-    true_states <- NA_real_
-    true_params <- NA_real_
-  } else if (mod_type == "simulation") {
-    true_states <- envir_par$true_states
-    true_params <- envir_par$true_params
-  }
+  load_model(env_model = pgas_model, to_env = envir_par)
+  arg_list_cluster_smc <- prepare_cluster(pe = envir_par)
   # Run (P)MCMC loop
   if (sim_type == "pmcmc") {
     # 0. run cBPF and use output as first conditioning trajectory
-    pgas_init(pe = envir_par, pc = arg_list_cluster_smc, mm = 1)
+    pgas_init(pe = envir_par, pc = arg_list_cluster_smc)
     for (m in 2:envir_par$MM) {
       # I. Run GIBBS part
       sample_all_params(envir_par, mm = m)
@@ -69,34 +57,16 @@ pgas <- function(pgas_model,
   }
   if (sim_type == "mcmc") {
     # 0. Copy & paste true state values as first conditioning trajectory
-    envir_par$X[,,1,] <- true_states
+    envir_par$X[ , , 1, ] <- envir_par$true_states
     for (m in 2:envir_par$MM) {
       # I. Run GIBBS part
       sample_all_params(envir_par, mm = m)
       # II. Copy & paste true state values
-      envir_par$X[,,m,] <- true_states
+      envir_par$X[ , , m, ] <- envir_par$true_states
     }
   }
-  cat("PGAS finished!\n")
-  if ("cl" %in% names(envir_par)) {
-    cat("Closing cluster!\n")
-    # snow::stopCluster(envir_par$cl)
-    cat("Cluster closed!\n")
-    # if (envir_par$cluster_type == "MPI") Rmpi::mpi.exit(); cat("MPI exit ...");
-  }
-  options(warn = 0)
-  cat("Resetting options!\n")
-  out <- list(sig_sq_x = envir_par$sig_sq_x,
-              phi_x = envir_par$phi_x,
-              bet_z = envir_par$bet_z,
-              bet_u = envir_par$bet_u,
-              vcm_bet_u = envir_par$vcm_bet_u,
-              x = envir_par$X,
-              true_states = true_states,
-              true_vals = true_params,
-              meta_info = list(MM = envir_par$MM,
-                               mod_type = mod_type))
-  class(out) <- sim_type
+  cleanup_cluster(pe = envir_par)
+  out <- generate_pgas_output(pe = envir_par, mod_type, sim_type)
   return(out)
 }
 pgas_init <- function(pe, pc, mm = 1) {

@@ -1,19 +1,54 @@
+check_settings_input <- function(st_type, sm_type, md_type) {
+  stopifnot(`Unknown settings_type...` = st_type %in% c("clean_run", "testing"))
+  stopifnot(`Unknown sim_type... ` = sm_type %in% c("pmcmc", "mcmc"))
+  stopifnot(`Unknown mod_type...` = md_type %in% c("empirical", "simulation"))
+  return(invisible(NULL))
+}
+cleanup_cluster <- function(pe) {
+  cat("PGAS finished!\n")
+  if ("cl" %in% names(pe)) {
+    cat("Closing cluster ... \n")
+    if(pe$cluster_type == "PSOCK") snow::stopCluster(pe$cl)
+    if(pe$cluster_type == "MPI") Rmpi::mpi.exit()
+    cat(paste0(pe$cluster_type, " cluster closed!\n"))
+  }
+  options(warn = 0)
+  cat("Resetting options!\n")
+}
 generate_environment_parallel <- function(envir_current,
                                           type = NULL,
                                           seed = NULL) {
-  if(type == "testing") {
-    if (!is.null(seed)) {
-      envir_current$settings_seed <- seed
-    }
-    return(envir_current)
-  }
-  if(type == "clean_run") {
+  if (type == "testing") {
+    envir_used <- envir_current
+  } else if(type == "clean_run") {
     envir_used <- new.env(parent = rlang::env_parents(environment())[[1]])
-    if (!is.null(seed)) {
-      envir_used$settings_seed <- seed
-    }
-    return(envir_used)
   }
+  if (!is.null(seed)) {
+    envir_current$settings_seed <- seed
+    if(!is.null(seed$seed_all_init)) set.seed(seed$seed_all_init)
+  }
+  return(envir_used)
+}
+generate_pgas_output <- function(pe, md_type, sm_type) {
+  if (md_type == "empirical") {
+    true_states <- NA_real_
+    true_params <- NA_real_
+  } else if (md_type == "simulation") {
+    true_states <- pe$true_states
+    true_params <- pe$true_params
+  }
+  out <- list(sig_sq_x = pe$sig_sq_x,
+              phi_x = pe$phi_x,
+              bet_z = pe$bet_z,
+              bet_u = pe$bet_u,
+              vcm_bet_u = pe$vcm_bet_u,
+              x = pe$X,
+              true_states = true_states,
+              true_vals = true_params,
+              meta_info = list(MM = pe$MM,
+                               mod_type = md_type))
+  class(out) <- sm_type
+  return(out)
 }
 get_smc_internal <- function(obs_type, smc_type) {
   grep_smc <- NULL
@@ -21,9 +56,9 @@ get_smc_internal <- function(obs_type, smc_type) {
     grep_smc <- "cbpf_"
   }
   if (obs_type == "DIRICHLET") {
-    grep_smc <- paste0(grep_smc, "as_d_cpp_par")
+    grep_smc <- paste0(grep_smc, "as_d_cpp_par2")
   } else if (obs_type == "DIRICHLET-MULT") {
-    grep_smc <- paste0(grep_smc, "as_dm_cpp_par")
+    grep_smc <- paste0(grep_smc, "as_dm_cpp_par2")
   }
   grep_smc <- paste0("BNMPD:::", grep_smc)
   return(eval(parse(text = grep_smc)))
