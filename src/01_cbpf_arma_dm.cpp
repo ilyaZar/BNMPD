@@ -136,7 +136,8 @@ arma::mat cbpf_as_dm_cpp(const int& N,
   }
 
   // b_draw = sample_final_trajectory(w.col(TT - 1), N, id_as_lnspc);
-  b_draw = sample_final_trajectory(w_norm, N, id_as_lnspc);
+  // b_draw = sample_final_trajectory(w_norm, N, id_as_lnspc);
+  b_draw = sample_final_trajectory(w_norm, N);
 
   for(int d = 0; d < DD; ++d) {
     x_out.col(d) = xa.row(b_draw + N*d).t();

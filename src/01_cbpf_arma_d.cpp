@@ -173,7 +173,8 @@ arma::mat cbpf_as_d_cpp(const Rcpp::IntegerVector& dd_range,
   }
 
   // b_draw = sample_final_trajectory(w.col(TT - 1), N, id_as_lnspc);
-  b_draw = sample_final_trajectory(w_norm, N, id_as_lnspc);
+  // b_draw = sample_final_trajectory(w_norm, N, id_as_lnspc);
+  b_draw = sample_final_trajectory(w_norm, N);
 
   for(auto d : dd_range) {
     x_out.col(d) = xa.row(b_draw + N*d).t();

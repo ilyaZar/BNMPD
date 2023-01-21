@@ -187,15 +187,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // sample_final_trajectory
-double sample_final_trajectory(const arma::colvec& weights, const int& N, const arma::uvec& id_as_lnspc);
-RcppExport SEXP _BNMPD_sample_final_trajectory(SEXP weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
+double sample_final_trajectory(const arma::colvec& weights, const int& N);
+RcppExport SEXP _BNMPD_sample_final_trajectory(SEXP weightsSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::colvec& >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type id_as_lnspc(id_as_lnspcSEXP);
-    rcpp_result_gen = Rcpp::wrap(sample_final_trajectory(weights, N, id_as_lnspc));
+    rcpp_result_gen = Rcpp::wrap(sample_final_trajectory(weights, N));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -458,7 +457,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_check_weights", (DL_FUNC) &_BNMPD_check_weights, 2},
     {"_BNMPD_throw_weight_msg", (DL_FUNC) &_BNMPD_throw_weight_msg, 3},
     {"_BNMPD_resample", (DL_FUNC) &_BNMPD_resample, 3},
-    {"_BNMPD_sample_final_trajectory", (DL_FUNC) &_BNMPD_sample_final_trajectory, 3},
+    {"_BNMPD_sample_final_trajectory", (DL_FUNC) &_BNMPD_sample_final_trajectory, 2},
     {"_BNMPD_sample_init_prtcls", (DL_FUNC) &_BNMPD_sample_init_prtcls, 3},
     {"_BNMPD_propagate_bpf", (DL_FUNC) &_BNMPD_propagate_bpf, 3},
     {"_BNMPD_cbpf_as_d_cpp", (DL_FUNC) &_BNMPD_cbpf_as_d_cpp, 9},

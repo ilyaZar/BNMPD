@@ -1,3 +1,4 @@
+#include "01_cbpf_arma.h"
 #include "00_helper_smc_deterministic.h"
 //' State transition
 //'
@@ -468,4 +469,109 @@ void throw_weight_msg(const std::string w_type,
   } else {
     Rcpp::stop("Message type neither 'error' nor 'warning");
   }
+}
+Rcpp::List generate_output_container(const Rcpp::IntegerVector& nn_iterate) {
+  int len_id_par = nn_iterate.size();
+  Rcpp::List x_out_list(len_id_par);
+  Rcpp::List x_out_names(len_id_par);
+  Rcpp::CharacterVector x_names(nn_iterate.begin(), nn_iterate.end());
+  for (int j = 0; j<len_id_par; j++) {
+    // this comment's a test to check if cheops pulling works
+    // x_out_names(j) = std::to_string(id_parallelize(j));
+    x_out_names(j) = x_names(j);
+  }
+  x_out_list.attr("names") = x_out_names;
+  return(x_out_list);
+}
+void sample_init(const Rcpp::IntegerVector& dd_rng, const arma::mat& Xbeta,
+                 const arma::vec& phi, const arma::vec& sig_sq,
+                 int N, const arma::uvec& id, arma::mat& X) {
+  double mu = 0;
+  double sd = 0;
+  for(auto d : dd_rng) {
+    mu = arma::as_scalar(Xbeta.submat(0, d, 0, d)) / (1.0 - phi(d));
+    sd = sqrt(sig_sq(d) / (1.0 - pow(phi(d), 2)));
+    X.submat(id(d), 0, id(d + 1) - 1, 0) = sample_init_prtcls(mu, sd, N);
+  }
+  return;
+}
+void set_conditional_value(arma::mat& X, const arma::mat Xr,
+                           const Rcpp::IntegerVector& dd_rng,
+                           const arma::uvec& id, int t) {
+  for(auto d : dd_rng) {
+    X(id(d + 1) - 1, t) = Xr(t, d);
+  }
+}
+arma::mat draw_trajectory(int N, int TT, int DD,
+                          const Rcpp::IntegerVector& dd_rng,
+                          const arma::uvec& id,
+                          arma::mat& X, const arma::umat& A,
+                          const arma::vec& w_n) {
+  int b = 0;
+  arma::uvec t_word(1, arma::fill::zeros);
+  arma::uvec ind(N, arma::fill::zeros);
+  arma::mat x_out(TT, DD, arma::fill::zeros);
+  ind = A.col(TT - 1);
+  for (arma::uword t = TT-2; t >= 1; --t) {
+    t_word(0) = t;
+    for (auto d : dd_rng) {
+      X.submat(id(d), t, id(d + 1) - 1, t) = X(ind + N*d, t_word);
+    }
+    ind = A(ind, t_word);
+  }
+  t_word(0) = 0;
+  for (auto d : dd_rng) {
+    X.submat(id(d), 0, id(d + 1) - 1, 0) = X(ind + N*d, t_word);
+  }
+  b = sample_final_trajectory(w_n, N);
+  for(auto d : dd_rng) {
+    x_out.col(d) = X.row(b + N*d).t();
+  }
+  return(x_out);
+}
+arma::uvec compute_id_x(int DD, int N) {
+  arma::uvec id(DD + 1);
+  for (int d = 0; d < DD+1; ++d) {
+      id(d) = d*N;
+  }
+  return(id);
+}
+arma::uvec compute_id_x2(int DD, int DD2, const arma::uvec& id) {
+  int drop_num = DD - DD2;
+  if (drop_num > 0) {
+    return(id.head(DD2 + 1));
+  } else {
+    return(id);
+  }
+}
+arma::uvec compute_id_w(int N, int DD2, const arma::uvec& id,
+                        const Rcpp::IntegerVector& dd_rng){
+    arma::uvec id_weights(DD2 * N);
+    arma::uvec tmp_ls(N);
+    int tmp_iter = 0;
+    for (auto d : dd_rng) {
+      tmp_ls = arma::linspace<arma::uvec>(id(d), id(d + 1) - 1, N);
+      id_weights.subvec(tmp_iter * N, (tmp_iter + 1) * N  - 1) = tmp_ls;
+      tmp_iter++;
+    }
+    return(id_weights);
+}
+arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
+                        const Rcpp::IntegerVector& dd_rng,
+                        const arma::vec& phi, const arma::vec& sig_sq,
+                        const arma::mat& Xbeta,
+                        arma::mat& X, const arma::mat& Xr,
+                        const arma::uvec& A) {
+  arma::vec eval_f(N, arma::fill::zeros);
+  arma::mat mean_diff(N, DD, arma::fill::zeros);
+  for(auto d : dd_rng) {
+    eval_f = f_cpp(X.submat(id(d), tmin1, id(d + 1) - 1, tmin1),
+                   phi(d), as_scalar(Xbeta.submat(t, d, t, d)));
+    mean_diff.col(d) = eval_f -  Xr(t, d);
+    eval_f = eval_f.elem(A);
+    X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
+                                                         sqrt(sig_sq(d)),
+                                                         N);
+   }
+   return(mean_diff);
 }

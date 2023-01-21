@@ -4,7 +4,7 @@
 \alias{sample_final_trajectory}
 \title{Samples final particle trajectory index}
 \usage{
-sample_final_trajectory(weights, N, id_as_lnspc)
+sample_final_trajectory(weights, N)
 }
 \arguments{
 \item{weights}{arma::colvec of dimension \code{N} storing particle weights}

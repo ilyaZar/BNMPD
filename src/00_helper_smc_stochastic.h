@@ -9,8 +9,8 @@ arma::uvec resample(const arma::colvec& weights,
                     const int& N,
                     const arma::uvec& id_as_lnspc);
 double sample_final_trajectory(const arma::colvec& weights,
-                               const int& N,
-                               const arma::uvec& id_as_lnspc);
+                               const int& N); // ,
+                               // const arma::uvec& id_as_lnspc);
 arma::colvec sample_init_prtcls(const double& mmu,
                                 const double& sdd,
                                 const int& N);

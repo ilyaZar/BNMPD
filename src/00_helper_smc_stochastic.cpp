@@ -38,8 +38,8 @@ arma::uvec resample(const arma::colvec& weights,
 //'
 // [[Rcpp::export]]
 double sample_final_trajectory(const arma::colvec& weights,
-                               const int& N,
-                               const arma::uvec& id_as_lnspc) {
+                               const int& N) { //,
+                               // const arma::uvec& id_as_lnspc) {
   return(Rcpp::sample(N, 1, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(weights)))[0] - 1);
   // return(arma::as_scalar(Rcpp::RcppArmadillo::sample(id_as_lnspc, 1, true, weights)));
   // return(dqrng::dqsample_num(N, 1, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(weights)))[0]);
