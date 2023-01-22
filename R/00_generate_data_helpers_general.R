@@ -23,25 +23,32 @@
 #' @examples
 #' get_dirichlet_levels(DD = 3, NN = 4)
 get_dirichlet_levels <- function(DD, NN,
+                                 target_val_fixed = NULL,
                                  tuning_parameters = list(seq_start = 0.3,
                                                           seq_step = 0.025,
                                                           seq_rep = 2,
-                                                          seq_scale = 1e3)) {
-  seq_start <- tuning_parameters$seq_start
-  seq_step  <- tuning_parameters$seq_step
-  seq_rep   <- tuning_parameters$seq_rep
+                                                          seq_scale = 1e4)) {
+  if (is.null(target_val_fixed)) {
+    seq_start <- tuning_parameters$seq_start
+    seq_step  <- tuning_parameters$seq_step
+    seq_rep   <- tuning_parameters$seq_rep
 
-  tuned_vec <- rep(seq(from = seq_start,
-                       to = seq_start + seq_step * DD,
-                       by = seq_step),
-                   each = seq_rep)
-  tuned_vec <- tuned_vec[1:DD]
-  tuned_vec <- tuned_vec/sum(tuned_vec)
+    tuned_vec <- rep(seq(from = seq_start,
+                         to = seq_start + seq_step * DD,
+                         by = seq_step),
+                     each = seq_rep)
+    tuned_vec <- tuned_vec[1:DD]
+    tuned_vec <- tuned_vec/sum(tuned_vec)
 
-  matrix(tuned_vec * tuning_parameters$seq_scale,
-         nrow = DD,
-         ncol = NN)
-
+    out <- matrix(tuned_vec * tuning_parameters$seq_scale,
+                  nrow = DD,
+                  ncol = NN)
+  } else {
+    out <- matrix(rep(target_val_fixed, times = NN * DD),
+                  nrow = DD,
+                  ncol = NN)
+  }
+  return(out)
 }
 #' Save simulated data and true parameter values used to generate it.
 #'
@@ -79,6 +86,14 @@ save_simulated_data <- function(pth_to_write,
   zero_states <- true_states
   zero_states[, , ] <- 0
 
+  DISTRIBUTION <- attr(data_sim$data, "model_type_obs")
+  if (any(DISTRIBUTION %in% c("DIRICHLET", "GEN-DIRICHLET", "NORMAL"))) {
+    dist_type <- "type1"
+  } else if(any(DISTRIBUTION %in% c("DIRICHLET-MULT", "GEN-DIRICHLET-MULT",
+                                    "MULTINOMIAL"))) {
+    dist_type <- "type2"
+  }
+
   NN <- dim_model[1] # Cross sectional length
   cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
       crayon::green("to "), crayon::red(NN), crayon::green("!"))
@@ -96,23 +111,41 @@ save_simulated_data <- function(pth_to_write,
   names_z_reg <- tmp_list$names$names_z_reg
   names_u_reg <- tmp_list$names$names_u_reg
 
-  ncol_out <- DD + num_regs_z + num_regs_u
+  offset_col <- 2
+  if (dist_type == "type1") {
+    ncol_out <- DD + num_regs_z + num_regs_u
+    data_out_colnames <- c(paste0("Y", 1:DD), names_z_reg, names_u_reg)
+
+    id_col_y <- 1:DD + offset_col
+    if (SIMUL_Z_BETA) id_col_z <- DD + 1:(num_regs_z) + offset_col
+    if (SIMUL_U_BETA) id_col_u <- DD + num_regs_z + 1:(num_regs_u) + offset_col
+  } else if (dist_type == "type2") {
+    ncol_out <- DD + 1 + num_regs_z + num_regs_u
+    data_out_colnames <- c(paste0("Y", 1:DD), "num_counts",
+                           names_z_reg, names_u_reg)
+
+    id_col_y <- 1:(DD + 1) + offset_col
+    if (SIMUL_Z_BETA) id_col_z <- (DD + 1) + 1:(num_regs_z) + offset_col
+    if (SIMUL_U_BETA) id_col_u <- (DD + 1) + num_regs_z + 1:(num_regs_u) + offset_col
+  }
   data_out <- matrix(0, nrow = TT * NN, ncol = ncol_out)
   data_out <- as.data.frame(data_out)
 
-  names(data_out) <- c(paste0("Y", 1:DD), names_z_reg, names_u_reg)
+  names(data_out) <- data_out_colnames
   vals_cs  <- as.character(paste0("cs_", rep(seq_len(NN), each = TT)))
   vals_ts  <- rep(1:TT, times = NN)
   cs_ts    <-tibble::tibble(CS = vals_cs, TS = vals_ts)
   data_out <- dplyr::bind_cols(cs_ts, data_out)
 
-  offset_col <- 2
-  id_col_y <- 1:DD + offset_col
-  if (SIMUL_Z_BETA) id_col_z <- DD + 1:(num_regs_z) + offset_col
-  if (SIMUL_U_BETA) id_col_u <- DD + num_regs_z + 1:(num_regs_u) + offset_col
   for(n in 1:NN) {
     id_rows <- TT*(n - 1) + (1:TT)
-    data_out[id_rows, id_col_y] <- data_sim$data$yraw[, , n]
+    if (dist_type == "type1") {
+      tmp_data <- data_sim$data$yraw[, , n]
+    } else if(dist_type == "type2") {
+      tmp_data <- cbind(data_sim$data$yraw[, , n],
+                        data_sim$data$num_counts[, n])
+    }
+    data_out[id_rows, id_col_y] <- tmp_data
     if (SIMUL_Z_BETA) {
       data_out[id_rows, id_col_z] <- data_sim$regs$z[, , n]
     }
@@ -354,7 +387,7 @@ generate_simulation_study <- function(data_simulation,
                                         which = "model_type_lat"))
   base_name <- get_file_name_main(dim_model =  meta_info_tmp$MODEL_DIM,
                                   par_settings = meta_info_tmp$PAR_SETTINGS,
-                                  seed_no = seeds_both)
+                                  seed_nos = seeds_both)
   tmp_name <- paste0(model_type[["model_type_obs"]],
                      "_", base_name)
   project_name <- paste0(c(project_name$prepend, tmp_name, project_name$append),
@@ -369,7 +402,7 @@ generate_simulation_study <- function(data_simulation,
                file.path(pth_top_lvl, "model",
                          c("history",
                            "input",
-                           "log",
+                           "history/log",
                            "model-definition",
                            "output",
                            "settings")),
@@ -390,9 +423,9 @@ generate_simulation_study <- function(data_simulation,
                                 file.path(pth_top_lvl, "model",
                                           "model-definition",
                                           "model_definition.yaml"))
-  generate_setup_init_json(usedParams,file.path(pth_top_lvl, "model",
-                                                "model-definition",
-                                                "setup_inits.json"))
+  generate_setup_init_json(usedParams, file.path(pth_top_lvl, "model",
+                                                 "model-definition",
+                                                 "setup_inits.json"))
   save_simulated_data(file.path(pth_top_lvl, "model", "input"),
                       file.path("datasets", fn_all[["fn_data_set"]]),
                       fn_all[["fn_true_val"]],
@@ -416,10 +449,10 @@ get_zero_or_defaults <- function(true_params) {
     zero_params[["sig_sq"]][] <- 1
   }
   if (!is.null(true_params[["phi"]])) {
-    zero_params[["phi"]] <- 0
+    zero_params[["phi"]][] <- lapply(zero_params[["phi"]],
+                                     function(x) {y <- x; y[] <- 0; y})
   }
   if (!is.null(true_params[["beta_z_lin"]])) {
-    browser()
     zero_params[["beta_z_lin"]][] <- lapply(zero_params[["beta_z_lin"]],
                                             function(x) {y <- x; y[] <- 0; y})
   }
