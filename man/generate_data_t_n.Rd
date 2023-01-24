@@ -21,8 +21,11 @@ seed under which the true parameters are generated, the logical indicators
 that describe which parameters to generate and their lengths, as provided
 by the function \code{\link[=generate_true_params]{generate_true_params()}}}
 
-\item{distribution}{specifies the distribution; "dirichlet", "multinomial" or
-"dirichlet-multinomial"}
+\item{distribution}{specifies the distribution: "dirichlet", "gen-dirichlet",
+multinomial", "dirichlet-mult", "gen-dirichlet-mult", or "normal" (the
+latter generates the latent states without link-function and measurement/
+response transformations, which is useful e.g. when testing the pure Gibbs
+sampler)}
 
 \item{x_levels}{target "mean" levels of the states around which they
 fluctuate}

@@ -12,8 +12,11 @@
 #'   seed under which the true parameters are generated, the logical indicators
 #'   that describe which parameters to generate and their lengths, as provided
 #'   by the function [generate_true_params()]
-#' @param distribution specifies the distribution; "dirichlet", "multinomial" or
-#'   "dirichlet-multinomial"
+#' @param distribution specifies the distribution: "dirichlet", "gen-dirichlet",
+#'    multinomial", "dirichlet-mult", "gen-dirichlet-mult", or "normal" (the
+#'    latter generates the latent states without link-function and measurement/
+#'    response transformations, which is useful e.g. when testing the pure Gibbs
+#'    sampler)
 #' @param x_levels target "mean" levels of the states around which they
 #'   fluctuate
 #' @param X_LOG_SCALE logical; if \code{TRUE}, \code{x_levels} are taken as logs
@@ -91,7 +94,13 @@ generate_data_t_n <- function(par_trues,
   check_distribution_args(distribution)
   opt1 <- get_opt_include(options_include, NN, DD)
 
-  if (X_LOG_SCALE) x_levels <- log(x_levels)
+  if (X_LOG_SCALE && distribution == "normal") x_levels <- log(x_levels)
+  if (X_LOG_SCALE && any(distribution %in% c("dirichlet", "gen-dirichlet",
+                                             "multinomial", "dirichlet-mult",
+                                             "gen-dirichlet-mult"))) {
+    sig_tmp <- par_trues$sig_sq[, 1]
+    x_levels <- log(x_levels) - sig_tmp/2
+  }
   if (!is.null(seed_no)) set.seed(seed_no)
 
   reg_types <- get_modelling_reg_types(par_trues)
@@ -399,13 +408,19 @@ get_measurements <- function(x_states, X_LOG_SCALE, distribution) {
   }
   for (n in 1:NN) {
     if (distribution == "dirichlet") {
-      # browser()
-      yraw <- my_rdirichlet(alpha = x[, , n])
-      if (sum(rowSums(yraw)) != TT) {
-        stop("Something is wrong with Dirichelet: fractions don't sum up to 1!")
-      }
+      # yraw <- 0
+      # while (any(yraw <= 0.01)) {
+        yraw <- my_rdirichlet(alpha = x[, , n])
+        if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
+          msg <- paste0("Bad Dirichelet simulation: ",
+                        "fractions don't sum to 1 and/or zero componenent!")
+          stop(msg)
+        }
+        print(paste0("Simulatiing Dirichlet data at cross section: ",
+                     n))
       out_data[["part1"]][, , n] <- yraw
-    }
+      # }
+      }
     if (distribution == "multinomial") {
       num_counts <- sample(x = 80000:120000, size = TT)
       tmp_x <- x[, , n]
