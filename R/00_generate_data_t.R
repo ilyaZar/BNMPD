@@ -72,8 +72,8 @@ generate_data_t <- function(TT, DD,
                       # reg_var_within = 0.00025,
                       # reg_var_among = 0.1
                       # reg_var_within = 2.0025,
-                      reg_var_within = 2.25,
-                      reg_var_among = 0.25
+                      reg_var_within = 0.35,
+                      reg_var_among = 0.125
                       )
     res <- generate_x_z_u(TT = TT,
                           phi_x = par_true[["phi"]][[d]],
