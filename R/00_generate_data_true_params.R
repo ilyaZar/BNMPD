@@ -284,10 +284,10 @@ get_default_phi <- function(DD, NN, order_p_vec) {
 #'   \code{d=1,...,DD}
 get_default_beta_z_lin <- function(DD, num, intercepts) {
   num_reg_len <- length(num)
-  tmp1 <- c(0.125, - 0.14)  # tmp values large, first component negative
-  tmp2 <- c(0.127, -0.135)    # tmp values large, first component positive
-  tmp3 <- c(0.13, -0.13)   # tmp values small, first component negative
-  tmp4 <- c(0.132, -0.115) # tmp values small, first component positive
+  tmp1 <- c(0.325, -0.44)  # tmp values large, first component negative
+  tmp2 <- c(0.327, -0.435)    # tmp values large, first component positive
+  tmp3 <- c(0.33, -0.43)   # tmp values small, first component negative
+  tmp4 <- c(0.332, -0.415) # tmp values small, first component positive
   if (num_reg_len == 1) {
     tmp_neg_pos_large <- rep(tmp1, length.out = num)
     tmp_pos_neg_large <- rep(tmp2, length.out = num)
@@ -348,17 +348,18 @@ scale_up_intercept <- function(vals_list, scl_up, intercept_ids) {
 generate_bet_u <- function(DD, NN,
                            from_IW,
                            num_re,
-                           prior_vcm_u_scl = 0.5,
+                           vcm_u_scl = 0.03,
+                           rel_var_to_cov = 5,
+                           n0u = 50, # n0u <- num_re + 1
                            seed_no = 42) {
   true_bet_u <- vector("list", DD)
   if (from_IW) {
     stopifnot(is.numeric(num_re) && (length(num_re) == DD))
     if (!is.null(seed_no))  set.seed(seed_no)
-    n0u <- num_re + 1
     D0u <- vector("list", DD)
     for (d in 1:DD) {
-      D0u[[d]] <- get_hyper_prior_vcm(prior_vcm_u_scl, num_re[d])
-      D0u[[d]] <- solveme((stats::rWishart(1, n0u[d], D0u[[d]]))[, , 1])
+      D0u[[d]] <- get_hyper_prior_vcm(vcm_u_scl, rel_var_to_cov, num_re[d])
+      D0u[[d]] <- solveme((stats::rWishart(1, n0u, D0u[[d]]))[, , 1])
       colnames(D0u[[d]]) <- paste0("U", 1:num_re[d])
       rownames(D0u[[d]]) <- paste0("U", 1:num_re[d])
       true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
@@ -367,7 +368,7 @@ generate_bet_u <- function(DD, NN,
       for (n in 1:NN) {
         true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
                                               # mu = c(2, rep(0.5, times = num_re[d] - 1)),
-                                              mu = c(1, rep(0.5, times = num_re[d] - 1)),
+                                              mu = c(1.25, rep(0.75, times = num_re[d] - 1)),
                                               Sigma = D0u[[d]])
       }
     }
@@ -383,10 +384,13 @@ generate_bet_u <- function(DD, NN,
     return(true_bet_u = true_bet_u)
   }
 }
-get_hyper_prior_vcm <- function(prior_vcm_u_scl, num_re) {
-  prior_vcm_u_scl_adj <- prior_vcm_u_scl * (1 + 1/num_re)
-  out_mat <- matrix(-1.0, nrow = num_re, ncol = num_re)
-  diag(out_mat) <- rep(8.0, times = num_re) * prior_vcm_u_scl_adj
+get_hyper_prior_vcm <- function(vcm_u_scl, rel_var_to_cov, num_re) {
+  # vcm_u_scl_adj <- vcm_u_scl * (1 + 1/num_re)
+  cov_entry <- -1.0
+  var_entry <- abs(cov_entry) * rel_var_to_cov
+  out_mat <- matrix(cov_entry, nrow = num_re, ncol = num_re)
+  diag(out_mat) <- rep(var_entry, times = num_re)
+  out_mat <- out_mat * vcm_u_scl
   # solveme(out_mat)
   out_mat
 }
