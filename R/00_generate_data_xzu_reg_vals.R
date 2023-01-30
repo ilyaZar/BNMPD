@@ -79,7 +79,7 @@ generate_x_z_u <- function(TT,
   x_level <- options_reg_simul[["x_level"]]
   x_sd_within  <- sqrt(options_reg_simul[["reg_var_within"]])
   x_sd_among   <- sqrt(options_reg_simul[["reg_var_among"]])
-  spl_lvl <- c(0.7, 0.3)
+  spl_lvl <- c(0.6, 0.4)
   dim_z <- length(bet_z)
   dim_u <- length(bet_u)
   # BEGINNING OF REGRESSOR SIMULATION: --------------------------------------
@@ -144,7 +144,7 @@ get_sub_level_x <- function(other_regtype, level_split,
   x_level_tmp <- ifelse(other_regtype,
                         level_target * level_split,
                         level_target)
-  x_level_tmp / (1-sum(phi))
+  x_level_tmp * (1-sum(phi))
 }
 simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT, order_p) {
   if (is.null(regs) && is.null(bet_reg)) {
@@ -222,7 +222,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg,
   # reg_means <- stats::rnorm(max(dim_reg - 3, 0), mean = 0, sd = x_sd_among)
   if (!intercept && !policy_dummy) {
     weights <- rep(1/dim_reg, times = dim_reg) #(abs(bet_reg)/sum(abs(bet_reg)))
-    reg_means <- x_level * weights * sign(bet_reg)
+    reg_means <- x_level * weights
     reg_means <- reg_means / bet_reg
     # num_add_sims <- max(min(2, dim_reg - 1), 0)
     # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
@@ -230,10 +230,10 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg,
   } else if (intercept && !policy_dummy) {
     bet_tmp <- bet_reg[-1]
     dim_tmp <- length(bet_tmp)
-    x_lvl_tmp <- x_level - bet_reg[-1]
+    x_lvl_tmp <- x_level - bet_reg[1]
     weights <- rep(1/dim_tmp, times = dim_tmp) #(abs(bet_tmp)/sum(abs(bet_tmp)))
-    reg_means <- x_lvl_tmp * weights * sign(bet_tmp)
-    reg_means <- reg_means / bet_reg
+    reg_means <- x_lvl_tmp * weights
+    reg_means <- reg_means / bet_reg[-1]
     # num_add_sims <- max(min(2, dim_reg - 2), 0)
     # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
     #                reg_means)
@@ -266,7 +266,7 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg,
                           ncol = reg_len,
                           byrow = TRUE)
 
-  if (intercept && !policy_dummy) regs[, 1]   <- 1
+  if (intercept && !policy_dummy) regs <- cbind(1, regs)
   if (!intercept && policy_dummy) stop("Not yet implemented.") # regs[, 1] <- policy_dummy
   if (intercept && policy_dummy)  stop("Not yet implemented.") # regs[, 1:2] <- c(1, policy_dummy)
 
