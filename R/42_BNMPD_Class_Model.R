@@ -559,7 +559,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'
                             #' @details either \code{NULL} when none were passed
                             #'   or a list of true values as produced by
-                            #'   [BNMPD::generate_true_params] and written to
+                            #'   [BNMPD::new_trueParams] and written to
                             #'   .RData via [BNMPD::generate_simulation_study]
                             #'
                             get_true_params = function() {

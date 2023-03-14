@@ -19,7 +19,7 @@ generate_data_t_n(
 true parameter values and meta information such as model dimension, the
 seed under which the true parameters are generated, the logical indicators
 that describe which parameters to generate and their lengths, as provided
-by the function \code{\link[=generate_true_params]{generate_true_params()}}}
+by the function \code{\link[=new_trueParams]{new_trueParams()}}}
 
 \item{distribution}{specifies the distribution: "dirichlet", "gen-dirichlet",
 multinomial", "dirichlet-mult", "gen-dirichlet-mult", or "normal" (the
