@@ -92,7 +92,7 @@ new_trueParams <- function(dim_model,
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
   # 2. Set up parameter values: ---------------------------------------------
-  true_sig_sq <- set_simul_vals_sig_sq_x(sig_sq, DD, NN, options$dwn_scl)
+  true_sig_sq <- new_sig_sq_x(sig_sq, DD, NN, options$dwn_scl)
   true_phi    <- set_simul_vals_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
   true_bet_z  <- set_simul_vals_bet_z(SIMUL_Z_BETA, beta_z_lin,
                                       DD, num_z_regs,
@@ -158,7 +158,7 @@ set_simul_vals_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
 #'
 #' @return a matrix of dimension \code{DD x NN} of true parameter values for
 #'   sig_sq_x
-set_simul_vals_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
+new_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
   if (!is.null(sig_sq)) {
     check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
     if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
@@ -169,6 +169,8 @@ set_simul_vals_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
   }
   rownames(out_sig_sq) <- paste0("D", 1:DD)
   colnames(out_sig_sq) <- paste0("N", 1:NN)
+  structure(out_sig_sq,
+            class = c("true_sig_sq", "matrix"))
   return(out_sig_sq)
 }
 #' Sets true values (default or user supplied) for parameter bet_z
