@@ -170,7 +170,7 @@ new_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
   rownames(out_sig_sq) <- paste0("D", 1:DD)
   colnames(out_sig_sq) <- paste0("N", 1:NN)
   structure(out_sig_sq,
-            class = c("true_sig_sq", "matrix"))
+            class = c("true_sig_sq", "matrix", "array"))
   return(out_sig_sq)
 }
 #' Sets true values (default or user supplied) for parameter bet_z
