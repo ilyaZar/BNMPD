@@ -58,18 +58,18 @@
 #'   }
 #' @export
 new_trueParams <- function(dim_model,
-                                 sig_sq = NULL,
-                                 phi = NULL,
-                                 beta_z_lin = NULL,
-                                 settings_pars = list(SIMUL_PHI = TRUE,
-                                                      SIMUL_Z_BETA = TRUE,
-                                                      SIMUL_U_BETA = TRUE,
-                                                      num_z_regs = 3,
-                                                      num_u_regs = 2,
-                                                      order_p_vec = 1),
-                                 options = list(dwn_scl = 10,
-                                                intercepts = NULL),
-                                 seed_taken) {
+                           sig_sq = NULL,
+                           phi = NULL,
+                           beta_z_lin = NULL,
+                           settings_pars = list(SIMUL_PHI = TRUE,
+                                                SIMUL_Z_BETA = TRUE,
+                                                SIMUL_U_BETA = TRUE,
+                                                num_z_regs = 3,
+                                                num_u_regs = 2,
+                                                order_p_vec = 1),
+                           options = list(dwn_scl = 10,
+                                          intercepts = NULL),
+                           seed_taken) {
   SIMUL_PHI    <- settings_pars$SIMUL_PHI
   SIMUL_Z_BETA <- settings_pars$SIMUL_Z_BETA
   SIMUL_U_BETA <- settings_pars$SIMUL_U_BETA
