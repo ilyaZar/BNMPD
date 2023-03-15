@@ -149,6 +149,7 @@ new_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
   } else {
     out_phi <- NULL
   }
+
   return(out_phi)
 }
 #' Sets true values (default or user supplied) for parameter sig_sq_x
@@ -171,7 +172,6 @@ new_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
   colnames(out_sig_sq) <- paste0("N", 1:NN)
   structure(out_sig_sq,
             class = c("true_sig_sq", "matrix", "array"))
-  return(out_sig_sq)
 }
 #' Sets true values (default or user supplied) for parameter bet_z
 #'
