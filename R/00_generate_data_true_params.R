@@ -93,7 +93,7 @@ new_trueParams <- function(dim_model,
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
   # 2. Set up parameter values: ---------------------------------------------
   true_sig_sq <- new_sig_sq_x(sig_sq, DD, NN, options$dwn_scl)
-  true_phi    <- set_simul_vals_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
+  true_phi    <- new_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
   true_bet_z  <- set_simul_vals_bet_z(SIMUL_Z_BETA, beta_z_lin,
                                       DD, num_z_regs,
                                       options$intercepts$at_z)
@@ -124,7 +124,7 @@ new_trueParams <- function(dim_model,
 #'   dimension \code{order_p_vec[d] x NN} that stores the phi's per number of
 #'   autoregressions, number of cross section and per component \code{d}.
 #' @export
-set_simul_vals_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
+new_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
   if (SIMUL_PHI) {
     if (length(order_p_vec) == 1) {
       order_p_vec <- rep(order_p_vec, times = DD)
@@ -154,7 +154,7 @@ set_simul_vals_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
 #' Sets true values (default or user supplied) for parameter sig_sq_x
 #'
 #' @inheritParams new_trueParams
-#' @inheritParams set_simul_vals_phi
+#' @inheritParams new_phi
 #'
 #' @return a matrix of dimension \code{DD x NN} of true parameter values for
 #'   sig_sq_x
@@ -176,7 +176,7 @@ new_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
 #' Sets true values (default or user supplied) for parameter bet_z
 #'
 #' @inheritParams new_trueParams
-#' @inheritParams set_simul_vals_phi
+#' @inheritParams new_phi
 #'
 #' @return a list of length \code{DD} each element being a vector of the
 #'   corresponding number of regressors
@@ -199,7 +199,7 @@ set_simul_vals_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs,
 #' Sets true values (default or user supplied) for parameter bet_u
 #'
 #' @inheritParams new_trueParams
-#' @inheritParams set_simul_vals_phi
+#' @inheritParams new_phi
 #'
 #' @return a list of two elements for bet_u and vcm_bet_u each again a list of
 #'   dimension \code{DD} with first element being a matrix of dimension
@@ -247,7 +247,7 @@ get_default_sig_sq <- function(DD, dwn_scl) {
 #' Get default values for true \code{phi} parameters in simulation
 #'
 #' @inheritParams new_trueParams
-#' @inheritParams set_simul_vals_phi
+#' @inheritParams new_phi
 #'
 #' @return a list of length \code{DD} with elements being matrices of dimension
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
