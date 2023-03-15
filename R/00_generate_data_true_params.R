@@ -149,8 +149,8 @@ new_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
   } else {
     out_phi <- NULL
   }
-
-  return(out_phi)
+  structure(out_phi,
+            class = c("true_phi", list))
 }
 #' Sets true values (default or user supplied) for parameter sig_sq_x
 #'
