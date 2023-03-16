@@ -94,7 +94,7 @@ new_trueParams <- function(dim_model,
   # 2. Set up parameter values: ---------------------------------------------
   true_sig_sq <- new_sig_sq_x(sig_sq, DD, NN, options$dwn_scl)
   true_phi    <- new_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
-  true_bet_z  <- set_simul_vals_bet_z(SIMUL_Z_BETA, beta_z_lin,
+  true_bet_z  <- new_bet_z(SIMUL_Z_BETA, beta_z_lin,
                                       DD, num_z_regs,
                                       options$intercepts$at_z)
   tmp_u       <- set_simul_vals_bet_vcm_u(SIMUL_U_BETA, DD, NN,
@@ -180,7 +180,7 @@ new_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
 #'
 #' @return a list of length \code{DD} each element being a vector of the
 #'   corresponding number of regressors
-set_simul_vals_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs,
+new_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs,
                                  intercepts) {
   if (SIMUL_Z_BETA) {
     if (!is.null(beta_z_lin)) {
@@ -194,7 +194,8 @@ set_simul_vals_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs,
   } else {
     out_bet_z <- NULL
   }
-  return(out_bet_z)
+  structure(out_bet_z,
+            class = "true_bet_z")
 }
 #' Sets true values (default or user supplied) for parameter bet_u
 #'
