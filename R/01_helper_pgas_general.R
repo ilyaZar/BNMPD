@@ -9,7 +9,7 @@ cleanup_cluster <- function(pe) {
   if ("cl" %in% names(pe)) {
     cat("Closing cluster ... \n")
     if(pe$cluster_type == "PSOCK") snow::stopCluster(pe$cl)
-    if(pe$cluster_type == "MPI") Rmpi::mpi.exit()
+    # if(pe$cluster_type == "MPI") Rmpi::mpi.exit()
     cat(paste0(pe$cluster_type, " cluster closed!\n"))
   }
   options(warn = 0)
