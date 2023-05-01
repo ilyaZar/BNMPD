@@ -24,8 +24,13 @@
 #'      \item{\code{seed_pgas_init: }}{set in the very first PGAS run, i.e.
 #'      when \code{pgas_init()} is run}
 #'    }
-#' @param run_type either 'PMCMC' for particle Gibbs or 'MCMC' for a plain MCMC
+#' @param sim_type either 'PMCMC' for particle Gibbs or 'MCMC' for a plain MCMC
 #'   sampler where true states are taken as conditioning trajectory
+#' @param mod_type either 'empirical' or 'simulation' depending on what model
+#'   type is run
+#' @param close_cluster logical; if \code{TRUE} then cluster is closed properly
+#'   after PGAS run via [cleanup_cluster()]; otherwise only the 'options' are
+#'   set back to previous defaults
 #'
 #' @return a list object of class "PMCMC" or "MCMC" depending on \code{run_type}
 #'   with components being: all MCMC parameter draws and all drawn state
@@ -35,7 +40,8 @@ pgas <- function(pgas_model,
                  settings_type = "clean_run",
                  settings_seed = NULL,
                  sim_type = "pmcmc",
-                 mod_type = "empirical") {
+                 mod_type = "empirical",
+                 close_cluster = FALSE) {
   check_settings_input(settings_type, sim_type, mod_type)
   # Initialize environment for parallel execution
   envir_par <- generate_environment_parallel(environment(),
@@ -65,7 +71,7 @@ pgas <- function(pgas_model,
       envir_par$X[ , , m, ] <- envir_par$true_states
     }
   }
-  cleanup_cluster(pe = envir_par)
+  cleanup_cluster(pe = envir_par, close = close_cluster)
   out <- generate_pgas_output(pe = envir_par, mod_type, sim_type)
   return(out)
 }

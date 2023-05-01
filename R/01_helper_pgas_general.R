@@ -4,13 +4,16 @@ check_settings_input <- function(st_type, sm_type, md_type) {
   stopifnot(`Unknown mod_type...` = md_type %in% c("empirical", "simulation"))
   return(invisible(NULL))
 }
-cleanup_cluster <- function(pe) {
+cleanup_cluster <- function(pe, close = TRUE) {
+  stopifnot(`Arg. close must be logical.` = is.logical(close))
   cat("PGAS finished!\n")
-  if ("cl" %in% names(pe)) {
-    cat("Closing cluster ... \n")
-    if(pe$cluster_type == "PSOCK") snow::stopCluster(pe$cl)
-    # if(pe$cluster_type == "MPI") Rmpi::mpi.exit()
-    cat(paste0(pe$cluster_type, " cluster closed!\n"))
+  if (close) {
+    if ("cl" %in% names(pe)) {
+      cat("Closing cluster ... \n")
+      if(pe$cluster_type == "PSOCK") snow::stopCluster(pe$cl)
+      if(pe$cluster_type == "MPI") Rmpi::mpi.exit()
+      cat(paste0(pe$cluster_type, " cluster closed!\n"))
+    }
   }
   options(warn = 0)
   cat("Resetting options!\n")
