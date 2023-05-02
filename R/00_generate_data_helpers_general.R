@@ -13,6 +13,9 @@
 #'
 #' @param DD integer giving the multivariate dimension
 #' @param NN number of cross sectional units (repetitions of target values)
+#' @param distribution a character string of either "dirichlet",
+#'   "gen-dirichlet", "multinomial", "dirichlet-mult", "gen-dirichlet-mult"
+#'   giving the distribution
 #' @param tuning_parameters a set of tuning parameters that generate a
 #'   reasonably spaced sequence of target values
 #'
@@ -23,32 +26,42 @@
 #' @examples
 #' get_dirichlet_levels(DD = 3, NN = 4)
 get_dirichlet_levels <- function(DD, NN,
+                                 distribution,
                                  target_val_fixed = NULL,
                                  tuning_parameters = list(seq_start = 0.3,
                                                           seq_step = 0.025,
                                                           seq_rep = 2,
                                                           seq_scale = 1e4)) {
+  browser()
+  DD2 <- get_DD2(distribution = distribution, DD = DD)
   if (is.null(target_val_fixed)) {
     seq_start <- tuning_parameters$seq_start
     seq_step  <- tuning_parameters$seq_step
     seq_rep   <- tuning_parameters$seq_rep
 
     tuned_vec <- rep(seq(from = seq_start,
-                         to = seq_start + seq_step * DD,
+                         to = seq_start + seq_step * DD2,
                          by = seq_step),
                      each = seq_rep)
-    tuned_vec <- tuned_vec[1:DD]
+    tuned_vec <- tuned_vec[1:DD2]
     tuned_vec <- tuned_vec/sum(tuned_vec)
 
     out <- matrix(tuned_vec * tuning_parameters$seq_scale,
-                  nrow = DD,
+                  nrow = DD2,
                   ncol = NN)
   } else {
-    out <- matrix(rep(target_val_fixed, times = NN * DD),
-                  nrow = DD,
+    out <- matrix(rep(target_val_fixed, times = NN * DD2),
+                  nrow = DD2,
                   ncol = NN)
   }
   return(out)
+}
+get_DD2 <- function(distribution, DD) {
+  switch(distribution,
+         "dirichlet" = DD,
+         "dirichlet-mult" = DD,
+         "gen-dirichlet" = DD * 2 -1,
+         "gen-dirichlet-mult" = DD * 2)
 }
 #' Save simulated data and true parameter values used to generate it.
 #'
