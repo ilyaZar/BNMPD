@@ -208,9 +208,9 @@ new_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs,
 #'   matrix \code{num_u_regs x num_u_regs} (covariance matrix for random
 #'   effects)
 #' @export
-set_simul_vals_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
-                                     num_u_regs, seed_taken,
-                                     intercepts) {
+new_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
+                          num_u_regs, seed_taken,
+                          intercepts) {
   if (SIMUL_U_BETA) {
     if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
     num_reg_seq <- if (length(num_u_regs) == 1) {
@@ -224,12 +224,13 @@ set_simul_vals_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
     true_out_u <- BNMPD::generate_bet_u(DD, NN, TRUE, num_reg_seq,
                                         seed_no = seed_taken)
     true_bet_u <- true_out_u[[1]]
-    true_D0u_u <- true_out_u[[2]]
+    true_D0u_u <- true_out_u[[2]] # nolint: object_name_linter.
   } else {
     true_bet_u <- NULL
-    true_D0u_u <- NULL
+    true_D0u_u <- NULL # nolint: object_name_linter.
   }
-  return(list(true_bet_u = true_bet_u, true_D0u_u = true_D0u_u))
+  structure(list(true_bet_u = true_bet_u, true_D0u_u = true_D0u_u),
+            class = "true_bet_vcm_u")
 }
 #' Get default values for true \code{sig_sq} parameters in simulation
 #'
@@ -237,12 +238,12 @@ set_simul_vals_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
 #' @param dwn_scl control parameter that scales variance upwards/downwards
 #'
 #' @return a vector of length \code{DD}
-get_default_sig_sq <- function(DD, dwn_scl) {
+get_default_sig_sq <- function(DD, dwn_scl) { # nolint: object_name_linter.
   str_scl <- 3.1 / dwn_scl
   add_scl <- 0.1 / dwn_scl
 
-  # str_scl <- 2.1 / dwn_scl
-  # add_scl <- 1.1 / dwn_scl
+  # str_scl <- 2.1 / dwn_scl # nolint: commented_code_linter.
+  # add_scl <- 1.1 / dwn_scl # nolint: object_name_linter.
   return(str_scl + add_scl * 0:(DD - 1))
 }
 #' Get default values for true \code{phi} parameters in simulation
