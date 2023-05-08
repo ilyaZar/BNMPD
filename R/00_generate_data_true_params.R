@@ -120,9 +120,13 @@ new_trueParams <- function(distribution,
     beta_z_lin,
     DD, num_z_regs,
     options$intercepts$at_z)
-  tmp_u       <- new_bet_vcm_u(SIMUL_U_BETA, DD, NN,
-                               num_u_regs, seed_taken,
-                               options$intercepts$at_u)
+  tmp_u  <- new_bet_vcm_u(
+    SIMUL_U_BETA,
+    distribution,
+    DD, NN,
+    num_u_regs,
+    seed_taken,
+    options$intercepts$at_u)
   true_bet_u <- tmp_u[["true_bet_u"]]
   true_D0u_u <- tmp_u[["true_D0u_u"]]
 
@@ -261,21 +265,18 @@ get_manual_bet_z <- function(beta_z_lin, DD) {
 #'   matrix \code{num_u_regs x num_u_regs} (covariance matrix for random
 #'   effects)
 #' @export
-new_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
-                          num_u_regs, seed_taken,
+new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
+                          DD, NN,
+                          num_u_regs,
+                          seed_taken,
                           intercepts) {
   if (SIMUL_U_BETA) {
-    if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
-    num_reg_seq <- if (length(num_u_regs) == 1) {
-      num_reg_seq <- rep(num_u_regs, times = DD)
-    } else if (length(num_u_regs) == DD) {
-      num_reg_seq <- num_u_regs
-    } else {
-      stop(paste0("Number of random effects must be length, in which case it",
-                  "gets recycled, or DD!"))
-    }
-    true_out_u <- BNMPD::generate_bet_u(DD, NN, TRUE, num_reg_seq,
-                                        seed_no = seed_taken)
+    DD <- get_DD(distribution, DD)
+    num_reg_seq <- get_num_reg_seq(num_u_regs, DD)
+    true_out_u  <- generate_bet_u(
+      distribution,
+      DD, NN, TRUE, num_reg_seq,
+      seed_no = seed_taken)
     true_bet_u <- true_out_u[[1]]
     true_D0u_u <- true_out_u[[2]] # nolint: object_name_linter.
   } else {
@@ -284,6 +285,18 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
   }
   structure(list(true_bet_u = true_bet_u, true_D0u_u = true_D0u_u),
             class = "true_bet_vcm_u")
+}
+get_num_reg_seq <- function(num_u_regs, DD) {
+  if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
+  if (length(num_u_regs) == 1) {
+    num_reg_seq <- rep(num_u_regs, times = DD)
+  } else if (length(num_u_regs) == DD) {
+    num_reg_seq <- num_u_regs
+  } else {
+    stop(paste0("Number of random effects must be length, in which case it",
+                "gets recycled, or DD!"))
+  }
+  return(num_reg_seq)
 }
 #' Get default values for true \code{sig_sq} parameters in simulation
 #'
@@ -441,13 +454,16 @@ scale_up_intercept <- function(vals_list, scl_up, intercept_ids) {
 #'   }
 #'
 #' @export
-generate_bet_u <- function(DD, NN,
+generate_bet_u <- function(distribution,
+                           DD, NN,
                            from_IW,
                            num_re,
                            vcm_u_scl = 0.03,
                            rel_var_to_cov = 5,
                            n0u = 50, # n0u <- num_re + 1
                            seed_no = 42) {
+
+  DD2 <- get_DD2(distribution, DD)
   true_bet_u <- vector("list", DD)
   if (from_IW) {
     stopifnot(is.numeric(num_re) && (length(num_re) == DD))
@@ -468,8 +484,12 @@ generate_bet_u <- function(DD, NN,
                                               Sigma = D0u[[d]])
       }
     }
-    return(list(true_bet_u = true_bet_u,
-                true_vcm_u = D0u))
+    out <- list(true_bet_u = true_bet_u,
+                true_vcm_u = D0u)
+    if (2 * DD == DD2) out <- list(true_bet_u = list(A = true_bet_u,
+                                                     B = true_bet_u),
+                                   true_vcm_u = list(A = D0u,
+                                                     B = D0u))
   } else {
     warning("Not simulating RE with VCM distributed as ~IW().")
     stopifnot(is.numeric(num_re) && (length(num_re) == 1))
@@ -477,8 +497,11 @@ generate_bet_u <- function(DD, NN,
     for (d in 1:DD) {
       true_bet_u[[d]] <- vals[1:num_re + num_re*(d - 1), , drop = FALSE]
     }
-    return(true_bet_u = true_bet_u)
+    out <- list(true_bet_u = true_bet_u)
+    if (2 * DD == DD2) out <- list(true_bet_u = list(A = true_bet_u,
+                                                     B = true_bet_u))
   }
+  return(out)
 }
 get_hyper_prior_vcm <- function(vcm_u_scl, rel_var_to_cov, num_re) {
   # vcm_u_scl_adj <- vcm_u_scl * (1 + 1/num_re)
