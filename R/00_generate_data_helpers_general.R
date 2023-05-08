@@ -30,7 +30,6 @@ get_dirichlet_levels <- function(distribution,
                                                           seq_step = 0.025,
                                                           seq_rep = 2,
                                                           seq_scale = 1e4)) {
-  browser()
   DD2 <- get_DD2(distribution = distribution, DD = DD)
   if (is.null(target_val_fixed)) {
     seq_start <- tuning_parameters$seq_start
@@ -52,6 +51,20 @@ get_dirichlet_levels <- function(distribution,
                   nrow = DD2,
                   ncol = NN)
   }
+  out <- set_name_target_vals(out, DD, DD2, NN)
+  return(out)
+}
+set_name_target_vals <- function(out, DD, DD2, NN) {
+  if (DD == DD2) {
+    rownames(out) <- paste0("D", seq_len(DD))
+    colnames(out) <- paste0("N", seq_len(NN))
+  } else if (2 * DD == DD2) {
+    rownames(out) <- c(paste0("A_D", seq_len(DD)),
+                       paste0("B_D", seq_len(DD)))
+    colnames(out) <- paste0("N", seq_len(NN))
+  } else {
+    stop("Something went wrong. DD and DD2 dims do not match properly.")
+  }
   return(out)
 }
 get_DD <- function(distribution, DD) {
@@ -62,6 +75,7 @@ get_DD <- function(distribution, DD) {
          "gen-dirichlet-mult" = DD - 1)
 }
 get_DD2 <- function(distribution, DD) {
+  DD <- unname(DD)
   switch(distribution,
          "dirichlet" = DD,
          "dirichlet-mult" = DD,
