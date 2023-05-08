@@ -97,9 +97,9 @@ new_trueParams <- function(dim_model,
   true_bet_z  <- new_bet_z(SIMUL_Z_BETA, beta_z_lin,
                                       DD, num_z_regs,
                                       options$intercepts$at_z)
-  tmp_u       <- set_simul_vals_bet_vcm_u(SIMUL_U_BETA, DD, NN,
-                                          num_u_regs, seed_taken,
-                                          options$intercepts$at_u)
+  tmp_u       <- new_bet_vcm_u(SIMUL_U_BETA, DD, NN,
+                               num_u_regs, seed_taken,
+                               options$intercepts$at_u)
   true_bet_u <- tmp_u[["true_bet_u"]]
   true_D0u_u <- tmp_u[["true_D0u_u"]]
 
