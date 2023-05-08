@@ -13,20 +13,18 @@
 #'
 #' @param DD integer giving the multivariate dimension
 #' @param NN number of cross sectional units (repetitions of target values)
-#' @param distribution a character string of either "dirichlet",
-#'   "gen-dirichlet", "multinomial", "dirichlet-mult", "gen-dirichlet-mult"
-#'   giving the distribution
 #' @param tuning_parameters a set of tuning parameters that generate a
 #'   reasonably spaced sequence of target values
+#' @inheritParams generate_data_t_n
 #'
 #' @return a matrix of dimension \code{NN x DD}, with each row being the target
 #'   levels (currently all the same)
 #' @export
 #'
 #' @examples
-#' get_dirichlet_levels(DD = 3, NN = 4)
-get_dirichlet_levels <- function(DD, NN,
-                                 distribution,
+#' get_dirichlet_levels(distribution = "dirichlet", DD = 3, NN = 4)
+get_dirichlet_levels <- function(distribution,
+                                 DD, NN,
                                  target_val_fixed = NULL,
                                  tuning_parameters = list(seq_start = 0.3,
                                                           seq_step = 0.025,
@@ -56,12 +54,19 @@ get_dirichlet_levels <- function(DD, NN,
   }
   return(out)
 }
+get_DD <- function(distribution, DD) {
+  switch(distribution,
+         "dirichlet" = DD,
+         "dirichlet-mult" = DD,
+         "gen-dirichlet" = DD,
+         "gen-dirichlet-mult" = DD - 1)
+}
 get_DD2 <- function(distribution, DD) {
   switch(distribution,
          "dirichlet" = DD,
          "dirichlet-mult" = DD,
-         "gen-dirichlet" = DD * 2 -1,
-         "gen-dirichlet-mult" = DD * 2)
+         "gen-dirichlet" = DD * 2,
+         "gen-dirichlet-mult" = DD * 2 - 2)
 }
 #' Save simulated data and true parameter values used to generate it.
 #'
