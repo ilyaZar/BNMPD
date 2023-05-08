@@ -62,7 +62,7 @@
 #' @return a named list of two elements, the first one being a list of three:
 #'   \itemize{
 #'   \item{\code{data: }}{a list of at most two elements (if \code{distribution}
-#'   is of type Dirichlet , the second element is \code{NULL}, but otherwise has
+#'   is of type Dirichlet, the second element is \code{NULL}, but otherwise has
 #'   the total number of counts e.g. in a Dirichlet-multinomial model)}
 #'   \item{\code{regs: }}{list of regressors with two elements: 'z' and 'u'}
 #'   \item{\code{states: }}{simulated latent states}
