@@ -102,21 +102,24 @@ new_trueParams <- function(distribution,
   }
   # 2. Set up parameter values: ---------------------------------------------
   true_sig_sq <- new_sig_sq_x(
-    distribution = distribution,
+    distribution,
     sig_sq,
     DD,
     NN,
     options$dwn_scl)
   true_phi <- new_phi(
     SIMUL_PHI,
-    distribution = distribution,
+    distribution,
     phi,
     DD,
     NN,
     order_p_vec)
-  true_bet_z  <- new_bet_z(SIMUL_Z_BETA, beta_z_lin,
-                                      DD, num_z_regs,
-                                      options$intercepts$at_z)
+  true_bet_z  <- new_bet_z(
+    SIMUL_Z_BETA,
+    distribution,
+    beta_z_lin,
+    DD, num_z_regs,
+    options$intercepts$at_z)
   tmp_u       <- new_bet_vcm_u(SIMUL_U_BETA, DD, NN,
                                num_u_regs, seed_taken,
                                options$intercepts$at_u)
@@ -220,22 +223,32 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
 #'
 #' @return a list of length \code{DD} each element being a vector of the
 #'   corresponding number of regressors
-new_bet_z <- function(SIMUL_Z_BETA, beta_z_lin, DD, num_z_regs,
-                                 intercepts) {
+new_bet_z <- function(SIMUL_Z_BETA,
+                      distribution,
+                      beta_z_lin,
+                      DD, num_z_regs,
+                      intercepts) {
   if (SIMUL_Z_BETA) {
     if (!is.null(beta_z_lin)) {
-      check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
-      if (!check_bet_z) stop("'beta_z_lin' not a list or not of length = DD...")
-      out_bet_z <- beta_z_lin
+      out_bet_z <- get_manual_bet_z(beta_z_lin, DD)
     } else {
       if (is.null(num_z_regs)) stop("Num. of 'beta_z_lin' regressors required.")
-      out_bet_z <- get_default_beta_z_lin(DD, num = num_z_regs, intercepts)
+      out_bet_z <- get_default_beta_z_lin(
+        distribution,
+        DD,
+        num = num_z_regs,
+        intercepts)
     }
   } else {
     out_bet_z <- NULL
   }
   structure(out_bet_z,
             class = "true_bet_z")
+}
+get_manual_bet_z <- function(beta_z_lin, DD) {
+  check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
+  if (!check_bet_z) stop("'beta_z_lin' not a list or not of length = DD...")
+  beta_z_lin
 }
 #' Sets true values (default or user supplied) for parameter bet_u
 #'
@@ -362,10 +375,12 @@ get_order_p_vec <- function(order_p_vec, DD) {
 #' @return a list of length \code{DD}, with number of elements = \code{num}, or,
 #'   if \code{num} is a vector of length \code{DD}, \code{num[d]}, for
 #'   \code{d=1,...,DD}
-get_default_beta_z_lin <- function(DD, num, intercepts) {
+get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
+  DD  <- get_DD(distribution, DD)
+  DD2 <- get_DD2(distribution, DD)
   num_reg_len <- length(num)
   tmp1 <- c(0.325, -0.44)  # tmp values large, first component negative
-  tmp2 <- c(0.327, -0.435)    # tmp values large, first component positive
+  tmp2 <- c(0.327, -0.435) # tmp values large, first component positive
   tmp3 <- c(0.33, -0.43)   # tmp values small, first component negative
   tmp4 <- c(0.332, -0.415) # tmp values small, first component positive
   if (num_reg_len == 1) {
@@ -388,6 +403,7 @@ get_default_beta_z_lin <- function(DD, num, intercepts) {
                     tmp_pos_neg_small)
   list_vals <- rep(list_vals, length.out = DD)
   list_vals <- scale_up_intercept(list_vals, 100, intercepts)
+  if (2 * DD == DD2) list_vals <- list(A = list_vals, B = list_vals)
   return(list_vals)
 }
 scale_up_intercept <- function(vals_list, scl_up, intercept_ids) {
