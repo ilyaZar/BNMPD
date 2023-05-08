@@ -94,13 +94,19 @@ new_trueParams <- function(distribution,
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
   if (distribution %in% c("gen-dirichlet", "gen-dirichlet-mult")) {
-    DD2 <- get_DD2_dim(distribution = distribution, DD = model_dim[3])
+    DD2 <- get_DD2(distribution = distribution, DD = model_dim[3])
     cat(crayon::green("Setting !internal! dimension "), crayon::yellow("DD2"),
         crayon::green("to "), crayon::red(DD2),
         crayon::green(paste0("for ", distribution," type parameters!\n")))
+    model_dim <- c(model_dim, DD2 = DD2)
   }
   # 2. Set up parameter values: ---------------------------------------------
-  true_sig_sq <- new_sig_sq_x(sig_sq, DD, NN, options$dwn_scl)
+  true_sig_sq <- new_sig_sq_x(
+    distribution = distribution,
+    sig_sq,
+    DD,
+    NN,
+    options$dwn_scl)
   true_phi    <- new_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
   true_bet_z  <- new_bet_z(SIMUL_Z_BETA, beta_z_lin,
                                       DD, num_z_regs,
@@ -122,16 +128,6 @@ new_trueParams <- function(distribution,
                                                PAR_SETTINGS = settings_pars,
                                                SEED_NO = seed_taken)
   return(true_params = par_trues)
-}
-get_DD2_dim <- function(distribution, DD) {
-  if (distribution == "gen-dirichlet") {
-    return(2 * DD)
-  } else if (distribution == "gen-dirichlet-mult") {
-    return(2 * DD - 2)
-  } else {
-    stop("Unknown distribution")
-  }
-  return(invisible(distribution))
 }
 #' Sets true values (default or user supplied) for parameter phi
 #'
@@ -178,19 +174,52 @@ new_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
 #'
 #' @return a matrix of dimension \code{DD x NN} of true parameter values for
 #'   sig_sq_x
-new_sig_sq_x <- function(sig_sq, DD, NN, dwn_scl) {
-  if (!is.null(sig_sq)) {
-    check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
-    if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
-    out_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
+new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
+  if (distribution %in% c("dirichlet", "multinomial", "dirichlet-mult")) {
+    if (!is.null(sig_sq)) {
+      check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
+      if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
+      out_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
+    } else {
+      tmp_sig_sq  <- get_default_sig_sq(distribution, DD, dwn_scl)
+      out_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
+    }
+    rownames(out_sig_sq) <- paste0("D", 1:DD)
+    colnames(out_sig_sq) <- paste0("N", 1:NN)
+    return(structure(out_sig_sq,
+                     class = c("true_sig_sq", "matrix", "array")))
+  } else if (distribution %in% c("gen-dirichlet")) {
+    if (!is.null(sig_sq)) {
+      check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
+      if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
+      out_sig_sq <- array(sig_sq, c(DD, NN, 2))
+    } else {
+      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
+      out_sig_sq <- array(tmp_sig_sq, c(DD, NN, 2))
+    }
+    dimnames(out_sig_sq) <- list(paste0("D", 1:DD),
+                                 paste0("N", 1:NN),
+                                 c("A", "B"))
+    return(structure(out_sig_sq,
+                     class = c("true_sig_sq", "matrix", "array")))
+  } else if (distribution %in% c("gen-dirichlet-mult")) {
+    if (!is.null(sig_sq)) {
+      check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
+      if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
+      out_sig_sq <- array(sig_sq, c(DD - 1, NN, 2))
+    } else {
+      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
+      out_sig_sq <- array(tmp_sig_sq, c(DD - 1, NN, 2))
+    }
+    dimnames(out_sig_sq) <- list(paste0("D", 1:(DD - 1)),
+                                 paste0("N", 1:NN),
+                                 c("A", "B"))
+    return(structure(out_sig_sq,
+                     class = c("true_sig_sq", "matrix", "array")))
   } else {
-    tmp_sig_sq  <- get_default_sig_sq(DD, dwn_scl)
-    out_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
+    stop("Uknown distribution argument.")
   }
-  rownames(out_sig_sq) <- paste0("D", 1:DD)
-  colnames(out_sig_sq) <- paste0("N", 1:NN)
-  structure(out_sig_sq,
-            class = c("true_sig_sq", "matrix", "array"))
+  return(invisible(distribution))
 }
 #' Sets true values (default or user supplied) for parameter bet_z
 #'
@@ -257,12 +286,17 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
 #' @param dwn_scl control parameter that scales variance upwards/downwards
 #'
 #' @return a vector of length \code{DD}
-get_default_sig_sq <- function(DD, dwn_scl) { # nolint: object_name_linter.
+get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_name_linter.
+  browser()
+  DD  <- get_DD(distribution, DD)
+  DD2 <- get_DD2(distribution, DD)
   str_scl <- 3.1 / dwn_scl
   add_scl <- 0.1 / dwn_scl
 
   # str_scl <- 2.1 / dwn_scl # nolint: commented_code_linter.
   # add_scl <- 1.1 / dwn_scl # nolint: object_name_linter.
+  sig_vals <- str_scl + add_scl * 0:(DD - 1)
+  if(2 * DD == DD2) sig_vals <- rep(sig_vals, times = 2)
   return(str_scl + add_scl * 0:(DD - 1))
 }
 #' Get default values for true \code{phi} parameters in simulation
