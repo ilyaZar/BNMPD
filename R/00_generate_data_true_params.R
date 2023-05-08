@@ -2,7 +2,7 @@
 #'
 #' Arguments specify true parameter values, dimension of the model and which
 #' regressor types to use. For random effects (beta_u-type regressors) a seed
-#' makes sure to produce the same setup. Output container can be used when
+#' makes sure to produce the same setup. This output container can be used when
 #' plotting diagnostics (in a simulation study) as well as generating simulated
 #' data sets based on the true parameter values.
 #'
@@ -22,23 +22,23 @@
 #'   (z-type) covariates are included}
 #'    \item{SIMUL_U_BETA: }{logical; if \code{TRUE}, then random effects (u-type
 #'    regressors) are simulated based on the argument \code{seed_taken}}
-#'   \item{num_z_regs: }{integer giving the number of z-type regressors (either the
-#'   same number for all multivariate components, or a vector of length equal to
-#'   the number of multivariate components)}
-#'      \item{num_u_regs: }{integer giving the number of random effects per cross
-#'   section to simulate (either the same number for all multivariate
+#'   \item{num_z_regs: }{integer giving the number of z-type regressors (either
+#'   the same number for all multivariate components, or a vector of length
+#'   equal to the number of multivariate components)}
+#'   \item{num_u_regs: }{integer giving the number of random effects per
+#'   cross section to simulate (either the same number for all multivariate
 #'   components, or a vector of length equal to the number of multivariate
 #'   components; currently not varying along the cross sectional units but
 #'   extension is possible)}
-#'      \item{order_p_vec: }{a vector of length DD with integers > 0 giving the order of
-#'   auto-regression per component d}
+#'   \item{order_p_vec: }{a vector of length DD with integers >= 0 giving the
+#'   order of auto-regression per component d=1,...,DD}
 #'   }
 #' @param options a list with settings for true parameter generation with first
 #'   component being a \code{dwn_scl} value for the variance parameter
 #'   \code{sigma} and the second an optional list with two logical vectors of
 #'   length DD indicating whether the corresponding component (either at z or u)
 #'   should have an intercept
-#' @param seed_taken the seed used drawing random effects
+#' @param seed_taken the seed used for drawing random effects
 #'
 #' @return an object of class "\code{trueParams}" which is a list of three: true
 #'   parameter values as a list, meta information such as model dimension, the
