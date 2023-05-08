@@ -22,15 +22,16 @@
 #' @export
 #'
 #' @examples
-#' get_dirichlet_levels(distribution = "dirichlet", DD = 3, NN = 4)
-get_dirichlet_levels <- function(distribution,
-                                 DD, NN,
-                                 target_val_fixed = NULL,
-                                 tuning_parameters = list(seq_start = 0.3,
-                                                          seq_step = 0.025,
-                                                          seq_rep = 2,
-                                                          seq_scale = 1e4)) {
-  DD2 <- get_DD2(distribution = distribution, DD = DD)
+#' get_target_dist_levels(distribution = "dirichlet", DD = 3, NN = 4)
+get_target_dist_levels <- function(distribution,
+                                   DD, NN,
+                                   target_val_fixed = NULL,
+                                   tuning_parameters = list(seq_start = 0.3,
+                                                            seq_step = 0.025,
+                                                            seq_rep = 2,
+                                                            seq_scale = 1e4)) {
+  DD  <- get_DD(distribution, DD)
+  DD2 <- get_DD2(distribution,DD)
   if (is.null(target_val_fixed)) {
     seq_start <- tuning_parameters$seq_start
     seq_step  <- tuning_parameters$seq_step
@@ -218,18 +219,18 @@ get_name_num <- function(type, par, DD) {
   if (type == "reg_z") {
     seq_regs <- lapply(par, length)
     tmp_name <- paste0(paste0(paste0("Z_", sapply(lapply(seq_regs,
-                                                            function(x) {
-                                                              seq_len(x)}),
-                                                     as.character)), "_"),
-                          rep(1:DD, unlist(seq_regs)))
+                                                         function(x) {
+                                                           seq_len(x)}),
+                                                  as.character)), "_"),
+                       rep(1:DD, unlist(seq_regs)))
   }
   if (type == "reg_u") {
     seq_regs <- lapply(par, nrow)
     tmp_name <- paste0(paste0(paste0("U_", sapply(lapply(seq_regs,
-                                                            function(x) {
-                                                              seq_len(x)}),
-                                                     as.character)), "_"),
-                          rep(1:DD, unlist(seq_regs)))
+                                                         function(x) {
+                                                           seq_len(x)}),
+                                                  as.character)), "_"),
+                       rep(1:DD, unlist(seq_regs)))
   }
   list(num = sum(unlist(seq_regs)),
        names = tmp_name)
@@ -499,7 +500,7 @@ get_zero_or_defaults <- function(true_params) {
                                              y[] <- 0;
                                              diag(y) <- 1;
                                              y}
-                                           )
+    )
   }
 
   return(zero_params)
