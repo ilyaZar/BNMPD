@@ -94,7 +94,7 @@ new_trueParams <- function(distribution,
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
   if (distribution %in% c("gen-dirichlet", "gen-dirichlet-mult")) {
-    DD2 <- get_DD2(distribution = distribution, DD = model_dim[3])
+    DD2 <- get_DD2(distribution = distribution, DD = model_dim[[3]])
     cat(crayon::green("Setting !internal! dimension "), crayon::yellow("DD2"),
         crayon::green("to "), crayon::red(DD2),
         crayon::green(paste0("for ", distribution," type parameters!\n")))
@@ -107,7 +107,13 @@ new_trueParams <- function(distribution,
     DD,
     NN,
     options$dwn_scl)
-  true_phi    <- new_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
+  true_phi <- new_phi(
+    SIMUL_PHI,
+    distribution = distribution,
+    phi,
+    DD,
+    NN,
+    order_p_vec)
   true_bet_z  <- new_bet_z(SIMUL_Z_BETA, beta_z_lin,
                                       DD, num_z_regs,
                                       options$intercepts$at_z)
@@ -139,27 +145,13 @@ new_trueParams <- function(distribution,
 #'   dimension \code{order_p_vec[d] x NN} that stores the phi's per number of
 #'   autoregressions, number of cross section and per component \code{d}.
 #' @export
-new_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
+new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
   if (SIMUL_PHI) {
-    if (length(order_p_vec) == 1) {
-      order_p_vec <- rep(order_p_vec, times = DD)
-    } else if (length(order_p_vec) != DD) {
-      stop("Autoregressive order_p must be either length 1 or DD!")
-    }
+    order_p_vec <- get_order_p_vec(order_p_vec, DD)
     if (!is.null(phi)) {
-      if (length(phi) != DD) {
-        stop("Phi params must be passed as a list of length DD!")
-      }
-      out_phi <- vector("list", DD)
-      for (d in 1:DD) {
-        check_phi <- all(phi[[d]] >= 0) && all(phi[[d]] < 1)
-        if (!check_phi) {
-          stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
-        }
-        out_phi[[d]] <- matrix(phi[[d]], nrow = order_p_vec[d], ncol = NN)
-      }
+      out_phi <- get_manual_phi(phi, DD, order_p_vec, NN)
     } else {
-      out_phi  <- get_default_phi(DD, NN, order_p_vec)
+      out_phi <- get_default_phi(distribution, DD, NN, order_p_vec)
     }
   } else {
     out_phi <- NULL
@@ -287,7 +279,6 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, DD, NN,
 #'
 #' @return a vector of length \code{DD}
 get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_name_linter.
-  browser()
   DD  <- get_DD(distribution, DD)
   DD2 <- get_DD2(distribution, DD)
   str_scl <- 3.1 / dwn_scl
@@ -306,7 +297,9 @@ get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_nam
 #'
 #' @return a list of length \code{DD} with elements being matrices of dimension
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
-get_default_phi <- function(DD, NN, order_p_vec) {
+get_default_phi <- function(distribution, DD, NN, order_p_vec) {
+  DD  <- get_DD(distribution, DD)
+  DD2 <- get_DD2(distribution, DD)
   if (any(order_p_vec > 4)) stop("Need more default phis ...")
   # possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
   #                           0.25, 0.20, 0.35, 0.25,
@@ -327,7 +320,37 @@ get_default_phi <- function(DD, NN, order_p_vec) {
     colnames(tmp_phis) <- paste0("NN", 1:NN)
     out_phi[[d]] <- tmp_phis
   }
+  if (2 * DD == DD2) out_phi <- list(A = out_phi, B = out_phi)
   return(out_phi)
+}
+#' Use manual user input values for true \code{phi} parameters
+#'
+#' Helper to extend user input to full container class.
+#'
+#' @inheritParams get_default_phi
+#'
+#' @return a list of length \code{DD} with elements being matrices of dimension
+#'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
+get_manual_phi <- function(phi, DD, order_p_vec, NN) {
+  if (length(phi) != DD) {
+    stop("Phi params must be passed as a list of length DD!")
+  }
+  out_phi <- vector("list", DD)
+  for (d in 1:DD) {
+    check_phi <- all(phi[[d]] >= 0) && all(phi[[d]] < 1)
+    if (!check_phi) {
+      stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
+    }
+    out_phi[[d]] <- matrix(phi[[d]], nrow = order_p_vec[d], ncol = NN)
+  }
+}
+get_order_p_vec <- function(order_p_vec, DD) {
+  if (length(order_p_vec) == 1) {
+    order_p_vec <- rep(order_p_vec, times = DD)
+  } else if (length(order_p_vec) != DD) {
+    stop("Autoregressive order_p must be either length 1 or DD!")
+  }
+  return(order_p_vec)
 }
 #' Get default values for true \code{beta_z_lin} parameters in simulation
 #'
