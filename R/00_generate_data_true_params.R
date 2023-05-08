@@ -39,6 +39,7 @@
 #'   length DD indicating whether the corresponding component (either at z or u)
 #'   should have an intercept
 #' @param seed_taken the seed used for drawing random effects
+#' @inheritParams generate_data_t_n
 #'
 #' @return an object of class "\code{trueParams}" which is a list of three: true
 #'   parameter values as a list, meta information such as model dimension, the
@@ -57,7 +58,8 @@
 #'   lag order for each \code{d} in \code{1,...,DD}}
 #'   }
 #' @export
-new_trueParams <- function(dim_model,
+new_trueParams <- function(distribution,
+                           model_dim,
                            sig_sq = NULL,
                            phi = NULL,
                            beta_z_lin = NULL,
@@ -78,19 +80,25 @@ new_trueParams <- function(dim_model,
   order_p_vec  <- settings_pars$order_p_vec
   check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
                    missing(SIMUL_PHI) || missing(seed_taken) ||
-                   missing(dim_model))
+                   missing(model_dim))
   if (check_args) stop("Missing arguments")
   if (SIMUL_U_BETA && missing(num_u_regs)) stop("Number of REs not specified!")
   # 1. Data settings: -------------------------------------------------------
-  NN <- dim_model[1]   # Cross sectional length
+  NN <- model_dim[1]   # Cross sectional length
   cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
       crayon::green("to "), crayon::red(NN), crayon::green("!\n"))
-  TT <- dim_model[2]  # Time series length
+  TT <- model_dim[2]  # Time series length
   cat(crayon::green("Setting dimension "), crayon::yellow("TT"),
       crayon::green("to "), crayon::red(TT), crayon::green("!\n"))
-  DD <- dim_model[3]
+  DD <- model_dim[3]
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
+  if (distribution %in% c("gen-dirichlet", "gen-dirichlet-mult")) {
+    DD2 <- get_DD2_dim(distribution = distribution, DD = model_dim[3])
+    cat(crayon::green("Setting !internal! dimension "), crayon::yellow("DD2"),
+        crayon::green("to "), crayon::red(DD2),
+        crayon::green(paste0("for ", distribution," type parameters!\n")))
+  }
   # 2. Set up parameter values: ---------------------------------------------
   true_sig_sq <- new_sig_sq_x(sig_sq, DD, NN, options$dwn_scl)
   true_phi    <- new_phi(SIMUL_PHI, phi, DD, NN, order_p_vec)
@@ -109,10 +117,21 @@ new_trueParams <- function(dim_model,
                     beta_u_lin = true_bet_u,
                     vcm_u_lin = true_D0u_u)
   class(par_trues) <- "trueParams"
-  attr(par_trues, which = "meta_info") <- list(MODEL_DIM = dim_model,
+  attr(par_trues, which = "meta_info") <- list(MODEL_TYPE = distribution,
+                                               MODEL_DIM = model_dim,
                                                PAR_SETTINGS = settings_pars,
                                                SEED_NO = seed_taken)
   return(true_params = par_trues)
+}
+get_DD2_dim <- function(distribution, DD) {
+  if (distribution == "gen-dirichlet") {
+    return(2 * DD)
+  } else if (distribution == "gen-dirichlet-mult") {
+    return(2 * DD - 2)
+  } else {
+    stop("Unknown distribution")
+  }
+  return(invisible(distribution))
 }
 #' Sets true values (default or user supplied) for parameter phi
 #'
@@ -150,7 +169,7 @@ new_phi <- function(SIMUL_PHI, phi, DD, NN, order_p_vec) {
     out_phi <- NULL
   }
   structure(out_phi,
-            class = c("true_phi", list))
+            class = c("true_phi"))
 }
 #' Sets true values (default or user supplied) for parameter sig_sq_x
 #'
