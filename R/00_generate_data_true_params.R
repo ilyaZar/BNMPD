@@ -93,7 +93,7 @@ new_trueParams <- function(distribution,
   DD <- model_dim[3]
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
-  if (distribution %in% c("gen-dirichlet", "gen-dirichlet-mult")) {
+  if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     DD2 <- get_DD2(distribution = distribution, DD = model_dim[[3]])
     cat(crayon::green("Setting !internal! dimension "), crayon::yellow("DD2"),
         crayon::green("to "), crayon::red(DD2),
@@ -127,6 +127,7 @@ new_trueParams <- function(distribution,
     num_u_regs,
     seed_taken,
     options$intercepts$at_u)
+
   true_bet_u <- tmp_u[["true_bet_u"]]
   true_D0u_u <- tmp_u[["true_D0u_u"]]
 
@@ -135,7 +136,9 @@ new_trueParams <- function(distribution,
                     beta_z_lin = true_bet_z,
                     beta_u_lin = true_bet_u,
                     vcm_u_lin = true_D0u_u)
+
   class(par_trues) <- "trueParams"
+
   attr(par_trues, which = "meta_info") <- list(MODEL_TYPE = distribution,
                                                MODEL_DIM = model_dim,
                                                PAR_SETTINGS = settings_pars,
@@ -174,7 +177,7 @@ new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
 #' @return a matrix of dimension \code{DD x NN} of true parameter values for
 #'   sig_sq_x
 new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
-  if (distribution %in% c("dirichlet", "multinomial", "dirichlet-mult")) {
+  if (distribution %in% c("dirichlet", "multinomial", "dirichlet_mult")) {
     if (!is.null(sig_sq)) {
       check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
       if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
@@ -187,7 +190,7 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
     colnames(out_sig_sq) <- paste0("N", 1:NN)
     return(structure(out_sig_sq,
                      class = c("true_sig_sq", "matrix", "array")))
-  } else if (distribution %in% c("gen-dirichlet")) {
+  } else if (distribution %in% c("gen_dirichlet")) {
     if (!is.null(sig_sq)) {
       check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
       if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
@@ -201,7 +204,7 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
                                  c("A", "B"))
     return(structure(out_sig_sq,
                      class = c("true_sig_sq", "matrix", "array")))
-  } else if (distribution %in% c("gen-dirichlet-mult")) {
+  } else if (distribution %in% c("gen_dirichlet_mult")) {
     if (!is.null(sig_sq)) {
       check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
       if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
@@ -281,3 +284,19 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
   structure(list(true_bet_u = true_bet_u, true_D0u_u = true_D0u_u),
             class = "true_bet_vcm_u")
 }
+#' Generic methods to runs Gibbs sampler.
+#'
+#' Dispatches on attribute-class of \code{pe} to determine whether to invoke
+#' linear regressor type MCMC sampler, random effects sampler or hybrid or
+#' spline versions thereof.
+#'
+#' @param pe environment of appropriate class (see Description) with parameter
+#'   containers
+#' @param mm MCMC iteration
+#'
+#' @return updated environment with parameter containers containing the draws
+#' @export
+get_params_n <- function(trueParam, n, DD_TYPE = NULL) {
+  UseMethod("sample_get_params_nall_params", pe)
+}
+get_params_n.trueParamsdirichlet

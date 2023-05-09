@@ -21,8 +21,8 @@ seed under which the true parameters are generated, the logical indicators
 that describe which parameters to generate and their lengths, as provided
 by the function \code{\link[=new_trueParams]{new_trueParams()}}}
 
-\item{distribution}{specifies the distribution: "dirichlet", "gen-dirichlet",
-multinomial", "dirichlet-mult", "gen-dirichlet-mult", or "normal" (the
+\item{distribution}{specifies the distribution: "dirichlet", "gen_dirichlet",
+multinomial", "dirichlet_mult", "gen_dirichlet_mult", or "normal" (the
 latter generates the latent states without link-function and measurement/
 response transformations, which is useful e.g. when testing the pure Gibbs
 sampler)}
@@ -77,7 +77,7 @@ for reproducibility purposes, set \code{NULL} if not required}
 a named list of two elements, the first one being a list of three:
 \itemize{
 \item{\code{data: }}{a list of at most two elements (if \code{distribution}
-is of type Dirichlet , the second element is \code{NULL}, but otherwise has
+is of type Dirichlet, the second element is \code{NULL}, but otherwise has
 the total number of counts e.g. in a Dirichlet-multinomial model)}
 \item{\code{regs: }}{list of regressors with two elements: 'z' and 'u'}
 \item{\code{states: }}{simulated latent states}

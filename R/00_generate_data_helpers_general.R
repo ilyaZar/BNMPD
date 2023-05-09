@@ -71,17 +71,17 @@ set_name_target_vals <- function(out, DD, DD2, NN) {
 get_DD <- function(distribution, DD) {
   switch(distribution,
          "dirichlet" = DD,
-         "dirichlet-mult" = DD,
-         "gen-dirichlet" = DD,
-         "gen-dirichlet-mult" = DD - 1)
+         "dirichlet_mult" = DD,
+         "gen_dirichlet" = DD,
+         "gen_dirichlet_mult" = DD - 1)
 }
 get_DD2 <- function(distribution, DD) {
   DD <- unname(DD)
   switch(distribution,
          "dirichlet" = DD,
-         "dirichlet-mult" = DD,
-         "gen-dirichlet" = DD * 2,
-         "gen-dirichlet-mult" = DD * 2 - 2)
+         "dirichlet_mult" = DD,
+         "gen_dirichlet" = DD * 2,
+         "gen_dirichlet_mult" = DD * 2 - 2)
 }
 #' Save simulated data and true parameter values used to generate it.
 #'

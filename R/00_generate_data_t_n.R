@@ -12,8 +12,8 @@
 #'   seed under which the true parameters are generated, the logical indicators
 #'   that describe which parameters to generate and their lengths, as provided
 #'   by the function [new_trueParams()]
-#' @param distribution specifies the distribution: "dirichlet", "gen-dirichlet",
-#'    multinomial", "dirichlet-mult", "gen-dirichlet-mult", or "normal" (the
+#' @param distribution specifies the distribution: "dirichlet", "gen_dirichlet",
+#'    multinomial", "dirichlet_mult", "gen_dirichlet_mult", or "normal" (the
 #'    latter generates the latent states without link-function and measurement/
 #'    response transformations, which is useful e.g. when testing the pure Gibbs
 #'    sampler)
@@ -95,9 +95,9 @@ generate_data_t_n <- function(par_trues,
   opt1 <- get_opt_include(options_include, NN, DD)
 
   if (X_LOG_SCALE && distribution == "normal") x_levels <- log(x_levels)
-  if (X_LOG_SCALE && any(distribution %in% c("dirichlet", "gen-dirichlet",
-                                             "multinomial", "dirichlet-mult",
-                                             "gen-dirichlet-mult"))) {
+  if (X_LOG_SCALE && any(distribution %in% c("dirichlet", "gen_dirichlet",
+                                             "multinomial", "dirichlet_mult",
+                                             "gen_dirichlet_mult"))) {
     sig_tmp <- par_trues$sig_sq[, 1]
     x_levels <- log(x_levels) - sig_tmp/2
   }
@@ -237,8 +237,8 @@ get_opt_include <- function(includes, NN, DD) {
 #' @return pure side effect function; throws an error if argument
 #'   \code{distribution} is unknown (see fct. body for details)
 check_distribution_args <- function(distribution) {
-  densitities_supported <- c("multinomial", "dirichlet-mult",
-                             "gen-dirichlet-mult", "gen-dirichlet",
+  densitities_supported <- c("multinomial", "dirichlet_mult",
+                             "gen_dirichlet_mult", "gen_dirichlet",
                              "dirichlet", "normal")
   if (!(distribution %in% densitities_supported)) {
     stop(paste0("Argument to distribution must be one of: ",
@@ -352,7 +352,7 @@ get_output_data_simul <- function(cnt_data,
   out_data <- vector("list", 3)
   if (dist %in% c("dirichlet", "normal")) {
     out_data[[1]] <- list(yraw = cnt_data[["part1"]])
-  } else if (dist == "multinomial" || dist == "dirichlet-mult") {
+  } else if (dist == "multinomial" || dist == "dirichlet_mult") {
     out_data[[1]] <- list(yraw = cnt_data[["part1"]],
                           num_counts = cnt_data[["part2"]])
   } else {
@@ -385,7 +385,7 @@ get_measurements <- function(x_states, X_LOG_SCALE, distribution) {
 
   data_part1 <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
 
-  if (distribution == "multinomial" || distribution == "dirichlet-mult") {
+  if (distribution == "multinomial" || distribution == "dirichlet_mult") {
     data_part2 <- matrix(0, nrow = TT, ncol = NN)
     rownames(data_part2) <- paste0("t_", seq_len(TT))
     colnames(data_part2) <- paste0("n_", seq_len(NN))
@@ -429,7 +429,7 @@ get_measurements <- function(x_states, X_LOG_SCALE, distribution) {
       out_data[["part1"]][, , n] <- yraw
       out_data[["part2"]][, n]   <- num_counts
     }
-    if (distribution == "dirichlet-mult") {
+    if (distribution == "dirichlet_mult") {
       num_counts <- sample(x = 80000:120000, size = TT)
       yraw <- my_rmult_diri(alpha =  x[, , n],
                             num_counts = num_counts)
