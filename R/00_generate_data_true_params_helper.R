@@ -230,3 +230,12 @@ get_hyper_prior_vcm <- function(vcm_u_scl, rel_var_to_cov, num_re) {
   # solveme(out_mat)
   out_mat
 }
+get_class_true_param <- function(distribution) {
+  model_dist_names <- c("dirichlet", "gen_dirichlet", "multinomial",
+                        "dirichlet_mult", "gen_dirichlet_mult")
+  class_dist_names <- c("Dirichlet", "GenDirichlet", "Multinomial",
+                        "DirichletMult", "GenDirichletMult")
+  names(class_dist_names) <- model_dist_names
+  name_subclass <- class_dist_names[[distribution]]
+  c(paste0("trueParams", name_subclass), "trueParams")
+}
