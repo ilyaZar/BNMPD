@@ -137,13 +137,12 @@ new_trueParams <- function(distribution,
                     beta_u_lin = true_bet_u,
                     vcm_u_lin = true_D0u_u)
 
-  class(par_trues) <- "trueParams"
-
-  attr(par_trues, which = "meta_info") <- list(MODEL_TYPE = distribution,
-                                               MODEL_DIM = model_dim,
-                                               PAR_SETTINGS = settings_pars,
-                                               SEED_NO = seed_taken)
-  return(true_params = par_trues)
+  structure(par_trues,
+            meta_info = list(MODEL_TYPE = distribution,
+                             MODEL_DIM = model_dim,
+                             PAR_SETTINGS = settings_pars,
+                             SEED_NO = seed_taken),
+            class = get_class_true_param(distribution))
 }
 #' Sets true values (default or user supplied) for parameter phi
 #'
@@ -284,19 +283,129 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
   structure(list(true_bet_u = true_bet_u, true_D0u_u = true_D0u_u),
             class = "true_bet_vcm_u")
 }
-#' Generic methods to runs Gibbs sampler.
+#' Generic methods to extract parameters
 #'
-#' Dispatches on attribute-class of \code{pe} to determine whether to invoke
-#' linear regressor type MCMC sampler, random effects sampler or hybrid or
-#' spline versions thereof.
+#' Dispatches on attribute-class of \code{trueParam} access appropriate
+#' parameters for cross sectional unit \code{n}n
 #'
-#' @param pe environment of appropriate class (see Description) with parameter
-#'   containers
-#' @param mm MCMC iteration
+#' @param trueParam object of `class` "trueParam" and one of its subclasses i.e.
+#'    "trueParamDirichlet", "trueParamGenDirichlet" etc.
+#' @param n cross sectional unit; an integer or vector of integers of
+#'    appropriate values matching (sub-)indices of the cross sectional dimension
+#'    if not then R-type out of bounds error is thrown
+#' @param DD multivariate dimension; an integer or vector of integers of
+#'    appropriate values matching (sub-)indices of the multivariate dimension;
+#'    if not then R-type out of bounds error is thrown
+#' @param name_par optional string giving the parameter name; if \code{NULL}
+#'    then all parameters are returned; must be of either 'sig_sq', 'phi',
+#'    'beta_z_lin', 'beta_u_lin', or 'vcm_u_lin'
+#' @param DD_TYPE optional; if not \code{NULL}, then it must be "A", "B" or "AB"
+#'    to use DD-A, DD-B or both slice(s) of multivariate component; only
+#'    applicable for special distributions such as generalized Dirichlet or
+#'    generalized Multinomial Dirichlet
 #'
-#' @return updated environment with parameter containers containing the draws
+#' @return sliced parameters for some cross sectional unit \code{n}
 #' @export
-get_params_n <- function(trueParam, n, DD_TYPE = NULL) {
-  UseMethod("sample_get_params_nall_params", pe)
+get_params <- function(trueParam, n, DD = NULL,
+                       name_par = NULL, DD_TYPE = NULL) {
+  UseMethod("get_params")
 }
-get_params_n.trueParamsdirichlet
+#' Method for class 'trueParamsDirichlet' derived from 'trueParams'
+#'
+#' Used for the Dirichlet distribution.
+#'
+#' @inheritParams get_params
+#'
+#' @return sliced parameters for some cross sectional unit \code{n}
+#' @export
+get_params.trueParamsDirichlet <- function(trueParam,
+                                           n, DD = NULL,
+                                           name_par = NULL,
+                                           DD_TYPE = NULL) {
+  reg_types <- get_modelling_reg_types(trueParam)
+  pars_out  <- trueParam %>%
+    get_default_pars(n, DD, reg_types) %>%
+    get_par_name(name_par)
+  return(pars_out)
+}
+#' Method for class 'trueParamsGenDirichlet' derived from 'trueParams'
+#'
+#' Used for the generalized Dirichlet distribution.
+#'
+#' @inheritParams get_params
+#'
+#' @return sliced parameters for some cross sectional unit \code{n}
+#' @export
+get_params.trueParamsGenDirichlet <- function(trueParam,
+                                              n, DD = NULL,
+                                              name_par = NULL,
+                                              DD_TYPE = NULL) {
+  if (missing(DD_TYPE)) stop("Must set arg. 'DD_TYPE' for gen. Dirichlet!" )
+  reg_types <- get_modelling_reg_types(trueParam)
+  pars_out  <- trueParam %>%
+    get_special_pars(n, DD, reg_types, special_type = DD_TYPE) %>%
+    get_par_name(name_par)
+  return(pars_out)
+}
+#' Method for class 'trueParamsDirichletMult' derived from 'trueParams'
+#'
+#' Used for the Dirichlet Multinomial distribution.
+#'
+#' @inheritParams get_params
+#'
+#' @return sliced parameters for some cross sectional unit \code{n}
+#' @export
+get_params.trueParamsDirichletMult <- function(trueParam,
+                                               n, DD = NULL,
+                                               name_par = NULL,
+                                               DD_TYPE = NULL) {
+  reg_types <- get_modelling_reg_types(trueParam)
+  pars_out  <- trueParam %>%
+    get_default_pars(n, DD, reg_types) %>%
+    get_par_name(name_par)
+  return(pars_out)
+}
+get_default_pars <- function(trueParam, n, DD = NULL, reg_types) {
+  pars_out <- list(sig_sq = trueParam[["sig_sq"]][, n],
+                   phi = lapply(trueParam[["phi"]], `[`, i = , j = n))
+  if (reg_types[["z-linear-regressors"]]) {
+    pars_out$beta_z_lin <- trueParam[["beta_z_lin"]]
+  }
+  if (reg_types[["u-linear-regressors"]]) {
+    pars_out$beta_u_lin <- lapply(trueParam[["beta_u_lin"]], `[`, i = , j = n)
+    pars_out$vcm_u_lin  <- trueParam[["vcm_u_lin"]]
+  }
+  if (!is.null(DD)) pars_out <- get_dd_slice(pars_out, DD)
+  return(pars_out)
+}
+get_special_pars <- function(trueParam, n, DD = NULL,
+                             reg_types, special_type) {
+  stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B", "AB"))
+  if (special_type == "AB") special_type <- c("A", "B")
+  pars_out <- list(sig_sq = trueParam[["sig_sq"]][, n, special_type],
+                   phi = lapply(trueParam[["phi"]][[special_type]],
+                                `[`, i = , j = n))
+  if (reg_types[["z-linear-regressors"]]) {
+    pars_out$beta_z_lin <- trueParam[["beta_z_lin"]][[special_type]]
+  }
+  if (reg_types[["u-linear-regressors"]]) {
+    pars_out$beta_u_lin <- lapply(trueParam[["beta_u_lin"]][[special_type]],
+                                  `[`, i = , j = n)
+    pars_out$vcm_u_lin  <- trueParam[["vcm_u_lin"]][[special_type]]
+  }
+  if (!is.null(DD)) pars_out <- get_dd_slice(pars_out, DD)
+  return(pars_out)
+}
+get_dd_slice <- function(tmp_pars_out, DD) {
+  if (is.null(DD)) return(tmp_pars_out)
+  tmp_pars_out$sig_sq     <- tmp_pars_out$sig_sq[DD, ]
+  tmp_pars_out$phi        <- tmp_pars_out$phi[[DD]]
+  tmp_pars_out$vcm_u_lin  <- tmp_pars_out$vcm_u_lin[[DD]]
+  tmp_pars_out$beta_z_lin <- tmp_pars_out$beta_z_lin[[DD]]
+  tmp_pars_out$beta_u_lin <- tmp_pars_out$beta_u_lin[[DD]]
+  return(tmp_pars_out)
+}
+get_par_name <- function(tmp_pars_out, name) {
+  if (is.null(name)) return(tmp_pars_out)
+  tmp_pars_out[[name]]
+}
