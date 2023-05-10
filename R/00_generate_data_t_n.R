@@ -84,7 +84,7 @@ generate_data_t_n <- function(par_trues,
                                                   states_each_d = FALSE),
                               seed_no = NULL) {
   stopifnot(`par_true must be object of class trueParams` =
-              class(par_trues) == "trueParams")
+              "trueParams" %in% class(par_trues))
 
   meta_info_tmp <- attr(par_trues, "meta_info")$MODEL_DIM
   NN <- meta_info_tmp[["NN"]]
