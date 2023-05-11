@@ -387,8 +387,9 @@ get_default_pars <- function(trueParam, n, DD = NULL, reg_types) {
 }
 get_special_pars <- function(trueParam, n, DD = NULL,
                              reg_types, special_type) {
-  stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B", "AB"))
-  if (special_type == "AB") special_type <- c("A", "B")
+  stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B"))
+  # stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B", "AB"))
+  # if (special_type == "AB") special_type <- c("A", "B")
   pars_out <- list(sig_sq = trueParam[["sig_sq"]][, n, special_type, drop = FALSE],
                    phi = lapply(trueParam[["phi"]][[special_type]],
                                 `[`, i = , j = n))
@@ -404,17 +405,18 @@ get_special_pars <- function(trueParam, n, DD = NULL,
   return(pars_out)
 }
 get_dd_slice <- function(tmp_pars_out, DD, special_type = NULL) {
-  if (is.null(DD)) return(tmp_pars_out)
+  pars_out <- tmp_pars_out
+  if (is.null(DD)) return(pars_out)
   if (!is.null(special_type)) {
-    tmp_pars_out$sig_sq <- tmp_pars_out$sig_sq[, DD, special_type]
+    pars_out$sig_sq <- pars_out$sig_sq[DD, , special_type]
   } else {
-    tmp_pars_out$sig_sq <- tmp_pars_out$sig_sq[, DD]
+    pars_out$sig_sq <- pars_out$sig_sq[DD, ]
   }
-  tmp_pars_out$phi        <- tmp_pars_out$phi[[DD]]
-  tmp_pars_out$vcm_u_lin  <- tmp_pars_out$vcm_u_lin[[DD]]
-  tmp_pars_out$beta_z_lin <- tmp_pars_out$beta_z_lin[[DD]]
-  tmp_pars_out$beta_u_lin <- tmp_pars_out$beta_u_lin[[DD]]
-  return(tmp_pars_out)
+  pars_out$phi        <- pars_out$phi[[DD]]
+  pars_out$vcm_u_lin  <- pars_out$vcm_u_lin[[DD]]
+  pars_out$beta_z_lin <- pars_out$beta_z_lin[[DD]]
+  pars_out$beta_u_lin <- pars_out$beta_u_lin[[DD]]
+  return(pars_out)
 }
 get_par_name <- function(tmp_pars_out, name) {
   if (is.null(name)) return(tmp_pars_out)
