@@ -84,13 +84,13 @@ new_trueParams <- function(distribution,
   if (check_args) stop("Missing arguments")
   if (SIMUL_U_BETA && missing(num_u_regs)) stop("Number of REs not specified!")
   # 1. Data settings: -------------------------------------------------------
-  NN <- model_dim[1]   # Cross sectional length
+  NN <- model_dim[[1]]   # Cross sectional length
   cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
       crayon::green("to "), crayon::red(NN), crayon::green("!\n"))
-  TT <- model_dim[2]  # Time series length
+  TT <- model_dim[[2]]  # Time series length
   cat(crayon::green("Setting dimension "), crayon::yellow("TT"),
       crayon::green("to "), crayon::red(TT), crayon::green("!\n"))
-  DD <- model_dim[3]
+  DD <- model_dim[[3]]
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
       crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
   if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
@@ -98,7 +98,9 @@ new_trueParams <- function(distribution,
     cat(crayon::green("Setting !internal! dimension "), crayon::yellow("DD2"),
         crayon::green("to "), crayon::red(DD2),
         crayon::green(paste0("for ", distribution," type parameters!\n")))
-    model_dim <- c(model_dim, DD2 = DD2)
+    model_dim <- c(NN = NN, TT = TT, DD = DD, DD2 = DD2)
+  } else {
+    model_dim <- c(NN = NN, TT = TT, DD = DD)
   }
   # 2. Set up parameter values: ---------------------------------------------
   true_sig_sq <- new_sig_sq_x(
@@ -144,10 +146,85 @@ new_trueParams <- function(distribution,
                              SEED_NO = seed_taken),
             class = get_class_true_param(distribution))
 }
-#' @param trueParam object of `class` "trueParam" and one of its subclasses i.e.
-#'    "trueParamDirichlet", "trueParamGenDirichlet" etc.
-get_meta_info_all <- function(trueParam) {
-
+#' Access to meta information for object of class "trueParams"
+#'
+#' @param true_params object of `class` "trueParams" and one of its subclasses
+#'   i.e. "trueParamDirichlet", "trueParamGenDirichlet" etc.
+#'
+#' @return attributes (except class attribute) for object of class \code{class}
+#'    "trueParams"
+#' @export
+get_meta_info <- function(true_params) {
+  check_class_true_params(true_params)
+  attr(true_params, which = "meta_info")
+}
+#' Access to meta information for object of class "trueParams"
+#'
+#' Specifically, getting distributions information.
+#'
+#' @inheritParams get_meta_info
+#'
+#' @return distribution attribute of \code{class} "trueParams" i.e. a character
+#'    string that represents the distribution for which the true parameters are
+#'    meant to be used
+#' @export
+get_distribution <- function(true_params) {
+  check_class_true_params(true_params)
+  attr(true_params, which = "meta_info")[["MODEL_TYPE"]]
+}
+#' Access to meta information for object of class "trueParams"
+#'
+#' Specifically, getting information on parameter settings used during object
+#' construction.
+#'
+#' @inheritParams get_meta_info
+#'
+#' @return parameter settings attribute of \code{class} "trueParams" which was
+#'    used for object construction
+#' @export
+get_par_settings <- function(true_params) {
+  check_class_true_params(true_params)
+  attr(true_params, which = "meta_info")[["PAR_SETTINGS"]]
+}
+#' Access to meta information for object of class "trueParams"
+#'
+#' Specifically, getting seed number used during bet_u_lin and VCM value
+#' simulation.
+#'
+#' @inheritParams get_meta_info
+#'
+#' @return seed number of attribute of \code{class} "trueParams"; the random
+#'    seed during beta_u type value construction and corresponding VCMs
+#' @export
+get_seed <- function(true_params) {
+  check_class_true_params(true_params)
+  attr(true_params, which = "meta_info")[["SEED_NO"]]
+}
+#' Access to meta information for object of class "trueParams"
+#'
+#' Specifically, getting dimensions of implied model for which the "trueParams"
+#' object is meant to be used..
+#'
+#' @inheritParams get_meta_info
+#' @param dim a character string; either of "NN", "TT", "DD" or 'all' which returns
+#'    all three.
+#'
+#' @return dimension for object of class \code{class} "trueParams"
+#' @export
+get_dimension <- function(true_params, dim = NULL) {
+  if (missing(dim)) stop("Arg. 'dim' must be set, see help.")
+  check_class_true_params(true_params)
+  stopifnot(`Incorrect value for arg. 'dim'.` =
+              (dim %in% c("NN", "TT", "DD", "all")))
+  if (dim == "all") {
+    return(attr(true_params, which = "meta_info")[["MODEL_DIM"]])
+  } else {
+    return(attr(true_params, which = "meta_info")[["MODEL_DIM"]][[dim]])
+  }
+}
+check_class_true_params <- function(obj) {
+  checker <- "trueParams" %in% class(obj)
+  stopifnot(`Object 'true_params' must be of class 'trueParams'.` = checker)
 }
 #' Sets true values (default or user supplied) for parameter phi
 #'

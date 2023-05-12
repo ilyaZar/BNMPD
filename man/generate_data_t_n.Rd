@@ -16,10 +16,10 @@ generate_data_t_n(
 }
 \arguments{
 \item{par_trues}{an object of class "\code{trueParams}" which is a list of
-true parameter values and meta information such as model dimension, the
-seed under which the true parameters are generated, the logical indicators
-that describe which parameters to generate and their lengths, as provided
-by the function \code{\link[=new_trueParams]{new_trueParams()}}}
+true parameter values and meta information such as distribution,
+model dimension, the seed under which the true parameters are generated,
+the logical indicators that describe which parameters to generate and their
+lengths, as provided by the function \code{\link[=new_trueParams]{new_trueParams()}}}
 
 \item{distribution}{specifies the distribution: "dirichlet", "gen_dirichlet",
 multinomial", "dirichlet_mult", "gen_dirichlet_mult", or "normal" (the
