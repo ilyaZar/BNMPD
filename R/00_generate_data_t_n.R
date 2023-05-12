@@ -83,14 +83,13 @@ generate_data_t_n <- function(true_params,
                                                   states = FALSE,
                                                   states_each_d = FALSE),
                               seed_no = NULL) {
-  stopifnot(`Arg. 'par_true' must be of (parent) class trueParams` =
-              "trueParams" %in% class(true_params))
+  check_class_true_params(true_params)
+  check_true_params_distribution(true_params)
 
   NN <- get_dimension(true_params, "NN")
   TT <- get_dimension(true_params, "TT")
   DD <- get_dimension(true_params, "DD")
 
-  check_distribution_args(distribution)
   opt1 <- get_opt_include(options_include, NN, DD)
 
   if (X_LOG_SCALE && distribution == "normal") x_levels <- log(x_levels)
@@ -100,7 +99,8 @@ generate_data_t_n <- function(true_params,
     sig_tmp <- true_params$sig_sq[, 1]
     x_levels <- log(x_levels) - sig_tmp/2
   }
-  if (!is.null(seed_no)) set.seed(seed_no)
+  if (is.null(seed_no)) seed_no <- get_seed(true_params)
+  set.seed(seed_no)
 
   reg_types <- get_modelling_reg_types(true_params)
 
@@ -229,22 +229,7 @@ get_opt_include <- function(includes, NN, DD) {
   names(out_opt) <- paste0("N_", 1:NN)
   return(out_opt)
 }
-#' Check if distribution argument is valid
-#'
-#' @param distribution a character specifying a distribution
-#'
-#' @return pure side effect function; throws an error if argument
-#'   \code{distribution} is unknown (see fct. body for details)
-check_distribution_args <- function(distribution) {
-  densitities_supported <- c("multinomial", "dirichlet_mult",
-                             "gen_dirichlet_mult", "gen_dirichlet",
-                             "dirichlet", "normal")
-  if (!(distribution %in% densitities_supported)) {
-    stop(paste0("Argument to distribution must be one of: ",
-                paste0(densitities_supported, collapse = ", "), "!"))
-  }
-  return(invisible(distribution))
-}
+
 #' Generate container for measurements and states of appropriate dimension.
 #'
 #' For \code{distribution} of appropriate type, where the data-part is compound

@@ -224,7 +224,19 @@ get_dimension <- function(true_params, dim = NULL) {
 }
 check_class_true_params <- function(obj) {
   checker <- "trueParams" %in% class(obj)
-  stopifnot(`Object 'true_params' must be of class 'trueParams'.` = checker)
+  stopifnot(`Arg. 'true_params' must be of class 'trueParams'.` = checker)
+}
+check_true_params_distribution <- function(obj) {
+  check_class_true_params(obj)
+  densitities_supported <- c("multinomial", "dirichlet_mult",
+                             "gen_dirichlet_mult", "gen_dirichlet",
+                             "dirichlet", "normal")
+  distribution <- get_distribution(obj)
+  if (!(distribution %in% densitities_supported)) {
+    stop(paste0("Argument to distribution must be one of: ",
+                paste0(densitities_supported, collapse = ", "), "!"))
+  }
+  return(invisible(obj))
 }
 #' Sets true values (default or user supplied) for parameter phi
 #'

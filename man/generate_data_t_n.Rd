@@ -5,7 +5,7 @@
 \title{Generates multivariate (non-linear) panel data for various models.}
 \usage{
 generate_data_t_n(
-  par_trues,
+  true_params,
   distribution,
   x_levels,
   X_LOG_SCALE,
@@ -15,7 +15,7 @@ generate_data_t_n(
 )
 }
 \arguments{
-\item{par_trues}{an object of class "\code{trueParams}" which is a list of
+\item{true_params}{an object of class "\code{trueParams}" which is a list of
 true parameter values and meta information such as distribution,
 model dimension, the seed under which the true parameters are generated,
 the logical indicators that describe which parameters to generate and their
