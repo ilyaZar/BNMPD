@@ -222,6 +222,41 @@ get_dimension <- function(true_params, dim = NULL) {
     return(attr(true_params, which = "meta_info")[["MODEL_DIM"]][[dim]])
   }
 }
+#' Deduces from vector of parameter names which type of modelling to employ
+#'
+#' @inheritParams get_meta_info
+#'
+#' @return a named, logical vector of dimension 4 giving \code{TRUE} or
+#'   \code{FALSE} if (in this order) modeling of z-regressors, u-regressors
+#'   (both linear type), or z spline regressors or u spline regressors should be
+#'   performed (with names of return vector set to these variants)
+get_modelling_reg_types <- function(true_params) {
+  correct_names <- c("phi", "beta_z_lin", "beta_u_lin",
+                     "beta_z_spl", "beta_u_spl")
+  par_names <- names(true_params)[sapply(true_params,
+                                         function(x) {
+                                           !is.null(x)
+                                         })
+                                  ]
+  par_names_taken <- setdiff(par_names, c("sig_sq","vcm_u_lin"))
+  if (!all(par_names_taken %in% correct_names)) {
+    stop(paste0("The 'par_trues' argument must have correct names: choose from",
+                "'beta_z_lin', 'beta_u_lin', 'beta_z_spl' or 'beta_u_spl'! "))
+  }
+  out <- vector("logical", 5)
+  out[1] <- correct_names[1] %in% par_names_taken
+  out[2] <- correct_names[2] %in% par_names_taken
+  out[3] <- correct_names[3] %in% par_names_taken
+  out[4] <- correct_names[4] %in% par_names_taken
+  out[5] <- correct_names[5] %in% par_names_taken
+
+  names(out) <- c("autoregression",
+                  "z-linear-regressors",
+                  "u-linear-regressors",
+                  "z-spline-regressors",
+                  "u-spline-regressors")
+  return(out)
+}
 check_class_true_params <- function(obj) {
   checker <- "trueParams" %in% class(obj)
   stopifnot(`Arg. 'true_params' must be of class 'trueParams'.` = checker)
@@ -230,7 +265,7 @@ check_true_params_distribution <- function(obj) {
   check_class_true_params(obj)
   densitities_supported <- c("multinomial", "dirichlet_mult",
                              "gen_dirichlet_mult", "gen_dirichlet",
-                             "dirichlet", "normal")
+                             "dirichlet")
   distribution <- get_distribution(obj)
   if (!(distribution %in% densitities_supported)) {
     stop(paste0("Argument to distribution must be one of: ",
