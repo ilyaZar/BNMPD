@@ -7,11 +7,11 @@
 #' function of regressors and latent states where the regressors and latent
 #' states can vary over time and cross section.
 #'
-#' @param par_trues an object of class "\code{trueParams}" which is a list of
-#'   true parameter values and meta information such as model dimension, the
-#'   seed under which the true parameters are generated, the logical indicators
-#'   that describe which parameters to generate and their lengths, as provided
-#'   by the function [new_trueParams()]
+#' @param true_params an object of class "\code{trueParams}" which is a list of
+#'   true parameter values and meta information such as distribution,
+#'   model dimension, the seed under which the true parameters are generated,
+#'   the logical indicators that describe which parameters to generate and their
+#'   lengths, as provided by the function [new_trueParams()]
 #' @param distribution specifies the distribution: "dirichlet", "gen_dirichlet",
 #'    multinomial", "dirichlet_mult", "gen_dirichlet_mult", or "normal" (the
 #'    latter generates the latent states without link-function and measurement/
@@ -72,7 +72,7 @@
 #'   corresponding true parameter values as stored in this object)
 #'
 #' @export
-generate_data_t_n <- function(par_trues,
+generate_data_t_n <- function(true_params,
                               distribution,
                               x_levels,
                               X_LOG_SCALE,
@@ -83,13 +83,12 @@ generate_data_t_n <- function(par_trues,
                                                   states = FALSE,
                                                   states_each_d = FALSE),
                               seed_no = NULL) {
-  stopifnot(`par_true must be object of class trueParams` =
-              "trueParams" %in% class(par_trues))
+  stopifnot(`Arg. 'par_true' must be of (parent) class trueParams` =
+              "trueParams" %in% class(true_params))
 
-  meta_info_tmp <- attr(par_trues, "meta_info")$MODEL_DIM
-  NN <- meta_info_tmp[["NN"]]
-  TT <- meta_info_tmp[["TT"]]
-  DD <- meta_info_tmp[["DD"]]
+  NN <- get_dimension(true_params, "NN")
+  TT <- get_dimension(true_params, "TT")
+  DD <- get_dimension(true_params, "DD")
 
   check_distribution_args(distribution)
   opt1 <- get_opt_include(options_include, NN, DD)
@@ -98,24 +97,24 @@ generate_data_t_n <- function(par_trues,
   if (X_LOG_SCALE && any(distribution %in% c("dirichlet", "gen_dirichlet",
                                              "multinomial", "dirichlet_mult",
                                              "gen_dirichlet_mult"))) {
-    sig_tmp <- par_trues$sig_sq[, 1]
+    sig_tmp <- true_params$sig_sq[, 1]
     x_levels <- log(x_levels) - sig_tmp/2
   }
   if (!is.null(seed_no)) set.seed(seed_no)
 
-  reg_types <- get_modelling_reg_types(par_trues)
+  reg_types <- get_modelling_reg_types(true_params)
 
   x <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
-  z <- generate_z_u_container(par_trues[["beta_z_lin"]],
+  z <- generate_z_u_container(true_params[["beta_z_lin"]],
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "z",
                               reg_types[["z-linear-regressors"]])
-  u <- generate_z_u_container(par_trues[["beta_u_lin"]],
+  u <- generate_z_u_container(true_params[["beta_u_lin"]],
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "u",
                               reg_types[["u-linear-regressors"]])
   for (n in 1:NN) {
-    par_true_current <- get_par_true_n(par_trues, reg_types, n)
+    par_true_current <- get_par_true_n(true_params, reg_types, n)
     out_data_tmp <- generate_data_t(TT = TT, DD = DD,
                                     par_true = par_true_current,
                                     x_levels = x_levels[, n],
@@ -146,7 +145,7 @@ generate_data_t_n <- function(par_trues,
   class(out_data) <- "simulatedDataBNMPD"
   attr(out_data, which = "SEED_NO") <- seed_no
   return(list(simulatedDataBNMPD = out_data,
-              trueParams = par_trues))
+              trueParams = true_params))
 }
 #' Deduces from vector of parameter names which type of modelling to employ
 #'
@@ -278,7 +277,7 @@ get_x_y_containter_names <- function(NN, TT, DD) {
 #' (\code{par}).
 #'
 #' @param pars container of true parameter values as passed to main function
-#'   [generate_data_t_n(par_trues = ...)]
+#'   [generate_data_t_n(true_params = ...)]
 #' @inheritParams generate_data_t_n
 #' @param cnt_name a character: either "z" for z-type regressors or "u" for the
 #'   random effects container; other imput gives an error
