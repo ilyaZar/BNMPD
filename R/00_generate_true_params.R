@@ -144,6 +144,11 @@ new_trueParams <- function(distribution,
                              SEED_NO = seed_taken),
             class = get_class_true_param(distribution))
 }
+#' @param trueParam object of `class` "trueParam" and one of its subclasses i.e.
+#'    "trueParamDirichlet", "trueParamGenDirichlet" etc.
+get_meta_info_all <- function(trueParam) {
+
+}
 #' Sets true values (default or user supplied) for parameter phi
 #'
 #' @inheritParams new_trueParams
@@ -288,8 +293,8 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
 #' Dispatches on attribute-class of \code{trueParam} access appropriate
 #' parameters for cross sectional unit \code{n}n
 #'
-#' @param trueParam object of `class` "trueParam" and one of its subclasses i.e.
-#'    "trueParamDirichlet", "trueParamGenDirichlet" etc.
+#' @param true_params object of `class` "trueParams" and one of its subclasses
+#'   i.e. "trueParamDirichlet", "trueParamGenDirichlet" etc.
 #' @param n cross sectional unit; an integer or vector of integers of
 #'    appropriate values matching (sub-)indices of the cross sectional dimension
 #'    if not then R-type out of bounds error is thrown
@@ -306,7 +311,7 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
 #'
 #' @return sliced parameters for some cross sectional unit \code{n}
 #' @export
-get_params <- function(trueParam, n = NULL, DD = NULL,
+get_params <- function(true_params, n = NULL, DD = NULL,
                        name_par = NULL, DD_TYPE = NULL) {
   stopifnot(`Arg. 'n' is either NULL or a single number.` = length(n) <= 1)
   stopifnot(`Arg. 'DD' is either NULL or a single number.` = length(DD) <= 1)
@@ -322,13 +327,13 @@ get_params <- function(trueParam, n = NULL, DD = NULL,
 #'
 #' @return sliced parameters for some cross sectional unit \code{n}
 #' @export
-get_params.trueParamsDirichlet <- function(trueParam,
+get_params.trueParamsDirichlet <- function(true_params,
                                            n = NULL, DD = NULL,
                                            name_par = NULL,
                                            DD_TYPE = NULL) {
-  if (is.null(n)) n <- seq_len(nrow(trueParam$sig_sq))
-  reg_types <- get_modelling_reg_types(trueParam)
-  pars_out  <- trueParam %>%
+  if (is.null(n)) n <- seq_len(nrow(true_params$sig_sq))
+  reg_types <- get_modelling_reg_types(true_params)
+  pars_out  <- true_params %>%
     get_default_pars(n, DD, reg_types) %>%
     get_par_name(name_par)
   return(pars_out)
@@ -341,14 +346,14 @@ get_params.trueParamsDirichlet <- function(trueParam,
 #'
 #' @return sliced parameters for some cross sectional unit \code{n}
 #' @export
-get_params.trueParamsGenDirichlet <- function(trueParam,
+get_params.trueParamsGenDirichlet <- function(true_params,
                                               n = NULL, DD = NULL,
                                               name_par = NULL,
                                               DD_TYPE = NULL) {
-  if (is.null(n)) n <- seq_len(dim(trueParam$sig_sq)[1])
+  if (is.null(n)) n <- seq_len(dim(true_params$sig_sq)[1])
   if (missing(DD_TYPE)) stop("Must set arg. 'DD_TYPE' for gen. Dirichlet!" )
-  reg_types <- get_modelling_reg_types(trueParam)
-  pars_out  <- trueParam %>%
+  reg_types <- get_modelling_reg_types(true_params)
+  pars_out  <- true_params %>%
     get_special_pars(n, DD, reg_types, special_type = DD_TYPE) %>%
     get_par_name(name_par)
   return(pars_out)
@@ -361,45 +366,45 @@ get_params.trueParamsGenDirichlet <- function(trueParam,
 #'
 #' @return sliced parameters for some cross sectional unit \code{n}
 #' @export
-get_params.trueParamsDirichletMult <- function(trueParam,
+get_params.trueParamsDirichletMult <- function(true_params,
                                                n = NULL, DD = NULL,
                                                name_par = NULL,
                                                DD_TYPE = NULL) {
-  if (is.null(n)) n <- seq_len(nrow(trueParam$sig_sq))
-  reg_types <- get_modelling_reg_types(trueParam)
-  pars_out  <- trueParam %>%
+  if (is.null(n)) n <- seq_len(nrow(true_params$sig_sq))
+  reg_types <- get_modelling_reg_types(true_params)
+  pars_out  <- true_params %>%
     get_default_pars(n, DD, reg_types) %>%
     get_par_name(name_par)
   return(pars_out)
 }
-get_default_pars <- function(trueParam, n, DD = NULL, reg_types) {
-  pars_out <- list(sig_sq = trueParam[["sig_sq"]][, n, drop = FALSE],
-                   phi = lapply(trueParam[["phi"]], `[`, i = , j = n))
+get_default_pars <- function(true_params, n, DD = NULL, reg_types) {
+  pars_out <- list(sig_sq = true_params[["sig_sq"]][, n, drop = FALSE],
+                   phi = lapply(true_params[["phi"]], `[`, i = , j = n))
   if (reg_types[["z-linear-regressors"]]) {
-    pars_out$beta_z_lin <- trueParam[["beta_z_lin"]]
+    pars_out$beta_z_lin <- true_params[["beta_z_lin"]]
   }
   if (reg_types[["u-linear-regressors"]]) {
-    pars_out$beta_u_lin <- lapply(trueParam[["beta_u_lin"]], `[`, i = , j = n)
-    pars_out$vcm_u_lin  <- trueParam[["vcm_u_lin"]]
+    pars_out$beta_u_lin <- lapply(true_params[["beta_u_lin"]], `[`, i = , j = n)
+    pars_out$vcm_u_lin  <- true_params[["vcm_u_lin"]]
   }
   if (!is.null(DD)) pars_out <- get_dd_slice(pars_out, DD)
   return(pars_out)
 }
-get_special_pars <- function(trueParam, n, DD = NULL,
+get_special_pars <- function(true_params, n, DD = NULL,
                              reg_types, special_type) {
   stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B"))
   # stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B", "AB"))
   # if (special_type == "AB") special_type <- c("A", "B")
-  pars_out <- list(sig_sq = trueParam[["sig_sq"]][, n, special_type, drop = FALSE],
-                   phi = lapply(trueParam[["phi"]][[special_type]],
+  pars_out <- list(sig_sq = true_params[["sig_sq"]][, n, special_type, drop = FALSE],
+                   phi = lapply(true_params[["phi"]][[special_type]],
                                 `[`, i = , j = n))
   if (reg_types[["z-linear-regressors"]]) {
-    pars_out$beta_z_lin <- trueParam[["beta_z_lin"]][[special_type]]
+    pars_out$beta_z_lin <- true_params[["beta_z_lin"]][[special_type]]
   }
   if (reg_types[["u-linear-regressors"]]) {
-    pars_out$beta_u_lin <- lapply(trueParam[["beta_u_lin"]][[special_type]],
+    pars_out$beta_u_lin <- lapply(true_params[["beta_u_lin"]][[special_type]],
                                   `[`, i = , j = n)
-    pars_out$vcm_u_lin  <- trueParam[["vcm_u_lin"]][[special_type]]
+    pars_out$vcm_u_lin  <- true_params[["vcm_u_lin"]][[special_type]]
   }
   if (!is.null(DD)) pars_out <- get_dd_slice(pars_out, DD, special_type)
   return(pars_out)
