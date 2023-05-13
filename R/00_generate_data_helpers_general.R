@@ -476,8 +476,7 @@ generate_simulation_study <- function(data_simulation,
   return(invisible(data_simulation))
 }
 get_zero_or_defaults <- function(true_params) {
-  stopifnot(`true_params is not an object of class 'trueParams'.` =
-              class(true_params) == "trueParams")
+  check_class_true_params(true_params)
   zero_params <- true_params
   if (!is.null(true_params[["sig_sq"]])) {
     zero_params[["sig_sq"]][] <- 1
