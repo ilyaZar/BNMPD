@@ -258,8 +258,9 @@ get_modelling_reg_types <- function(true_params) {
   return(out)
 }
 check_class_true_params <- function(obj) {
-  checker <- "trueParams" %in% class(obj)
-  stopifnot(`Arg. 'true_params' must be of class 'trueParams'.` = checker)
+  checker <- inherits(obj, "trueParams")
+  stopifnot(`Arg. 'obj' must be of class 'trueParams'.` = checker)
+  return(invisible(obj))
 }
 check_true_params_distribution <- function(obj) {
   check_class_true_params(obj)
