@@ -132,11 +132,32 @@ new_dataSim <- function(true_params,
                       cs = n)
     }
   }
-  out_data <- structure(get_output_data_simul(y, x, z, u, reg_types),
-                        SEED_NO = seed_no,
-                        class = "simulatedDataBNMPD")
-  return(list(simulatedDataBNMPD = out_data,
-              trueParams = true_params))
+  out_data_sim <- structure(get_output_data_simul(y, x, z, u, reg_types),
+                            TRUE_PARAMS = true_params,
+                            SEED_NO = seed_no,
+                            class = "dataSim")
+  return(out_data_sim)
+}
+#' Returns "trueParams" that comes with the \code{class} "dataSim"
+#'
+#' The "trueParams" accompanying the simulated data class is stored as an
+#' attribute. This helper retrieves this attribute with appropriate class
+#' checks.
+#'
+#' @param data_sim object of \code{class} "dataSim"
+#'
+#' @return an object of \class{code} "trueParams" accompanying this data class
+#' @export
+get_true_params_obj <- function(data_sim) {
+  check_class_data_sim(data_sim)
+  check_class_true_params(attr(data_sim, which = "TRUE_PARAMS"))
+  attr(data_sim, which = "TRUE_PARAMS")
+}
+check_class_data_sim <- function(obj) {
+  checker <- inherits(obj, "dataSim")
+  stopifnot(`Arg. "obj" must be of class "dataSim".` = checker)
+  check_class_true_params(attr(obj, which = "TRUE_PARAMS"))
+  return(invisible(obj))
 }
 #' Helper function to get good values for state levels to simulation
 #'
