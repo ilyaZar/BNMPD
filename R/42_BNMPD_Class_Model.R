@@ -549,7 +549,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'
                             #' @details either \code{NULL} when none were passed
                             #'   or a matrix of true values as produced by
-                            #'   [BNMPD::generate_data_t_n] and written to .csv
+                            #'   [BNMPD::new_dataSim] and written to .csv
                             #'   via [BNMPD::generate_simulation_study]
                             #'
                             get_true_states = function() {

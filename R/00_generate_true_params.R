@@ -39,7 +39,7 @@
 #'   length DD indicating whether the corresponding component (either at z or u)
 #'   should have an intercept
 #' @param seed_taken the seed used for drawing random effects
-#' @inheritParams generate_data_t_n
+#' @inheritParams new_dataSim
 #'
 #' @return an object of class "\code{trueParams}" which is a list of three: true
 #'   parameter values as a list, meta information such as model dimension, the

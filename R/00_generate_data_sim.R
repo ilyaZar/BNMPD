@@ -72,17 +72,17 @@
 #'   corresponding true parameter values as stored in this object)
 #'
 #' @export
-generate_data_t_n <- function(true_params,
-                              distribution,
-                              x_levels,
-                              X_LOG_SCALE,
-                              options_include = list(intercept = NULL,
-                                                     policy = NULL,
-                                                     zeros = NULL),
-                              options_plot = list(measurements = FALSE,
-                                                  states = FALSE,
-                                                  states_each_d = FALSE),
-                              seed_no = NULL) {
+new_dataSim <- function(true_params,
+                        distribution,
+                        x_levels,
+                        X_LOG_SCALE,
+                        options_include = list(intercept = NULL,
+                                               policy = NULL,
+                                               zeros = NULL),
+                        options_plot = list(measurements = FALSE,
+                                            states = FALSE,
+                                            states_each_d = FALSE),
+                        seed_no = NULL) {
   check_class_true_params(true_params)
   check_true_params_distribution(true_params)
 
@@ -90,18 +90,9 @@ generate_data_t_n <- function(true_params,
   TT <- get_dimension(true_params, "TT")
   DD <- get_dimension(true_params, "DD")
 
-  opt1 <- get_opt_include(options_include, NN, DD)
-
-  if (X_LOG_SCALE && distribution == "normal") x_levels <- log(x_levels)
-  if (X_LOG_SCALE && any(distribution %in% c("dirichlet", "gen_dirichlet",
-                                             "multinomial", "dirichlet_mult",
-                                             "gen_dirichlet_mult"))) {
-    sig_tmp <- true_params$sig_sq[, 1]
-    x_levels <- log(x_levels) - sig_tmp/2
-  }
-  if (is.null(seed_no)) seed_no <- get_seed(true_params)
-  set.seed(seed_no)
-
+  opt1      <- get_opt_include(options_include, NN, DD)
+  x_levels  <- get_x_levels(true_params, distribution, x_levels, X_LOG_SCALE)
+  seed_no   <- get_seed_no(true_params, seed_no); set.seed(seed_no);
   reg_types <- get_modelling_reg_types(true_params)
 
   x <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
@@ -141,43 +132,52 @@ generate_data_t_n <- function(true_params,
                       cs = n)
     }
   }
-  out_data <- get_output_data_simul(y, x, z, u, reg_types)
-  class(out_data) <- "simulatedDataBNMPD"
-  attr(out_data, which = "SEED_NO") <- seed_no
+  out_data <- structure(get_output_data_simul(y, x, z, u, reg_types),
+                        SEED_NO = seed_no,
+                        class = "simulatedDataBNMPD")
   return(list(simulatedDataBNMPD = out_data,
               trueParams = true_params))
 }
-#' Deduces from vector of parameter names which type of modelling to employ
+#' Helper function to get good values for state levels to simulation
 #'
-#' @param pars a character vector of parameter names
+#' As a side effect, checks if argument 'distribution' is valid.
 #'
-#' @return a named, logical vector of dimension 4 giving \code{TRUE} or
-#'   \code{FALSE} if (in this order) modeling of z-regressors, u-regressors
-#'   (both linear type), or z spline regressors or u spline regressors should be
-#'   performed (with names of return vector set to these variants)
+#' @inheritParams new_dataSim
 #'
-get_modelling_reg_types <- function(pars) {
-  correct_names <- c("phi", "beta_z_lin", "beta_u_lin",
-                     "beta_z_spl", "beta_u_spl")
-  par_names <- names(pars)[sapply(pars, function(x) {!is.null(x)})]
-  par_names_taken <- setdiff(par_names, c("sig_sq","vcm_u_lin"))
-  if (!all(par_names_taken %in% correct_names)) {
-    stop(paste0("The 'par_trues' argument must have correct names: choose from",
-                "'beta_z_lin', 'beta_u_lin', 'beta_z_spl' or 'beta_u_spl'! "))
+#' @return resulting target levels, that might need adjustment e.g. taking to
+#'    the log-scale or standardization with the variance
+get_x_levels <- function(true_params, distribution, x_levels, X_LOG_SCALE) {
+  densitities_supported <- c("multinomial", "dirichlet_mult",
+                             "gen_dirichlet_mult", "gen_dirichlet",
+                             "dirichlet", "normal")
+  if (!(distribution %in% densitities_supported)) {
+    stop(paste0("Argument to distribution must be one of: ",
+                paste0(densitities_supported, collapse = ", "), "!"))
   }
-  out <- vector("logical", 5)
-  out[1] <- correct_names[1] %in% par_names_taken
-  out[2] <- correct_names[2] %in% par_names_taken
-  out[3] <- correct_names[3] %in% par_names_taken
-  out[4] <- correct_names[4] %in% par_names_taken
-  out[5] <- correct_names[5] %in% par_names_taken
-
-  names(out) <- c("autoregression",
-                  "z-linear-regressors",
-                  "u-linear-regressors",
-                  "z-spline-regressors",
-                  "u-spline-regressors")
-  return(out)
+  if (X_LOG_SCALE && distribution == "normal") x_levels <- log(x_levels)
+  if (X_LOG_SCALE && any(distribution %in% c("dirichlet", "gen_dirichlet",
+                                             "multinomial", "dirichlet_mult",
+                                             "gen_dirichlet_mult"))) {
+    if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+      browser()
+      sig_tmp  <- get_params(true_params, n = 1,
+                             name_par = "sig_sq", DD_TYPE = "A")
+    } else {
+      sig_tmp  <- get_params(true_params, n = 1, name_par = "sig_sq")
+      sig_tmp <- sig_tmp[, 1]
+    }
+    x_levels <- log(x_levels) - sig_tmp/2
+  }
+  return(x_levels)
+}
+#' Helper function to set the seed
+#'
+#' @inheritParams new_dataSim
+#'
+#' @return a
+get_seed_no <- function(true_params, seed_no) {
+  if (is.null(seed_no)) seed_no <- get_seed(true_params)
+  seed_no
 }
 #' Options list of included effects.
 #'
@@ -186,7 +186,7 @@ get_modelling_reg_types <- function(pars) {
 #'
 #' @param includes a list of three elements named: 'intercept',
 #'   'policy', and 'zeros'
-#' @inheritParams generate_data_t_n
+#' @inheritParams new_dataSim
 #'
 #' @return a list of the same structure as includes but with elements adjusted
 #'   for model dimension; \code{includes} is a list of \code{NULL} elements,
@@ -236,7 +236,7 @@ get_opt_include <- function(includes, NN, DD) {
 #' of two types, a list of two elements (not \code{NULL}) is returned; otherwise
 #' a list element can be \code{NULL} indicating that this element is not needed.
 #'
-#' @inheritParams generate_data_t_n
+#' @inheritParams new_dataSim
 #'
 #' @return a list of two; \code{data} and \code{states} where the former can
 #'   itself be a list of two elements (part1 and part2 if data is compound e.g.
@@ -262,8 +262,8 @@ get_x_y_containter_names <- function(NN, TT, DD) {
 #' (\code{par}).
 #'
 #' @param pars container of true parameter values as passed to main function
-#'   [generate_data_t_n(true_params = ...)]
-#' @inheritParams generate_data_t_n
+#'   [new_dataSim(true_params = ...)]
+#' @inheritParams new_dataSim
 #' @param cnt_name a character: either "z" for z-type regressors or "u" for the
 #'   random effects container; other imput gives an error
 #' @param reg_type output from [get_modelling_reg_types()] specifying the type
@@ -394,17 +394,17 @@ get_measurements <- function(x_states, X_LOG_SCALE, distribution) {
     if (distribution == "dirichlet") {
       # yraw <- 0
       # while (any(yraw <= 0.01)) {
-        yraw <- my_rdirichlet(alpha = x[, , n])
-        if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
-          msg <- paste0("Bad Dirichelet simulation: ",
-                        "fractions don't sum to 1 and/or zero componenent!")
-          stop(msg)
-        }
-        print(paste0("Simulatiing Dirichlet data at cross section: ",
-                     n))
+      yraw <- my_rdirichlet(alpha = x[, , n])
+      if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
+        msg <- paste0("Bad Dirichelet simulation: ",
+                      "fractions don't sum to 1 and/or zero componenent!")
+        stop(msg)
+      }
+      print(paste0("Simulatiing Dirichlet data at cross section: ",
+                   n))
       out_data[["part1"]][, , n] <- yraw
       # }
-      }
+    }
     if (distribution == "multinomial") {
       num_counts <- sample(x = 80000:120000, size = TT)
       tmp_x <- x[, , n]
