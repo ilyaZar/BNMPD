@@ -55,7 +55,7 @@ generate_simulation_study <- function(data_simulation,
 
   pth_top_lvl <- file.path(pth_to_project, project_name)
   stopifnot(`Project directory already exists!` = !dir.exists(pth_top_lvl))
-  dir.create(pth_top_lvl)
+  dir.create(pth_top_lvl, recursive = TRUE)
 
   pth_tmp <- c(file.path(pth_top_lvl, "model"),
                file.path(pth_top_lvl, "results"),
@@ -242,9 +242,9 @@ save_simulated_data <- function(pth_to_write,
   zero_states[, , ] <- 0
 
   DISTRIBUTION <- attr(data_sim$data, "model_type_obs")
-  if (any(DISTRIBUTION %in% c("DIRICHLET", "GEN-DIRICHLET", "NORMAL"))) {
+  if (any(DISTRIBUTION %in% c("DIRICHLET", "GEN_DIRICHLET", "NORMAL"))) {
     dist_type <- "type1"
-  } else if(any(DISTRIBUTION %in% c("DIRICHLET-MULT", "GEN-DIRICHLET-MULT",
+  } else if(any(DISTRIBUTION %in% c("DIRICHLET_MULT", "GEN_DIRICHLET_MULT",
                                     "MULTINOMIAL"))) {
     dist_type <- "type2"
   }
