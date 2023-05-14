@@ -146,7 +146,7 @@ new_dataSim <- function(true_params,
 #'
 #' @param data_sim object of \code{class} "dataSim"
 #'
-#' @return an object of \class{code} "trueParams" accompanying this data class
+#' @return an object of \code{class} "trueParams" accompanying this data class
 #' @export
 get_true_params_obj <- function(data_sim) {
   check_class_data_sim(data_sim)
