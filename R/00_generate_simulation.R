@@ -187,8 +187,10 @@ dir_update <- function(pth_top_lvl, overwrite) {
   if (isFALSE(overwrite)) {
     stopifnot(`Project directory already exists!` = !dir.exists(pth_top_lvl))
   } else if (isTRUE(overwrite)) {
-    if (dir.exists(pth_top_lvl)) unlink(pth_top_lvl, recursive=TRUE)
-    warning(paste0("Overwriting project structure in: ", pth_top_lvl))
+    if (dir.exists(pth_top_lvl)) {
+      unlink(pth_top_lvl, recursive=TRUE)
+      warning(paste0("Overwriting project structure in: ", pth_top_lvl))
+    }
   }
   dir.create(pth_top_lvl, recursive = TRUE)
   return(invisible(pth_top_lvl))
