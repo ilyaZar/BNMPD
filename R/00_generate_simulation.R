@@ -32,9 +32,9 @@ generate_simulation_study <- function(data_simulation,
 
   dataSim       <- data_simulation
   trueParams    <- get_true_params_obj(dataSim)
-  meta_info_tmp <- attr(trueParams, "meta_info")
+  meta_info_tmp <- get_meta_info(trueParams)
 
-  seeds_both <- c(par_seed = meta_info_tmp$SEED_NO,
+  seeds_both <- c(par_seed = get_seed(trueParams),
                   sim_seed = attr(dataSim, which = "SEED_NO"))
 
   zeroParams   <- get_zero_or_defaults(trueParams)
@@ -48,8 +48,8 @@ generate_simulation_study <- function(data_simulation,
                                         which = "model_type_obs"),
                   model_type_lat = attr(dataSim[["states"]],
                                         which = "model_type_lat"))
-  base_name <- get_file_name_main(dim_model =  meta_info_tmp$MODEL_DIM,
-                                  par_settings = meta_info_tmp$PAR_SETTINGS,
+  base_name <- get_file_name_main(dim_model =  get_dimension(trueParams, "all"),
+                                  par_settings = get_par_settings(trueParams),
                                   seed_nos = seeds_both)
   tmp_name <- paste0(model_type[["model_type_obs"]],
                      "_", base_name)
@@ -81,8 +81,8 @@ generate_simulation_study <- function(data_simulation,
                                       fn_true_states = "states_true",
                                       fn_zero_states = "states_zero")
   generate_yaml_model_defintion(model_type,
-                                dim_model = meta_info_tmp$MODEL_DIM,
-                                par_settings = meta_info_tmp$PAR_SETTINGS,
+                                dim_model =  get_dimension(trueParams, "all"),
+                                par_settings = get_par_settings(trueParams),
                                 file.path(pth_top_lvl, "model",
                                           "model-definition",
                                           "model_definition.yaml"))
@@ -94,7 +94,7 @@ generate_simulation_study <- function(data_simulation,
                       fn_all[["fn_true_val"]],
                       fn_all[["fn_zero_val"]],
                       data_sim = dataSim,
-                      dim_model = meta_info_tmp$MODEL_DIM,
+                      dim_model = get_dimension(trueParams, "all"),
                       true_params =  trueParams,
                       defl_params = zeroParams)
   copy_meta_files(pth_top_lvl, project_name)
