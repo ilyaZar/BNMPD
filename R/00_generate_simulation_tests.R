@@ -55,6 +55,17 @@ read_sttgs_pj <- function(pth) {
   sttgs_pj <- yaml::read_yaml(tmp_pth)
   return(sttgs_pj)
 }
+#' Internal helper to test identical simulation directory structure
+#'
+#' Useful when changes to [new_trueParams()] or [new_dataSim()] are done which
+#' when simulation studies are generated from these, can be tested against
+#' suitable backups.
+#'
+#' @param pth_1 path to test or backup
+#' @param pth_2 the other path (to test or backup, vice versa to \code{pth_1})
+#'
+#' @return \code{TRUE} if everything is identical, but error if not; pure
+#'   side-effect function
 test_sim_dirs <- function(pth_1, pth_2) {
   pth_top_lvl_01 <- pth_1
   pth_top_lvl_02 <- pth_2
