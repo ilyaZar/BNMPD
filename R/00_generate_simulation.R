@@ -9,6 +9,8 @@
 #'   directory is to be created)
 #' @param project_name character; name of the simulation study used as top-level
 #'   directory and in project information
+#' @param overwrite logical; if \code{TRUE} then implied project directory is
+#'   overwritten when it exists, otherwise an error is thrown
 #'
 #' @return side effect function generating directories and files for simulation
 #'   study and copying data/template files into corresponding directories
