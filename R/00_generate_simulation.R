@@ -17,8 +17,8 @@ generate_simulation_study <- function(data_simulation,
                                       INIT_AT = "true",
                                       pth_to_project,
                                       project_name = list(prepend = NULL,
-                                                          append = NULL)) {
-  browser()
+                                                          append = NULL),
+                                      overwrite = FALSE) {
   check_class_data_sim(data_simulation)
   stopifnot(`INIT_AT must be eihter 'true' or 'default'.` =
               INIT_AT %in% c("true", "default"))
@@ -26,6 +26,7 @@ generate_simulation_study <- function(data_simulation,
               is.character(pth_to_project))
   stopifnot(`Arg. 'project_name' must be named list` =
               names(project_name) %in% c("prepend", "append"))
+  stopifnot(`Arg. 'project_name' must be logical` = is.logical(overwrite))
 
   dataSim       <- data_simulation
   trueParams    <- get_true_params_obj(dataSim)
@@ -54,8 +55,8 @@ generate_simulation_study <- function(data_simulation,
                          collapse = "_")
 
   pth_top_lvl <- file.path(pth_to_project, project_name)
-  stopifnot(`Project directory already exists!` = !dir.exists(pth_top_lvl))
-  dir.create(pth_top_lvl, recursive = TRUE)
+
+  dir_update(pth_top_lvl, overwrite = overwrite)
 
   pth_tmp <- c(file.path(pth_top_lvl, "model"),
                file.path(pth_top_lvl, "results"),
@@ -177,6 +178,18 @@ get_file_name_main <- function(dim_model,
                    "_", "parSEED", seed_nos[1],
                    "_", "simSEED", seed_nos[2])
   return(tmp_fn)
+}
+dir_update <- function(pth_top_lvl, overwrite) {
+  stopifnot(`Missing args. not permitted` =
+              !(missing(pth_top_lvl) && missing(overwrite)))
+  if (isFALSE(overwrite)) {
+    stopifnot(`Project directory already exists!` = !dir.exists(pth_top_lvl))
+  } else if (isTRUE(overwrite)) {
+    if (dir.exists(pth_top_lvl)) unlink(pth_top_lvl, recursive=TRUE)
+    warning(paste0("Overwriting project structure in: ", pth_top_lvl))
+  }
+  dir.create(pth_top_lvl, recursive = TRUE)
+  return(invisible(pth_top_lvl))
 }
 #' Generates consistent file names for simulation study
 #'
