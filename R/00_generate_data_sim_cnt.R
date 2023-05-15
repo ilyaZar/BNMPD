@@ -65,3 +65,73 @@ set_class_name <- function(dist) {
 # set_class_name(test_name_class[4])
 # set_class_name(test_name_class[5])
 # set_class_name(test_name_class[6])
+#' Generate container for measurements and states of appropriate dimension.
+#'
+#' For \code{distribution} of appropriate type, where the data-part is compound
+#' of two types, a list of two elements (not \code{NULL}) is returned; otherwise
+#' a list element can be \code{NULL} indicating that this element is not needed.
+#'
+#' @inheritParams new_dataSim
+#'
+#' @return a list of two; \code{data} and \code{states} where the former can
+#'   itself be a list of two elements (part1 and part2 if data is compound e.g.
+#'   of counts and total counts as for the Multinomial distribution)
+generate_y_x_containter <- function(NN, TT, DD) {
+  tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
+
+  out_cnt <- array(0, c(TT, DD, NN))
+  dimnames(out_cnt) <- tmp_names
+
+  return(out_cnt)
+}
+get_x_y_containter_names <- function(NN, TT, DD) {
+  names_out <- list(paste0("t_", seq_len(TT)),
+                    paste0("d_", seq_len(DD)),
+                    paste0("n_", seq_len(NN)))
+  return(names_out)
+}
+#' Generate container for regressors.
+#'
+#' The multivariate dimension \code{DD} need not be specified as necessary
+#' information is directly inferred from container of true parameters
+#' (\code{par}).
+#'
+#' @param pars container of true parameter values as passed to main function
+#'   [new_dataSim(true_params = ...)]
+#' @inheritParams new_dataSim
+#' @param cnt_name a character: either "z" for z-type regressors or "u" for the
+#'   random effects container; other imput gives an error
+#' @param reg_type output from [get_modelling_reg_types()] specifying the type
+#'   of regressors (effects) to generate
+#'
+#' @return a named list of two elements: \code{z} and \code{u} for z-type or
+#'   u-type regressors; elements can be \code{NULL} whenever the corresponding
+#'   regressor type is not needed.
+generate_z_u_container <- function(pars, NN, TT, DD, cnt_name, reg_type) {
+  if (reg_type) {
+    if(cnt_name == "z") {
+      dim_bet <- sapply(pars, length)
+    } else if (cnt_name == "u") {
+      if (NN == 1) {
+        dim_bet <- sapply(pars, length)
+        num_bet <- sum(dim_bet)
+      } else {
+        dim_bet <- sapply(pars, nrow)
+        num_bet <- sum(dim_bet)
+      }
+    } else {
+      stop("Unknown container name.")
+    }
+    num_bet <- sum(dim_bet)
+    names_cnt <- paste0(paste0(cnt_name, unlist(sapply(dim_bet, seq_len))),
+                        "_d", rep(1:DD, unlist(dim_bet)))
+    tmp_names <- list(paste0("t_", seq_len(TT)),
+                      names_cnt,
+                      paste0("n_", seq_len(NN)))
+    cnt <- array(0, c(TT, num_bet, NN))
+    dimnames(cnt) <- tmp_names
+  } else {
+    cnt <- NULL
+  }
+  return(cnt)
+}
