@@ -191,12 +191,13 @@ get_par_settings <- function(true_params) {
 #' Specifically, getting seed number used during bet_u_lin and VCM value
 #' simulation.
 #'
+#' @inheritParams get_seed
 #' @inheritParams get_meta_info
 #'
 #' @return seed number of attribute of \code{class} "trueParams"; the random
 #'    seed during beta_u type value construction and corresponding VCMs
 #' @export
-get_seed <- function(true_params) {
+get_seed.trueParams <- function(true_params, type = NULL) {
   check_class_true_params(true_params)
   attr(true_params, which = "meta_info")[["SEED_NO"]]
 }

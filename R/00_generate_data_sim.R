@@ -92,7 +92,6 @@ new_dataSim <- function(true_params,
 
   opt1      <- get_opt_include(options_include, NN, DD)
   x_levels  <- get_x_levels(true_params, distribution, x_levels, X_LOG_SCALE)
-  seed_no   <- get_seed_no(true_params, seed_no); set.seed(seed_no);
   reg_types <- get_modelling_reg_types(true_params)
 
   x <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
@@ -104,6 +103,8 @@ new_dataSim <- function(true_params,
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "u",
                               reg_types[["u-linear-regressors"]])
+
+  seed_no <- set_seed_no(true_params, seed_no); set.seed(seed_no);
   for (n in 1:NN) {
     par_true_current <- get_par_true_n(true_params, reg_types, n)
     out_data_tmp <- generate_data_t(TT = TT, DD = DD,
@@ -137,6 +138,10 @@ new_dataSim <- function(true_params,
                             SEED_NO = seed_no,
                             class = "dataSim")
   return(out_data_sim)
+}
+set_seed_no <- function(true_params, seed_no) {
+  if (is.null(seed_no)) seed_no <- get_seed(true_params)
+  return(seed_no)
 }
 #' Returns "trueParams" that comes with the \code{class} "dataSim"
 #'
@@ -191,14 +196,40 @@ get_x_levels <- function(true_params, distribution, x_levels, X_LOG_SCALE) {
   }
   return(x_levels)
 }
+#' Generic function to set the seed
+#'
+#' Dispatches on class \code{trueParams} or \code{dataSim}.
+#'
+#' @param obj an object of class \code{trueParams} or \code{dataSim}; see
+#'    details of corresponding S3 methods
+#' @param type a character: either "data_sim", returning the seed used for data
+#'   simulation, or "true_params" returning the seed for generation of the
+#'   underlying \code{trueParams} object; this is only useful for
+#'   \code{get_seed.dataSim} i.e. \code{get_seed()} applied to type
+#'   \code{dataSim}; defaults to "data_sim" but will be ignored when first
+#'   argument is \code{class=="trueParams"}
+#'
+#'
+#' @return an \code{integer} giving the underlying seed number(s)
+#' @export
+get_seed <- function(obj, type = "data_sim") {
+  stopifnot(`Arg. 'type' must be either 'data_sim' or 'true_params'` =
+            (type %in% c("data_sim", "true_params")))
+  UseMethod("get_seed")
+}
 #' Helper function to set the seed
 #'
-#' @inheritParams new_dataSim
+#' @inheritParams get_seed
+#' @inheritParams get_true_params_obj
 #'
-#' @return a
-get_seed_no <- function(true_params, seed_no) {
-  if (is.null(seed_no)) seed_no <- get_seed(true_params)
-  seed_no
+#' @return an \code{integer} giving the underlying seed number(s)
+get_seed.dataSim <- function(data_sim, type = "data_sim") {
+  browser()
+  check_class_data_sim(data_sim)
+
+  if (type == "data_sim") return(attr(data_sim, "SEED_NO"))
+  if (type == "true_params") return(get_seed(get_true_params_obj(data_sim)))
+  return(invisible(NULL))
 }
 #' Options list of included effects.
 #'
