@@ -25,5 +25,6 @@
 /results/*
 /tests-own/*
 /inst/simulation-studies/*
+/inst/simulation-studies-tests/*
 /inst/generate-artificial-datasets/*
 ./04-results/*
