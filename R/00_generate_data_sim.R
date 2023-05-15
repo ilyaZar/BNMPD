@@ -90,8 +90,9 @@ new_dataSim <- function(true_params,
   TT <- get_dimension(true_params, "TT")
   DD <- get_dimension(true_params, "DD")
 
-  opt1      <- get_opt_include(options_include, NN, DD)
-  x_levels  <- get_x_levels(true_params, distribution, x_levels, X_LOG_SCALE)
+  opt1      <- set_opt_include(options_include, NN, DD)
+  x_levels  <- set_x_levels(true_params, distribution,
+                                 x_levels, X_LOG_SCALE)
   reg_types <- get_modelling_reg_types(true_params)
 
   x <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
@@ -120,7 +121,7 @@ new_dataSim <- function(true_params,
     }
     x[, , n] <- out_data_tmp$x_states
   }
-  y <- get_measurements(x, X_LOG_SCALE, distribution)
+  y <- generate_measurements(x, X_LOG_SCALE, distribution)
   if (any(sapply(options_plot, isTRUE))) {
     for (n in 1:NN) {
       plot_data_per_n(DD,
@@ -133,15 +134,18 @@ new_dataSim <- function(true_params,
                       cs = n)
     }
   }
-  out_data_sim <- structure(get_output_data_simul(y, x, z, u, reg_types),
+  out_data_sim_core <- get_output_data_simul(y, x, z, u, reg_types)
+  out_data_sim <- structure(out_data_sim_core,
                             TRUE_PARAMS = true_params,
                             SEED_NO = seed_no,
-                            class = "dataSim")
+                            class = c(class(out_data_sim_core), "dataSim"))
   return(out_data_sim)
 }
-set_seed_no <- function(true_params, seed_no) {
-  if (is.null(seed_no)) seed_no <- get_seed(true_params)
-  return(seed_no)
+check_class_data_sim <- function(obj) {
+  checker <- inherits(obj, "dataSim")
+  stopifnot(`Arg. "obj" must be of class "dataSim".` = checker)
+  check_class_true_params(attr(obj, which = "TRUE_PARAMS"))
+  return(invisible(obj))
 }
 #' Returns "trueParams" that comes with the \code{class} "dataSim"
 #'
@@ -153,16 +157,69 @@ set_seed_no <- function(true_params, seed_no) {
 #'
 #' @return an object of \code{class} "trueParams" accompanying this data class
 #' @export
-get_true_params_obj <- function(data_sim) {
+get_true_params <- function(data_sim) {
   check_class_data_sim(data_sim)
   check_class_true_params(attr(data_sim, which = "TRUE_PARAMS"))
   attr(data_sim, which = "TRUE_PARAMS")
 }
-check_class_data_sim <- function(obj) {
-  checker <- inherits(obj, "dataSim")
-  stopifnot(`Arg. "obj" must be of class "dataSim".` = checker)
-  check_class_true_params(attr(obj, which = "TRUE_PARAMS"))
-  return(invisible(obj))
+#' Get type of measurements/observations of the "dataSim" object
+#'
+#' @inheritParams get_true_params
+#'
+#' @return the data container of the z-type regressor
+#' @export
+get_regs_z <- function(data_sim) {
+  check_class_data_sim(data_sim)
+  data_sim[["regs"]][["z"]]
+}
+#' Get type of measurements/observations of the "dataSim" object
+#'
+#' @inheritParams get_true_params
+#'
+#' @return the data container of the u-type regressor
+#' @export
+get_regs_u <- function(data_sim) {
+  check_class_data_sim(data_sim)
+  data_sim[["regs"]][["u"]]
+}
+#' Get type of measurements/observations of the "dataSim" object
+#'
+#' @inheritParams get_true_params
+#'
+#' @return the measurement/observation data set of appropriate type e.g. the
+#'   "raw" fractions if the distribution is a Dirichlet or component counts and
+#'    total counts of distribution is of Multinomial type (e.g.
+#'    Dirichlet-Multinomial)
+#' @export
+get_data <- function(data_sim, type) {
+  check_class_data_sim(data_sim)
+  if (type == "raw") {
+    return(data_sim[["data"]][["yraw"]])
+  } else if (type == "count") {
+    return(data_sim[["data"]][["num_counts"]])
+  }
+}
+#' Get type of measurements/observations of the "dataSim" object
+#'
+#' @inheritParams get_true_params
+#'
+#' @return a character string of either: "NORMAL", "DIRICHLET",
+#'    "GEN_DIRICHLET", "MULTINOMIAL", "DIRICHLET_MULT", or "GEN_DIRICHLET_MULT"
+#' @export
+get_type_obs <- function(data_sim) {
+  check_class_data_sim(data_sim)
+  attr(data_sim, "model_type_obs")
+}
+#' Get type of latent states of the "dataSim" object
+#'
+#' @inheritParams get_true_params
+#'
+#' @return a character string of either: "auto", "lin", "re", "splZ", "splU" or
+#'    a combination thereof
+#' @export
+get_type_lat <- function(data_sim) {
+  check_class_data_sim(data_sim)
+  attr(data_sim, "model_type_lat")
 }
 #' Helper function to get good values for state levels to simulation
 #'
@@ -172,7 +229,7 @@ check_class_data_sim <- function(obj) {
 #'
 #' @return resulting target levels, that might need adjustment e.g. taking to
 #'    the log-scale or standardization with the variance
-get_x_levels <- function(true_params, distribution, x_levels, X_LOG_SCALE) {
+set_x_levels <- function(true_params, distribution, x_levels, X_LOG_SCALE) {
   densitities_supported <- c("multinomial", "dirichlet_mult",
                              "gen_dirichlet_mult", "gen_dirichlet",
                              "dirichlet", "normal")
@@ -185,7 +242,6 @@ get_x_levels <- function(true_params, distribution, x_levels, X_LOG_SCALE) {
                                              "multinomial", "dirichlet_mult",
                                              "gen_dirichlet_mult"))) {
     if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
-      browser()
       sig_tmp  <- get_params(true_params, n = 1,
                              name_par = "sig_sq", DD_TYPE = "A")
     } else {
@@ -220,7 +276,7 @@ get_seed <- function(obj, type = "data_sim") {
 #' Helper function to set the seed
 #'
 #' @inheritParams get_seed
-#' @inheritParams get_true_params_obj
+#' @inheritParams get_true_params
 #'
 #' @return an \code{integer} giving the underlying seed number(s)
 get_seed.dataSim <- function(data_sim, type = "data_sim") {
@@ -228,7 +284,7 @@ get_seed.dataSim <- function(data_sim, type = "data_sim") {
   check_class_data_sim(data_sim)
 
   if (type == "data_sim") return(attr(data_sim, "SEED_NO"))
-  if (type == "true_params") return(get_seed(get_true_params_obj(data_sim)))
+  if (type == "true_params") return(get_seed(get_true_params(data_sim)))
   return(invisible(NULL))
 }
 #' Options list of included effects.
@@ -243,7 +299,7 @@ get_seed.dataSim <- function(data_sim, type = "data_sim") {
 #' @return a list of the same structure as includes but with elements adjusted
 #'   for model dimension; \code{includes} is a list of \code{NULL} elements,
 #'   then the default specifications are returned (see the function body)
-get_opt_include <- function(includes, NN, DD) {
+set_opt_include <- function(includes, NN, DD) {
   intercept <- includes$intercept
   policy    <- includes$policy
   zeros     <- includes$zeros
@@ -352,68 +408,11 @@ generate_z_u_container <- function(pars, NN, TT, DD, cnt_name, reg_type) {
   }
   return(cnt)
 }
-#' Subset container of true parameters by current cross sectional unit \code{n}
-#'
-#' @inheritParams generate_z_u_container
-#' @param n integer giving the cross sectional unit for which to subset
-#'
-#' @return subset of true parameter container for current cross sectional unit
-get_par_true_n <- function(pars, reg_types, n) {
-  pars_out <- list(sig_sq = pars[["sig_sq"]][, n],
-                   phi = lapply(pars[["phi"]], `[`, i = , j = n))
-  if (reg_types[["z-linear-regressors"]]) {
-    pars_out$beta_z_lin <- pars[["beta_z_lin"]]
-  }
-  if (reg_types[["u-linear-regressors"]]) {
-    pars_out$beta_u_lin <- lapply(pars[["beta_u_lin"]], `[`, i = , j = n)
-  }
-  return(pars_out)
+set_seed_no <- function(true_params, seed_no) {
+  if (is.null(seed_no)) seed_no <- get_seed(true_params)
+  return(seed_no)
 }
-#' Produce output container of the main simulation function
-#'
-#' Takes input from intermediate containers; internal function.
-#'
-#' @param cnt_data output container of measurements
-#' @param cnt_states output container of latent states
-#' @param cnt_z output container of z-type regressors
-#' @param cnt_u output container of u-type-regressors
-#' @param reg_types regressor type specification
-#'
-#' @return a names list of appropriate structure to return from main function
-get_output_data_simul <- function(cnt_data,
-                                  cnt_states,
-                                  cnt_z, cnt_u,
-                                  reg_types) {
-  dist <- attr(cnt_data, which = "distribution")
-  out_data <- vector("list", 3)
-  if (dist %in% c("dirichlet", "normal")) {
-    out_data[[1]] <- list(yraw = cnt_data[["part1"]])
-  } else if (dist == "multinomial" || dist == "dirichlet_mult") {
-    out_data[[1]] <- list(yraw = cnt_data[["part1"]],
-                          num_counts = cnt_data[["part2"]])
-  } else {
-    stop("Unknown distribution attribute of data.")
-  }
-  attr(out_data[[1]], which = "model_type_obs") <- toupper(dist)
-  if (reg_types[["z-linear-regressors"]]) {
-    out_data[[2]]$z <- cnt_z
-  } else{
-    out_data[[2]]$z <- NULL
-  }
-  if (reg_types[["u-linear-regressors"]]) {
-    out_data[[2]]$u <- cnt_u
-  } else {
-    out_data[[2]]$u <- NULL
-  }
-  out_data[[3]] <- cnt_states
-
-  lat_type_names <- c("auto", "lin", "re", "splZ", "splU")
-  lat_type_names <- paste0(lat_type_names[reg_types], collapse = "_")
-  attr(out_data[[3]], which = "model_type_lat") <- lat_type_names
-  names(out_data) <- c("data", "regs", "states")
-  return(out_data)
-}
-get_measurements <- function(x_states, X_LOG_SCALE, distribution) {
+generate_measurements <- function(x_states, X_LOG_SCALE, distribution) {
   tmp_dim <- dim(x_states)
   TT <- tmp_dim[1]
   DD <- tmp_dim[2]

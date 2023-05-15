@@ -31,7 +31,7 @@ generate_simulation_study <- function(data_simulation,
   stopifnot(`Arg. 'project_name' must be logical` = is.logical(overwrite))
 
   dataSim       <- data_simulation
-  trueParams    <- get_true_params_obj(dataSim)
+  trueParams    <- get_true_params(dataSim)
   meta_info_tmp <- get_meta_info(trueParams)
 
   seeds_both <- c(par_seed = get_seed(trueParams),
