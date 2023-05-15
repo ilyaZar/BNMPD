@@ -3,6 +3,7 @@
 S3method(get_params,trueParamsDirichlet)
 S3method(get_params,trueParamsDirichletMult)
 S3method(get_params,trueParamsGenDirichlet)
+S3method(get_seed,trueParams)
 S3method(sample_all_params,auto_lin)
 S3method(sample_all_params,auto_lin_re)
 S3method(sample_all_params,auto_re)
