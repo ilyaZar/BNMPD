@@ -268,13 +268,13 @@ save_simulated_data <- function(pth_to_write,
 
   NN <- dim_model[1] # Cross sectional length
   cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
-      crayon::green("to "), crayon::red(NN), crayon::green("!"))
+      crayon::green("to "), crayon::red(NN), crayon::green("!\n"))
   TT <- dim_model[2]  # Time series length
   cat(crayon::green("Setting dimension "), crayon::yellow("TT"),
-      crayon::green("to "), crayon::red(TT), crayon::green("!"))
+      crayon::green("to "), crayon::red(TT), crayon::green("!\n"))
   DD <- dim_model[3] # mult. comp. length
   cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
-      crayon::green("to "), crayon::red(DD), crayon::green("!"))
+      crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
 
   tmp_list <- get_names_num_simulated(true_params, DD,
                                       SIMUL_Z_BETA, SIMUL_U_BETA)

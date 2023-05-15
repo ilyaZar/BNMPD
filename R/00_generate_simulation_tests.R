@@ -116,3 +116,14 @@ test_sim_dirs <- function(pth_1, pth_2) {
   stopifnot(`Some tests failed!` = all(all_tests))
   return(all(all_tests))
 }
+test_dirs_files <- function(pth_to_test) {
+  test_names <- list.files(pth_to_test, recursive = TRUE)
+  test_BU <- test_names[grepl("^BACKUP", test_names, perl = TRUE)]
+  test_GN <- test_names[grepl("^DIRICHLET", test_names, perl = TRUE)]
+
+  test_BU <- gsub("(BACKUP/|_BACKUP_TEST)", "", test_BU)
+
+  check <- identical(test_BU, test_GN)
+  stopifnot(`Dirs and filenames not equal in BACKUP and generated` = check)
+  cat(crayon::green("ALL DIR/FILE NAMES CHECKS PASSED !!! \n"))
+}
