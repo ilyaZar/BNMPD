@@ -147,7 +147,7 @@ check_class_data_sim <- function(obj) {
   check_class_true_params(attr(obj, which = "TRUE_PARAMS"))
   return(invisible(obj))
 }
-#' Returns "trueParams" that comes with the \code{class} "dataSim"
+#' Returns "trueParams" object that comes with the \code{class} "dataSim"
 #'
 #' The "trueParams" accompanying the simulated data class is stored as an
 #' attribute. This helper retrieves this attribute with appropriate class
@@ -162,7 +162,7 @@ get_true_params <- function(data_sim) {
   check_class_true_params(attr(data_sim, which = "TRUE_PARAMS"))
   attr(data_sim, which = "TRUE_PARAMS")
 }
-#' Get type of measurements/observations of the "dataSim" object
+#' Get z-type regressors from an instance of "dataSim"
 #'
 #' @inheritParams get_true_params
 #'
@@ -172,7 +172,7 @@ get_regs_z <- function(data_sim) {
   check_class_data_sim(data_sim)
   data_sim[["regs"]][["z"]]
 }
-#' Get type of measurements/observations of the "dataSim" object
+#' Get u-type regressors from an instance of "dataSim"
 #'
 #' @inheritParams get_true_params
 #'
@@ -182,7 +182,7 @@ get_regs_u <- function(data_sim) {
   check_class_data_sim(data_sim)
   data_sim[["regs"]][["u"]]
 }
-#' Get type of measurements/observations of the "dataSim" object
+#' Get measurements/observations i.e. the data from an instance of "dataSim"
 #'
 #' @inheritParams get_true_params
 #'
@@ -198,6 +198,16 @@ get_data <- function(data_sim, type) {
   } else if (type == "count") {
     return(data_sim[["data"]][["num_counts"]])
   }
+}
+#' Get latent states from an instance of "dataSim"
+#'
+#' @inheritParams get_true_params
+#'
+#' @return the latent states which are simulated
+#' @export
+get_states <- function(data_sim) {
+  check_class_data_sim(data_sim)
+  data_sim[["states"]]
 }
 #' Get type of measurements/observations of the "dataSim" object
 #'
