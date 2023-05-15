@@ -105,10 +105,10 @@ new_dataSim <- function(true_params,
                               reg_types[["u-linear-regressors"]])
 
   seed_no <- set_seed_no(true_params, seed_no); set.seed(seed_no);
+
   for (n in 1:NN) {
-    par_true_current <- get_par_true_n(true_params, reg_types, n)
-    out_data_tmp <- generate_data_t(TT = TT, DD = DD,
-                                    par_true = par_true_current,
+    out_data_tmp <- generate_data_t(nn = n, TT = TT, DD = DD,
+                                    par_true = true_params,
                                     x_levels = x_levels[, n],
                                     options_include = opt1[[n]],
                                     modelling_reg_types = reg_types)

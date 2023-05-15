@@ -6,12 +6,12 @@
 #' function of regressors (attached to the latent states) where the regressors
 #' and latent states can vary over time.
 #'
+#' @param nn current iteration of the cross sectional dimension
 #' @param TT number of time periods
 #' @param DD number of shares/fractions (for Dirichlet or Dirichlet-Multinomial)
 #'   or the number of categories for a Multinomial distribution
 # @param n current cross sectional unit i.e. an integer \code{n=1,...,NN}
-#' @param par_true list of true parameters that describe the latent state
-#'   process
+#' @param par_true an object of \code{class} "trueParams"
 #' @param x_levels vector of target "means"/"levels" of the states around which
 #'   they fluctuate
 #' @param options_include a named list of three elements:
@@ -49,43 +49,36 @@
 #'
 #' @return a list of two: \code{[[1]]} -> regressors and \code{[[2]]} -> latent
 #'   states
-generate_data_t <- function(TT, DD,
+generate_data_t <- function(nn, TT, DD,
                             par_true,
                             x_levels,
                             options_include,
                             modelling_reg_types) {
-  x <- matrix(nrow = TT, ncol = DD, 0)
 
-  if (modelling_reg_types[["z-linear-regressors"]]) {
-    z <- list()
-  } else {
-    z <- NULL
-  }
-  if (modelling_reg_types[["u-linear-regressors"]]) {
-    u <- list()
-  } else {
-    u <- NULL
-  }
+  x <- matrix(nrow = TT, ncol = DD, 0)
+  z <- generate_z_u_cnt_t(modelling_reg_types, "z-linear-regressors")
+  u <- generate_z_u_cnt_t(modelling_reg_types, "u-linear-regressors")
 
   for (d in 1:DD) {
+    # reg_var_within = 0.00025, # reg_var_within = 2.0025,
+    # reg_var_among = 0.1
     opt_taken <- list(x_level = x_levels[d],
-                      # reg_var_within = 0.00025,
-                      # reg_var_among = 0.1
-                      # reg_var_within = 2.0025,
                       reg_var_within = 0.35,
-                      reg_var_among = 0.125
-                      )
-    res <- generate_x_z_u(TT = TT,
-                          phi_x = par_true[["phi"]][[d]],
-                          sig_sq_x = par_true[["sig_sq"]][d],
-                          bet_z = par_true[["beta_z_lin"]][[d]],
-                          bet_u = par_true[["beta_u_lin"]][[d]],
-                          modelling_reg_types = modelling_reg_types,
-                          options_reg_simul = opt_taken,
-                          intercept_z = options_include$intercept$at_z[d],
-                          intercept_u = options_include$intercept$at_u[d],
-                          policy_dummy   = options_include$policy[d],
-                          zero_pattern   = options_include$include_zeros[d])
+                      reg_var_among = 0.125)
+
+    res <- generate_x_z_u(
+      TT = TT,
+      phi_x = get_params(par_true, n = nn, name_par = "phi", DD = d),
+      sig_sq_x = get_params(par_true, n = nn, name_par = "sig_sq", DD = d),
+      bet_z = get_params(par_true, n = nn, name_par = "beta_z_lin", DD = d),
+      bet_u = get_params(par_true, n = nn, name_par = "beta_u_lin", DD = d),
+      modelling_reg_types = modelling_reg_types,
+      options_reg_simul = opt_taken,
+      intercept_z = options_include$intercept$at_z[d],
+      intercept_u = options_include$intercept$at_u[d],
+      policy_dummy   = options_include$policy[d],
+      zero_pattern   = options_include$include_zeros[d])
+
     x[, d] <- res$x
     if (modelling_reg_types[["z-linear-regressors"]]) {
       z[[d]] <- res$z
@@ -96,6 +89,10 @@ generate_data_t <- function(TT, DD,
   }
   out_data <- get_out_data_t(x, z, u)
   return(out_data)
+}
+generate_z_u_cnt_t <- function(reg_types, type) {
+  if (reg_types[[type]]) return(list())
+  return(NULL)
 }
 get_out_data_t <- function(x_states, z_regs, u_regs) {
   tmp_out <- list()
