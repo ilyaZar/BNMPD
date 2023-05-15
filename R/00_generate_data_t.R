@@ -1,4 +1,4 @@
-#' Generates time series data for various models.
+#' Generates time series data for various compositional/count models.
 #'
 #' The data is a time series of latent state processes of dimension DD as the
 #' multivariate draws can vary along the time dimension. These are used as
@@ -11,7 +11,7 @@
 #' @param DD number of shares/fractions (for Dirichlet or Dirichlet-Multinomial)
 #'   or the number of categories for a Multinomial distribution
 # @param n current cross sectional unit i.e. an integer \code{n=1,...,NN}
-#' @param par_true an object of \code{class} "trueParams"
+#' @inheritParams new_dataSim
 #' @param x_levels vector of target "means"/"levels" of the states around which
 #'   they fluctuate
 #' @param options_include a named list of three elements:
@@ -50,7 +50,7 @@
 #' @return a list of two: \code{[[1]]} -> regressors and \code{[[2]]} -> latent
 #'   states
 generate_data_t <- function(nn, TT, DD,
-                            par_true,
+                            true_params,
                             x_levels,
                             options_include,
                             modelling_reg_types) {
@@ -68,10 +68,10 @@ generate_data_t <- function(nn, TT, DD,
 
     res <- generate_x_z_u(
       TT = TT,
-      phi_x = get_params(par_true, n = nn, name_par = "phi", DD = d),
-      sig_sq_x = get_params(par_true, n = nn, name_par = "sig_sq", DD = d),
-      bet_z = get_params(par_true, n = nn, name_par = "beta_z_lin", DD = d),
-      bet_u = get_params(par_true, n = nn, name_par = "beta_u_lin", DD = d),
+      phi_x = get_params(true_params, n = nn, name_par = "phi", DD = d),
+      sig_sq_x = get_params(true_params, n = nn, name_par = "sig_sq", DD = d),
+      bet_z = get_params(true_params, n = nn, name_par = "beta_z_lin", DD = d),
+      bet_u = get_params(true_params, n = nn, name_par = "beta_u_lin", DD = d),
       modelling_reg_types = modelling_reg_types,
       options_reg_simul = opt_taken,
       intercept_z = options_include$intercept$at_z[d],

@@ -2,25 +2,31 @@
 % Please edit documentation in R/00_generate_data_t.R
 \name{generate_data_t}
 \alias{generate_data_t}
-\title{Generates time series data for various models.}
+\title{Generates time series data for various compositional/count models.}
 \usage{
 generate_data_t(
+  nn,
   TT,
   DD,
-  par_true,
+  true_params,
   x_levels,
   options_include,
   modelling_reg_types
 )
 }
 \arguments{
+\item{nn}{current iteration of the cross sectional dimension}
+
 \item{TT}{number of time periods}
 
 \item{DD}{number of shares/fractions (for Dirichlet or Dirichlet-Multinomial)
 or the number of categories for a Multinomial distribution}
 
-\item{par_true}{list of true parameters that describe the latent state
-process}
+\item{true_params}{an object of class "\code{trueParams}" which is a list of
+true parameter values and meta information such as distribution,
+model dimension, the seed under which the true parameters are generated,
+the logical indicators that describe which parameters to generate and their
+lengths, as provided by the function \code{\link[=new_trueParams]{new_trueParams()}}}
 
 \item{x_levels}{vector of target "means"/"levels" of the states around which
 they fluctuate}

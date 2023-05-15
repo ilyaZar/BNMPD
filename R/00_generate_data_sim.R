@@ -108,7 +108,7 @@ new_dataSim <- function(true_params,
 
   for (n in 1:NN) {
     out_data_tmp <- generate_data_t(nn = n, TT = TT, DD = DD,
-                                    par_true = true_params,
+                                    true_params = true_params,
                                     x_levels = x_levels[, n],
                                     options_include = opt1[[n]],
                                     modelling_reg_types = reg_types)
