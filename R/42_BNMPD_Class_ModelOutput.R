@@ -58,24 +58,54 @@ ModelOut <- R6::R6Class("ModelOut",
                           },
                           jn_sig_sq = function(sig_sq_x1, sig_sq_x2) {
                             if (is.null(sig_sq_x1) || is.null(sig_sq_x2)) return(NA)
+                            check_jn_sig_sq(sig_sq_x1, sig_sq_x2)
                             cbind(sig_sq_x1, sig_sq_x2)
+                          },
+                          check_jn_sig_sq = function(sig_sq_x1, sig_sq_x2) {
+                            lastM_iter_prev <- sig_sq_x1[, ncol(sig_sq_x1)]
+                            first_iter_next <- sig_sq_x2[, 1]
+                            check <- identical(lastM_iter_prev, first_iter_next)
+                            stopifnot(`Joins for sig_sq not identical` = check)
                           },
                           jn_phi_x = function(phi_x1, phi_x2) {
                             if (is.null(phi_x1) || is.null(phi_x2)) return(NA)
+                            check_jn_phi(phi_x1, phi_x2)
                             cbind(phi_x1, phi_x2)
+                          },
+                          check_jn_phi = function(phi_x1, phi_x2) {
+                            lastM_iter_prev <- phi_x1[, ncol(phi_x1)]
+                            first_iter_next <- phi_x2[, 1]
+                            check <- identical(lastM_iter_prev, first_iter_next)
+                            stopifnot(`Joins for 'phi' not identical` = check)
                           },
                           jn_bet_z = function(bet_z1, bet_z2) {
                             if (is.null(bet_z1) || is.null(bet_z2)) return(NA)
+                            check_jn_bet_z(bet_z1, bet_z2)
                             cbind(bet_z1, bet_z2)
+                          },
+                          check_jn_bet_z = function(bet_z_x1, bet_z_x2) {
+                            lastM_iter_prev <- bet_z_x1[, ncol(bet_z_x1)]
+                            first_iter_next <- bet_z_x2[, 1]
+                            check <- identical(lastM_iter_prev, first_iter_next)
+                            stopifnot(`Joins for 'bet_z' not identical` = check)
                           },
                           jn_bet_u = function(bet_u1, bet_u2) {
                             if (is.null(bet_u1) || is.null(bet_u2)) return(NA)
+                            check_jn_bet_u(bet_u1, bet_u2)
                             abind::abind(bet_u1, bet_u2, along = 2)
+                          },
+                          check_jn_bet_u = function(bet_u_x1, bet_u_x2) {
+                            id <- dim(bet_u_x1)[2]
+                            lastM_iter_prev <- bet_u_x1[, id, ]
+                            first_iter_next <- bet_u_x2[, 1, ]
+                            check <- identical(lastM_iter_prev, first_iter_next)
+                            stopifnot(`Joins for 'bet_u' not identical` = check)
                           },
                           jn_vcm = function(vcm1, vcm2) {
                             if (is.null(vcm1) || is.null(vcm2)) return(NA)
                             DD_tmp <- length(vcm1)
                             out_vcm <- vector("list", DD_tmp)
+                            check_jn_vcm(vcm1, vcm2)
                             for (d in 1:DD_tmp) {
                               out_vcm[[d]] <- abind::abind(vcm1[[d]],
                                                            vcm2[[d]],
@@ -83,9 +113,29 @@ ModelOut <- R6::R6Class("ModelOut",
                             }
                             return(out_vcm)
                           },
+                          check_jn_vcm = function(vcm1, vcm2) {
+                            DD_tmp <- length(vcm1)
+                            id <- dim(vcm1[[1]])[3]
+                            for (d in 1:DD_tmp) {
+                              lastM_iter_prev <- vcm1[[d]][, , id]
+                              first_iter_next <- vcm2[[d]][, , 1]
+                              check <- identical(lastM_iter_prev, first_iter_next)
+                              stopifnot(`Joins for 'vcm' not identical` = check)
+                            }
+                          },
                           jn_states = function(x1, x2) {
+                            # check_jn_states(x1, x2)
                             abind::abind(x1, x2, along = 3)
                           },
+                          # DEACTIVATED: for the states, actually new values
+                          # are initialized when the PGAS starts!
+                          # check_jn_states = function(x1, x2) {
+                          #   id <- dim(x1)[3]
+                          #   lastM_iter_prev <- x1[, , id, ]
+                          #   first_iter_next <- x2[, , 1, ]
+                          #   check <- identical(lastM_iter_prev, first_iter_next)
+                          #   stopifnot(`Joins for 'vcm' not identical` = check)
+                          # },
                           get_range_out = function(out_all, range_parts) {
                             range_all <- seq_len(private$.num_out)
                             if (!all(range_parts %in% range_all)) {
