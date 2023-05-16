@@ -16,92 +16,43 @@
 #'   study and copying data/template files into corresponding directories
 #' @export
 generate_simulation_study <- function(data_simulation,
-                                      INIT_AT = "true",
+                                      INIT_AT = "trues",
                                       pth_to_project,
                                       project_name = list(prepend = NULL,
                                                           append = NULL),
                                       overwrite = FALSE) {
   check_class_data_sim(data_simulation)
   stopifnot(`INIT_AT must be eihter 'true' or 'default'.` =
-              INIT_AT %in% c("true", "default"))
+              INIT_AT %in% c("trues", "default"))
   stopifnot(`'pth_to_proj' must be of type character` =
               is.character(pth_to_project))
   stopifnot(`Arg. 'project_name' must be named list` =
               names(project_name) %in% c("prepend", "append"))
   stopifnot(`Arg. 'project_name' must be logical` = is.logical(overwrite))
 
-  dataSim       <- data_simulation
-  trueParams    <- get_true_params(dataSim)
-  meta_info_tmp <- get_meta_info(trueParams)
+  dataSim    <- data_simulation
+  trueParams <- get_true_params_obj(dataSim)
 
-  seeds_both <- c(par_seed = get_seed(trueParams),
-                  sim_seed = attr(dataSim, which = "SEED_NO"))
+  zeroParams <- get_zero_or_defaults(trueParams)
+  usedParams <- get_used_or_zeros(trueParams, zeroParams, INIT_AT = INIT_AT)
 
-  zeroParams   <- get_zero_or_defaults(trueParams)
-  usedParams   <- if (INIT_AT == "true") {
-    usedParams <- trueParams
-  } else {
-    usedParams <-zeroParams
-  }
+  model_type <- c(model_type_obs = get_type_obs(dataSim),
+                  model_type_lat = get_type_lat(dataSim))
 
-  model_type <- c(model_type_obs = attr(dataSim[["data"]],
-                                        which = "model_type_obs"),
-                  model_type_lat = attr(dataSim[["states"]],
-                                        which = "model_type_lat"))
-  base_name <- get_file_name_main(dim_model =  get_dimension(trueParams, "all"),
-                                  par_settings = get_par_settings(trueParams),
-                                  seed_nos = seeds_both)
-  tmp_name <- paste0(model_type[["model_type_obs"]],
-                     "_", base_name)
-  project_name <- paste0(c(project_name$prepend, tmp_name, project_name$append),
-                         collapse = "_")
+  base_name    <- set_base_name(dataSim)
+  project_name <- set_new_project_name(project_name, base_name, model_type)
+  pth_top_lvl  <- file.path(pth_to_project, project_name)
 
-  pth_top_lvl <- file.path(pth_to_project, project_name)
+  dir_proj_top_level_update(pth_top_lvl, overwrite = overwrite)
+  set_project_dir_structure(pth_top_lvl)
 
-  dir_update(pth_top_lvl, overwrite = overwrite)
+  generate_yaml_model_defintion(trueParams, pth_top_lvl, model_type)
+  generate_setup_init_json(usedParams, pth_top_lvl)
 
-  pth_tmp <- c(file.path(pth_top_lvl, "model"),
-               file.path(pth_top_lvl, "results"),
-               file.path(pth_top_lvl, "model",
-                         c("history",
-                           "input",
-                           "history/log",
-                           "model-definition",
-                           "output",
-                           "settings")),
-               file.path(pth_top_lvl, "model", "input", "datasets"),
-               file.path(pth_top_lvl, "results",
-                         c("diagnostics",
-                           "inference",
-                           "interpretation",
-                           "summary")))
-  lapply(pth_tmp, dir.create)
-  fn_all <- get_file_names_simul_data(fn_main_part = base_name,
-                                      fn_data = "sim_data",
-                                      fn_true_states = "states_true",
-                                      fn_zero_states = "states_zero")
-  generate_yaml_model_defintion(model_type,
-                                dim_model =  get_dimension(trueParams, "all"),
-                                par_settings = get_par_settings(trueParams),
-                                file.path(pth_top_lvl, "model",
-                                          "model-definition",
-                                          "model_definition.yaml"))
-  generate_setup_init_json(usedParams, file.path(pth_top_lvl, "model",
-                                                 "model-definition",
-                                                 "setup_inits.json"))
-  save_simulated_data(file.path(pth_top_lvl, "model", "input"),
-                      file.path("datasets", fn_all[["fn_data_set"]]),
-                      fn_all[["fn_true_val"]],
-                      fn_all[["fn_zero_val"]],
-                      data_sim = dataSim,
-                      dim_model = get_dimension(trueParams, "all"),
-                      true_params =  trueParams,
-                      defl_params = zeroParams)
+  save_simulated_data(pth_top_lvl, base_name, dataSim, trueParams, zeroParams)
+
   copy_meta_files(pth_top_lvl, project_name)
-  update_settings_project_yaml(file.path(pth_to_project, project_name, "model",
-                                         "settings", "settings_project.yaml"),
-                               proj_no = NULL, proj_name = project_name,
-                               notes = NULL)
+  update_settings_project_yaml(pth_top_lvl, project_name)
   return(invisible(data_simulation))
 }
 get_zero_or_defaults <- function(true_params) {
@@ -135,29 +86,29 @@ get_zero_or_defaults <- function(true_params) {
 }
 #' Generate main part of a file name
 #'
-#' @param dim_model numeric vector of 3 elements: \code{NN x TT x DD} (can be
-#'   taken from attributes of any object from class \code{trueParams},
-#'   see [new_trueParams()] and below)
-#' @param par_settings list of parameter settings as returned via attributes of
-#'   any object from class \code{trueParams} (see [new_trueParams()] for
-#'   details)
-#' @param seed_nos integer vector with two components giving the seed number
-#'   under which the trueParams object (first entry) and simulated data (second
-#'   entry) is obtained
+#' Which is the 'basename' internally. Takes into consideration the type of
+#' simulation, regressor numbers and types, order of the autoregression, seeds
+#' etc.
+#'
+#' @inheritParams new_dataSim
 #'
 #' @return main part for file names
-get_file_name_main <- function(dim_model,
-                               par_settings,
-                               seed_nos) {
+set_base_name <- function(data_sim) {
+  true_params  <- get_true_params_obj(data_sim)
+  dim_model    <- get_dimension(true_params, "all")
+  par_settings <- get_par_settings(true_params)
+  seed_nos_01  <- get_seed(true_params)
+  seed_nos_02  <- get_seed(data_sim)
+
   SIMUL_PHI    <-par_settings[["SIMUL_PHI"]]
   SIMUL_Z_BETA <-par_settings[["SIMUL_Z_BETA"]]
   SIMUL_U_BETA <-par_settings[["SIMUL_U_BETA"]]
   num_z_regs   <-par_settings[["num_z_regs"]]
   num_u_regs   <-par_settings[["num_u_regs"]]
   order_p      <-par_settings[["order_p"]]
-  tmp_fn <- paste0("NN", dim_model[1],
-                   "_TT", dim_model[2],
-                   "_DD", dim_model[3])
+
+  tmp_fn <- paste0("NN", dim_model[1], "_TT", dim_model[2], "_DD", dim_model[3])
+
   if (SIMUL_PHI) {
     tmp_fn <- paste0(tmp_fn, "_", "withAUTO", paste0(",", unique(order_p),
                                                      collapse = ""))
@@ -177,11 +128,11 @@ get_file_name_main <- function(dim_model,
     tmp_fn <- paste0(tmp_fn, "_", "noRE")
   }
   tmp_fn <- paste0(tmp_fn,
-                   "_", "parSEED", seed_nos[1],
-                   "_", "simSEED", seed_nos[2])
+                   "_", "parSEED", seed_nos_01,
+                   "_", "simSEED", seed_nos_02)
   return(tmp_fn)
 }
-dir_update <- function(pth_top_lvl, overwrite) {
+dir_proj_top_level_update <- function(pth_top_lvl, overwrite) {
   stopifnot(`Missing args. not permitted` =
               !(missing(pth_top_lvl) && missing(overwrite)))
   if (isFALSE(overwrite)) {
@@ -198,13 +149,13 @@ dir_update <- function(pth_top_lvl, overwrite) {
 #' Generates consistent file names for simulation study
 #'
 #' @param fn_main_part character giving base part of the name, see
-#'   [get_file_name_main]
+#'   [set_base_name]
 #' @param fn_data character giving the filename of the simulated data set
-#'   (saved in \code{.csv}-format)
+#'   (saved in \code{.csv}-format); default to "sim_data"
 #' @param fn_true_states character giving the filename of the simulated true
-#'   states (saved in \code{.RData}-format)
+#'   states (saved in \code{.RData}-format); default to "states_true"
 #' @param fn_zero_states  character giving the filename of the states set all to
-#'   zero (saved in \code{.RData}-format)
+#'   zero (saved in \code{.RData}-format); default to "states_zero"
 #'
 #' @return a list of 3:
 #'    \itemize{
@@ -213,9 +164,9 @@ dir_update <- function(pth_top_lvl, overwrite) {
 #'    \item\code{fn_data_set}: file name for zero state values
 #'    }
 get_file_names_simul_data <- function(fn_main_part,
-                                      fn_data,
-                                      fn_true_states,
-                                      fn_zero_states) {
+                                      fn_data = "sim_data",
+                                      fn_true_states = "states_true",
+                                      fn_zero_states = "states_zero") {
 
   fn_data_set <- paste0(fn_data, "_", fn_main_part, ".csv")
   fn_true_val <- paste0(fn_true_states, "_", fn_main_part, ".RData")
@@ -226,27 +177,31 @@ get_file_names_simul_data <- function(fn_main_part,
 }
 #' Save simulated data and true parameter values used to generate it.
 #'
-#' @param pth_to_write path to output directory
-#' @param fn_data_set file name (\code{.csv}-ending required) for simulated data
-#' @param fn_true_states file name for R-container object that stores true
-#'   states
-#' @param fn_zero_states file name for R-container object that stores true
-#'   states
-#' @param data_sim simulated data set as produced via [new_dataSim()]
-#' @param true_params true parameter values used to generate data (to determine
-#'   container/data sizes) as produced by output from [new_trueParams()]
-#' @param dim_model a vector with three components: \code{NN x TT x DD}
+#' @inheritParams generate_yaml_model_defintion
+#' @inheritParams set_new_project_name
+#' @inheritParams generate_simulation_study
+#' @inheritParams generate_yaml_model_defintion
+#' @inheritParams new_dataSim
+#' @param defl_params default parameter values used to generate data (to
+#'   determine container/data sizes); usually set to an instance of 'zeroParams'
+#'   as generated by [get_zero_or_defaults()]
 #'
 #' @return side effect function; saves simulated data and true parameter values
 #'   to output path
-save_simulated_data <- function(pth_to_write,
-                                fn_data_set,
-                                fn_true_states,
-                                fn_zero_states,
+save_simulated_data <- function(pth_project,
+                                base_name,
                                 data_sim,
-                                dim_model,
                                 true_params,
                                 defl_params) {
+
+  pth_to_write <- file.path(pth_project, "model", "input")
+
+  fn_all         <- get_file_names_simul_data(fn_main_part = base_name)
+  fn_true_states <- fn_all[["fn_true_val"]]
+  fn_zero_states <- fn_all[["fn_zero_val"]]
+  fn_data_set    <- file.path("datasets", fn_all[["fn_data_set"]])
+  dim_model      <- get_dimension(data_sim, "all")
+
   pth_data        <- file.path(pth_to_write, fn_data_set)
   pth_true_states <- file.path(pth_to_write, fn_true_states)
   pth_zero_states <- file.path(pth_to_write, fn_zero_states)

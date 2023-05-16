@@ -201,18 +201,14 @@ get_seed.trueParams <- function(true_params, type = NULL) {
   check_class_true_params(true_params)
   attr(true_params, which = "meta_info")[["SEED_NO"]]
 }
-#' Access to meta information for object of class "trueParams"
+#' S3 method for generic 'get_dimension' for class "trueParams"
 #'
-#' Specifically, getting dimensions of implied model for which the "trueParams"
-#' object is meant to be used..
+#' See [get_dimension()] for details.
 #'
-#' @inheritParams get_meta_info
-#' @param dim a character string; either of "NN", "TT", "DD" or 'all' which returns
-#'    all three.
+#' @inheritParams get_dimension
 #'
 #' @return dimension for object of class \code{class} "trueParams"
-#' @export
-get_dimension <- function(true_params, dim = NULL) {
+get_dimension.trueParams <- function(true_params, dim = NULL) {
   if (missing(dim)) stop("Arg. 'dim' must be set, see help.")
   check_class_true_params(true_params)
   stopifnot(`Incorrect value for arg. 'dim'.` =

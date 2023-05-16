@@ -1,3 +1,34 @@
+get_used_or_zeros <- function(trueParams, zeroParams, INIT_AT = INIT_AT) {
+  if (INIT_AT == "trues") {
+    return(trueParams)
+  } else if (INIT_AT == "default") {
+    return(zeroParams)
+  } else {
+    stop("Unknown value for arg. 'INIT_AT'")
+  }
+}
+#' Update project name
+#'
+#' New project name contains information from observation/state types, model
+#' type etc.
+#'
+#' @param project_name character string; old settings for project name i.e.
+#'   'append'/'prepend' as passed from top level function
+#'   [generate_simulation_study()]
+#' @param base_name character string giving the base-name as set via
+#'   [set_base_name()]
+#' @param model_type a named or unnamed vector of two characters specifying the
+#'   model type observations (e.g. 'DIRICHLET") and the model type latent states
+#'   i.e. "lin_re" giving the specification of linear and random effect
+#'   covariates in the latent state process
+#'
+#' @return character string giving the updated project name
+set_new_project_name <- function(project_name, base_name, model_type) {
+  tmp_name     <- paste0(model_type[["model_type_obs"]], "_", base_name)
+  project_name <- paste0(c(project_name$prepend, tmp_name, project_name$append),
+                         collapse = "_")
+  return(project_name)
+}
 get_names_num_simulated <- function(true_params, DD, SIMUL_Z, SIMUL_U) {
   if (SIMUL_Z) {
     tmp_list    <- get_name_num(type = "reg_z", true_params$beta_z_lin, DD)
@@ -20,6 +51,26 @@ get_names_num_simulated <- function(true_params, DD, SIMUL_Z, SIMUL_U) {
               num = list(num_regs_z = num_regs_z,
                          num_regs_u = num_regs_u))
   return(out)
+}
+set_project_dir_structure <- function(pth_proj) {
+  pth_tmp <- c(file.path(pth_proj, "model"),
+               file.path(pth_proj, "results"),
+               file.path(pth_proj, "model",
+                         c("history",
+                           "input",
+                           "history/log",
+                           "model-definition",
+                           "output",
+                           "settings")),
+               file.path(pth_proj, "model", "input", "datasets"),
+               file.path(pth_proj, "results",
+                         c("diagnostics",
+                           "inference",
+                           "interpretation",
+                           "summary")))
+  lapply(pth_tmp, dir.create)
+  cat(crayon::green("Setting dirs for simulation project SUCCESSFULL!\n"))
+  return(invisible(pth_proj))
 }
 get_name_num <- function(type, par, DD) {
   if (type == "reg_z") {

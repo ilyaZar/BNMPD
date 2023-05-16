@@ -562,7 +562,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   [BNMPD::new_trueParams] and written to
                             #'   .RData via [BNMPD::generate_simulation_study]
                             #'
-                            get_true_params = function() {
+                            get_true_params_obj = function() {
                               return(private$.params_true)
                             },
                             #' @description Returns joined model outputs

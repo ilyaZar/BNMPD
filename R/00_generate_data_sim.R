@@ -157,14 +157,14 @@ check_class_data_sim <- function(obj) {
 #'
 #' @return an object of \code{class} "trueParams" accompanying this data class
 #' @export
-get_true_params <- function(data_sim) {
+get_true_params_obj <- function(data_sim) {
   check_class_data_sim(data_sim)
   check_class_true_params(attr(data_sim, which = "TRUE_PARAMS"))
   attr(data_sim, which = "TRUE_PARAMS")
 }
 #' Get z-type regressors from an instance of "dataSim"
 #'
-#' @inheritParams get_true_params
+#' @inheritParams get_true_params_obj
 #'
 #' @return the data container of the z-type regressor
 #' @export
@@ -174,7 +174,7 @@ get_regs_z <- function(data_sim) {
 }
 #' Get u-type regressors from an instance of "dataSim"
 #'
-#' @inheritParams get_true_params
+#' @inheritParams get_true_params_obj
 #'
 #' @return the data container of the u-type regressor
 #' @export
@@ -184,7 +184,7 @@ get_regs_u <- function(data_sim) {
 }
 #' Get measurements/observations i.e. the data from an instance of "dataSim"
 #'
-#' @inheritParams get_true_params
+#' @inheritParams get_true_params_obj
 #'
 #' @return the measurement/observation data set of appropriate type e.g. the
 #'   "raw" fractions if the distribution is a Dirichlet or component counts and
@@ -201,7 +201,7 @@ get_data <- function(data_sim, type) {
 }
 #' Get latent states from an instance of "dataSim"
 #'
-#' @inheritParams get_true_params
+#' @inheritParams get_true_params_obj
 #'
 #' @return the latent states which are simulated
 #' @export
@@ -211,7 +211,7 @@ get_states <- function(data_sim) {
 }
 #' Get type of measurements/observations of the "dataSim" object
 #'
-#' @inheritParams get_true_params
+#' @inheritParams get_true_params_obj
 #'
 #' @return a character string of either: "NORMAL", "DIRICHLET",
 #'    "GEN_DIRICHLET", "MULTINOMIAL", "DIRICHLET_MULT", or "GEN_DIRICHLET_MULT"
@@ -222,7 +222,7 @@ get_type_obs <- function(data_sim) {
 }
 #' Get type of latent states of the "dataSim" object
 #'
-#' @inheritParams get_true_params
+#' @inheritParams get_true_params_obj
 #'
 #' @return a character string of either: "auto", "lin", "re", "splZ", "splU" or
 #'    a combination thereof
@@ -255,18 +255,44 @@ get_seed <- function(obj, type = "data_sim") {
 #' Helper function to set the seed
 #'
 #' @inheritParams get_seed
-#' @inheritParams get_true_params
+#' @inheritParams get_true_params_obj
 #'
 #' @return an \code{integer} giving the underlying seed number(s)
 get_seed.dataSim <- function(data_sim, type = "data_sim") {
-  browser()
   check_class_data_sim(data_sim)
 
   if (type == "data_sim") return(attr(data_sim, "SEED_NO"))
-  if (type == "true_params") return(get_seed(get_true_params(data_sim)))
+  if (type == "true_params") return(get_seed(get_true_params_obj(data_sim)))
   return(invisible(NULL))
 }
 set_seed_no <- function(true_params, seed_no) {
   if (is.null(seed_no)) seed_no <- get_seed(true_params)
   return(seed_no)
+}
+#' Access to model dimension meta info
+#'
+#' Applicable to object of class "dataSim" or "trueParams". Specifically,
+#' getting dimensions of implied model for which the "trueParams" object is
+#' meant to be used.
+#'
+#' @inheritParams get_meta_info
+#' @param dim a character string; either of "NN", "TT", "DD" or "all" which
+#'   returns all three
+#'
+#' @return dimension for object of class \code{class} "trueParams"
+#' @export
+get_dimension <- function(obj, dim) {
+  UseMethod("get_dimension")
+}
+#' S3 method for generic 'get_dimension' for class "dataSim"
+#'
+#' See [get_dimension()] for details.
+#'
+#' @inheritParams get_dimension
+#'
+#' @return dimension for object of class (underlying) \code{class} "trueParams"
+get_dimension.dataSim <- function(obj, dim) {
+  check_class_data_sim(obj)
+  true_params <- get_true_params_obj(obj)
+  get_dimension.trueParams(true_params, dim)
 }
