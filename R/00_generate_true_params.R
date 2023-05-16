@@ -234,7 +234,7 @@ get_modelling_reg_types <- function(true_params) {
                                          function(x) {
                                            !is.null(x)
                                          })
-                                  ]
+  ]
   par_names_taken <- setdiff(par_names, c("sig_sq","vcm_u_lin"))
   if (!all(par_names_taken %in% correct_names)) {
     stop(paste0("The 'par_trues' argument must have correct names: choose from",
@@ -440,6 +440,51 @@ get_params <- function(true_params, n = NULL, DD = NULL,
   stopifnot(`Arg. 'name_par' is either NULL or a single number.` = length(name_par) <= 1)
   stopifnot(`Arg. 'DD_TYPE' is either NULL or a single number.` = length(DD_TYPE) <= 1)
   UseMethod("get_params")
+}
+#' Set new values for objects of \code{class} "trueParams"
+#'
+#' @inheritParams get_params
+#' @param name_par character string giving the parameter name; must be of either
+#'   'sig_sq', 'phi', 'beta_z_lin', 'beta_u_lin', or 'vcm_u_lin'
+#' @param values a numeric vector of length 1 (scaler) for all but
+#'    \code{par_name = "vcm_u_lin"}; for the latter length must be 2
+#'
+#' @return same object as passed via \code{true_params} but with new values
+#'    for \code{par_name}
+#' @export
+set_params <- function(true_params, name_par, values, DD_TYPE = NULL) {
+  check_class_true_params(true_params)
+  true_params2 <- true_params
+  if (name_par == "sig_sq") {
+    stopifnot(`Arg. "values" must be scalar for sig_sq` = length(values) == 1)
+    true_params2[["sig_sq"]][] <- values
+  }
+  if (name_par == "phi") {
+    stopifnot(`Arg. "values" must be scalar for phi` = length(values) == 1)
+    true_params2[["phi"]][] <- lapply(true_params2[["phi"]],
+                                      function(x) {y <- x; y[] <- values; y})
+  }
+  if (name_par == "beta_z_lin") {
+    stopifnot(`Arg. "values" must be scalar for bet_z_lin` = length(values) == 1)
+    true_params2[["beta_z_lin"]][] <- lapply(true_params2[["beta_z_lin"]],
+                                             function(x) {y <- x; y[] <- values; y})
+  }
+  if (name_par == "beta_u_lin") {
+    stopifnot(`Arg. "values" must be scalar for bet_u_lin` = length(values) == 1)
+    true_params2[["beta_u_lin"]][] <- lapply(true_params2[["beta_u_lin"]],
+                                             function(x) {y <- x; y[] <- values; y})
+  }
+  if (name_par == "vcm_u_lin") {
+    stopifnot(`Arg. "values" must be length = 2 for vcm_u_lin` = length(values) == 2)
+    true_params2[["vcm_u_lin"]][] <- lapply(true_params2[["vcm_u_lin"]],
+                                            function(x) {
+                                              y <- x;
+                                              y[] <- values[1];
+                                              diag(y) <- values[2];
+                                              y}
+    )
+  }
+  return(true_params2)
 }
 #' Method for class 'trueParamsDirichlet' derived from 'trueParams'
 #'

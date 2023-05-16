@@ -60,28 +60,29 @@ get_zero_or_defaults <- function(true_params) {
   check_class_true_params(true_params)
   zero_params <- true_params
   if (!is.null(true_params[["sig_sq"]])) {
-    zero_params[["sig_sq"]][] <- 1
+    zero_params <- set_params(zero_params,
+                              name_par = "sig_sq",
+                              values = 1)
   }
   if (!is.null(true_params[["phi"]])) {
-    zero_params[["phi"]][] <- lapply(zero_params[["phi"]],
-                                     function(x) {y <- x; y[] <- 0; y})
+    zero_params <- set_params(zero_params,
+                              name_par = "phi",
+                              values = 0)
   }
   if (!is.null(true_params[["beta_z_lin"]])) {
-    zero_params[["beta_z_lin"]][] <- lapply(zero_params[["beta_z_lin"]],
-                                            function(x) {y <- x; y[] <- 0; y})
+    zero_params <- set_params(zero_params,
+                              name_par = "beta_z_lin",
+                              values = 0)
   }
   if (!is.null(true_params[["beta_u_lin"]])) {
-    zero_params[["beta_u_lin"]][] <- lapply(zero_params[["beta_u_lin"]],
-                                            function(x) {y <- x; y[] <- 0; y})
+    zero_params <- set_params(zero_params,
+                              name_par = "beta_u_lin",
+                              values = 0)
   }
   if (!is.null(true_params[["vcm_u_lin"]])) {
-    zero_params[["vcm_u_lin"]][] <- lapply(zero_params[["vcm_u_lin"]],
-                                           function(x) {
-                                             y <- x;
-                                             y[] <- 0;
-                                             diag(y) <- 1;
-                                             y}
-    )
+    zero_params <- set_params(zero_params,
+                              name_par = "vcm_u_lin",
+                              values = c(0, 1))
   }
   return(zero_params)
 }
