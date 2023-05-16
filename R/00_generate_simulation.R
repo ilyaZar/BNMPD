@@ -41,7 +41,8 @@ generate_simulation_study <- function(data_simulation,
                   model_type_lat = get_type_lat(dataSim))
 
   base_name      <- set_base_name(dataSim)
-  project_name   <- set_new_project_name(project_name, base_name, model_type)
+  project_name   <- set_new_project_name(project_name, base_name,
+                                         model_type[["model_type_obs"]])
   pth_to_project <- file.path(pth_top_level, project_name)
 
   dir_proj_top_level_update(pth_to_project, overwrite = overwrite)

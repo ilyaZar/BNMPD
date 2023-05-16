@@ -17,14 +17,12 @@ get_used_or_zeros <- function(trueParams, zeroParams, INIT_AT = INIT_AT) {
 #'   [generate_simulation_study()]
 #' @param base_name character string giving the base-name as set via
 #'   [set_base_name()]
-#' @param model_type a named or unnamed vector of two characters specifying the
-#'   model type observations (e.g. 'DIRICHLET") and the model type latent states
-#'   i.e. "lin_re" giving the specification of linear and random effect
-#'   covariates in the latent state process
+#' @param model_type a named character string specifying the
+#'   model type observations (e.g. 'DIRICHLET")
 #'
 #' @return character string giving the updated project name
-set_new_project_name <- function(project_name, base_name, model_type) {
-  tmp_name     <- paste0(model_type[["model_type_obs"]], "_", base_name)
+set_new_project_name <- function(project_name, base_name, model_type_obs) {
+  tmp_name     <- paste0(model_type_obs, "_", base_name)
   project_name <- paste0(c(project_name$prepend, tmp_name, project_name$append),
                          collapse = "_")
   return(project_name)
