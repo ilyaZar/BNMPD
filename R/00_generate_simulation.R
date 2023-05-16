@@ -5,10 +5,11 @@
 #' @param INIT_AT a character: either "trues" or "default" to write
 #'   initialization values at true or default values (an identity matrix for the
 #'   VCM of bet_u_lin e.g. but the beta_z/beta_u set to 0).
-#' @param pth_to_project character giving path to where the project (top level
-#'   directory is to be created)
-#' @param project_name character; name of the simulation study used as top-level
-#'   directory and in project information
+#' @param pth_top_level character giving path to where create the project (top
+#'   level directory and not full path with project name, see argument
+#'   \code{project_name})
+#' @param project_name a named list with pre-pending and appending meta-infos
+#'   characterizing the simulation study (e.g. set \code{append = "MCMC_only"})
 #' @param overwrite logical; if \code{TRUE} then implied project directory is
 #'   overwritten when it exists, otherwise an error is thrown
 #'
@@ -17,7 +18,7 @@
 #' @export
 generate_simulation_study <- function(data_simulation,
                                       INIT_AT = "trues",
-                                      pth_to_project,
+                                      pth_top_level,
                                       project_name = list(prepend = NULL,
                                                           append = NULL),
                                       overwrite = FALSE) {
@@ -25,10 +26,10 @@ generate_simulation_study <- function(data_simulation,
   stopifnot(`INIT_AT must be eihter 'true' or 'default'.` =
               INIT_AT %in% c("trues", "default"))
   stopifnot(`'pth_to_proj' must be of type character` =
-              is.character(pth_to_project))
+              is.character(pth_top_level))
   stopifnot(`Arg. 'project_name' must be named list` =
               names(project_name) %in% c("prepend", "append"))
-  stopifnot(`Arg. 'project_name' must be logical` = is.logical(overwrite))
+  stopifnot(`Arg. 'overwrite' must be logical` = is.logical(overwrite))
 
   dataSim    <- data_simulation
   trueParams <- get_true_params_obj(dataSim)
@@ -39,20 +40,20 @@ generate_simulation_study <- function(data_simulation,
   model_type <- c(model_type_obs = get_type_obs(dataSim),
                   model_type_lat = get_type_lat(dataSim))
 
-  base_name    <- set_base_name(dataSim)
-  project_name <- set_new_project_name(project_name, base_name, model_type)
-  pth_top_lvl  <- file.path(pth_to_project, project_name)
+  base_name      <- set_base_name(dataSim)
+  project_name   <- set_new_project_name(project_name, base_name, model_type)
+  pth_to_project <- file.path(pth_top_level, project_name)
 
-  dir_proj_top_level_update(pth_top_lvl, overwrite = overwrite)
-  set_project_dir_structure(pth_top_lvl)
+  dir_proj_top_level_update(pth_to_project, overwrite = overwrite)
+  set_project_dir_structure(pth_to_project)
 
-  generate_yaml_model_defintion(trueParams, pth_top_lvl, model_type)
-  generate_setup_init_json(usedParams, pth_top_lvl)
+  generate_yaml_model_defintion(trueParams, pth_to_project, model_type)
+  generate_setup_init_json(usedParams, pth_to_project)
 
-  save_simulated_data(pth_top_lvl, base_name, dataSim, trueParams, zeroParams)
+  save_simulated_data(pth_to_project, base_name, dataSim, trueParams, zeroParams)
 
-  copy_meta_files(pth_top_lvl, project_name)
-  update_settings_project_yaml(pth_top_lvl, project_name)
+  copy_meta_files(pth_to_project, project_name)
+  update_settings_project_yaml(pth_to_project, project_name)
   return(invisible(data_simulation))
 }
 get_zero_or_defaults <- function(true_params) {
