@@ -85,14 +85,12 @@ new_trueParams <- function(distribution,
   if (SIMUL_U_BETA && missing(num_u_regs)) stop("Number of REs not specified!")
   # 1. Data settings: -------------------------------------------------------
   NN <- model_dim[[1]]   # Cross sectional length
-  cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
-      crayon::green("to "), crayon::red(NN), crayon::green("!\n"))
   TT <- model_dim[[2]]  # Time series length
-  cat(crayon::green("Setting dimension "), crayon::yellow("TT"),
-      crayon::green("to "), crayon::red(TT), crayon::green("!\n"))
   DD <- model_dim[[3]]
-  cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
-      crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
+  msg_dim_ready(NN, "NN")
+  msg_dim_ready(TT, "TT")
+  msg_dim_ready(DD, "DD")
+
   if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     DD2 <- get_DD2(distribution = distribution, DD = model_dim[[3]])
     cat(crayon::green("Setting !internal! dimension "), crayon::yellow("DD2"),
