@@ -185,6 +185,8 @@ get_regs_u <- function(data_sim) {
 #' Get measurements/observations i.e. the data from an instance of "dataSim"
 #'
 #' @inheritParams get_true_params_obj
+#' @param type a character giving the "type" of measurement/observational
+#'    data to return; either "raw" or "count"
 #'
 #' @return the measurement/observation data set of appropriate type e.g. the
 #'   "raw" fractions if the distribution is a Dirichlet or component counts and
@@ -193,6 +195,7 @@ get_regs_u <- function(data_sim) {
 #' @export
 get_data <- function(data_sim, type) {
   check_class_data_sim(data_sim)
+  stopifnot(`Unknown value for arg. 'type'` = type %in% c("raw", "count"))
   if (type == "raw") {
     return(data_sim[["data"]][["yraw"]])
   } else if (type == "count") {
@@ -205,7 +208,7 @@ get_data <- function(data_sim, type) {
 #'
 #' @return the latent states which are simulated
 #' @export
-get_states <- function(data_sim) {
+get_sim_latent_states <- function(data_sim) {
   check_class_data_sim(data_sim)
   data_sim[["states"]]
 }

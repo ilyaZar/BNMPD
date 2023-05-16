@@ -195,27 +195,25 @@ save_simulated_data <- function(pth_project,
                                 data_sim,
                                 true_params,
                                 defl_params) {
-
   pth_to_write <- file.path(pth_project, "model", "input")
 
   fn_all         <- get_file_names_simul_data(fn_main_part = base_name)
   fn_true_states <- fn_all[["fn_true_val"]]
   fn_zero_states <- fn_all[["fn_zero_val"]]
   fn_data_set    <- file.path("datasets", fn_all[["fn_data_set"]])
-  dim_model      <- get_dimension(data_sim, "all")
 
   pth_data        <- file.path(pth_to_write, fn_data_set)
   pth_true_states <- file.path(pth_to_write, fn_true_states)
   pth_zero_states <- file.path(pth_to_write, fn_zero_states)
   pth_true_params <- file.path(pth_to_write, "true_params.RData")
   pth_defl_params <- file.path(pth_to_write, "defl_params.RData")
-  SIMUL_U_BETA <- !is.null(data_sim$regs$u)
-  SIMUL_Z_BETA <- !is.null(data_sim$regs$z)
-  true_states <- data_sim$states
+  SIMUL_U_BETA <- !is.null(get_regs_u(data_sim))
+  SIMUL_Z_BETA <- !is.null(get_regs_z(data_sim))
+  true_states <- get_sim_latent_states(data_sim)
   zero_states <- true_states
   zero_states[, , ] <- 0
 
-  DISTRIBUTION <- attr(data_sim$data, "model_type_obs")
+  DISTRIBUTION <- get_type_obs(data_sim)
   if (any(DISTRIBUTION %in% c("DIRICHLET", "GEN_DIRICHLET", "NORMAL"))) {
     dist_type <- "type1"
   } else if(any(DISTRIBUTION %in% c("DIRICHLET_MULT", "GEN_DIRICHLET_MULT",
@@ -223,15 +221,12 @@ save_simulated_data <- function(pth_project,
     dist_type <- "type2"
   }
 
-  NN <- dim_model[1] # Cross sectional length
-  cat(crayon::green("Setting dimension "), crayon::yellow("NN"),
-      crayon::green("to "), crayon::red(NN), crayon::green("!\n"))
-  TT <- dim_model[2]  # Time series length
-  cat(crayon::green("Setting dimension "), crayon::yellow("TT"),
-      crayon::green("to "), crayon::red(TT), crayon::green("!\n"))
-  DD <- dim_model[3] # mult. comp. length
-  cat(crayon::green("Setting dimension "), crayon::yellow("DD"),
-      crayon::green("to "), crayon::red(DD), crayon::green("!\n"))
+  NN <- get_dimension(data_sim, "NN") # Cross sectional length
+  TT <- get_dimension(data_sim, "TT") # Time series length
+  DD <- get_dimension(data_sim, "DD") # mult. comp. length
+  msg_dim_ready(NN, "NN")
+  msg_dim_ready(TT, "TT")
+  msg_dim_ready(DD, "DD")
 
   tmp_list <- get_names_num_simulated(true_params, DD,
                                       SIMUL_Z_BETA, SIMUL_U_BETA)
@@ -263,7 +258,7 @@ save_simulated_data <- function(pth_project,
   names(data_out) <- data_out_colnames
   vals_cs  <- as.character(paste0("cs_", rep(seq_len(NN), each = TT)))
   vals_ts  <- rep(1:TT, times = NN)
-  cs_ts    <-tibble::tibble(CS = vals_cs, TS = vals_ts)
+  cs_ts    <- tibble::tibble(CS = vals_cs, TS = vals_ts)
   data_out <- dplyr::bind_cols(cs_ts, data_out)
 
   for(n in 1:NN) {
@@ -271,15 +266,15 @@ save_simulated_data <- function(pth_project,
     if (dist_type == "type1") {
       tmp_data <- data_sim$data$yraw[, , n]
     } else if(dist_type == "type2") {
-      tmp_data <- cbind(data_sim$data$yraw[, , n],
-                        data_sim$data$num_counts[, n])
+      tmp_data <- cbind(get_data(data_sim, type = "raw")[, , n],
+                        get_data(data_sim, type = "count")[, n])
     }
     data_out[id_rows, id_col_y] <- tmp_data
     if (SIMUL_Z_BETA) {
-      data_out[id_rows, id_col_z] <- data_sim$regs$z[, , n]
+      data_out[id_rows, id_col_z] <- get_regs_z(data_sim)[, , n]
     }
     if (SIMUL_U_BETA) {
-      data_out[id_rows, id_col_u] <- data_sim$regs$u[, , n]
+      data_out[id_rows, id_col_u] <- get_regs_u(data_sim)[, , n]
     }
   }
   write.csv(data_out, file = pth_data, row.names = FALSE)
