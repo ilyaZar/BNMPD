@@ -10,33 +10,36 @@ generate_yaml_model_defintion <- function(true_params,
                                           pth_project,
                                           model_type) {
 
-  dim_model    <-  get_dimension(true_params, "all")
+  dim_model    <- get_dimension(true_params, "all")
   par_settings <- get_par_settings(true_params)
 
   pth_to_yaml <- file.path(pth_project, "model",
                            "model-definition", "model_definition.yaml")
-  SIMUL_PHI    <-par_settings[["SIMUL_PHI"]]
-  SIMUL_Z_BETA <-par_settings[["SIMUL_Z_BETA"]]
-  SIMUL_U_BETA <-par_settings[["SIMUL_U_BETA"]]
-  num_z_regs   <-par_settings[["num_z_regs"]]
-  num_u_regs   <-par_settings[["num_u_regs"]]
-  order_p      <-par_settings[["order_p"]]
+  SIMUL_PHI    <- par_settings[["SIMUL_PHI"]]
+  SIMUL_Z_BETA <- par_settings[["SIMUL_Z_BETA"]]
+  SIMUL_U_BETA <- par_settings[["SIMUL_U_BETA"]]
+  num_z_regs   <- par_settings[["num_z_regs"]]
+  num_u_regs   <- par_settings[["num_u_regs"]]
+  order_p      <- par_settings[["order_p"]]
   check_args_to_generate_yaml_json(dim_model, par_settings)
-  tmp_nms <- names(dim_model)
-  dim_model <- as.integer(dim_model)
-  names(dim_model) <- tmp_nms
+  dim_model <- set_dim_model_writeable(dim_model)
   out_list <- list(model_type_obs = model_type_to_list(model_type)[1],
                    model_type_lat = model_type_to_list(model_type)[2],
                    dimension = dimensions_to_list(dim_model),
                    cross_section_used = cross_section_to_list(dim_model),
                    time_series_used = time_series_to_list(dim_model))
   for (d in seq_len(dim_model[["DD"]])) {
-    # browser()
     name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
     out_list[[name_list_elem]] <- DD_to_list(par_settings, d)
   }
 
   yaml::write_yaml(out_list, file = pth_to_yaml)
+}
+set_dim_model_writeable <- function(dims) {
+  tmp  <- names(dims)
+  dims <- as.integer(dims)
+  names(dims) <- tmp
+  return(dims)
 }
 check_args_to_generate_yaml_json <- function(dim = NULL, regspc = NULL) {
   if (!is.null(dim)) {
