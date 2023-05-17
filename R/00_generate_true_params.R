@@ -432,11 +432,13 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
 #' @return sliced parameters for some cross sectional unit \code{n}
 #' @export
 get_params <- function(true_params, n = NULL, DD = NULL,
-                       name_par = NULL, DD_TYPE = NULL) {
+                       name_par = NULL, DD_TYPE = NULL,
+                       drop = FALSE) {
   stopifnot(`Arg. 'n' is either NULL or a single number.` = length(n) <= 1)
   stopifnot(`Arg. 'DD' is either NULL or a single number.` = length(DD) <= 1)
   stopifnot(`Arg. 'name_par' is either NULL or a single number.` = length(name_par) <= 1)
   stopifnot(`Arg. 'DD_TYPE' is either NULL or a single number.` = length(DD_TYPE) <= 1)
+  stopifnot(`Arg. 'drop' must be logical` = is.logical(drop))
   UseMethod("get_params")
 }
 #' Set new values for objects of \code{class} "trueParams"
@@ -495,12 +497,14 @@ set_params <- function(true_params, name_par, values, DD_TYPE = NULL) {
 get_params.trueParamsDirichlet <- function(true_params,
                                            n = NULL, DD = NULL,
                                            name_par = NULL,
-                                           DD_TYPE = NULL) {
+                                           DD_TYPE = NULL,
+                                           drop = FALSE) {
   if (is.null(n)) n <- seq_len(nrow(true_params$sig_sq))
   reg_types <- get_modelling_reg_types(true_params)
   pars_out  <- true_params %>%
     get_default_pars(n, DD, reg_types) %>%
     get_par_name(name_par)
+  if (isTRUE(drop)) return(drop(pars_out))
   return(pars_out)
 }
 #' Method for class 'trueParamsGenDirichlet' derived from 'trueParams'
@@ -514,13 +518,15 @@ get_params.trueParamsDirichlet <- function(true_params,
 get_params.trueParamsGenDirichlet <- function(true_params,
                                               n = NULL, DD = NULL,
                                               name_par = NULL,
-                                              DD_TYPE = NULL) {
+                                              DD_TYPE = NULL,
+                                              drop = FALSE) {
   if (is.null(n)) n <- seq_len(dim(true_params$sig_sq)[1])
   if (missing(DD_TYPE)) stop("Must set arg. 'DD_TYPE' for gen. Dirichlet!" )
   reg_types <- get_modelling_reg_types(true_params)
   pars_out  <- true_params %>%
     get_special_pars(n, DD, reg_types, special_type = DD_TYPE) %>%
     get_par_name(name_par)
+  if (isTRUE(drop)) return(drop(pars_out))
   return(pars_out)
 }
 #' Method for class 'trueParamsDirichletMult' derived from 'trueParams'
@@ -534,12 +540,14 @@ get_params.trueParamsGenDirichlet <- function(true_params,
 get_params.trueParamsDirichletMult <- function(true_params,
                                                n = NULL, DD = NULL,
                                                name_par = NULL,
-                                               DD_TYPE = NULL) {
+                                               DD_TYPE = NULL,
+                                               drop = FALSE) {
   if (is.null(n)) n <- seq_len(nrow(true_params$sig_sq))
   reg_types <- get_modelling_reg_types(true_params)
   pars_out  <- true_params %>%
     get_default_pars(n, DD, reg_types) %>%
     get_par_name(name_par)
+  if (isTRUE(drop)) return(drop(pars_out))
   return(pars_out)
 }
 get_default_pars <- function(true_params, n, DD = NULL, reg_types) {
