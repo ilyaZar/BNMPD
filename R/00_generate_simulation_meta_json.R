@@ -14,8 +14,10 @@ generate_setup_init_json <- function(params_used, pth_project) {
   pth_to_json <- file.path(pth_project, "model",
                            "model-definition",
                            "setup_inits.json")
-  browser()
-  params_used$sig_sq <- params_used$sig_sq[, 1]
+
+  params_used$sig_sq <- get_params(params_used, n = 1,
+                                   name_par = "sig_sq",
+                                   drop = TRUE)
   DD <- length(params_used$sig_sq)
 
   list_json <- list()
@@ -23,10 +25,9 @@ generate_setup_init_json <- function(params_used, pth_project) {
     name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
 
     par_avail <- get_par_avail(params_used, num_d = d)
-    par_avail_names <- names(par_avail)
 
     par_to_list <- list()
-    for (j in par_avail_names) {
+    for (j in names(par_avail)) {
       par_to_list[[j]] <- par_to_list(par_avail[[j]], j, d)
     }
     list_json[[name_list_elem]] <- par_to_list
