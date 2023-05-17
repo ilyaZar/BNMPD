@@ -422,8 +422,9 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
 #'    appropriate values matching (sub-)indices of the multivariate dimension;
 #'    if not then R-type out of bounds error is thrown
 #' @param name_par optional string giving the parameter name; if \code{NULL}
-#'    then all parameters are returned; must be of either 'sig_sq', 'phi',
-#'    'beta_z_lin', 'beta_u_lin', or 'vcm_u_lin'
+#'    then all parameters are addressed; otherwise, must be of either
+#'    'sig_sq', 'phi', 'beta_z_lin', 'beta_u_lin', or 'vcm_u_lin' which are the
+#'    compatible parameter names
 #' @param DD_TYPE optional; if not \code{NULL}, then it must be "A", "B" or "AB"
 #'    to use DD-A, DD-B or both slice(s) of multivariate component; only
 #'    applicable for special distributions such as generalized Dirichlet or
@@ -499,7 +500,7 @@ get_params.trueParamsDirichlet <- function(true_params,
                                            name_par = NULL,
                                            DD_TYPE = NULL,
                                            drop = FALSE) {
-  if (is.null(n)) n <- seq_len(nrow(true_params$sig_sq))
+  if (is.null(n)) n <- seq_len(ncol(true_params$sig_sq))
   reg_types <- get_modelling_reg_types(true_params)
   pars_out  <- true_params %>%
     get_default_pars(n, DD, reg_types) %>%
@@ -542,7 +543,7 @@ get_params.trueParamsDirichletMult <- function(true_params,
                                                name_par = NULL,
                                                DD_TYPE = NULL,
                                                drop = FALSE) {
-  if (is.null(n)) n <- seq_len(nrow(true_params$sig_sq))
+  if (is.null(n)) n <- seq_len(ncol(true_params$sig_sq))
   reg_types <- get_modelling_reg_types(true_params)
   pars_out  <- true_params %>%
     get_default_pars(n, DD, reg_types) %>%
@@ -557,7 +558,8 @@ get_default_pars <- function(true_params, n, DD = NULL, reg_types) {
     pars_out$beta_z_lin <- true_params[["beta_z_lin"]]
   }
   if (reg_types[["u-linear-regressors"]]) {
-    pars_out$beta_u_lin <- lapply(true_params[["beta_u_lin"]], `[`, i = , j = n)
+    pars_out$beta_u_lin <- lapply(true_params[["beta_u_lin"]], `[`, i = , j = n,
+                                  drop = FALSE)
     pars_out$vcm_u_lin  <- true_params[["vcm_u_lin"]]
   }
   if (!is.null(DD)) pars_out <- get_dd_slice(pars_out, DD)
@@ -599,4 +601,21 @@ get_dd_slice <- function(tmp_pars_out, DD, special_type = NULL) {
 get_par_name <- function(tmp_pars_out, name) {
   if (is.null(name)) return(tmp_pars_out)
   tmp_pars_out[[name]]
+}
+#' Check if parameter is available for some object of \code{class} 'trueParams'
+#'
+#' Scans the names of the list-type object.
+#'
+#' @inheritParams get_params
+#'
+#' @return logical; \code{TRUE} if available and \code{FALSE} else
+#' @export
+check_avail_param <- function(true_params, name_par) {
+  check_class_true_params(true_params)
+  stopifnot(`Arg. 'name_par' cannot be NULL for there is nothing to check` =
+              !is.null(name_par))
+  stopifnot(`Arg. 'name_par' not in the list of available parameter names` =
+              isTRUE(name_par %in% c("phi", "beta_z_lin", "beta_u_lin",
+                                      "sig_sq", "vcm_u_lin")))
+  isTRUE(name_par %in% names(true_params))
 }
