@@ -15,10 +15,7 @@ generate_setup_init_json <- function(params_used, pth_project) {
                            "model-definition",
                            "setup_inits.json")
 
-  params_used$sig_sq <- get_params(params_used, n = 1,
-                                   name_par = "sig_sq",
-                                   drop = TRUE)
-  DD <- length(params_used$sig_sq)
+  DD <- get_dimension(params_used, dim = "DD")
 
   list_json <- list()
   for(d in seq_len(DD)) {
@@ -71,30 +68,22 @@ par_to_list <- function(par_val, par_name, num_d) {
        var =  var,
        val =  val)
 }
-get_par <- function(par_to_check, par_name, num_d) {
-  if (par_name == "sig_sq") {
-    if (!is.null(par_to_check)) return(par_to_check[num_d])
-  } else if (par_name == "phi") {
-    if (!is.null(par_to_check)) return(par_to_check[[num_d]][, 1])
-  } else if (par_name %in% c("beta_z_lin", "beta_u_lin", "vcm_u_lin")) {
-    if (!is.null(par_to_check)) return(par_to_check[[num_d]])
-  } else {
-    stop("Unknown parameter name.")
-  }
-}
 get_par_avail <- function(params_used, num_d) {
   check_pars <- c("phi", "beta_z_lin", "beta_u_lin", "sig_sq", "vcm_u_lin")
-  num_pars <- length(check_pars)
   id_avail  <- NULL
-  par_avail <- vector("list", num_pars)
-  for (j in seq_len(num_pars)) {
-    if(isTRUE(!is.null((params_used[[check_pars[j]]])))) {
-      par_avail[[j]] <- get_par(params_used[[check_pars[j]]],
-                                check_pars[j], num_d)
-      id_avail <- c(id_avail, j)
+  par_avail <- vector("list", length(check_pars))
+  names(par_avail) <- check_pars
+  jj <- 1
+  for (par_tmp in check_pars) {
+    if(check_avail_param(params_used, par_tmp)) {
+      if (par_tmp %in% c("phi", "sig_sq")) {tmp_n <- 1} else {tmp_n <- NULL}
+      par_avail[[jj]] <- get_params(params_used,
+                           n = tmp_n,
+                           name_par = par_tmp,
+                           DD = num_d)
+      id_avail <- c(id_avail, jj)
     }
+    jj <- jj + 1
   }
-  par_avail <- par_avail[id_avail]
-  names(par_avail) <- check_pars[id_avail]
-  return(par_avail)
+  par_avail[id_avail]
 }
