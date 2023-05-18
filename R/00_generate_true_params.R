@@ -205,16 +205,72 @@ get_seed.trueParams <- function(true_params, type = NULL) {
 #' @inheritParams get_dimension
 #'
 #' @return dimension for object of class \code{class} "trueParams"
-get_dimension.trueParams <- function(true_params, dim = NULL) {
+#' @export
+get_dimension.trueParams <- function(obj, dim = NULL) {
   if (missing(dim)) stop("Arg. 'dim' must be set, see help.")
-  check_class_true_params(true_params)
+  check_class_true_params(obj)
   stopifnot(`Incorrect value for arg. 'dim'.` =
-              (dim %in% c("NN", "TT", "DD", "all")))
+              (dim %in% c("NN", "TT", "DD", "DD2", "all")))
   if (dim == "all") {
-    return(attr(true_params, which = "meta_info")[["MODEL_DIM"]])
+    return(attr(obj, which = "meta_info")[["MODEL_DIM"]])
   } else {
-    return(attr(true_params, which = "meta_info")[["MODEL_DIM"]][[dim]])
+    return(attr(obj, which = "meta_info")[["MODEL_DIM"]][[dim]])
   }
+}
+#' S3 method for generic 'get_dimension' for class "trueParamsDirichlet"
+#'
+#' See [get_dimension()] for details.
+#'
+#' @inheritParams get_dimension
+#'
+#' @return dimension for object of class \code{class} "trueParamsDirichlet"
+#' @export
+get_dimension.trueParamsDirichlet <- function(obj, dim = NULL) {
+  NextMethod("get_dimension")
+}
+#' S3 method for generic 'get_dimension' for class "trueParamsGenDirichlet"
+#'
+#' See [get_dimension()] for details.
+#'
+#' @inheritParams get_dimension
+#'
+#' @return dimension for object of class \code{class} "trueParamsGenDirichlet"
+#' @export
+get_dimension.trueParamsGenDirichlet <- function(obj, dim = NULL) {
+  NextMethod("get_dimension")
+}
+#' S3 method for generic 'get_dimension' for class "trueParamsMultinomial"
+#'
+#' See [get_dimension()] for details.
+#'
+#' @inheritParams get_dimension
+#'
+#' @return dimension for object of class \code{class} "trueParamsMultinomial"
+#' @export
+get_dimension.trueParamsMultinomial <- function(obj, dim = NULL) {
+  NextMethod("get_dimension")
+}
+#' S3 method for generic 'get_dimension' for class "trueParamsDirichletMult"
+#'
+#' See [get_dimension()] for details.
+#'
+#' @inheritParams get_dimension
+#'
+#' @return dimension for object of class \code{class} "trueParamsDirichletMult"
+#' @export
+get_dimension.trueParamsDirichletMult <- function(obj, dim = NULL) {
+  NextMethod("get_dimension")
+}
+#' S3 method for generic 'get_dimension' for class "trueParamsGenDirichletMult"
+#'
+#' See [get_dimension()] for details.
+#'
+#' @inheritParams get_dimension
+#'
+#' @return dimension for object of class \code{class} "trueParamsGenDirichletMult"
+#' @export
+get_dimension.trueParamsGenDirichletMult <- function(obj, dim = NULL) {
+  NextMethod("get_dimension")
 }
 #' Deduces from vector of parameter names which type of modelling to employ
 #'
@@ -454,7 +510,6 @@ get_params <- function(true_params, n = NULL, DD = NULL,
   stopifnot(`Arg. 'n' is either NULL or a single number.` = length(n) <= 1)
   stopifnot(`Arg. 'DD' is either NULL or a single number.` = length(DD) <= 1)
   stopifnot(`Arg. 'name_par' is either NULL or a single number.` = length(name_par) <= 1)
-  browser()
   stopifnot(`Arg. 'name_par' must be either of 'sig_sq', 'phi',
             'beta_z_lin', 'beta_u_lin', 'vcm_u_lin', or NULL` =
               name_par %in% c('sig_sq', 'phi', 'beta_z_lin', 'beta_u_lin', 'vcm_u_lin') || is.null(name_par))

@@ -230,7 +230,7 @@ get_type_lat <- function(data_sim) {
   check_class_data_sim(data_sim)
   attr(data_sim, "model_type_lat")
 }
-#' Generic function to set the seed
+#' Generic function to get the seed
 #'
 #' Dispatches on class \code{trueParams} or \code{dataSim}.
 #'
@@ -257,6 +257,7 @@ get_seed <- function(obj, type = "data_sim") {
 #' @inheritParams get_true_params_obj
 #'
 #' @return an \code{integer} giving the underlying seed number(s)
+#' @export
 get_seed.dataSim <- function(data_sim, type = "data_sim") {
   check_class_data_sim(data_sim)
 
@@ -268,19 +269,22 @@ set_seed_no <- function(true_params, seed_no) {
   if (is.null(seed_no)) seed_no <- get_seed(true_params)
   return(seed_no)
 }
-#' Access to model dimension meta info
+#' Generic function to model dimension meta info
 #'
-#' Applicable to object of class "dataSim" or "trueParams". Specifically,
-#' getting dimensions of implied model for which the "trueParams" object is
-#' meant to be used.
+#' Dispatches on class \code{trueParams}, \code{trueParamsDirichlet},
+#' \code{trueParamsGenDirichlet} etc. or \code{dataSim}.
 #'
-#' @inheritParams get_meta_info
+#' Applicable to object of class "dataSim", "trueParams" or derived classed of
+#' the latter. The dimensions of the implied model for which the "trueParams"
+#' object is meant to be used are returned.
+#'
+#' @inheritParams get_seed
 #' @param dim a character string; either of "NN", "TT", "DD" or "all" which
 #'   returns all three
 #'
 #' @return dimension for object of class \code{class} "trueParams"
 #' @export
-get_dimension <- function(obj, dim) {
+get_dimension <- function(obj, dim = NULL) {
   UseMethod("get_dimension")
 }
 #' S3 method for generic 'get_dimension' for class "dataSim"
@@ -290,7 +294,7 @@ get_dimension <- function(obj, dim) {
 #' @inheritParams get_dimension
 #'
 #' @return dimension for object of class (underlying) \code{class} "trueParams"
-get_dimension.dataSim <- function(obj, dim) {
+get_dimension.dataSim <- function(obj, dim = NULL) {
   check_class_data_sim(obj)
   true_params <- get_true_params_obj(obj)
   get_dimension.trueParams(true_params, dim)
