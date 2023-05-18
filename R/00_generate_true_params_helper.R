@@ -68,7 +68,10 @@ get_manual_phi <- function(distribution, phi, DD, NN, order_p_vec) {
     if (!check_phi) {
       stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
     }
-    out_phi[[d]] <- matrix(phi[[d]], nrow = order_p_vec[d], ncol = NN)
+    tmp_phis <- matrix(phi[[d]], nrow = order_p_vec[d], ncol = NN)
+    rownames(tmp_phis) <- paste0("p", 1:order_p_vec[d])
+    colnames(tmp_phis) <- paste0("NN", 1:NN)
+    out_phi[[d]] <- tmp_phis
   }
   if (2 * DD == DD2) out_phi <- list(A = out_phi[head(seq_len(DD2), n = DD)],
                                      B = out_phi[tail(seq_len(DD2), n = DD)])
