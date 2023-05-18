@@ -1,7 +1,6 @@
 #' Get default values for true \code{sig_sq} parameters in simulation
 #'
-#' @param DD number of multivariate components
-#' @param dwn_scl control parameter that scales variance upwards/downwards
+#' @inheritParams new_sig_sq_x
 #'
 #' @return a vector of length \code{DD}
 get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_name_linter.
@@ -14,7 +13,7 @@ get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_nam
   # add_scl <- 1.1 / dwn_scl # nolint: object_name_linter.
   sig_vals <- str_scl + add_scl * 0:(DD - 1)
   if(2 * DD == DD2) sig_vals <- rep(sig_vals, times = 2)
-  return(str_scl + add_scl * 0:(DD - 1))
+  return(sig_vals)
 }
 #' Get default values for true \code{phi} parameters in simulation
 #'

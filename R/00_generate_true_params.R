@@ -124,17 +124,14 @@ new_trueParams <- function(distribution,
     num_u_regs,
     seed_taken,
     options$intercepts$at_u)
-
   true_bet_u <- tmp_u[["true_bet_u"]]
   true_D0u_u <- tmp_u[["true_D0u_u"]]
-
-  par_trues <- list(sig_sq = true_sig_sq,
-                    phi = true_phi,
-                    beta_z_lin = true_bet_z,
-                    beta_u_lin = true_bet_u,
-                    vcm_u_lin = true_D0u_u)
-
-  structure(par_trues,
+  # 3. Return object of appropriate class: ----------------------------------
+  structure(list(sig_sq = true_sig_sq,
+                 phi = true_phi,
+                 beta_z_lin = true_bet_z,
+                 beta_u_lin = true_bet_u,
+                 vcm_u_lin = true_D0u_u),
             meta_info = list(MODEL_TYPE = distribution,
                              MODEL_DIM = model_dim,
                              PAR_SETTINGS = settings_pars,
@@ -268,9 +265,13 @@ check_true_params_distribution <- function(obj) {
 }
 #' Sets true values (default or user supplied) for parameter phi
 #'
+#' @param SIMUL_PHI logical; if \code{TRUE}, then phi-parameters are generated
 #' @inheritParams new_trueParams
 #' @param DD number of multivariate components
 #' @param NN number of cross sectional units
+#' @param order_p_vec a numeric vector of length 1 or \code{DD} giving the
+#'    order(s) of autoregression per component \code{d=1,...,DD}. If length 1,
+#'    then a single number is used for all multivariate components.
 #'
 #' @return a list of length \code{DD} with each element being a matrix of
 #'   dimension \code{order_p_vec[d] x NN} that stores the phi's per number of
@@ -294,17 +295,17 @@ new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
 #'
 #' @inheritParams new_trueParams
 #' @inheritParams new_phi
+#' @param dwn_scl control parameter that scales variance upwards/downwards
 #'
 #' @return a matrix of dimension \code{DD x NN} of true parameter values for
 #'   sig_sq_x
 new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
   if (distribution %in% c("dirichlet", "multinomial", "dirichlet_mult")) {
     if (!is.null(sig_sq)) {
-      check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
-      if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
+      check_sig_sq_user(sig_sq, DD)
       out_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
     } else {
-      tmp_sig_sq  <- get_default_sig_sq(distribution, DD, dwn_scl)
+      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
       out_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
     }
     rownames(out_sig_sq) <- paste0("D", 1:DD)
@@ -313,8 +314,7 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
                      class = c("true_sig_sq", "matrix", "array")))
   } else if (distribution %in% c("gen_dirichlet")) {
     if (!is.null(sig_sq)) {
-      check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
-      if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
+      check_sig_sq_user(sig_sq, DD)
       out_sig_sq <- array(sig_sq, c(DD, NN, 2))
     } else {
       tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
@@ -327,8 +327,7 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
                      class = c("true_sig_sq", "matrix", "array")))
   } else if (distribution %in% c("gen_dirichlet_mult")) {
     if (!is.null(sig_sq)) {
-      check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
-      if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
+      check_sig_sq_user(sig_sq, DD)
       out_sig_sq <- array(sig_sq, c(DD - 1, NN, 2))
     } else {
       tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
@@ -343,6 +342,10 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
     stop("Uknown distribution argument.")
   }
   return(invisible(distribution))
+}
+check_sig_sq_user <- function(sig_sq, DD) {
+  check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
+  if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
 }
 #' Sets true values (default or user supplied) for parameter bet_z
 #'
@@ -518,7 +521,7 @@ get_params.trueParamsGenDirichlet <- function(true_params,
                                               name_par = NULL,
                                               DD_TYPE = NULL,
                                               drop = FALSE) {
-  if (is.null(n)) n <- seq_len(dim(true_params$sig_sq)[1])
+  if (is.null(n)) n <- seq_len(dim(true_params$sig_sq)[2])
   if (missing(DD_TYPE)) stop("Must set arg. 'DD_TYPE' for gen. Dirichlet!" )
   reg_types <- get_modelling_reg_types(true_params)
   pars_out  <- true_params %>%
