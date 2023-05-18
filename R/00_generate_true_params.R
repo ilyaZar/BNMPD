@@ -454,6 +454,10 @@ get_params <- function(true_params, n = NULL, DD = NULL,
   stopifnot(`Arg. 'n' is either NULL or a single number.` = length(n) <= 1)
   stopifnot(`Arg. 'DD' is either NULL or a single number.` = length(DD) <= 1)
   stopifnot(`Arg. 'name_par' is either NULL or a single number.` = length(name_par) <= 1)
+  browser()
+  stopifnot(`Arg. 'name_par' must be either of 'sig_sq', 'phi',
+            'beta_z_lin', 'beta_u_lin', 'vcm_u_lin', or NULL` =
+              name_par %in% c('sig_sq', 'phi', 'beta_z_lin', 'beta_u_lin', 'vcm_u_lin') || is.null(name_par))
   stopifnot(`Arg. 'DD_TYPE' is either NULL or a single number.` = length(DD_TYPE) <= 1)
   stopifnot(`Arg. 'drop' must be logical` = is.logical(drop))
   UseMethod("get_params")
@@ -584,8 +588,7 @@ get_default_pars <- function(true_params, n, DD = NULL, reg_types) {
 get_special_pars <- function(true_params, n, DD = NULL,
                              reg_types, special_type) {
   stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B"))
-  # stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B", "AB"))
-  # if (special_type == "AB") special_type <- c("A", "B")
+
   pars_out <- list(sig_sq = true_params[["sig_sq"]][, n, special_type, drop = FALSE],
                    phi = lapply(true_params[["phi"]][[special_type]],
                                 `[`, i = , j = n))
