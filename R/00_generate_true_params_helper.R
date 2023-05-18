@@ -1,20 +1,3 @@
-#' Get default values for true \code{sig_sq} parameters in simulation
-#'
-#' @inheritParams new_sig_sq_x
-#'
-#' @return a vector of length \code{DD}
-get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_name_linter.
-  DD2 <- get_DD2(distribution, DD)
-  DD  <- get_DD(distribution, DD)
-  str_scl <- 3.1 / dwn_scl
-  add_scl <- 0.1 / dwn_scl
-
-  # str_scl <- 2.1 / dwn_scl # nolint: commented_code_linter.
-  # add_scl <- 1.1 / dwn_scl # nolint: object_name_linter.
-  sig_vals <- str_scl + add_scl * 0:(DD - 1)
-  if(2 * DD == DD2) sig_vals <- rep(sig_vals, times = 2)
-  return(sig_vals)
-}
 #' Get default values for true \code{beta_z_lin} parameters in simulation
 #'
 #' @inheritParams get_default_sig_sq
@@ -26,7 +9,6 @@ get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_nam
 #'   if \code{num} is a vector of length \code{DD}, \code{num[d]}, for
 #'   \code{d=1,...,DD}
 get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
-  browser()
   DD2 <- get_DD2(distribution, DD)
   DD  <- get_DD(distribution, DD)
   num_reg_len <- length(num)
@@ -119,7 +101,6 @@ generate_bet_u <- function(distribution,
                            rel_var_to_cov = 5,
                            n0u = 50, # n0u <- num_re + 1
                            seed_no = 42) {
-  browser()
   DD2 <- get_DD2(distribution, DD)
   DD  <- get_DD(distribution, DD)
   true_bet_u <- vector("list", DD)

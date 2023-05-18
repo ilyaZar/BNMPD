@@ -77,7 +77,6 @@ new_trueParams <- function(distribution,
                            options = list(dwn_scl = 10,
                                           intercepts = NULL),
                            seed_taken) {
-  check_distribution(distribution)
   SIMUL_PHI    <- settings_pars$SIMUL_PHI
   SIMUL_Z_BETA <- settings_pars$SIMUL_Z_BETA
   SIMUL_U_BETA <- settings_pars$SIMUL_U_BETA
@@ -318,108 +317,13 @@ check_true_params_distribution <- function(obj) {
   check_class_true_params(obj)
   densitities_supported <- c("multinomial", "dirichlet_mult",
                              "gen_dirichlet_mult", "gen_dirichlet",
-                             "dirichlet", "normal")
+                             "dirichlet")
   distribution <- get_distribution(obj)
   if (!(distribution %in% densitities_supported)) {
     stop(paste0("Argument to distribution must be one of: ",
                 paste0(densitities_supported, collapse = ", "), "!"))
   }
   return(invisible(obj))
-}
-#' Sets true values (default or user supplied) for parameter phi
-#'
-#' @param SIMUL_PHI logical; if \code{TRUE}, then phi-parameters are generated
-#' @inheritParams new_trueParams
-#' @param DD number of multivariate components
-#' @param NN number of cross sectional units
-#' @param order_p_vec a numeric vector of length 1 or \code{DD} giving the
-#'    order(s) of autoregression per component \code{d=1,...,DD}. If length 1,
-#'    then a single number is used for all multivariate components. If a special
-#'    distributionis used, and the length is larger than 1, then the implied
-#'    number of parameters (which does not equal the multivariate model
-#'    dimension) is used.
-#'
-#' @return a list of length \code{DD} with each element being a matrix of
-#'   dimension \code{order_p_vec[d] x NN} that stores the phi's per number of
-#'   autoregressions, number of cross section and per component \code{d}.
-#' @export
-new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
-  if (SIMUL_PHI) {
-    order_p_vec <- get_order_p_vec(distribution, order_p_vec, DD)
-    if (!is.null(phi)) {
-      out_phi <- get_manual_phi(
-        distribution,
-        phi,
-        DD,
-        NN,
-        order_p_vec)
-    } else {
-      out_phi <- get_default_phi(
-        distribution,
-        DD,
-        NN,
-        order_p_vec)
-    }
-  } else {
-    out_phi <- NULL
-  }
-  structure(out_phi, class = c("true_phi"))
-}
-#' Sets true values (default or user supplied) for parameter sig_sq_x
-#'
-#' @inheritParams new_trueParams
-#' @inheritParams new_phi
-#' @param dwn_scl control parameter that scales variance upwards/downwards
-#'
-#' @return a matrix of dimension \code{DD/DD2 x NN} of true parameter values for
-#'   \code{sig_sq_x}
-new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
-  if (distribution %in% c("dirichlet", "multinomial", "dirichlet_mult")) {
-    if (!is.null(sig_sq)) {
-      check_sig_sq_user(sig_sq, DD)
-      out_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
-    } else {
-      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
-      out_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
-    }
-    rownames(out_sig_sq) <- paste0("D", 1:DD)
-    colnames(out_sig_sq) <- paste0("N", 1:NN)
-    return(structure(out_sig_sq,
-                     class = c("true_sig_sq", "matrix", "array")))
-  } else if (distribution %in% c("gen_dirichlet")) {
-    if (!is.null(sig_sq)) {
-      check_sig_sq_user(sig_sq, DD)
-      out_sig_sq <- array(sig_sq, c(DD, NN, 2))
-    } else {
-      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
-      out_sig_sq <- array(tmp_sig_sq, c(DD, NN, 2))
-    }
-    dimnames(out_sig_sq) <- list(paste0("D", 1:DD),
-                                 paste0("N", 1:NN),
-                                 c("A", "B"))
-    return(structure(out_sig_sq,
-                     class = c("true_sig_sq", "matrix", "array")))
-  } else if (distribution %in% c("gen_dirichlet_mult")) {
-    if (!is.null(sig_sq)) {
-      check_sig_sq_user(sig_sq, DD)
-      out_sig_sq <- array(sig_sq, c(DD - 1, NN, 2))
-    } else {
-      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
-      out_sig_sq <- array(tmp_sig_sq, c(DD - 1, NN, 2))
-    }
-    dimnames(out_sig_sq) <- list(paste0("D", 1:(DD - 1)),
-                                 paste0("N", 1:NN),
-                                 c("A", "B"))
-    return(structure(out_sig_sq,
-                     class = c("true_sig_sq", "matrix", "array")))
-  } else {
-    stop("Uknown distribution argument.")
-  }
-  return(invisible(distribution))
-}
-check_sig_sq_user <- function(sig_sq, DD) {
-  check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
-  if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
 }
 #' Sets true values (default or user supplied) for parameter bet_z
 #'
