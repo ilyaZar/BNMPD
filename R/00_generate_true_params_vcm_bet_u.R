@@ -1,59 +1,39 @@
-#' Get default values for true \code{beta_z_lin} parameters in simulation
+#' Sets true values (default or user supplied) for parameter bet_u
 #'
-#' @inheritParams get_default_sig_sq
-#' @param num inter giving number of regressor components (if
-#'   \code{length(num) == 1}, then each code{beta_z_lin} gets the same number;
-#'   else must be a vector satisfying \code{length(num) == DD})
+#' @param SIMUL_U_BETA logical; if \code{TRUE}, then beta-u-parameters are
+#'   generated including VCM elements
+#' @inheritParams new_trueParams
+#' @inheritParams new_phi
+#' @inheritParams new_bet_z
+#' @param num_u_regs number of u-type regressors; see argument documentation
+#'   for 'settings_pars' from [new_trueParams()]
 #'
-#' @return a list of length \code{DD}, with number of elements = \code{num}, or,
-#'   if \code{num} is a vector of length \code{DD}, \code{num[d]}, for
-#'   \code{d=1,...,DD}
-get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
-  DD2 <- get_DD2(distribution, DD)
-  DD  <- get_DD(distribution, DD)
-  num_reg_len <- length(num)
-  tmp1 <- c(0.325, -0.44)  # tmp values large, first component negative
-  tmp2 <- c(0.327, -0.435) # tmp values large, first component positive
-  tmp3 <- c(0.33, -0.43)   # tmp values small, first component negative
-  tmp4 <- c(0.332, -0.415) # tmp values small, first component positive
-  if (num_reg_len == 1) {
-    tmp_neg_pos_large <- rep(tmp1, length.out = num)
-    tmp_pos_neg_large <- rep(tmp2, length.out = num)
-    tmp_neg_pos_small <- rep(tmp3, length.out = num)
-    tmp_pos_neg_small <- rep(tmp4, length.out = num)
-
-  } else if (num_reg_len == DD) {
-    tmp_neg_pos_large <- rep(tmp1, length.out = num[1])
-    tmp_pos_neg_large <- rep(tmp2, length.out = num[2])
-    tmp_neg_pos_small <- rep(tmp3, length.out = num[3])
-    tmp_pos_neg_small <- rep(tmp4, length.out = num[4])
+#' @return a list of two elements for bet_u and vcm_bet_u each again a list of
+#'   dimension \code{DD} with first element being a matrix of dimension
+#'   \code{num_u_regs x NN} (matrix of true random effects) and the second
+#'   matrix \code{num_u_regs x num_u_regs} (covariance matrix for random
+#'   effects)
+#' @export
+new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
+                          DD, NN,
+                          num_u_regs,
+                          seed_taken,
+                          intercepts) {
+  if (SIMUL_U_BETA) {
+    DD <- get_DD(distribution, DD)
+    num_reg_seq <- get_num_reg_seq(num_u_regs, DD)
+    true_out_u  <- generate_bet_u(
+      distribution,
+      DD, NN, TRUE, num_reg_seq,
+      seed_no = seed_taken)
+    true_bet_u <- true_out_u[[1]]
+    true_D0u_u <- true_out_u[[2]] # nolint: object_name_linter.
   } else {
-    stop("If 'num_z_regs' is a vector, it must be of length 'DD'...")
+    true_bet_u <- NULL
+    true_D0u_u <- NULL # nolint: object_name_linter.
   }
-  list_vals <- list(tmp_neg_pos_large,
-                    tmp_pos_neg_large,
-                    tmp_neg_pos_small,
-                    tmp_pos_neg_small)
-  list_vals <- rep(list_vals, length.out = DD)
-  list_vals <- scale_up_intercept(list_vals, 100, intercepts)
-  if (2 * DD == DD2) list_vals <- list(A = list_vals, B = list_vals)
-  return(list_vals)
-}
-scale_up_intercept <- function(vals_list,  scl_factor, intercept_ids) {
-  DD  <- length(intercept_ids)
-  scl <- rep(1, times = DD) # default to factor = 1 i.e. no scaling
-  # where intercepts present (intercept_ids = TRUE) -> adjust scale factor:
-  scl[intercept_ids] <- scl_factor
-  for (d in 1:DD) {
-    # perform upscale with appropriately adjusted scale factor
-    vals_list[[d]][1] <- vals_list[[d]][1] * scl[d]
-  }
-  return(vals_list)
-}
-get_manual_bet_z <- function(beta_z_lin, DD) {
-  check_bet_z <- is.list(beta_z_lin) && length(beta_z_lin) == DD
-  if (!check_bet_z) stop("'beta_z_lin' not a list or not of length = DD...")
-  beta_z_lin
+  structure(list(true_bet_u = true_bet_u, true_D0u_u = true_D0u_u),
+            class = "true_bet_vcm_u")
 }
 get_num_reg_seq <- function(num_u_regs, DD) {
   if (is.null(num_u_regs)) stop("Specify number of U-type regressors.")
