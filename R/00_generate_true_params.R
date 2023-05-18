@@ -77,12 +77,14 @@ new_trueParams <- function(distribution,
                            options = list(dwn_scl = 10,
                                           intercepts = NULL),
                            seed_taken) {
+  check_distribution(distribution)
   SIMUL_PHI    <- settings_pars$SIMUL_PHI
   SIMUL_Z_BETA <- settings_pars$SIMUL_Z_BETA
   SIMUL_U_BETA <- settings_pars$SIMUL_U_BETA
   num_z_regs   <- settings_pars$num_z_regs
   num_u_regs   <- settings_pars$num_u_regs
   order_p_vec  <- settings_pars$order_p_vec
+  options$intercepts <- adjust_ic_to_dist(options$intercepts, distribution)
   check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
                    missing(SIMUL_PHI) || missing(seed_taken) ||
                    missing(model_dim))
@@ -316,7 +318,7 @@ check_true_params_distribution <- function(obj) {
   check_class_true_params(obj)
   densitities_supported <- c("multinomial", "dirichlet_mult",
                              "gen_dirichlet_mult", "gen_dirichlet",
-                             "dirichlet")
+                             "dirichlet", "normal")
   distribution <- get_distribution(obj)
   if (!(distribution %in% densitities_supported)) {
     stop(paste0("Argument to distribution must be one of: ",
@@ -332,7 +334,10 @@ check_true_params_distribution <- function(obj) {
 #' @param NN number of cross sectional units
 #' @param order_p_vec a numeric vector of length 1 or \code{DD} giving the
 #'    order(s) of autoregression per component \code{d=1,...,DD}. If length 1,
-#'    then a single number is used for all multivariate components.
+#'    then a single number is used for all multivariate components. If a special
+#'    distributionis used, and the length is larger than 1, then the implied
+#'    number of parameters (which does not equal the multivariate model
+#'    dimension) is used.
 #'
 #' @return a list of length \code{DD} with each element being a matrix of
 #'   dimension \code{order_p_vec[d] x NN} that stores the phi's per number of
@@ -340,17 +345,25 @@ check_true_params_distribution <- function(obj) {
 #' @export
 new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
   if (SIMUL_PHI) {
-    order_p_vec <- get_order_p_vec(order_p_vec, DD)
+    order_p_vec <- get_order_p_vec(distribution, order_p_vec, DD)
     if (!is.null(phi)) {
-      out_phi <- get_manual_phi(phi, DD, order_p_vec, NN)
+      out_phi <- get_manual_phi(
+        distribution,
+        phi,
+        DD,
+        NN,
+        order_p_vec)
     } else {
-      out_phi <- get_default_phi(distribution, DD, NN, order_p_vec)
+      out_phi <- get_default_phi(
+        distribution,
+        DD,
+        NN,
+        order_p_vec)
     }
   } else {
     out_phi <- NULL
   }
-  structure(out_phi,
-            class = c("true_phi"))
+  structure(out_phi, class = c("true_phi"))
 }
 #' Sets true values (default or user supplied) for parameter sig_sq_x
 #'
@@ -358,8 +371,8 @@ new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
 #' @inheritParams new_phi
 #' @param dwn_scl control parameter that scales variance upwards/downwards
 #'
-#' @return a matrix of dimension \code{DD x NN} of true parameter values for
-#'   sig_sq_x
+#' @return a matrix of dimension \code{DD/DD2 x NN} of true parameter values for
+#'   \code{sig_sq_x}
 new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
   if (distribution %in% c("dirichlet", "multinomial", "dirichlet_mult")) {
     if (!is.null(sig_sq)) {

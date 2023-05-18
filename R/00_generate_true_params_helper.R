@@ -4,8 +4,8 @@
 #'
 #' @return a vector of length \code{DD}
 get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_name_linter.
-  DD  <- get_DD(distribution, DD)
   DD2 <- get_DD2(distribution, DD)
+  DD  <- get_DD(distribution, DD)
   str_scl <- 3.1 / dwn_scl
   add_scl <- 0.1 / dwn_scl
 
@@ -23,8 +23,8 @@ get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_nam
 #' @return a list of length \code{DD} with elements being matrices of dimension
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
 get_default_phi <- function(distribution, DD, NN, order_p_vec) {
-  DD  <- get_DD(distribution, DD)
   DD2 <- get_DD2(distribution, DD)
+  DD  <- get_DD(distribution, DD)
   if (any(order_p_vec > 4)) stop("Need more default phis ...")
   # possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
   #                           0.25, 0.20, 0.35, 0.25,
@@ -56,24 +56,32 @@ get_default_phi <- function(distribution, DD, NN, order_p_vec) {
 #'
 #' @return a list of length \code{DD} with elements being matrices of dimension
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
-get_manual_phi <- function(phi, DD, order_p_vec, NN) {
-  if (length(phi) != DD) {
-    stop("Phi params must be passed as a list of length DD!")
+get_manual_phi <- function(distribution, phi, DD, NN, order_p_vec) {
+  DD2 <- get_DD2(distribution, DD)
+  DD  <- get_DD(distribution, DD)
+  if (length(phi) != DD2) {
+    stop("Phi params must be passed as a list of length DD2!")
   }
-  out_phi <- vector("list", DD)
-  for (d in 1:DD) {
+  out_phi <- vector("list", DD2)
+  for (d in 1:DD2) {
     check_phi <- all(phi[[d]] >= 0) && all(phi[[d]] < 1)
     if (!check_phi) {
       stop("phi > 0 or phi < 1 or not a vector of length DD ...\n")
     }
     out_phi[[d]] <- matrix(phi[[d]], nrow = order_p_vec[d], ncol = NN)
   }
+  if (2 * DD == DD2) out_phi <- list(A = out_phi[head(seq_len(DD2), n = DD)],
+                                     B = out_phi[tail(seq_len(DD2), n = DD)])
+  return(out_phi)
 }
-get_order_p_vec <- function(order_p_vec, DD) {
+get_order_p_vec <- function(distribution, order_p_vec, DD) {
   if (length(order_p_vec) == 1) {
-    order_p_vec <- rep(order_p_vec, times = DD)
-  } else if (length(order_p_vec) != DD) {
-    stop("Autoregressive order_p must be either length 1 or DD!")
+    DD2 <- get_DD2(distribution, DD)
+    order_p_vec <- rep(order_p_vec, times = DD2)
+  } else {
+    DD2 <- get_DD2(distribution, DD)
+    stopifnot(`Arg. order_p_vec is either scalar or of length equal to DD2` =
+                length(order_p_vec) == DD2)
   }
   return(order_p_vec)
 }
@@ -88,8 +96,9 @@ get_order_p_vec <- function(order_p_vec, DD) {
 #'   if \code{num} is a vector of length \code{DD}, \code{num[d]}, for
 #'   \code{d=1,...,DD}
 get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
-  DD  <- get_DD(distribution, DD)
+  browser()
   DD2 <- get_DD2(distribution, DD)
+  DD  <- get_DD(distribution, DD)
   num_reg_len <- length(num)
   tmp1 <- c(0.325, -0.44)  # tmp values large, first component negative
   tmp2 <- c(0.327, -0.435) # tmp values large, first component positive
@@ -118,11 +127,13 @@ get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
   if (2 * DD == DD2) list_vals <- list(A = list_vals, B = list_vals)
   return(list_vals)
 }
-scale_up_intercept <- function(vals_list, scl_up, intercept_ids) {
-  DD <- length(intercept_ids)
-  scl <- rep(1, times = DD)
-  scl[intercept_ids] <- scl_up
+scale_up_intercept <- function(vals_list,  scl_factor, intercept_ids) {
+  DD  <- length(intercept_ids)
+  scl <- rep(1, times = DD) # default to factor = 1 i.e. no scaling
+  # where intercepts present (intercept_ids = TRUE) -> adjust scale factor:
+  scl[intercept_ids] <- scl_factor
   for (d in 1:DD) {
+    # perform upscale with appropriately adjusted scale factor
     vals_list[[d]][1] <- vals_list[[d]][1] * scl[d]
   }
   return(vals_list)
@@ -178,8 +189,9 @@ generate_bet_u <- function(distribution,
                            rel_var_to_cov = 5,
                            n0u = 50, # n0u <- num_re + 1
                            seed_no = 42) {
-
+  browser()
   DD2 <- get_DD2(distribution, DD)
+  DD  <- get_DD(distribution, DD)
   true_bet_u <- vector("list", DD)
   if (from_IW) {
     stopifnot(is.numeric(num_re) && (length(num_re) == DD))
@@ -237,4 +249,12 @@ get_class_true_param <- function(distribution) {
   names(class_dist_names) <- model_dist_names
   name_subclass <- class_dist_names[[distribution]]
   c(paste0("trueParams", name_subclass), "trueParams")
+}
+adjust_ic_to_dist <- function(intercepts, distribution) {
+  if (distribution == "gen_dirichlet_mult") {
+    intercepts[[1]] <- head(intercepts[[1]], n = -1)
+    intercepts[[2]] <- head(intercepts[[2]], n = -1)
+    return(intercepts)
+  }
+  return(intercepts)
 }

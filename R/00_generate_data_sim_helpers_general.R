@@ -61,8 +61,9 @@ get_target_dist_levels <- function(distribution,
                                                             seq_step = 0.025,
                                                             seq_rep = 2,
                                                             seq_scale = 1e4)) {
-  DD  <- get_DD(distribution, DD)
+  check_distribution(distribution, type = "arg")
   DD2 <- get_DD2(distribution,DD)
+  DD  <- get_DD(distribution, DD)
   if (is.null(target_val_fixed)) {
     seq_start <- tuning_parameters$seq_start
     seq_step  <- tuning_parameters$seq_step
@@ -101,6 +102,8 @@ set_name_target_vals <- function(out, DD, DD2, NN) {
 }
 get_DD <- function(distribution, DD) {
   switch(distribution,
+         "multinomial" = DD,
+         "normal" = DD,
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
          "gen_dirichlet" = DD,
@@ -109,6 +112,8 @@ get_DD <- function(distribution, DD) {
 get_DD2 <- function(distribution, DD) {
   DD <- unname(DD)
   switch(distribution,
+         "multinomial" = DD,
+         "normal" = DD,
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
          "gen_dirichlet" = DD * 2,
