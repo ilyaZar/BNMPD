@@ -83,19 +83,16 @@ new_trueParams <- function(distribution,
                    missing(model_dim))
   if (check_args) stop("Missing arguments")
   if (SIMUL_U_BETA && missing(num_u_regs)) stop("Number of REs not specified!")
-  # 1. Data settings: -------------------------------------------------------
-  NN <- model_dim[[1]]   # Cross sectional length
-  TT <- model_dim[[2]]  # Time series length
-  DD <- model_dim[[3]]
+  # 1. Model dimension settings: --------------------------------------------
+  NN <- model_dim[[1]] # Cross sectional length
+  TT <- model_dim[[2]] # Time series length
+  DD <- model_dim[[3]] # mult. comp. length
   msg_dim_ready(NN, "NN")
   msg_dim_ready(TT, "TT")
   msg_dim_ready(DD, "DD")
-
   if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     DD2 <- get_DD2(distribution = distribution, DD = model_dim[[3]])
-    cat(crayon::green("Setting !internal! dimension "), crayon::yellow("DD2"),
-        crayon::green("to "), crayon::red(DD2),
-        crayon::green(paste0("for ", distribution," type parameters!\n")))
+    msg_dim_ready(DD2, "DD2")
     model_dim <- c(NN = NN, TT = TT, DD = DD, DD2 = DD2)
   } else {
     model_dim <- c(NN = NN, TT = TT, DD = DD)
