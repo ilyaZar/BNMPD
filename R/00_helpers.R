@@ -12,16 +12,18 @@ msg_dim_ready <- function(dim, print_name) {
 #'    'class', then class-check is performed
 #'
 #' @return
-check_dist_all <- function(x, type = "arg") {
+check_distribution <- function(x, type = "arg") {
   stopifnot(`Arg. 'type' must be either 'class' or 'arg'` =
               type %in% c("class", "arg"))
   if (type == "arg") {
     dist_names <- c("dirichlet", "gen_dirichlet", "multinomial",
-                    "dirichlet_mult", "gen_dirichlet_mult")
+                    "dirichlet_mult", "gen_dirichlet_mult",
+                    "normal")
     stopifnot(`Distrubtion arg. not supported` = x %in% dist_names)
   } else {
     dist_names_class <- c("Dirichlet", "GenDirichlet", "Multinomial",
-                          "DirichletMult", "GenDirichletMult")
+                          "DirichletMult", "GenDirichletMult",
+                          "NORMAL")
     stopifnot(`Object class not supported` = x %in% dist_names_class)
   }
   return(invisible(x))
