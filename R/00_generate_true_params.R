@@ -6,6 +6,11 @@
 #' plotting diagnostics (in a simulation study) as well as generating simulated
 #' data sets based on the true parameter values.
 #'
+#' @param distribution specifies the distribution: "dirichlet", "gen_dirichlet",
+#'    multinomial", "dirichlet_mult", "gen_dirichlet_mult", or "normal" (the
+#'    latter generates the latent states without link-function and measurement/
+#'    response transformations, which is useful e.g. when testing the pure Gibbs
+#'    sampler)
 #' @param dim_model a vector with three components: \code{NN x TT x DD}
 #' @param sig_sq a vector of length \code{DD} and strictly positive elements; if
 #'    \code{NULL}, then defaults are generated (see [get_default_sig_sq])
@@ -349,8 +354,14 @@ check_sig_sq_user <- function(sig_sq, DD) {
 }
 #' Sets true values (default or user supplied) for parameter bet_z
 #'
+#' @param SIMUL_Z_BETA logical; if \code{TRUE}, then beta-z-parameters are
+#'   generated
 #' @inheritParams new_trueParams
 #' @inheritParams new_phi
+#' @param num_z_regs number of z-type regressors; see argument documentation
+#'   for 'settings_pars' from [new_trueParams()]
+#' @param intercepts information on intercept generation, see argument
+#'    documentation for 'options' from [new_trueParams()]
 #'
 #' @return a list of length \code{DD} each element being a vector of the
 #'   corresponding number of regressors
@@ -378,8 +389,13 @@ new_bet_z <- function(SIMUL_Z_BETA,
 }
 #' Sets true values (default or user supplied) for parameter bet_u
 #'
+#' @param SIMUL_U_BETA logical; if \code{TRUE}, then beta-u-parameters are
+#'   generated including VCM elements
 #' @inheritParams new_trueParams
 #' @inheritParams new_phi
+#' @inheritParams new_bet_z
+#' @param num_u_regs number of u-type regressors; see argument documentation
+#'   for 'settings_pars' from [new_trueParams()]
 #'
 #' @return a list of two elements for bet_u and vcm_bet_u each again a list of
 #'   dimension \code{DD} with first element being a matrix of dimension

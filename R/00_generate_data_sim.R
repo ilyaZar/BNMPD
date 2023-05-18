@@ -12,11 +12,7 @@
 #'   model dimension, the seed under which the true parameters are generated,
 #'   the logical indicators that describe which parameters to generate and their
 #'   lengths, as provided by the function [new_trueParams()]
-#' @param distribution specifies the distribution: "dirichlet", "gen_dirichlet",
-#'    multinomial", "dirichlet_mult", "gen_dirichlet_mult", or "normal" (the
-#'    latter generates the latent states without link-function and measurement/
-#'    response transformations, which is useful e.g. when testing the pure Gibbs
-#'    sampler)
+#' @inheritParams new_trueParams
 #' @param x_levels target "mean" levels of the states around which they
 #'   fluctuate
 #' @param X_LOG_SCALE logical; if \code{TRUE}, \code{x_levels} are taken as logs
