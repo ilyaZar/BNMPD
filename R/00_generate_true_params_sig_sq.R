@@ -7,42 +7,21 @@
 #' @return a matrix of dimension \code{DD x NN} of true parameter values for
 #'   sig_sq_x
 new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
-  if (distribution %in% c("normal", "multinomial",
-                          "dirichlet","dirichlet_mult")) {
-    if (!is.null(sig_sq)) {
-      check_sig_sq_user(sig_sq, DD)
-      out_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
-    } else {
-      out_sig_sq <- get_default_sig_sq(distribution, DD, NN, dwn_scl)
-    }
-    return(structure(out_sig_sq,
-                     class = c("true_sig_sq", "matrix", "array")))
-  } else if (distribution %in% c("gen_dirichlet")) {
-    if (!is.null(sig_sq)) {
-      check_sig_sq_user(sig_sq, DD)
-      out_sig_sq <- array(sig_sq, c(DD, NN, 2))
-    } else {
-      out_sig_sq <- get_default_sig_sq(distribution, DD, NN, dwn_scl)
-    }
-    return(structure(out_sig_sq,
-                     class = c("true_sig_sq", "matrix", "array")))
-  } else if (distribution %in% c("gen_dirichlet_mult")) {
-    if (!is.null(sig_sq)) {
-      check_sig_sq_user(sig_sq, DD)
-      out_sig_sq <- array(sig_sq, c(DD - 1, NN, 2))
-    } else {
-      out_sig_sq <- get_default_sig_sq(distribution, DD, NN, dwn_scl)
-    }
-    return(structure(out_sig_sq,
-                     class = c("true_sig_sq", "matrix", "array")))
+  check_distribution(distribution)
+  if (!is.null(sig_sq)) {
+    check_sig_sq_user(distribution, sig_sq, DD)
+    out_sig_sq <- array(sig_sq, c(get_DD(distribution, DD), NN, 2))
   } else {
-    stop("Uknown distribution argument.")
+    out_sig_sq <- get_default_sig_sq(distribution, DD, NN, dwn_scl)
   }
-  return(invisible(distribution))
+  return(structure(out_sig_sq,
+                   class = c("true_sig_sq", "matrix", "array")))
 }
-check_sig_sq_user <- function(sig_sq, DD) {
-  check_sig_sq <- all(sig_sq > 0) && all(length(sig_sq) == DD)
-  if (!check_sig_sq) stop("'sig_sq' > 0 and a vector of length DD ...\n")
+check_sig_sq_user <- function(distribution, sig_sq, DD) {
+  check_sig_sq_1 <- all(sig_sq > 0)
+  if (!check_sig_sq_1) stop("Arg. 'sig_sq' > 0 for all components \n")
+  stopifnot(`Arg. sig_sq must be scalar or length of implied multivariate dimension`
+            = length(sig_sq) == get_DD2(distribution, DD))
 }
 #' Get default values for true \code{sig_sq} parameters in simulation
 #'
@@ -69,6 +48,6 @@ get_default_sig_sq <- function(distribution, DD, NN, dwn_scl) { # nolint: object
     dimnames(out_sig_sq) <- list(paste0("D", 1:DD),
                                  paste0("N", 1:NN),
                                  c("A", "B"))
-    }
+  }
   return(out_sig_sq)
 }
