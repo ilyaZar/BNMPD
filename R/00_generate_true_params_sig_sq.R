@@ -13,11 +13,8 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
       check_sig_sq_user(sig_sq, DD)
       out_sig_sq <- matrix(sig_sq, nrow = DD, ncol = NN)
     } else {
-      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
-      out_sig_sq <- matrix(tmp_sig_sq, nrow = DD, ncol = NN)
+      out_sig_sq <- get_default_sig_sq(distribution, DD, NN, dwn_scl)
     }
-    rownames(out_sig_sq) <- paste0("D", 1:DD)
-    colnames(out_sig_sq) <- paste0("N", 1:NN)
     return(structure(out_sig_sq,
                      class = c("true_sig_sq", "matrix", "array")))
   } else if (distribution %in% c("gen_dirichlet")) {
@@ -25,12 +22,8 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
       check_sig_sq_user(sig_sq, DD)
       out_sig_sq <- array(sig_sq, c(DD, NN, 2))
     } else {
-      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
-      out_sig_sq <- array(tmp_sig_sq, c(DD, NN, 2))
+      out_sig_sq <- get_default_sig_sq(distribution, DD, NN, dwn_scl)
     }
-    dimnames(out_sig_sq) <- list(paste0("D", 1:DD),
-                                 paste0("N", 1:NN),
-                                 c("A", "B"))
     return(structure(out_sig_sq,
                      class = c("true_sig_sq", "matrix", "array")))
   } else if (distribution %in% c("gen_dirichlet_mult")) {
@@ -38,12 +31,8 @@ new_sig_sq_x <- function(distribution, sig_sq, DD, NN, dwn_scl) {
       check_sig_sq_user(sig_sq, DD)
       out_sig_sq <- array(sig_sq, c(DD - 1, NN, 2))
     } else {
-      tmp_sig_sq <- get_default_sig_sq(distribution, DD, dwn_scl)
-      out_sig_sq <- array(tmp_sig_sq, c(DD - 1, NN, 2))
+      out_sig_sq <- get_default_sig_sq(distribution, DD, NN, dwn_scl)
     }
-    dimnames(out_sig_sq) <- list(paste0("D", 1:(DD - 1)),
-                                 paste0("N", 1:NN),
-                                 c("A", "B"))
     return(structure(out_sig_sq,
                      class = c("true_sig_sq", "matrix", "array")))
   } else {
@@ -60,7 +49,7 @@ check_sig_sq_user <- function(sig_sq, DD) {
 #' @inheritParams new_sig_sq_x
 #'
 #' @return a vector of length \code{DD}
-get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_name_linter.
+get_default_sig_sq <- function(distribution, DD, NN, dwn_scl) { # nolint: object_name_linter.
   DD2 <- get_DD2(distribution, DD)
   DD  <- get_DD(distribution, DD)
   str_scl <- 3.1 / dwn_scl
@@ -68,7 +57,18 @@ get_default_sig_sq <- function(distribution, DD, dwn_scl) { # nolint: object_nam
 
   # str_scl <- 2.1 / dwn_scl # nolint: commented_code_linter.
   # add_scl <- 1.1 / dwn_scl # nolint: object_name_linter.
-  sig_vals <- str_scl + add_scl * 0:(DD - 1)
-  if(2 * DD == DD2) sig_vals <- rep(sig_vals, times = 2)
-  return(sig_vals)
+  if (DD == DD2) {
+    sig_vals <- str_scl + add_scl * 0:(DD - 1)
+    out_sig_sq <- matrix(sig_vals, nrow = DD, ncol = NN)
+    rownames(out_sig_sq) <- paste0("D", 1:DD)
+    colnames(out_sig_sq) <- paste0("N", 1:NN)
+  }
+  if(2 * DD == DD2) {
+    sig_vals <- rep(sig_vals, times = 2)
+    out_sig_sq <- array(sig_vals, c(DD, NN, 2))
+    dimnames(out_sig_sq) <- list(paste0("D", 1:DD),
+                                 paste0("N", 1:NN),
+                                 c("A", "B"))
+    }
+  return(out_sig_sq)
 }
