@@ -82,18 +82,20 @@ generate_y_x_containter <- function(distribution, NN, TT, DD, type = "x") {
 
   if (distribution %in% (c("normal", "multinomial",
                            "dirichlet","dirichlet_mult"))) {
+    out_cnt <- array(0, c(TT = TT, DD = DD, NN = NN))
     tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
-    out_cnt <- array(0, c(TT, DD, NN))
     dimnames(out_cnt) <- tmp_names
   } else if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     if (type == "x") {
-      out_cnt   <- array(0, c(TT, get_DD2(distribution, DD), NN))
-      tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD)
+      DD2_tmp   <- get_DD2(distribution, DD)
+      DD1_tmp   <- get_DD(distribution, DD)
+      out_cnt   <- array(0, c(TT = TT, DD2 = DD2_tmp, NN = NN))
+      tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD1_tmp)
       tmp_names[[2]] <- c(paste0("A_", tmp_names[[2]]),
                           paste0("B_", tmp_names[[2]]))
       dimnames(out_cnt) <- tmp_names
     } else if (type == "y") {
-      out_cnt   <- array(0, c(TT, DD, NN))
+      out_cnt   <- array(0, c(TT = TT, DD = DD, NN = NN))
       tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
       dimnames(out_cnt) <- tmp_names
     }
