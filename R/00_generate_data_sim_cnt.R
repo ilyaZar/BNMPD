@@ -72,16 +72,32 @@ set_class_name <- function(dist) {
 #' a list element can be \code{NULL} indicating that this element is not needed.
 #'
 #' @inheritParams new_dataSim
+#' @param type character: either "x" or "y"
 #'
 #' @return a list of two; \code{data} and \code{states} where the former can
 #'   itself be a list of two elements (part1 and part2 if data is compound e.g.
 #'   of counts and total counts as for the Multinomial distribution)
-generate_y_x_containter <- function(NN, TT, DD) {
-  tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
+generate_y_x_containter <- function(distribution, NN, TT, DD, type = "x") {
+  check_distribution(distribution)
 
-  out_cnt <- array(0, c(TT, DD, NN))
-  dimnames(out_cnt) <- tmp_names
-
+  if (distribution %in% (c("normal", "multinomial",
+                           "dirichlet","dirichlet_mult"))) {
+    tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
+    out_cnt <- array(0, c(TT, DD, NN))
+    dimnames(out_cnt) <- tmp_names
+  } else if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+    if (type == "x") {
+      out_cnt   <- array(0, c(TT, get_DD2(distribution, DD), NN))
+      tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD)
+      tmp_names[[2]] <- c(paste0("A_", tmp_names[[2]]),
+                          paste0("B_", tmp_names[[2]]))
+      dimnames(out_cnt) <- tmp_names
+    } else if (type == "y") {
+      out_cnt   <- array(0, c(TT, DD, NN))
+      tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
+      dimnames(out_cnt) <- tmp_names
+    }
+  }
   return(out_cnt)
 }
 get_x_y_containter_names <- function(NN, TT, DD) {
@@ -100,9 +116,10 @@ get_x_y_containter_names <- function(NN, TT, DD) {
 #'   [new_dataSim(true_params = ...)]
 #' @inheritParams new_dataSim
 #' @param cnt_name a character: either "z" for z-type regressors or "u" for the
-#'   random effects container; other imput gives an error
-#' @param reg_type output from [get_modelling_reg_types()] specifying the type
-#'   of regressors (effects) to generate
+#'   random effects container; other input gives an error
+#' @param reg_type logical and output from [get_modelling_reg_types()]
+#'   specifying the type of regressors (effects) to generate; if \code{TRUE}
+#'   then that regressor type is present and container is generated
 #'
 #' @return a named list of two elements: \code{z} and \code{u} for z-type or
 #'   u-type regressors; elements can be \code{NULL} whenever the corresponding

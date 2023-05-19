@@ -4,7 +4,7 @@ generate_measurements <- function(x_states, X_LOG_SCALE, distribution) {
   DD <- tmp_dim[2]
   NN <- tmp_dim[3]
 
-  data_part1 <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
+  data_part1 <- generate_y_x_containter(distribution, NN = NN, TT = TT, DD = DD)
 
   if (distribution == "multinomial" || distribution == "dirichlet_mult") {
     data_part2 <- matrix(0, nrow = TT, ncol = NN)

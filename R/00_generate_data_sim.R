@@ -59,7 +59,7 @@
 #'   \itemize{
 #'   \item{\code{data: }}{a list of at most two elements (if \code{distribution}
 #'   is of type Dirichlet, the second element is \code{NULL}, but otherwise has
-#'   the total number of counts e.g. in a Dirichlet-multinomial model)}
+#'   the total number of counts e.g. in a Dirichlet-Multinomial model)}
 #'   \item{\code{regs: }}{list of regressors with two elements: 'z' and 'u'}
 #'   \item{\code{states: }}{simulated latent states}
 #'   }
@@ -87,11 +87,10 @@ new_dataSim <- function(true_params,
   DD <- get_dimension(true_params, "DD")
 
   opt1      <- set_opt_include(options_include, NN, DD)
-  x_levels  <- set_x_levels(true_params, distribution,
-                                 x_levels, X_LOG_SCALE)
+  x_levels  <- set_x_levels(true_params, x_levels, X_LOG_SCALE)
   reg_types <- get_modelling_reg_types(true_params)
 
-  x <- generate_y_x_containter(NN = NN, TT = TT, DD = DD)
+  x <- generate_y_x_containter(distribution, NN = NN, TT = TT, DD = DD)
   z <- generate_z_u_container(true_params[["beta_z_lin"]],
                               NN = NN, TT = TT, DD = DD,
                               cnt_name = "z",
