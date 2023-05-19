@@ -356,8 +356,8 @@ get_params <- function(true_params, n = NULL, DD = NULL,
   stopifnot(`Arg. 'DD' is either NULL or a single number.` = length(DD) <= 1)
   stopifnot(`Arg. 'name_par' is either NULL or a single number.` = length(name_par) <= 1)
   stopifnot(`Arg. 'name_par' must be either of 'sig_sq', 'phi',
-            'beta_z_lin', 'beta_u_lin', 'vcm_u_lin', or NULL` =
-              name_par %in% c('sig_sq', 'phi', 'beta_z_lin', 'beta_u_lin', 'vcm_u_lin') || is.null(name_par))
+             'beta_z_lin', 'beta_u_lin', 'vcm_u_lin', or NULL` =
+               name_par %in% c('sig_sq', 'phi', 'beta_z_lin', 'beta_u_lin', 'vcm_u_lin') || is.null(name_par))
   stopifnot(`Arg. 'DD_TYPE' is either NULL or a single number.` = length(DD_TYPE) <= 1)
   stopifnot(`Arg. 'drop' must be logical` = is.logical(drop))
   UseMethod("get_params")
@@ -471,6 +471,28 @@ get_params.trueParamsDirichletMult <- function(true_params,
   if (isTRUE(drop)) return(drop(pars_out))
   return(pars_out)
 }
+#' Method for class 'trueParamsGenDirichletMult' derived from 'trueParams'
+#'
+#' Used for the generalized Dirichlet distribution.
+#'
+#' @inheritParams get_params
+#'
+#' @return sliced parameters for some cross sectional unit \code{n}
+#' @export
+get_params.trueParamsGenDirichletMult <- function(true_params,
+                                                  n = NULL, DD = NULL,
+                                                  name_par = NULL,
+                                                  DD_TYPE = NULL,
+                                                  drop = FALSE) {
+  if (is.null(n)) n <- seq_len(dim(true_params$sig_sq)[2])
+  if (missing(DD_TYPE)) stop("Must set arg. 'DD_TYPE' for gen. Dirichlet!" )
+  reg_types <- get_modelling_reg_types(true_params)
+  pars_out  <- true_params %>%
+    get_special_pars(n, DD, reg_types, special_type = DD_TYPE) %>%
+    get_par_name(name_par)
+  if (isTRUE(drop)) return(drop(pars_out))
+  return(pars_out)
+}
 get_default_pars <- function(true_params, n, DD = NULL, reg_types) {
   pars_out <- list(sig_sq = true_params[["sig_sq"]][, n, drop = FALSE],
                    phi = lapply(true_params[["phi"]], `[`, i = , j = n))
@@ -535,6 +557,6 @@ check_avail_param <- function(true_params, name_par) {
               !is.null(name_par))
   stopifnot(`Arg. 'name_par' not in the list of available parameter names` =
               isTRUE(name_par %in% c("phi", "beta_z_lin", "beta_u_lin",
-                                      "sig_sq", "vcm_u_lin")))
+                                     "sig_sq", "vcm_u_lin")))
   isTRUE(name_par %in% names(true_params))
 }
