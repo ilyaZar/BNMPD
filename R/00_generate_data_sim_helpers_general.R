@@ -6,24 +6,24 @@
 #'
 #' @return resulting target levels, that might need adjustment e.g. taking to
 #'    the log-scale or standardization with the variance
-set_x_levels <- function(true_params, distribution, x_levels, X_LOG_SCALE) {
-  densitities_supported <- c("multinomial", "dirichlet_mult",
-                             "gen_dirichlet_mult", "gen_dirichlet",
-                             "dirichlet", "normal")
-  if (!(distribution %in% densitities_supported)) {
-    stop(paste0("Argument to distribution must be one of: ",
-                paste0(densitities_supported, collapse = ", "), "!"))
-  }
+set_x_levels <- function(true_params, x_levels, X_LOG_SCALE) {
+  distribution <- get_distribution(true_params)
+  check_distribution(distribution)
+
   if (X_LOG_SCALE && distribution == "normal") x_levels <- log(x_levels)
   if (X_LOG_SCALE && any(distribution %in% c("dirichlet", "gen_dirichlet",
                                              "multinomial", "dirichlet_mult",
                                              "gen_dirichlet_mult"))) {
     if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
-      sig_tmp  <- get_params(true_params, n = 1,
-                             name_par = "sig_sq", DD_TYPE = "A")
+      sig_tmp  <- c(get_params(true_params, n = 1,
+                               name_par = "sig_sq",
+                               DD_TYPE = "A"),
+                    get_params(true_params, n = 1,
+                               name_par = "sig_sq",
+                               DD_TYPE = "B"))
     } else {
-      sig_tmp  <- get_params(true_params, n = 1, name_par = "sig_sq")
-      sig_tmp <- sig_tmp[, 1]
+      sig_tmp  <- get_params(true_params, n = 1,
+                             name_par = "sig_sq", drop = TRUE)
     }
     x_levels <- log(x_levels) - sig_tmp/2
   }
