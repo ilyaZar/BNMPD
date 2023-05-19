@@ -91,14 +91,8 @@ new_dataSim <- function(true_params,
   reg_types <- get_modelling_reg_types(true_params)
 
   x <- generate_y_x_containter(distribution, NN = NN, TT = TT, DD = DD)
-  z <- generate_z_u_container(true_params[["beta_z_lin"]],
-                              NN = NN, TT = TT, DD = DD,
-                              cnt_name = "z",
-                              reg_types[["z-linear-regressors"]])
-  u <- generate_z_u_container(true_params[["beta_u_lin"]],
-                              NN = NN, TT = TT, DD = DD,
-                              cnt_name = "u",
-                              reg_types[["u-linear-regressors"]])
+  z <- generate_z_u_container(true_params, NN, TT, DD, "z")
+  u <- generate_z_u_container(true_params, NN, TT, DD, "u")
 
   seed_no <- set_seed_no(true_params, seed_no); set.seed(seed_no);
 

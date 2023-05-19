@@ -114,43 +114,52 @@ get_x_y_containter_names <- function(NN, TT, DD) {
 #' information is directly inferred from container of true parameters
 #' (\code{par}).
 #'
-#' @param pars container of true parameter values as passed to main function
-#'   [new_dataSim(true_params = ...)]
 #' @inheritParams new_dataSim
-#' @param cnt_name a character: either "z" for z-type regressors or "u" for the
-#'   random effects container; other input gives an error
-#' @param reg_type logical and output from [get_modelling_reg_types()]
-#'   specifying the type of regressors (effects) to generate; if \code{TRUE}
-#'   then that regressor type is present and container is generated
+#' @param cnt_name a character: either "z" for z-type regressors or
+#'   "u" for the random effects container; other input gives an error
 #'
 #' @return a named list of two elements: \code{z} and \code{u} for z-type or
 #'   u-type regressors; elements can be \code{NULL} whenever the corresponding
 #'   regressor type is not needed.
-generate_z_u_container <- function(pars, NN, TT, DD, cnt_name, reg_type) {
-  if (reg_type) {
-    if(cnt_name == "z") {
-      dim_bet <- sapply(pars, length)
-    } else if (cnt_name == "u") {
-      if (NN == 1) {
-        dim_bet <- sapply(pars, length)
-        num_bet <- sum(dim_bet)
-      } else {
-        dim_bet <- sapply(pars, nrow)
-        num_bet <- sum(dim_bet)
-      }
-    } else {
-      stop("Unknown container name.")
-    }
-    num_bet <- sum(dim_bet)
-    names_cnt <- paste0(paste0(cnt_name, unlist(sapply(dim_bet, seq_len))),
-                        "_d", rep(1:DD, unlist(dim_bet)))
-    tmp_names <- list(paste0("t_", seq_len(TT)),
-                      names_cnt,
-                      paste0("n_", seq_len(NN)))
-    cnt <- array(0, c(TT, num_bet, NN))
-    dimnames(cnt) <- tmp_names
+generate_z_u_container <- function(true_params, NN, TT, DD, cnt_name) {
+  if (cnt_name == "z") {
+    if (isFALSE(check_avail_param(true_params, "beta_z_lin"))) {cnt <- NULL; return(cnt);}
+    dim_bet <- get_dim_pars(true_params, name_par = "beta_z_lin")
+    num_bet <- get_num_pars(true_params, name_par = "beta_z_lin")
+  } else if (cnt_name == "u") {
+    if (isFALSE(check_avail_param(true_params, "beta_u_lin"))) {cnt <- NULL; return(cnt);}
+    dim_bet <- get_dim_pars(true_params, name_par = "beta_u_lin")
+    num_bet <- get_num_pars(true_params, name_par = "beta_u_lin")
   } else {
-    cnt <- NULL
+    stop("Unknown container name.")
   }
+  name_dim_cnt <- get_dim_names_cnt_z_u(true_params, cnt_name,
+                                        dim_bet, TT, NN, DD)
+  cnt <- array(0, c(TT, num_bet, NN))
+  dimnames(cnt) <- name_dim_cnt
   return(cnt)
+}
+get_dim_names_cnt_z_u <- function(true_params, cnt_name, dim_bet, TT, NN, DD) {
+  dist <- get_distribution(true_params)
+  if (dist %in% c("normal", "multinomial", "dirichlet", "dirichlet_mult")) {
+    tmp_names <- paste0(paste0(cnt_name, unlist(sapply(dim_bet, seq_len))),
+                        "_d", rep(1:DD, unlist(dim_bet)))
+  } else if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+    DD1_tmp <- get_DD(dist, DD)
+
+    dim_bet_A_part <- as.vector(unlist(sapply(head(dim_bet, DD1_tmp),
+                                              seq_len, simplify = TRUE)))
+    dim_bet_B_part <- as.vector(unlist(sapply(tail(dim_bet, DD1_tmp),
+                                              seq_len, simplify = TRUE)))
+    z_part <- paste0(cnt_name, c(dim_bet_A_part, dim_bet_B_part))
+    type_p <- c(rep("_A", each = length(dim_bet_A_part)),
+                rep("_B", times = length(dim_bet_B_part)))
+    d_part <- paste0("_d", rep(c(1:DD1_tmp, 1:DD1_tmp),
+                               c(head(dim_bet, DD1_tmp),
+                                 tail(dim_bet, DD1_tmp))))
+    tmp_names <- paste0(z_part, type_p, d_part)
+  }
+  return(list(paste0("t_", seq_len(TT)),
+              tmp_names,
+              paste0("n_", seq_len(NN))))
 }
