@@ -328,7 +328,7 @@ check_true_params_distribution <- function(obj) {
 #' Generic methods to extract parameters
 #'
 #' Dispatches on attribute-class of \code{trueParam} access appropriate
-#' parameters for cross sectional unit \code{n}n
+#' parameters for cross sectional unit \code{n}.
 #'
 #' @param true_params object of `class` "trueParams" and one of its subclasses
 #'   i.e. "trueParamDirichlet", "trueParamGenDirichlet" etc.
@@ -352,6 +352,7 @@ check_true_params_distribution <- function(obj) {
 get_params <- function(true_params, n = NULL, DD = NULL,
                        name_par = NULL, DD_TYPE = NULL,
                        drop = FALSE) {
+  check_class_true_params(true_params)
   stopifnot(`Arg. 'n' is either NULL or a single number.` = length(n) <= 1)
   stopifnot(`Arg. 'DD' is either NULL or a single number.` = length(DD) <= 1)
   stopifnot(`Arg. 'name_par' is either NULL or a single number.` = length(name_par) <= 1)
@@ -559,4 +560,111 @@ check_avail_param <- function(true_params, name_par) {
               isTRUE(name_par %in% c("phi", "beta_z_lin", "beta_u_lin",
                                      "sig_sq", "vcm_u_lin")))
   isTRUE(name_par %in% names(true_params))
+}
+#' Generic methods to extract parameters
+#'
+#' Dispatches on attribute-class of \code{trueParam} and sub-classes to access
+#' the dimension of the parameters.
+#'
+#' @inheritParams get_params
+#'
+#' @return numeric vector giving the dimension of parameters (joined for special
+#'   distributions)
+#' @export
+get_dim_pars <- function(true_params, name_par) {
+  check_class_true_params(true_params)
+  stopifnot(`Arg. 'name_par' so far only u/z-regressors` =
+              name_par %in% c("beta_z_lin", "beta_u_lin"))
+  UseMethod("get_dim_pars")
+}
+#' Method for computing dimension of parameters supplied
+#'
+#' @inheritParams get_dim_pars
+#'
+#' @return numeric vector giving the dimension of parameters (joined for special
+#'   distributions)
+#' @export
+get_dim_pars.trueParamsNormal <- function(true_params, name_par) {
+  NextMethod("get_dim_pars", true_params)
+}
+#' Method for computing dimension of parameters supplied
+#'
+#' @inheritParams get_dim_pars
+#'
+#' @return numeric vector giving the dimension of parameters (joined for special
+#'    distributions)
+#' @export
+get_dim_pars.trueParamsMultinomial <- function(true_params, name_par) {
+  NextMethod("get_dim_pars", true_params)
+}
+#' Method for computing dimension of parameters supplied
+#'
+#' @inheritParams get_dim_pars
+#'
+#' @return numeric vector giving the dimension of parameters (joined for special
+#'    distributions)
+#' @export
+get_dim_pars.trueParamsDirichletMult <- function(true_params, name_par) {
+  NextMethod("get_dim_pars", true_params)
+}
+#' Method for computing dimension of parameters supplied
+#'
+#' @inheritParams get_dim_pars
+#'
+#' @return numeric vector giving the dimension of parameters (joined for special
+#'    distributions)
+#' @export
+get_dim_pars.trueParamsDirichlet <- function(true_params, name_par) {
+  NextMethod("get_dim_pars", true_params)
+}
+#' Method for computing dimension of parameters supplied
+#'
+#' @inheritParams get_dim_pars
+#'
+#' @return numeric vector giving the dimension of parameters (joined for special
+#'    distributions)
+#' @export
+get_dim_pars.trueParamsGenDirichlet <- function(true_params, name_par) {
+  stop("not yet implemented")
+}
+#' Method for computing dimension of parameters supplied
+#'
+#' @inheritParams get_dim_pars
+#'
+#' @return numeric vector giving the dimension of parameters (joined for special
+#'    distributions)
+#' @export
+get_dim_pars.trueParamsGenDirichletMult <- function(true_params, name_par) {
+  stop("not yet implemented")
+}
+#' Method for computing dimension of parameters supplied
+#'
+#' @inheritParams get_dim_pars
+#'
+#' @return numeric vector giving the dimension of parameters (joined for special
+#'    distributions)
+#' @export
+get_dim_pars.trueParams <- function(true_params, name_par) {
+  nn <- get_dimension(true_params, dim = "NN")
+  if(name_par == "beta_z_lin") {
+    tmp_pars <- get_params(true_params, name_par = "beta_z_lin")
+    dim_par  <- sapply(tmp_pars, length)
+  } else if (name_par == "beta_u_lin") {
+    tmp_pars <- get_params(true_params, name_par = "beta_u_lin")
+    if (nn == 1) {
+      dim_par <- sapply(tmp_pars, length)
+    } else {
+      dim_par <- sapply(tmp_pars, nrow)
+    }
+  }
+  return(dim_par)
+}
+#' Computes the number of parameters for an object of \code{class} "trueParams"
+#'
+#' @inheritParams get_dim_pars
+#'
+#' @return numeric value giving the number of parameters
+#' @export
+get_num_pars <- function(true_params, name_par) {
+  sum(get_dim_pars(true_params, name_par))
 }
