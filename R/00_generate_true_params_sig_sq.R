@@ -36,14 +36,13 @@ get_default_sig_sq <- function(distribution, DD, NN, dwn_scl) { # nolint: object
 
   # str_scl <- 2.1 / dwn_scl # nolint: commented_code_linter.
   # add_scl <- 1.1 / dwn_scl # nolint: object_name_linter.
+  sig_vals <- str_scl + add_scl * 0:(DD - 1)
   if (DD == DD2) {
-    sig_vals <- str_scl + add_scl * 0:(DD - 1)
     out_sig_sq <- matrix(sig_vals, nrow = DD, ncol = NN)
     rownames(out_sig_sq) <- paste0("D", 1:DD)
     colnames(out_sig_sq) <- paste0("N", 1:NN)
   }
   if(2 * DD == DD2) {
-    sig_vals <- rep(sig_vals, times = 2)
     out_sig_sq <- array(sig_vals, c(DD, NN, 2))
     dimnames(out_sig_sq) <- list(paste0("D", 1:DD),
                                  paste0("N", 1:NN),
