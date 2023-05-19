@@ -20,8 +20,7 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
                           seed_taken,
                           intercepts) {
   if (SIMUL_U_BETA) {
-    DD <- get_DD(distribution, DD)
-    num_reg_seq <- get_num_reg_seq(num_u_regs, DD)
+    num_reg_seq <- get_num_reg_seq(num_u_regs, get_DD(distribution, DD))
     true_out_u  <- generate_bet_u(
       distribution,
       DD, NN, TRUE, num_reg_seq,
