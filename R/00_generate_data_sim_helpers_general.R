@@ -107,7 +107,8 @@ get_DD <- function(distribution, DD) {
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
          "gen_dirichlet" = DD,
-         "gen_dirichlet_mult" = DD - 1)
+         "gen_dirichlet_mult" = DD - 1,
+         stop("Unknown distribution name"))
 }
 get_DD2 <- function(distribution, DD) {
   DD <- unname(DD)
@@ -117,7 +118,8 @@ get_DD2 <- function(distribution, DD) {
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
          "gen_dirichlet" = DD * 2,
-         "gen_dirichlet_mult" = DD * 2 - 2)
+         "gen_dirichlet_mult" = DD * 2 - 2,
+         stop("Unknown distribution name"))
 }
 #' Options list of included effects.
 #'
