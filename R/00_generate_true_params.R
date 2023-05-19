@@ -625,7 +625,7 @@ get_dim_pars.trueParamsDirichlet <- function(true_params, name_par) {
 #'    distributions)
 #' @export
 get_dim_pars.trueParamsGenDirichlet <- function(true_params, name_par) {
-  stop("not yet implemented")
+  get_dim_pars_special(true_params, name_par)
 }
 #' Method for computing dimension of parameters supplied
 #'
@@ -635,7 +635,32 @@ get_dim_pars.trueParamsGenDirichlet <- function(true_params, name_par) {
 #'    distributions)
 #' @export
 get_dim_pars.trueParamsGenDirichletMult <- function(true_params, name_par) {
-  stop("not yet implemented")
+  get_dim_pars_special(true_params, name_par)
+}
+get_dim_pars_special <- function(true_params, name_par) {
+  nn <- get_dimension(true_params, dim = "NN")
+  if(name_par == "beta_z_lin") {
+    tmp_pars <- c(get_params(true_params,
+                             name_par = "beta_z_lin",
+                             DD_TYPE = "A"),
+                  get_params(true_params,
+                             name_par = "beta_z_lin",
+                             DD_TYPE = "B"))
+    dim_par  <- sapply(tmp_pars, length)
+  } else if (name_par == "beta_u_lin") {
+    tmp_pars <- c(get_params(true_params,
+                             name_par = "beta_u_lin",
+                             DD_TYPE = "A"),
+                  get_params(true_params,
+                             name_par = "beta_u_lin",
+                             DD_TYPE = "B"))
+    if (nn == 1) {
+      dim_par <- sapply(tmp_pars, length)
+    } else {
+      dim_par <- sapply(tmp_pars, nrow)
+    }
+  }
+  return(dim_par)
 }
 #' Method for computing dimension of parameters supplied
 #'
@@ -647,10 +672,10 @@ get_dim_pars.trueParamsGenDirichletMult <- function(true_params, name_par) {
 get_dim_pars.trueParams <- function(true_params, name_par) {
   nn <- get_dimension(true_params, dim = "NN")
   if(name_par == "beta_z_lin") {
-    tmp_pars <- get_params(true_params, name_par = "beta_z_lin")
+    tmp_pars <- get_params(true_params, name_par = "beta_z_lin", drop = TRUE)
     dim_par  <- sapply(tmp_pars, length)
   } else if (name_par == "beta_u_lin") {
-    tmp_pars <- get_params(true_params, name_par = "beta_u_lin")
+    tmp_pars <- get_params(true_params, name_par = "beta_u_lin", drop = TRUE)
     if (nn == 1) {
       dim_par <- sapply(tmp_pars, length)
     } else {
