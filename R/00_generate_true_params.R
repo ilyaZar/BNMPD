@@ -83,7 +83,7 @@ new_trueParams <- function(distribution,
   num_z_regs   <- settings_pars$num_z_regs
   num_u_regs   <- settings_pars$num_u_regs
   order_p_vec  <- settings_pars$order_p_vec
-  options$intercepts <- adjust_ic_to_dist(options$intercepts, distribution)
+
   check_args <- (missing(SIMUL_U_BETA) || missing(SIMUL_Z_BETA) ||
                    missing(SIMUL_PHI) || missing(seed_taken) ||
                    missing(model_dim))
