@@ -140,11 +140,3 @@ get_class_true_param <- function(distribution) {
   name_subclass <- class_dist_names[[distribution]]
   c(paste0("trueParams", name_subclass), "trueParams")
 }
-adjust_ic_to_dist <- function(intercepts, distribution) {
-  if (distribution == "gen_dirichlet_mult") {
-    intercepts[[1]] <- head(intercepts[[1]], n = -1)
-    intercepts[[2]] <- head(intercepts[[2]], n = -1)
-    return(intercepts)
-  }
-  return(intercepts)
-}

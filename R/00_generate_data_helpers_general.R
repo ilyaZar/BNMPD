@@ -83,3 +83,64 @@ get_DD2 <- function(distribution, DD) {
          "gen_dirichlet" = DD * 2,
          "gen_dirichlet_mult" = DD * 2 - 2)
 }
+#' Checks if intercept settings list matches implied length for distribution
+#'
+#' Some distributions have multivariate component dimension \code{DD} but
+#' require \code{2 x DD} or \code{2 x DD - 2} number of logical values for
+#' intercept settings.
+#'
+#' @inheritParams new_trueParams
+#' @inheritParams new_phi
+#' @param intercepts a named list of two elements that are logical vectors of
+#'   length \code{DD} (for standard distributions; each element can be a list
+#'   of two, "A", "B", each with a \code{DD}-dimensional logical vector; i.e.
+#'   with full number of logical values equal of \code{2 x DD} or \code{2 x DD -
+#'   2} for special distributions, see "Details") indicating whether the
+#'   corresponding component (either at z or u) should have an intercept.
+#'
+#' @return intercept list as passed via \code{intercept} or, if not admissible
+#'    an error is thrown
+#' @export
+check_ic_to_dist <- function(distribution, intercepts, DD) {
+  stopifnot(`Arg. 'intercepts' must be a list` = is.list(intercepts))
+  stopifnot(`Arg. 'intercepts' must be a named list: 'at_z', 'at_u'` =
+              all(names(intercepts) %in% c("at_z", "at_u")))
+  check_distribution(distribution)
+  if (distribution == "gen_dirichlet_mult") {
+    check_at_z <- intercepts[["at_z"]]
+    check_at_u <- intercepts[["at_u"]]
+    stopifnot(`Names of 'at_z' component of argument 'intercept' must be
+               c("A", "B")` = all(names(check_at_z) %in% c("A", "B")))
+    stopifnot(`Names of 'at_u' component of argument 'intercept' must be
+               c("A", "B")` = all(names(check_at_u) %in% c("A", "B")))
+
+    stopifnot(`Length of component 'A' must be 'DD'` = length(check_at_z[["A"]]) == DD)
+    stopifnot(`Length of component 'B' must be 'DD'` = length(check_at_z[["B"]]) == DD)
+
+    stopifnot(`Length of component 'A' must be 'DD'` = length(check_at_z[["A"]]) == DD)
+    stopifnot(`Length of component 'B' must be 'DD'` = length(check_at_z[["B"]]) == DD)
+    return(intercepts)
+  } else if (distribution == "gen_dirichlet") {
+    check_at_z <- intercepts[["at_z"]]
+    check_at_u <- intercepts[["at_u"]]
+    stopifnot(`Names of 'at_z' component of argument 'intercept' must be
+               c("A", "B")` = all(names(check_at_z) %in% c("A", "B")))
+    stopifnot(`Names of 'at_u' component of argument 'intercept' must be
+               c("A", "B")` = all(names(check_at_u) %in% c("A", "B")))
+
+    stopifnot(`Length of component 'A' must be 'DD'` = length(check_at_z[["A"]]) == DD - 1)
+    stopifnot(`Length of component 'B' must be 'DD'` = length(check_at_z[["B"]]) == DD - 1)
+
+    stopifnot(`Length of component 'A' must be 'DD'` = length(check_at_z[["A"]]) == DD - 1)
+    stopifnot(`Length of component 'B' must be 'DD'` = length(check_at_z[["B"]]) == DD - 1)
+
+    return(intercepts)
+  } else {
+    check_at_z <- intercepts[["at_z"]]
+    check_at_u <- intercepts[["at_u"]]
+
+    stopifnot(`Length of component 'a_z' must be 'DD'` = length(check_at_z) == DD)
+    stopifnot(`Length of component 'u_z' must be 'DD'` = length(check_at_u) == DD)
+    return(intercepts)
+  }
+}
