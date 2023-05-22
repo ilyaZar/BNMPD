@@ -4,10 +4,13 @@ msg_dim_ready <- function(dim, print_name) {
 }
 #' Checks if class or argument is admissible w.r.t. distribution name
 #'
-#' Used internally only.
+#' Used internally only; match testing is performed for allowed class names like
+#' "Dirichlet", "GenDirichletMult" etc. OR based on argument values for the
+#' '\code{distribution} argument. The latter pops up in many internal functions
+#' and admissible values are e.g. "dirichlet", "gen_dirichlet" etc. See function
+#' definition for more details.
 #'
-#' @param x  object to check for underlying class name match or argument
-#'    for which to check if it is a member of admissible distributions
+#' @param x  object to check for underlying class name or argument value
 #' @param type character: either 'arg' then argument check is performed or
 #'    'class', then class-check is performed
 #'
@@ -21,11 +24,13 @@ check_distribution <- function(x, type = "arg") {
                     "dirichlet_mult", "gen_dirichlet_mult",
                     "normal")
     stopifnot(`Distrubtion arg. not supported` = x %in% dist_names)
-  } else {
+  } else if (type == "class") {
     dist_names_class <- c("Dirichlet", "GenDirichlet", "Multinomial",
                           "DirichletMult", "GenDirichletMult",
                           "NORMAL")
     stopifnot(`Object class not supported` = x %in% dist_names_class)
+  } else {
+    stop("Unknown value for arg. 'type': use either 'arg' or 'class'.")
   }
   return(invisible(x))
 }
