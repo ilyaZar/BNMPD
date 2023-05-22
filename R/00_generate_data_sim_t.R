@@ -55,39 +55,24 @@ generate_data_t <- function(nn, TT, DD,
                             options_include,
                             modelling_reg_types) {
 
+  dist_type <- get_distribution(true_params)
+  DD2 <- get_DD2(dist_type, DD)
+  DD  <- get_DD(dist_type, DD)
+  sim_type <- ifelse(DD == DD2, "sim_type_01", "sim_type_02")
+
   x <- matrix(nrow = TT, ncol = DD, 0)
   z <- generate_z_u_cnt_t(modelling_reg_types, "z-linear-regressors")
   u <- generate_z_u_cnt_t(modelling_reg_types, "u-linear-regressors")
 
-  for (d in 1:DD) {
-    # reg_var_within = 0.00025, # reg_var_within = 2.0025,
-    # reg_var_among = 0.1
-    opt_taken <- list(x_level = x_levels[d],
-                      reg_var_within = 0.35,
-                      reg_var_among = 0.125)
-
-    res <- generate_x_z_u(
-      TT = TT,
-      phi_x = get_params(true_params, n = nn, name_par = "phi", DD = d),
-      sig_sq_x = get_params(true_params, n = nn, name_par = "sig_sq", DD = d),
-      bet_z = get_params(true_params, n = nn, name_par = "beta_z_lin", DD = d),
-      bet_u = get_params(true_params, n = nn, name_par = "beta_u_lin", DD = d),
-      modelling_reg_types = modelling_reg_types,
-      options_reg_simul = opt_taken,
-      intercept_z = options_include$intercept$at_z[d],
-      intercept_u = options_include$intercept$at_u[d],
-      policy_dummy   = options_include$policy[d],
-      zero_pattern   = options_include$include_zeros[d])
-
-    x[, d] <- res$x
-    if (modelling_reg_types[["z-linear-regressors"]]) {
-      z[[d]] <- res$z
-    }
-    if (modelling_reg_types[["u-linear-regressors"]]) {
-      u[[d]] <- res$u
-    }
+  if (sim_type == "sim_type_01") {
+    out_data <- sim_type_run_default(true_params, options_include, x_levels,
+                                     modelling_reg_types, nn, TT, DD,
+                                     x, z, u)
+  } else if (sim_type == "sim_type_02") {
+    out_data <- sim_type_run_special(true_params, options_include, x_levels,
+                                     modelling_reg_types, nn, TT, DD,
+                                     x, z, u)
   }
-  out_data <- get_out_data_t(x, z, u)
   return(out_data)
 }
 generate_z_u_cnt_t <- function(reg_types, type) {
@@ -106,4 +91,71 @@ get_out_data_t <- function(x_states, z_regs, u_regs) {
   tmp_out$u_regs <- u_regs
   tmp_out$x_states <- x_states
   return(tmp_out)
+}
+sim_type_run_default <- function(true_params, options_include, x_levels,
+                                 modelling_reg_types, nn, TT, DD,
+                                 x, z, u, DD_TYPE = NULL) {
+  if (!is.null(DD_TYPE)) {
+    x_levels_tmp  <- x_levels[grepl(DD_TYPE, names(x_levels))]
+    intercept_z  <- options_include$intercept$at_z[[DD_TYPE]]
+    intercept_u  <- options_include$intercept$at_u[[DD_TYPE]]
+    policy_dummy <- options_include$policy[[DD_TYPE]]
+    zero_pattern <- options_include$include_zeros
+  } else {
+    x_levels_tmp <- x_levels
+    intercept_z  <- options_include$intercept$at_z
+    intercept_u  <- options_include$intercept$at_u
+    policy_dummy <- options_include$policy
+    zero_pattern <- options_include$include_zeros
+  }
+  for (d in 1:DD) {
+    # reg_var_within = 0.00025, # reg_var_within = 2.0025,
+    # reg_var_among = 0.1
+    opt_taken <- list(x_level = x_levels_tmp[d],
+                      reg_var_within = 0.35,
+                      reg_var_among = 0.125)
+    res <- generate_x_z_u(
+      TT = TT,
+      phi_x = get_params(true_params, n = nn, name_par = "phi", DD = d, DD_TYPE = DD_TYPE),
+      sig_sq_x = get_params(true_params, n = nn, name_par = "sig_sq", DD = d, DD_TYPE = DD_TYPE),
+      bet_z = get_params(true_params, n = nn, name_par = "beta_z_lin", DD = d, DD_TYPE = DD_TYPE),
+      bet_u = get_params(true_params, n = nn, name_par = "beta_u_lin", DD = d, DD_TYPE = DD_TYPE),
+      modelling_reg_types = modelling_reg_types,
+      options_reg_simul = opt_taken,
+      intercept_z = intercept_z[d],
+      intercept_u = intercept_u[d],
+      policy_dummy   = policy_dummy[d],
+      zero_pattern   = zero_pattern[d])
+
+    x[, d] <- res$x
+    if (modelling_reg_types[["z-linear-regressors"]]) {
+      z[[d]] <- res$z
+    }
+    if (modelling_reg_types[["u-linear-regressors"]]) {
+      u[[d]] <- res$u
+    }
+  }
+  out_data <- get_out_data_t(x, z, u)
+  return(out_data)
+}
+sim_type_run_special <- function(true_params, options_include, x_levels,
+                                 modelling_reg_types, nn, TT, DD,
+                                 x, z, u) {
+  out_data_part_A <- sim_type_run_default(true_params, options_include,
+                                          x_levels,
+                                          modelling_reg_types, nn, TT, DD,
+                                          x, z, u, DD_TYPE = "A")
+  out_data_part_B <- sim_type_run_default(true_params, options_include,
+                                          x_levels,
+                                          modelling_reg_types, nn, TT, DD,
+                                          x, z, u, DD_TYPE = "B")
+  out_data <- joint_data_t_special(part_A = out_data_part_A,
+                                   part_B = out_data_part_B)
+  return(out_data)
+}
+joint_data_t_special <- function(part_A, part_B) {
+  out_x <- cbind(part_A$x_states, part_B$x_states)
+  out_z <- cbind(part_A$z_regs, part_B$z_regs)
+  out_u <- cbind(part_A$u_regs, part_B$u_regs)
+  return(list(x_states = out_x, z_regs = out_z, u_regs = out_u))
 }
