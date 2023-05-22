@@ -7,7 +7,7 @@
 #' data sets based on the true parameter values.
 #'
 #' @param distribution specifies the distribution: "dirichlet", "gen_dirichlet",
-#'    multinomial", "dirichlet_mult", "gen_dirichlet_mult", or "normal" (the
+#'    "multinomial", "dirichlet_mult", "gen_dirichlet_mult", or "normal" (the
 #'    latter generates the latent states without link-function and measurement/
 #'    response transformations, which is useful e.g. when testing the pure Gibbs
 #'    sampler)
