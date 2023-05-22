@@ -103,6 +103,7 @@ new_trueParams <- function(distribution,
   } else {
     model_dim <- c(NN = NN, TT = TT, DD = DD)
   }
+  check_ic_to_dist(distribution, options$intercepts, DD)
   # 2. Set up parameter values: ---------------------------------------------
   true_sig_sq <- new_sig_sq_x(
     distribution,

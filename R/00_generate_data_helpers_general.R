@@ -105,13 +105,14 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
   stopifnot(`Arg. 'intercepts' must be a list` = is.list(intercepts))
   stopifnot(`Arg. 'intercepts' must be a named list: 'at_z', 'at_u'` =
               all(names(intercepts) %in% c("at_z", "at_u")))
-  stopifnot(`Element 'at_z' of 'intercepts' list must be named` =
-              !is.null(names(intercepts[["at_z"]])))
-  stopifnot(`Element 'at_u' of 'intercepts' list must be named` =
-               !is.null(names(intercepts[["at_u"]])))
 
   check_distribution(distribution)
   if (distribution %in%  c("gen_dirichlet", "gen_dirichlet_mult")) {
+    stopifnot(`Element 'at_z' of 'intercepts' list must be named` =
+              !is.null(names(intercepts[["at_z"]])))
+    stopifnot(`Element 'at_u' of 'intercepts' list must be named` =
+               !is.null(names(intercepts[["at_u"]])))
+
     check_at_z <- intercepts[["at_z"]]
     check_at_u <- intercepts[["at_u"]]
 
