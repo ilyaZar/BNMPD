@@ -111,7 +111,7 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
                !is.null(names(intercepts[["at_u"]])))
 
   check_distribution(distribution)
-  if (distribution == "gen_dirichlet") {
+  if (distribution %in%  c("gen_dirichlet", "gen_dirichlet_mult")) {
     check_at_z <- intercepts[["at_z"]]
     check_at_u <- intercepts[["at_u"]]
 
@@ -120,33 +120,21 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
     stopifnot(`Names of 'at_u' component of argument 'intercept' must be
                c("A", "B")` = all(names(check_at_u) %in% c("A", "B")))
 
-    stopifnot(`Length of component 'A' at 'at_z' must be 'DD'` = length(check_at_z[["A"]]) == DD)
-    stopifnot(`Length of component 'B' at 'at_z' must be 'DD'` = length(check_at_z[["B"]]) == DD)
+    stopifnot(`Length of component 'A' at 'at_z' must be 'DD'` =
+                length(check_at_z[["A"]]) == get_DD(distribution, DD))
+    stopifnot(`Length of component 'B' at 'at_z' must be 'DD'` =
+                length(check_at_z[["B"]]) == get_DD(distribution, DD))
 
-    stopifnot(`Length of component 'A' at 'at_u' must be 'DD'` = length(check_at_u[["A"]]) == DD)
-    stopifnot(`Length of component 'B' at 'at_u' must be 'DD'` = length(check_at_u[["B"]]) == DD)
-    return(intercepts)
-  } else if (distribution == "gen_dirichlet_mult") {
-    check_at_z <- intercepts[["at_z"]]
-    check_at_u <- intercepts[["at_u"]]
-    stopifnot(`Names of 'at_z' component of argument 'intercept' must be
-               c("A", "B")` = all(names(check_at_z) %in% c("A", "B")))
-    stopifnot(`Names of 'at_u' component of argument 'intercept' must be
-               c("A", "B")` = all(names(check_at_u) %in% c("A", "B")))
-
-    stopifnot(`Length of component 'A' must be 'DD'` = length(check_at_z[["A"]]) == DD - 1)
-    stopifnot(`Length of component 'B' must be 'DD'` = length(check_at_z[["B"]]) == DD - 1)
-
-    stopifnot(`Length of component 'A' must be 'DD'` = length(check_at_z[["A"]]) == DD - 1)
-    stopifnot(`Length of component 'B' must be 'DD'` = length(check_at_z[["B"]]) == DD - 1)
-
-    return(intercepts)
+    stopifnot(`Length of component 'A' at 'at_u' must be 'DD'` =
+                length(check_at_u[["A"]]) == get_DD(distribution, DD))
+    stopifnot(`Length of component 'B' at 'at_u' must be 'DD'` =
+                length(check_at_u[["B"]]) == get_DD(distribution, DD))
   } else {
     check_at_z <- intercepts[["at_z"]]
     check_at_u <- intercepts[["at_u"]]
 
     stopifnot(`Length of component 'a_z' must be 'DD'` = length(check_at_z) == DD)
     stopifnot(`Length of component 'u_z' must be 'DD'` = length(check_at_u) == DD)
-    return(intercepts)
   }
+  return(intercepts)
 }
