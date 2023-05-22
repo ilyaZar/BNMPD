@@ -88,7 +88,7 @@ new_dataSim <- function(true_params,
 
   check_ic_to_dist(distribution, options_include$intercept, DD)
 
-  opt1      <- set_opt_include(options_include, NN, DD)
+  opt1      <- set_opt_include(distribution, options_include, NN, DD)
   x_levels  <- set_x_levels(true_params, x_levels, X_LOG_SCALE)
   reg_types <- get_modelling_reg_types(true_params)
 
@@ -98,7 +98,6 @@ new_dataSim <- function(true_params,
 
   seed_no <- set_seed_no(true_params, seed_no); set.seed(seed_no);
 
-  # browser()
   for (n in 1:NN) {
     out_data_tmp <- generate_data_t(nn = n, TT = TT, DD = DD,
                                     true_params = true_params,
@@ -106,14 +105,15 @@ new_dataSim <- function(true_params,
                                     options_include = opt1[[n]],
                                     modelling_reg_types = reg_types)
     if (reg_types[["z-linear-regressors"]]) {
-      z[, , n] <- out_data_tmp$z
+      z[, , n] <- out_data_tmp$z_regs
     }
     if (reg_types[["u-linear-regressors"]]) {
-      u[, , n] <- out_data_tmp$u
+      u[, , n] <- out_data_tmp$u_regs
     }
     x[, , n] <- out_data_tmp$x_states
   }
-  y <- generate_measurements(x, X_LOG_SCALE, distribution)
+  y <- generate_measurements(x, X_LOG_SCALE, distribution,
+                             get_dimension(true_params, dim = "all"))
   if (any(sapply(options_plot, isTRUE))) {
     for (n in 1:NN) {
       plot_data_per_n(DD,
