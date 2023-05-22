@@ -133,23 +133,34 @@ get_DD2 <- function(distribution, DD) {
 #' @return a list of the same structure as includes but with elements adjusted
 #'   for model dimension; \code{includes} is a list of \code{NULL} elements,
 #'   then the default specifications are returned (see the function body)
-set_opt_include <- function(includes, NN, DD) {
+set_opt_include <- function(distribution, includes, NN, DD) {
   intercept <- includes$intercept
   policy    <- includes$policy
   zeros     <- includes$zeros
+
+  dist_special <- distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")
   if (is.null(intercept)) {
-    intercept <- list()
-
-    intercept$at_z <- rep(FALSE, times = DD)
-    intercept$at_u <- rep(FALSE, times = DD)
-
-    names(intercept$at_z) <- paste0("d_", seq_len(DD))
-    names(intercept$at_u) <- paste0("d_", seq_len(DD))
+    stop("Can not set intercept to 'NULL'; we do not provide defaults yet.")
+    # intercept <- list()
+    #
+    # intercept$at_z <- rep(FALSE, times = DD)
+    # intercept$at_u <- rep(FALSE, times = DD)
+    #
+    # names(intercept$at_z) <- paste0("d_", seq_len(DD))
+    # names(intercept$at_u) <- paste0("d_", seq_len(DD))
   }
   if (is.null(policy)) {
-    policy <- matrix(FALSE, nrow = DD, ncol = NN)
-    rownames(policy) <- paste0("d_", seq_len(DD))
-    colnames(policy) <- paste0("n_", seq_len(NN))
+    if (dist_special) {
+      tmp_DD <- get_DD(distribution, DD)
+      policy <- matrix(FALSE, nrow = tmp_DD, ncol = NN)
+      rownames(policy) <- paste0("d_", seq_len(tmp_DD))
+      colnames(policy) <- paste0("n_", seq_len(NN))
+      policy <- list(A = policy, B = policy)
+    } else {
+      policy <- matrix(FALSE, nrow = DD, ncol = NN)
+      rownames(policy) <- paste0("d_", seq_len(DD))
+      colnames(policy) <- paste0("n_", seq_len(NN))
+    }
     # policy_modelling    <- cbind(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
@@ -164,8 +175,14 @@ set_opt_include <- function(includes, NN, DD) {
   }
   out_opt <- vector("list", length = NN)
   for (n in 1:NN) {
+    policy_tmp <- if (dist_special) {
+      list(A = policy[["A"]][, n, drop = TRUE],
+           B = policy[["B"]][, n, drop = TRUE])
+    } else {
+      policy[, n, drop = TRUE]
+    }
     out_opt[[n]] <- list(intercept = intercept,
-                         policy = policy[, n, drop = TRUE],
+                         policy = policy_tmp,
                          zeros = zeros)
   }
   names(out_opt) <- paste0("N_", 1:NN)
