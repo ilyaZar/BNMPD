@@ -1,11 +1,84 @@
-generate_measurements <- function(x_states, X_LOG_SCALE, distribution) {
-  tmp_dim <- dim(x_states)
-  TT <- tmp_dim[1]
-  DD <- tmp_dim[2]
-  NN <- tmp_dim[3]
+#' Generating observations/measurements
+#'
+#' @param x_states state values as generated via [generate_data_t()] for each
+#'    \code{n=1,...,NN}
+#' @inheritParams new_dataSim
+#' @param dims dimensions as returned from [get_dimension()] with \code{dim}
+#'    argument set to 'all' applied to an object of \code{class} 'trueParams'
+#'
+#' @return an array of size \code{TT x DD x NN} with measurements from the
+#'    distribution passed via the \code{distribution} argument
+#' @export
+generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims) {
+  check_distribution(distribution)
+  check_x_states(x_states, X_LOG_SCALE)
+  ### EXTREMELY AKWARD BUT MUST BE DONE SINCE OTHERWISE RANDOM NUMBERS ARE NOT
+  ### THE SAME: INTEGER VS DOUBLE AND NAMING OF DIM CHANGE THE EXACT RESULTS!
+  dimns <- names(dims)
+  dims  <- as.integer(dims)
+  names(dims) <- dimns
+  TT  <- dims["TT"]
+  NN  <- dims["NN"]
+  DD  <- dims["DD"]
 
+  out_data <- generate_data_container(distribution, NN = NN, TT = TT, DD = DD)
+  if (X_LOG_SCALE) {x <- exp(x_states)} else {x <- x_states};
+
+  out_data <- switch(distribution,
+    "normal" = generate_normal_obs(x, out_data),
+    "dirichlet" = generate_dirichlet_obs(x, NN, TT, out_data),
+    "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data)
+  )
+  return(out_data)
+}
+generate_normal_obs <- function(x, out_data) {
+  out_data[["part1"]] <- x
+  return(out_data) # early return with y=x for a Gaussian linear model spec.
+}
+generate_multinomial_obs <- function(x, NN, TT, DD, out_data) {
+  for (n in 1:NN) {
+    num_counts <- sample(x = 80000:120000, size = TT)
+    tmp_x <- x[, , n]
+    tmp_x / rowSums(tmp_x)
+    yraw <- my_rmultinomial(probs = tmp_x, num_counts = num_counts)
+    out_data[["part1"]][, , n] <- yraw
+    out_data[["part2"]][, n]   <- num_counts
+  }
+  return(out_data)
+}
+generate_dirichlet_obs <- function(x, NN, TT, out_data) {
+  for (n in 1:NN) {
+    # yraw <- 0
+    # while (any(yraw <= 0.01)) {
+    yraw <- my_rdirichlet(alpha = x[, , n])
+    if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
+      msg <- paste0("Bad Dirichelet simulation: ",
+                    "fractions don't sum to 1 and/or zero componenent!")
+      stop(msg)
+    }
+    print(paste0("Simulatiing Dirichlet data at cross section: ", n))
+    out_data[["part1"]][, , n] <- yraw
+  }
+  return(out_data)
+}
+generate_dirichlet_mult_obs <- function(x, NN, TT, out_data) {
+  for (n in 1:NN) {
+    num_counts <- sample(x = 80000:120000, size = TT)
+    yraw <- my_rmult_diri(alpha =  x[, , n],
+                          num_counts = num_counts)
+    out_data[["part1"]][, , n] <- yraw
+    out_data[["part2"]][, n]   <- num_counts
+  }
+  return(out_data)
+}
+generate_data_container <- function(distribution, NN = NN, TT = TT, DD = DD) {
   data_part1 <- generate_y_x_containter(distribution, NN = NN, TT = TT, DD = DD)
-
+  data_part2 <- generate_data_part2_containter(distribution, TT, NN)
+  out_data <-  list(part1 = data_part1, part2 = data_part2)
+  attr(out_data, which = "distribution") <- distribution
+  return(out_data)
+}
+generate_data_part2_containter <- function(distribution, TT, NN) {
   if (distribution == "multinomial" || distribution == "dirichlet_mult") {
     data_part2 <- matrix(0, nrow = TT, ncol = NN)
     rownames(data_part2) <- paste0("t_", seq_len(TT))
@@ -13,52 +86,22 @@ generate_measurements <- function(x_states, X_LOG_SCALE, distribution) {
   } else {
     data_part2 <- NULL
   }
-  out_data <-  list(part1 = data_part1,
-                    part2 = data_part2)
-  attr(out_data, which = "distribution") <- distribution
-
+  return(data_part2)
+}
+check_x_states <- function(x_states, X_LOG_SCALE) {
   if (sum(any(x_states <= 0)) & X_LOG_SCALE == FALSE) {
     stop("some state process (x1_t, x2_t, ... or xD_t) not positive!")
   }
-  if (X_LOG_SCALE) {
-    x <- exp(x_states)
-  }
-  if (distribution == "normal") {
-    out_data[["part1"]] <- x_states
-    return(out_data) # early return with y=x for a Gaussian linear model spec.
-  }
-  for (n in 1:NN) {
-    if (distribution == "dirichlet") {
-      # yraw <- 0
-      # while (any(yraw <= 0.01)) {
-      yraw <- my_rdirichlet(alpha = x[, , n])
-      if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
-        msg <- paste0("Bad Dirichelet simulation: ",
-                      "fractions don't sum to 1 and/or zero componenent!")
-        stop(msg)
-      }
-      print(paste0("Simulatiing Dirichlet data at cross section: ",
-                   n))
-      out_data[["part1"]][, , n] <- yraw
-      # }
+  if (isTRUE(X_LOG_SCALE)) {
+    if (sum(any(exp(x_states) == Inf))) {
+      stop("some state process (x1_t, x2_t, ... or xD_t) are infinite!")
     }
-    if (distribution == "multinomial") {
-      num_counts <- sample(x = 80000:120000, size = TT)
-      tmp_x <- x[, , n]
-      tmp_x / rowSums(tmp_x)
-      yraw <- my_rmultinomial(probs = tmp_x, num_counts = num_counts)
-      out_data[["part1"]][, , n] <- yraw
-      out_data[["part2"]][, n]   <- num_counts
-    }
-    if (distribution == "dirichlet_mult") {
-      num_counts <- sample(x = 80000:120000, size = TT)
-      yraw <- my_rmult_diri(alpha =  x[, , n],
-                            num_counts = num_counts)
-      out_data[["part1"]][, , n] <- yraw
-      out_data[["part2"]][, n]   <- num_counts
+  } else {
+    if (sum(any(abs(x_states) == Inf))) {
+      stop("some state process (x1_t, x2_t, ... or xD_t) are infinite!")
     }
   }
-  return(out_data)
+  return(invisible(x_states))
 }
 #' Generates random samples from Dirichlet distribution
 #'
