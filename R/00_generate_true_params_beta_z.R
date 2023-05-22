@@ -70,8 +70,16 @@ get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
                     tmp_neg_pos_small,
                     tmp_pos_neg_small)
   list_vals <- rep(list_vals, length.out = DD)
-  list_vals <- scale_up_intercept(list_vals, 100, intercepts)
-  if (2 * DD == DD2) list_vals <- list(A = list_vals, B = list_vals)
+  if (2 * DD == DD2) {
+    browser()
+    list_vals <- list(A = list_vals, B = list_vals)
+    list_vals[["A"]] <- scale_up_intercept(list_vals[["A"]],
+                                           100, intercepts[["A"]])
+    list_vals[["B"]] <- scale_up_intercept(list_vals[["B"]],
+                                           100, intercepts[["B"]])
+  } else if (DD == DD2) {
+    list_vals <- scale_up_intercept(list_vals, 100, intercepts)
+  }
   return(list_vals)
 }
 scale_up_intercept <- function(vals_list,  scl_factor, intercept_ids) {
