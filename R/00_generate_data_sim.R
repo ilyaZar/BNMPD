@@ -116,7 +116,7 @@ new_dataSim <- function(true_params,
                              get_dimension(true_params, dim = "all"))
   if (any(sapply(options_plot, isTRUE))) {
     for (n in 1:NN) {
-      plot_data_per_n(DD,
+      plot_data_per_n(distribution, DD,
                       yraw = y[["part1"]][, , n, drop = FALSE],
                       x = x[, , n, drop = FALSE],
                       x_levels = x_levels[, n],

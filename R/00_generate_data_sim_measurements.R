@@ -103,7 +103,6 @@ generate_gen_dirichlet_mult_obs <- function(x, NN, TT, DD, out_data) {
                                             beta = xb[, , n],
                                             DD,
                                             num_counts)
-    browser()
     print(paste0("Simulatiing Gen. Dirichlet Mult. data at cross section: ", n))
     out_data[["part1"]][, , n] <- yraw
     out_data[["part2"]][, n]   <- num_counts
