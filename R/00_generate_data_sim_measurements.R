@@ -120,7 +120,9 @@ generate_data_container <- function(distribution, NN = NN, TT = TT, DD = DD) {
   return(out_data)
 }
 generate_data_part2_containter <- function(distribution, TT, NN) {
-  if (distribution == "multinomial" || distribution == "dirichlet_mult") {
+  if (distribution %in% c("multinomial",
+                          "dirichlet_mult",
+                          "gen_dirichlet_mult")) {
     data_part2 <- matrix(0, nrow = TT, ncol = NN)
     rownames(data_part2) <- paste0("t_", seq_len(TT))
     colnames(data_part2) <- paste0("n_", seq_len(NN))
