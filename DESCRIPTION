@@ -21,6 +21,7 @@ Depends:
 Imports: 
     stats,
     MASS,
+    MGLM,
     utils,
     Rcpp,
     R6,
