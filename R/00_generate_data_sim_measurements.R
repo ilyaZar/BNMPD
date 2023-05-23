@@ -27,8 +27,9 @@ generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims) {
   out_data <- switch(distribution,
     "normal" = generate_normal_obs(x, out_data),
     "dirichlet" = generate_dirichlet_obs(x, NN, TT, out_data),
+    "gen_dirichlet" = generate_gen_dirichlet_obs(x, NN, TT, DD, out_data),
     "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data),
-    "gen_dirichlet_mult" = generate_gen_dirichlet_obs(x, NN, TT, DD, out_data)
+    "gen_dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data)
   )
   return(out_data)
 }
