@@ -72,7 +72,7 @@ get_DD <- function(distribution, DD) {
   switch(distribution,
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
-         "gen_dirichlet" = DD,
+         "gen_dirichlet" = DD - 1,
          "gen_dirichlet_mult" = DD - 1)
 }
 get_DD2 <- function(distribution, DD) {
@@ -80,7 +80,7 @@ get_DD2 <- function(distribution, DD) {
   switch(distribution,
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
-         "gen_dirichlet" = DD * 2,
+         "gen_dirichlet" = DD * 2 - 2,
          "gen_dirichlet_mult" = DD * 2 - 2)
 }
 #' Checks if intercept settings list matches implied length for distribution
