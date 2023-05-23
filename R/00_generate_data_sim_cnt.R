@@ -15,7 +15,7 @@ get_output_data_simul <- function(cnt_data,
                                   reg_types) {
   dist <- attr(cnt_data, which = "distribution")
   out_data <- vector("list", 3)
-  if (dist %in% c("dirichlet", "normal")) {
+  if (dist %in% c("dirichlet", "normal", "gen_dirichlet")) {
     out_data[[1]] <- list(yraw = cnt_data[["part1"]])
   } else if (dist %in% c("multinomial",
                          "dirichlet_mult",
