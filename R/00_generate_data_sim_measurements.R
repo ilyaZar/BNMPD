@@ -24,12 +24,13 @@ generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims) {
   out_data <- generate_data_container(distribution, NN = NN, TT = TT, DD = DD)
   if (X_LOG_SCALE) {x <- exp(x_states)} else {x <- x_states};
 
-  out_data <- switch(distribution,
+  out_data <- switch(
+    distribution,
     "normal" = generate_normal_obs(x, out_data),
     "dirichlet" = generate_dirichlet_obs(x, NN, TT, out_data),
     "gen_dirichlet" = generate_gen_dirichlet_obs(x, NN, TT, DD, out_data),
     "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data),
-    "gen_dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data)
+    "gen_dirichlet_mult" = generate_gen_dirichlet_mult_obs(x, NN, TT, DD, out_data)
   )
   return(out_data)
 }
@@ -43,6 +44,7 @@ generate_multinomial_obs <- function(x, NN, TT, DD, out_data) {
     tmp_x <- x[, , n]
     tmp_x / rowSums(tmp_x)
     yraw <- my_rmultinomial(probs = tmp_x, num_counts = num_counts)
+    print(paste0("Simulatiing Multinomial data at cross section: ", n))
     out_data[["part1"]][, , n] <- yraw
     out_data[["part2"]][, n]   <- num_counts
   }
@@ -75,7 +77,7 @@ generate_gen_dirichlet_obs <- function(x, NN, TT, DD, out_data) {
                     "fractions don't sum to 1 and/or zero componenent!")
       stop(msg)
     }
-    print(paste0("Simulatiing generalized Dirichlet data at cross section: ", n))
+    print(paste0("Simulatiing Gen. Dirichlet data at cross section: ", n))
     out_data[["part1"]][, , n] <- yraw
   }
   return(out_data)
@@ -86,7 +88,24 @@ generate_dirichlet_mult_obs <- function(x, NN, TT, out_data) {
     yraw <- my_rmult_diri(alpha =  x[, , n],
                           num_counts = num_counts)
     out_data[["part1"]][, , n] <- yraw
-    out_data[["part2"]][, n]   <- num_counts
+    out_data[["part2"]][, , n] <- num_counts
+  }
+  return(out_data)
+}
+generate_gen_dirichlet_mult_obs <- function(x, NN, TT, DD, out_data) {
+  for (n in 1:NN) {
+    num_counts <- sample(x = 80000:120000, size = TT)
+
+    xa <- x[, grepl("A", colnames(x)), ]
+    xb <- x[, grepl("B", colnames(x)), ]
+
+    yraw <- my_r_generalized_dirichlet_mult(alpha = xa[, , n],
+                                            beta = xb[, , n],
+                                            DD,
+                                            num_counts)
+    print(paste0("Simulatiing Gen. Dirichlet Mult. data at cross section: ", n))
+    out_data[["part1"]][, , n] <- yraw
+    out_data[["part2"]][, , n] <- num_counts
   }
   return(out_data)
 }
@@ -234,6 +253,20 @@ my_rmult_diri <- function(alpha, num_counts) {
     x[t, ] <- stats::rmultinom(n = 1, size = num_counts[t], prob = probs[t, ])
   }
   x
+}
+my_r_generalized_dirichlet_mult <- function(alpha, beta, DD, num_counts) {
+  if(!(nrow(alpha) == nrow(beta)) || !(ncol(alpha) == ncol(beta))) {
+    stop("Arguments 'alpha' and 'beta' must have the same number of rows/cols!")
+  }
+  TT <- nrow(alpha)
+  x  <- matrix(0, nrow = TT, ncol = DD)
+  for (t in 1:TT) {
+    x[t, ] <- MGLM::rgdirmn(n = 1, size = num_counts[t],
+                            alpha[t, ], beta[t, ])
+  }
+  stopifnot(`Total number must equal rowsums in gen. dir. mult simulation` =
+              rowSums(x) == num_counts)
+  return(x)
 }
 # Testing my dirichelet vs dirichelt from gtools-package
 # a1 <- 1:5
