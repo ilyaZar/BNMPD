@@ -27,7 +27,8 @@ generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims) {
   out_data <- switch(distribution,
     "normal" = generate_normal_obs(x, out_data),
     "dirichlet" = generate_dirichlet_obs(x, NN, TT, out_data),
-    "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data)
+    "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data),
+    "gen_dirichlet_mult" = generate_gen_dirichlet_obs(x, NN, TT, DD, out_data)
   )
   return(out_data)
 }
@@ -61,6 +62,23 @@ generate_dirichlet_obs <- function(x, NN, TT, out_data) {
   }
   return(out_data)
 }
+generate_gen_dirichlet_obs <- function(x, NN, TT, DD, out_data) {
+  for (n in 1:NN) {
+    xa <- x[, grepl("A", colnames(x)), ]
+    xb <- x[, grepl("B", colnames(x)), ]
+    yraw <- my_r_generalized_dirichlet(alpha = xa[, , n],
+                                       beta = xb[, , n],
+                                       DD)
+    if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
+      msg <- paste0("Bad Dirichelet simulation: ",
+                    "fractions don't sum to 1 and/or zero componenent!")
+      stop(msg)
+    }
+    print(paste0("Simulatiing generalized Dirichlet data at cross section: ", n))
+    out_data[["part1"]][, , n] <- yraw
+  }
+  return(out_data)
+}
 generate_dirichlet_mult_obs <- function(x, NN, TT, out_data) {
   for (n in 1:NN) {
     num_counts <- sample(x = 80000:120000, size = TT)
@@ -72,7 +90,9 @@ generate_dirichlet_mult_obs <- function(x, NN, TT, out_data) {
   return(out_data)
 }
 generate_data_container <- function(distribution, NN = NN, TT = TT, DD = DD) {
-  data_part1 <- generate_y_x_containter(distribution, NN = NN, TT = TT, DD = DD)
+  data_part1 <- generate_y_x_containter(distribution,
+                                        NN = NN, TT = TT, DD = DD,
+                                        type = "y")
   data_part2 <- generate_data_part2_containter(distribution, TT, NN)
   out_data <-  list(part1 = data_part1, part2 = data_part2)
   attr(out_data, which = "distribution") <- distribution
@@ -116,7 +136,6 @@ check_x_states <- function(x_states, X_LOG_SCALE) {
 #'
 #' @return a \code{n x D} dimensional matrix of Dirichlet draws
 my_rdirichlet <- function(alpha) {
-
   n <- nrow(alpha)
   l <- ncol(alpha)
   n <- n*l
@@ -137,22 +156,29 @@ my_rdirichlet <- function(alpha) {
 #'   distribution
 #' @param beta a matrix of beta parameters of a generalized Dirichlet
 #'   distribution
+#' @param DD multivariate dimension of the space to sample
 #'
 #' @return a nxD dimensional matrix of generalized Dirichlet draws
-my_r_generalized_dirichlet <- function(alpha, beta) {
-  browser()
+my_r_generalized_dirichlet <- function(alpha, beta, DD) {
   if(!(nrow(alpha) == nrow(beta)) || !(ncol(alpha) == ncol(beta))) {
     stop("Arguments 'alpha' and 'beta' must have the same number of rows/cols!")
   }
-  n <- nrow(alpha)
-  l <- ncol(alpha)
-  n <- n*l
-  x <- matrix(stats::rbeta(n = n,
-                           shape1 = t(alpha),
-                           shape2 = t(beta)), ncol = l, byrow = TRUE)
-  x_cumsums <- t(apply(x, MARGIN = 1, cumsum))
-  x[, 2:l] <- x[, 2:l]*(1-x_cumsums[1:l])
-  stop("THIS FUNCTION STILL NEEDS TESTING!")
+  TT <- nrow(alpha)
+  x  <- matrix(0, nrow = TT, ncol = DD)
+  for (t in 1:TT) {
+    tmp_sum <- 0
+    x[t, 1] <- stats::rbeta(n = 1,
+                            shape1 = alpha[t, 1],
+                            shape2 = beta[t, 1])
+    tmp_sum <- x[t, 1]
+    for (k in 2:(DD - 1)) {
+      x[t, k] <- stats::rbeta(n = 1,
+                              shape1 = alpha[t, k],
+                              shape2 = beta[t, k]) * (1 - tmp_sum)
+      tmp_sum <- tmp_sum + x[t, k]
+    }
+  }
+  x[, DD] <- 1 - rowSums(x[, 1:(DD - 1)])
   return(x)
 }
 #' Generates random samples from a mulinomial distribution
