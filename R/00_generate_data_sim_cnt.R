@@ -17,7 +17,9 @@ get_output_data_simul <- function(cnt_data,
   out_data <- vector("list", 3)
   if (dist %in% c("dirichlet", "normal")) {
     out_data[[1]] <- list(yraw = cnt_data[["part1"]])
-  } else if (dist == "multinomial" || dist == "dirichlet_mult") {
+  } else if (dist %in% c("multinomial",
+                         "dirichlet_mult",
+                         "gen_dirichlet_mult")) {
     out_data[[1]] <- list(yraw = cnt_data[["part1"]],
                           num_counts = cnt_data[["part2"]])
   } else {
