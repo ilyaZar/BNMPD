@@ -399,13 +399,27 @@ set_params <- function(true_params, name_par, values, DD_TYPE = NULL) {
   }
   if (name_par == "vcm_u_lin") {
     stopifnot(`Arg. "values" must be length = 2 for vcm_u_lin` = length(values) == 2)
-    true_params2[["vcm_u_lin"]][] <- lapply(true_params2[["vcm_u_lin"]],
-                                            function(x) {
-                                              y <- x;
-                                              y[] <- values[1];
-                                              diag(y) <- values[2];
-                                              y}
-    )
+    dist_tmp <- get_distribution(true_params)
+    if (dist_tmp %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+      for (type in c("A", "B")) {
+        true_params2[["vcm_u_lin"]][[type]][] <- lapply(true_params2[["vcm_u_lin"]][[type]],
+                                                       function(x) {
+                                                         y <- x;
+                                                         y[] <- values[1];
+                                                         diag(y) <- values[2];
+                                                         y}
+        )
+      }
+    } else {
+      true_params2[["vcm_u_lin"]][] <- lapply(true_params2[["vcm_u_lin"]],
+                                              function(x) {
+                                                y <- x;
+                                                y[] <- values[1];
+                                                diag(y) <- values[2];
+                                                y}
+      )
+    }
+
   }
   return(true_params2)
 }
