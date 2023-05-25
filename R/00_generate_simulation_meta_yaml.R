@@ -49,9 +49,9 @@ check_args_to_generate_yaml_json <- function(dim = NULL, regspc = NULL) {
   if (!is.null(dim)) {
     check_dim <- !(is.null(names(dim)))
     stopifnot(`Arg. 'dim' is unnamed; use NN, TT, DD as names.` = check_dim)
-    check_dim <- all(names(dim) %in% c("NN", "TT", "DD"))
+    check_dim <- all(names(dim) %in% c("NN", "TT", "DD", "DD2"))
     stopifnot(`Unknown names of arg. 'dimensions' ... ` = check_dim)
-    check_dim <- length(dim) == 3
+    check_dim <- length(dim) %in% c(3, 4)
     stopifnot(`Arg. 'dimensions' not of length 3.` = check_dim)
   }
   if (!is.null(regspc)) {
