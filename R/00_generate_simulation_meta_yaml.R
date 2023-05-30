@@ -13,6 +13,7 @@ generate_yaml_model_defintion <- function(true_params,
   dim_model    <- get_dimension(true_params, "all") %>%
     set_dim_model_writeable()
   par_settings <- get_par_settings(true_params)
+  distribution <- get_distribution(true_params)
   check_args_to_generate_yaml_json(dim_model, par_settings)
 
   pth_to_yaml <- file.path(pth_project, "model",
@@ -30,10 +31,7 @@ generate_yaml_model_defintion <- function(true_params,
                    cross_section_used = cross_section_to_list(dim_model),
                    time_series_used = time_series_to_list(dim_model))
 
-  for (d in seq_len(dim_model[["DD"]])) {
-    name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
-    out_list[[name_list_elem]] <- DD_to_list(par_settings, d)
-  }
+  out_list <- multi_DD_to_list(out_list, distribution, dim_model, par_settings)
 
   yaml::write_yaml(out_list, file = pth_to_yaml)
 
@@ -110,6 +108,18 @@ time_series_to_list <- function(dim) {
        ts_name_lab = "time_series",
        ts_var_val =  tmp_ts_var_val,
        ts_var_lab =  tmp_ts_var_lab)
+}
+multi_DD_to_list <- function(list_yaml, dist, dim_model, par_settings) {
+  if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+    DD2 <- dim_model["DD2"]
+    stop("not yetimplemented")
+  } else {
+    for (d in seq_len(dim_model[["DD"]])) {
+      name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
+      list_yaml[[name_list_elem]] <- DD_to_list(par_settings, d)
+    }
+  }
+  return(list_yaml)
 }
 DD_to_list <- function(regspc, d_tmp) {
   out_list <- list(y_var = paste0("Y", d_tmp),
