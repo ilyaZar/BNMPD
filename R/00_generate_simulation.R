@@ -49,6 +49,7 @@ generate_simulation_study <- function(data_simulation,
   set_project_dir_structure(pth_to_project)
 
   generate_yaml_model_defintion(trueParams, pth_to_project, model_type)
+  # browser()
   generate_setup_init_json(usedParams, pth_to_project)
 
   save_simulated_data(pth_to_project, base_name, dataSim,
