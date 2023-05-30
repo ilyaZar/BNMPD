@@ -110,31 +110,54 @@ time_series_to_list <- function(dim) {
        ts_var_lab =  tmp_ts_var_lab)
 }
 multi_DD_to_list <- function(list_yaml, dist, dim_model, par_settings) {
+  DD <- dim_model[["DD"]]
   if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
-    DD2 <- dim_model["DD2"]
-    stop("not yetimplemented")
+    list_yaml <- get_DD_to_list(list_yaml, par_settings, DD, "special")
   } else {
-    for (d in seq_len(dim_model[["DD"]])) {
-      name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
-      list_yaml[[name_list_elem]] <- DD_to_list(par_settings, d)
-    }
+    list_yaml <- get_DD_to_list(list_yaml, par_settings, DD, "default")
   }
   return(list_yaml)
 }
-DD_to_list <- function(regspc, d_tmp) {
-  out_list <- list(y_var = paste0("Y", d_tmp),
-                   y_lab = paste0("Y", d_tmp))
+get_DD_to_list <- function(list_out, par_settings, DD, type) {
+  for (d in seq_len(DD)) {
+    dd_elem             <- get_name_list_elem(d)
+    if (type == "special") {
+      list_out[[dd_elem]] <- get_y_to_sublist(d)
+      if (d == DD) break;
+      ad <- ifelse(d < 10, paste0(0, d), d)
+      eA <- paste0("DA_", ad)
+      eB <- paste0("DB_", ad)
+      list_out[[dd_elem]][[eA]] <- DD_to_list(par_settings, "A", d)
+      list_out[[dd_elem]][[eB]] <- DD_to_list(par_settings, "B", d)
+    } else if (type == "default") {
+      list_out[[dd_elem]] <- c(get_y_to_sublist(d),
+                               DD_to_list(par_settings, "", d))
+    } else {
+      stop("Unknown value for argument 'type'; either special or default")
+    }
+  }
+  return(list_out)
+}
+DD_to_list <- function(regspc, type, d_tmp) {
+  out_list <- list()
   if (regspc$SIMUL_Z_BETA) {
-    out_list$z_reg <-  get_reg_to_sublist(regspc$num_z_regs, d_tmp, "Z")
+    out_list$z_reg <-  get_reg_to_sublist(regspc$num_z_regs, type, d_tmp, "Z")
   }
   if (regspc$SIMUL_U_BETA) {
-    out_list$u_reg <-  get_reg_to_sublist(regspc$num_u_regs, d_tmp, "U")
+    out_list$u_reg <-  get_reg_to_sublist(regspc$num_u_regs, type, d_tmp, "U")
   }
   return(out_list)
 }
-get_reg_to_sublist <- function(num, d_tmp, name) {
-  list(lab = paste0(name, "_", seq_len(num), "_", d_tmp),
-       var = paste0(name, "_", seq_len(num), "_", d_tmp))
+get_name_list_elem <- function(d_tmp) {
+  paste0("D", ifelse(d_tmp < 10, paste0(0, d_tmp), d_tmp))
+}
+get_reg_to_sublist <- function(num, type, d_tmp, name) {
+  list(lab = paste0(name, "_", seq_len(num), "_", type, d_tmp),
+       var = paste0(name, "_", seq_len(num), "_", type, d_tmp))
+}
+get_y_to_sublist <- function(d_tmp) {
+   list(y_var = paste0("Y", d_tmp),
+        y_lab = paste0("Y", d_tmp))
 }
 update_settings_project_yaml <- function(pth_top_level,
                                          proj_name,
