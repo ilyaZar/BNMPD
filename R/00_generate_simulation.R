@@ -51,7 +51,8 @@ generate_simulation_study <- function(data_simulation,
   generate_yaml_model_defintion(trueParams, pth_to_project, model_type)
   generate_setup_init_json(usedParams, pth_to_project)
 
-  save_simulated_data(pth_to_project, base_name, dataSim, trueParams, zeroParams)
+  save_simulated_data(pth_to_project, base_name, dataSim,
+                      trueParams, zeroParams)
 
   copy_meta_files(pth_to_project, project_name)
   update_settings_project_yaml(pth_to_project, project_name)
@@ -103,12 +104,12 @@ set_base_name <- function(data_sim) {
   seed_nos_01  <- get_seed(true_params)
   seed_nos_02  <- get_seed(data_sim)
 
-  SIMUL_PHI    <-par_settings[["SIMUL_PHI"]]
-  SIMUL_Z_BETA <-par_settings[["SIMUL_Z_BETA"]]
-  SIMUL_U_BETA <-par_settings[["SIMUL_U_BETA"]]
-  num_z_regs   <-par_settings[["num_z_regs"]]
-  num_u_regs   <-par_settings[["num_u_regs"]]
-  order_p      <-par_settings[["order_p"]]
+  SIMUL_PHI    <- par_settings[["SIMUL_PHI"]]
+  SIMUL_Z_BETA <- par_settings[["SIMUL_Z_BETA"]]
+  SIMUL_U_BETA <- par_settings[["SIMUL_U_BETA"]]
+  num_z_regs   <- par_settings[["num_z_regs"]]
+  num_u_regs   <- par_settings[["num_u_regs"]]
+  order_p      <- par_settings[["order_p"]]
 
   tmp_fn <- paste0("NN", dim_model[1], "_TT", dim_model[2], "_DD", dim_model[3])
 
@@ -142,7 +143,7 @@ dir_proj_top_level_update <- function(pth_top_lvl, overwrite) {
     stopifnot(`Project directory already exists!` = !dir.exists(pth_top_lvl))
   } else if (isTRUE(overwrite)) {
     if (dir.exists(pth_top_lvl)) {
-      unlink(pth_top_lvl, recursive=TRUE)
+      unlink(pth_top_lvl, recursive = TRUE)
       warning(paste0("Overwriting project structure in: ", pth_top_lvl))
     }
   }
@@ -217,8 +218,8 @@ save_simulated_data <- function(pth_project,
   DISTRIBUTION <- get_type_obs(data_sim)
   if (any(DISTRIBUTION %in% c("DIRICHLET", "GEN_DIRICHLET", "NORMAL"))) {
     dist_type <- "type1"
-  } else if(any(DISTRIBUTION %in% c("DIRICHLET_MULT", "GEN_DIRICHLET_MULT",
-                                    "MULTINOMIAL"))) {
+  } else if (any(DISTRIBUTION %in% c("DIRICHLET_MULT", "GEN_DIRICHLET_MULT",
+                                     "MULTINOMIAL"))) {
     dist_type <- "type2"
   }
 
@@ -251,7 +252,9 @@ save_simulated_data <- function(pth_project,
 
     id_col_y <- 1:(DD + 1) + offset_col
     if (SIMUL_Z_BETA) id_col_z <- (DD + 1) + 1:(num_regs_z) + offset_col
-    if (SIMUL_U_BETA) id_col_u <- (DD + 1) + num_regs_z + 1:(num_regs_u) + offset_col
+    if (SIMUL_U_BETA) {
+      id_col_u <- (DD + 1) + num_regs_z + 1:(num_regs_u) + offset_col
+    }
   }
   data_out <- matrix(0, nrow = TT * NN, ncol = ncol_out)
   data_out <- as.data.frame(data_out)
@@ -262,11 +265,11 @@ save_simulated_data <- function(pth_project,
   cs_ts    <- tibble::tibble(CS = vals_cs, TS = vals_ts)
   data_out <- dplyr::bind_cols(cs_ts, data_out)
 
-  for(n in 1:NN) {
-    id_rows <- TT*(n - 1) + (1:TT)
+  for (n in 1:NN) {
+    id_rows <- TT * (n - 1) + (1:TT)
     if (dist_type == "type1") {
       tmp_data <- data_sim$data$yraw[, , n]
-    } else if(dist_type == "type2") {
+    } else if (dist_type == "type2") {
       tmp_data <- cbind(get_data(data_sim, type = "raw")[, , n],
                         get_data(data_sim, type = "count")[, n])
     }

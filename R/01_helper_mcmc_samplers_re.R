@@ -13,7 +13,7 @@ sample_all_params.re <- function(pe, mm) {
     Utmp <- pe$U[, id_uet_tmp, , drop = FALSE]
 
     pe$sig_sq_x[d, mm] <- sample_sig_sq_x_r(bet_u = pe$bet_u[id_betu_tmp,
-                                                              mm - 1,,
+                                                              mm - 1, ,
                                                               drop = FALSE],
                                              X = Xtmp,
                                              regs_u = Utmp,
@@ -65,15 +65,15 @@ sample_sig_sq_x_r <- function(bet_u,
                               iter_range_NN,
                               TT) {
   err_sig_sq_x_all <- 0
-  for(n in iter_range_NN) {
+  for (n in iter_range_NN) {
     tmp_regs <- matrix(regs_u[, , n], nrow = TT)
     tmp_bets <- matrix(bet_u[, , n], nrow = ncol(tmp_regs))
     err_sig_sq_x <- X[, n, drop = FALSE] - (tmp_regs %*%  tmp_bets)
     err_sig_sq_x_all <- err_sig_sq_x_all + sum(err_sig_sq_x ^ 2)
   }
-  out <- 1/stats::rgamma(n = 1,
-                         prior_ig[1],
-                         prior_ig[2] + err_sig_sq_x_all/2)
+  out <- 1 / stats::rgamma(n = 1,
+                           prior_ig[1],
+                           prior_ig[2] + err_sig_sq_x_all / 2)
   return(out)
 }
 #' Sampling random effects under autoregressive only latent processes.
@@ -102,7 +102,7 @@ sample_bet_u_r <- function(sig_sq_x,
     x_n   <- X[, n, drop = FALSE]
     Umat <- matrix(U[, , n, drop = FALSE], nrow = TT)
 
-    Omega_bet_u <- solveme(crossprod(Umat, Umat)/sig_sq_x + vcm_bet_u_inv)
+    Omega_bet_u <- solveme(crossprod(Umat, Umat) / sig_sq_x + vcm_bet_u_inv)
     mu_bet_u    <- Omega_bet_u %*% (crossprod(Umat, x_n) / sig_sq_x)
 
     out_mat[, nn] <- rnorm_fast_n1(mu = mu_bet_u,
