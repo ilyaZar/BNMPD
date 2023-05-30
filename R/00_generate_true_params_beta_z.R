@@ -46,6 +46,7 @@ new_bet_z <- function(SIMUL_Z_BETA,
 get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
   DD2 <- get_DD2(distribution, DD)
   DD  <- get_DD(distribution, DD)
+  check_dist <- check_dist_quick(DD, DD2)
   num_reg_len <- length(num)
   tmp1 <- c(0.325, -0.44)  # tmp values large, first component negative
   tmp2 <- c(0.327, -0.435) # tmp values large, first component positive
@@ -70,8 +71,7 @@ get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
                     tmp_neg_pos_small,
                     tmp_pos_neg_small)
   list_vals <- rep(list_vals, length.out = DD)
-  if (2 * DD == DD2) {
-    browser()
+  if (check_dist_quick(DD, DD2)) {
     list_vals <- list(A = list_vals, B = list_vals)
     list_vals[["A"]] <- scale_up_intercept(list_vals[["A"]],
                                            100, intercepts[["A"]])

@@ -90,7 +90,7 @@ generate_y_x_containter <- function(distribution, NN, TT, DD, type = "x") {
   } else if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     if (type == "x") {
       DD2_tmp   <- get_DD2(distribution, DD)
-      DD1_tmp   <- get_DD(distribution, DD)
+      DD1_tmp   <- DD2_tmp / 2
       out_cnt   <- array(0, c(TT = TT, DD2 = DD2_tmp, NN = NN))
       tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD1_tmp)
       tmp_names[[2]] <- c(paste0("A_", tmp_names[[2]]),
@@ -147,7 +147,7 @@ get_dim_names_cnt_z_u <- function(true_params, cnt_name, dim_bet, TT, NN, DD) {
     tmp_names <- paste0(paste0(cnt_name, unlist(sapply(dim_bet, seq_len))),
                         "_d", rep(1:DD, unlist(dim_bet)))
   } else if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
-    DD1_tmp <- get_DD(dist, DD)
+    DD1_tmp <- get_DD2(dist, DD) / 2
 
     dim_bet_A_part <- as.vector(unlist(sapply(head(dim_bet, DD1_tmp),
                                               seq_len, simplify = TRUE)))

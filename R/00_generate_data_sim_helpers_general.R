@@ -91,9 +91,9 @@ set_name_target_vals <- function(out, DD, DD2, NN) {
   if (DD == DD2) {
     rownames(out) <- paste0("D", seq_len(DD))
     colnames(out) <- paste0("N", seq_len(NN))
-  } else if (2 * DD == DD2) {
-    rownames(out) <- c(paste0("A_D", seq_len(DD)),
-                       paste0("B_D", seq_len(DD)))
+  } else if (check_dist_quick(DD, DD2)) {
+    rownames(out) <- c(paste0("A_D", seq_len(DD2 / 2)),
+                       paste0("B_D", seq_len(DD2 / 2)))
     colnames(out) <- paste0("N", seq_len(NN))
   } else {
     stop("Something went wrong. DD and DD2 dims do not match properly.")
@@ -107,7 +107,7 @@ get_DD <- function(distribution, DD) {
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
          "gen_dirichlet" = DD,
-         "gen_dirichlet_mult" = DD - 1,
+         "gen_dirichlet_mult" = DD,
          stop("Unknown distribution name"))
 }
 get_DD2 <- function(distribution, DD) {
@@ -120,6 +120,9 @@ get_DD2 <- function(distribution, DD) {
          "gen_dirichlet" = DD * 2 - 2,
          "gen_dirichlet_mult" = DD * 2 - 2,
          stop("Unknown distribution name"))
+}
+check_dist_quick <- function(DD, DD2) {
+  DD * 2 - 2 == DD2
 }
 #' Options list of included effects.
 #'

@@ -47,6 +47,13 @@ new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
 get_default_phi <- function(distribution, DD, NN, order_p_vec) {
   DD2 <- get_DD2(distribution, DD)
   DD  <- get_DD(distribution, DD)
+  check_dist <-check_dist_quick(DD, DD2)
+  if (check_dist) {
+    DD1 <- DD2 / 2
+  } else {
+    DD1 <- DD
+  }
+
   if (any(order_p_vec > 4)) stop("Need more default phis ...")
   # possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
   #                           0.25, 0.20, 0.35, 0.25,
@@ -59,15 +66,15 @@ get_default_phi <- function(distribution, DD, NN, order_p_vec) {
                             0.50, 0.50, 0.50, 0.50),
                           nrow = 4, ncol = 4)
   possible_phis <- rbind(possible_phis, possible_phis, possible_phis)
-  out_phi <- vector("list", DD)
-  for (d in seq_len(DD)) {
+  out_phi <- vector("list", DD1)
+  for (d in seq_len(DD1)) {
     tmp_phis <- possible_phis[d, 1:order_p_vec[d]]
     tmp_phis <- matrix(tmp_phis, nrow = order_p_vec[d], ncol = NN)
     rownames(tmp_phis) <- paste0("p", 1:order_p_vec[d])
     colnames(tmp_phis) <- paste0("NN", 1:NN)
     out_phi[[d]] <- tmp_phis
   }
-  if (2 * DD == DD2) out_phi <- list(A = out_phi, B = out_phi)
+  if (check_dist) out_phi <- list(A = out_phi, B = out_phi)
   return(out_phi)
 }
 #' Use manual user input values for true \code{phi} parameters
@@ -95,8 +102,10 @@ get_manual_phi <- function(distribution, phi, DD, NN, order_p_vec) {
     colnames(tmp_phis) <- paste0("NN", 1:NN)
     out_phi[[d]] <- tmp_phis
   }
-  if (2 * DD == DD2) out_phi <- list(A = out_phi[head(seq_len(DD2), n = DD)],
-                                     B = out_phi[tail(seq_len(DD2), n = DD)])
+  if (check_dist_quick(DD == DD2)) {
+    out_phi <- list(A = out_phi[head(seq_len(DD2), n = DD)],
+                    B = out_phi[tail(seq_len(DD2), n = DD)])
+  }
   return(out_phi)
 }
 get_order_p_vec <- function(distribution, order_p_vec, DD) {

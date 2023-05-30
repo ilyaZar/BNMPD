@@ -104,10 +104,12 @@ generate_bet_u <- function(distribution,
     }
     out <- list(true_bet_u = true_bet_u,
                 true_vcm_u = D0u)
-    if (2 * DD == DD2) out <- list(true_bet_u = list(A = true_bet_u,
-                                                     B = true_bet_u),
-                                   true_vcm_u = list(A = D0u,
-                                                     B = D0u))
+    if (check_dist_quick(DD, DD2)){
+      out <- list(true_bet_u = list(A = true_bet_u,
+                                    B = true_bet_u),
+                  true_vcm_u = list(A = D0u,
+                                    B = D0u))
+    }
   } else {
     warning("Not simulating RE with VCM distributed as ~IW().")
     stopifnot(is.numeric(num_re) && (length(num_re) == 1))
@@ -116,8 +118,10 @@ generate_bet_u <- function(distribution,
       true_bet_u[[d]] <- vals[1:num_re + num_re*(d - 1), , drop = FALSE]
     }
     out <- list(true_bet_u = true_bet_u)
-    if (2 * DD == DD2) out <- list(true_bet_u = list(A = true_bet_u,
-                                                     B = true_bet_u))
+    if (check_dist_quick(DD, DD2)){
+      out <- list(true_bet_u = list(A = true_bet_u,
+                                    B = true_bet_u))
+    }
   }
   return(out)
 }

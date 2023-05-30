@@ -42,9 +42,10 @@ get_default_sig_sq <- function(distribution, DD, NN, dwn_scl) { # nolint: object
     rownames(out_sig_sq) <- paste0("D", 1:DD)
     colnames(out_sig_sq) <- paste0("N", 1:NN)
   }
-  if(2 * DD == DD2) {
-    out_sig_sq <- array(sig_vals, c(DD, NN, 2))
-    dimnames(out_sig_sq) <- list(paste0("D", 1:DD),
+  if(check_dist_quick(DD, DD2)) {
+    DD1 <- DD2 / 2
+    out_sig_sq <- array(sig_vals, c(DD1, NN, 2))
+    dimnames(out_sig_sq) <- list(paste0("D", 1:DD1),
                                  paste0("N", 1:NN),
                                  c("A", "B"))
   }
