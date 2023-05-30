@@ -110,6 +110,16 @@ get_DD <- function(distribution, DD) {
          "gen_dirichlet_mult" = DD,
          stop("Unknown distribution name"))
 }
+get_DD1 <- function(distribution, DD) {
+  switch(distribution,
+         "multinomial" = DD,
+         "normal" = DD,
+         "dirichlet" = DD,
+         "dirichlet_mult" = DD,
+         "gen_dirichlet" = DD - 1,
+         "gen_dirichlet_mult" = DD - 1,
+         stop("Unknown distribution name"))
+}
 get_DD2 <- function(distribution, DD) {
   DD <- unname(DD)
   switch(distribution,
@@ -230,14 +240,14 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
                c("A", "B")` = all(names(check_at_u) %in% c("A", "B")))
 
     stopifnot(`Length of component 'A' at 'at_z' must be 'DD'` =
-                length(check_at_z[["A"]]) == get_DD(distribution, DD))
+                length(check_at_z[["A"]]) == get_DD1(distribution, DD))
     stopifnot(`Length of component 'B' at 'at_z' must be 'DD'` =
-                length(check_at_z[["B"]]) == get_DD(distribution, DD))
+                length(check_at_z[["B"]]) == get_DD1(distribution, DD))
 
     stopifnot(`Length of component 'A' at 'at_u' must be 'DD'` =
-                length(check_at_u[["A"]]) == get_DD(distribution, DD))
+                length(check_at_u[["A"]]) == get_DD1(distribution, DD))
     stopifnot(`Length of component 'B' at 'at_u' must be 'DD'` =
-                length(check_at_u[["B"]]) == get_DD(distribution, DD))
+                length(check_at_u[["B"]]) == get_DD1(distribution, DD))
   } else {
     check_at_z <- intercepts[["at_z"]]
     check_at_u <- intercepts[["at_u"]]
