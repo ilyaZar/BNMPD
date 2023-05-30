@@ -460,9 +460,10 @@ get_params.trueParamsGenDirichlet <- function(true_params,
   if (is.null(n)) n <- seq_len(dim(true_params$sig_sq)[2])
   if (missing(DD_TYPE)) stop("Must set arg. 'DD_TYPE' for gen. Dirichlet!" )
   reg_types <- get_modelling_reg_types(true_params)
-  pars_out  <- true_params %>%
-    get_special_pars(n, DD, reg_types, special_type = DD_TYPE) %>%
-    get_par_name(name_par)
+
+  pars_out <- get_special_pars(true_params, n, DD, reg_types, special_type = DD_TYPE)
+  pars_out <- get_par_name(pars_out, name_par)
+
   if (isTRUE(drop)) return(drop(pars_out))
   return(pars_out)
 }
@@ -527,19 +528,28 @@ get_special_pars <- function(true_params, n, DD = NULL,
                              reg_types, special_type) {
   stopifnot(`Wrong arg. to 'special_type':` = special_type %in% c("A", "B"))
 
-  pars_out <- list(sig_sq = true_params[["sig_sq"]][, n, special_type, drop = FALSE],
-                   phi = lapply(true_params[["phi"]][[special_type]],
-                                `[`, i = , j = n))
+  pars_out <- list(sig_sq = true_params[["sig_sq"]][, n, special_type, drop = FALSE])
+  pars_out$phi <- get_special_pars_phi(true_params, n, special_type)
+
   if (reg_types[["z-linear-regressors"]]) {
     pars_out$beta_z_lin <- true_params[["beta_z_lin"]][[special_type]]
   }
   if (reg_types[["u-linear-regressors"]]) {
-    pars_out$beta_u_lin <- lapply(true_params[["beta_u_lin"]][[special_type]],
-                                  `[`, i = , j = n)
+    pars_out$beta_u_lin <- get_special_pars_bet_u(true_params, n, special_type)
     pars_out$vcm_u_lin  <- true_params[["vcm_u_lin"]][[special_type]]
   }
   if (!is.null(DD)) pars_out <- get_dd_slice(pars_out, DD, special_type)
   return(pars_out)
+}
+get_special_pars_phi <- function(params, n, special_type) {
+  tmp_phi <- params[["phi"]][[special_type]]
+  if (!is.null(dim(tmp_phi[[1]]))) return(lapply(tmp_phi, `[`, i = , j = n))
+  return(tmp_phi)
+}
+get_special_pars_bet_u <- function(params, n, special_type) {
+  tmp_betu <- params[["beta_u_lin"]][[special_type]]
+  if (!is.null(dim(tmp_betu[[1]]))) return(lapply(tmp_betu, `[`, i = , j = n))
+  return(tmp_betu)
 }
 get_dd_slice <- function(tmp_pars_out, DD, special_type = NULL) {
   pars_out <- tmp_pars_out
