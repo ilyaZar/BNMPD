@@ -57,20 +57,20 @@ generate_data_t <- function(nn, TT, DD,
 
   dist_type <- get_distribution(true_params)
   DD2 <- get_DD2(dist_type, DD)
-  DD  <- get_DD(dist_type, DD)
-  sim_type <- ifelse(DD == DD2, "sim_type_01", "sim_type_02")
+  DD1 <- get_DD1(dist_type, DD)
+  sim_type <- ifelse(DD1 == DD2, "sim_type_01", "sim_type_02")
 
-  x <- matrix(nrow = TT, ncol = DD, 0)
+  x <- matrix(nrow = TT, ncol = DD1, 0)
   z <- generate_z_u_cnt_t(modelling_reg_types, "z-linear-regressors")
   u <- generate_z_u_cnt_t(modelling_reg_types, "u-linear-regressors")
 
   if (sim_type == "sim_type_01") {
     out_data <- sim_type_run_default(true_params, options_include, x_levels,
-                                     modelling_reg_types, nn, TT, DD,
+                                     modelling_reg_types, nn, TT, DD1,
                                      x, z, u)
   } else if (sim_type == "sim_type_02") {
     out_data <- sim_type_run_special(true_params, options_include, x_levels,
-                                     modelling_reg_types, nn, TT, DD,
+                                     modelling_reg_types, nn, TT, DD1,
                                      x, z, u)
   }
   return(out_data)
