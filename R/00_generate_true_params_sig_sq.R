@@ -30,20 +30,18 @@ check_sig_sq_user <- function(distribution, sig_sq, DD) {
 #' @return a vector of length \code{DD}
 get_default_sig_sq <- function(distribution, DD, NN, dwn_scl) { # nolint: object_name_linter.
   DD2 <- get_DD2(distribution, DD)
-  DD  <- get_DD(distribution, DD)
+  DD1 <- get_DD1(distribution, DD)
   str_scl <- 3.1 / dwn_scl
   add_scl <- 0.1 / dwn_scl
 
   # str_scl <- 2.1 / dwn_scl # nolint: commented_code_linter.
   # add_scl <- 1.1 / dwn_scl # nolint: object_name_linter.
-  sig_vals <- str_scl + add_scl * 0:(DD - 1)
-  if (DD == DD2) {
+  sig_vals <- str_scl + add_scl * 0:(DD1 - 1)
+  if (DD1 == DD2) {
     out_sig_sq <- matrix(sig_vals, nrow = DD, ncol = NN)
     rownames(out_sig_sq) <- paste0("D", 1:DD)
     colnames(out_sig_sq) <- paste0("N", 1:NN)
-  }
-  if(check_dist_quick(DD, DD2)) {
-    DD1 <- DD2 / 2
+  } else {
     out_sig_sq <- array(sig_vals, c(DD1, NN, 2))
     dimnames(out_sig_sq) <- list(paste0("D", 1:DD1),
                                  paste0("N", 1:NN),

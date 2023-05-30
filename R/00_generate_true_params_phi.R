@@ -46,13 +46,7 @@ new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi
 get_default_phi <- function(distribution, DD, NN, order_p_vec) {
   DD2 <- get_DD2(distribution, DD)
-  DD  <- get_DD(distribution, DD)
-  check_dist <-check_dist_quick(DD, DD2)
-  if (check_dist) {
-    DD1 <- DD2 / 2
-  } else {
-    DD1 <- DD
-  }
+  DD1 <- get_DD1(distribution, DD)
 
   if (any(order_p_vec > 4)) stop("Need more default phis ...")
   # possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
@@ -74,7 +68,7 @@ get_default_phi <- function(distribution, DD, NN, order_p_vec) {
     colnames(tmp_phis) <- paste0("NN", 1:NN)
     out_phi[[d]] <- tmp_phis
   }
-  if (check_dist) out_phi <- list(A = out_phi, B = out_phi)
+  if (DD1 != DD2) out_phi <- list(A = out_phi, B = out_phi)
   return(out_phi)
 }
 #' Use manual user input values for true \code{phi} parameters

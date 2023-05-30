@@ -20,7 +20,9 @@ new_bet_vcm_u <- function(SIMUL_U_BETA, distribution,
                           seed_taken,
                           intercepts) {
   if (SIMUL_U_BETA) {
-    num_reg_seq <- get_num_reg_seq(num_u_regs, get_DD(distribution, DD))
+    DD2 <- get_DD2(distribution, DD)
+    DD1 <- get_DD1(distribution, DD)
+    num_reg_seq <- get_num_reg_seq(num_u_regs, DD1)
     true_out_u  <- generate_bet_u(
       distribution,
       DD, NN, TRUE, num_reg_seq,
@@ -81,13 +83,15 @@ generate_bet_u <- function(distribution,
                            n0u = 50, # n0u <- num_re + 1
                            seed_no = 42) {
   DD2 <- get_DD2(distribution, DD)
-  DD  <- get_DD(distribution, DD)
-  true_bet_u <- vector("list", DD)
+  DD1 <- get_DD(distribution, DD)
+  check_dist <- check_dist_quick(DD1, DD2)
+  if (check_dist) DD1 <- DD2 / 2
+  true_bet_u <- vector("list", DD1)
   if (from_IW) {
-    stopifnot(is.numeric(num_re) && (length(num_re) == DD))
+    stopifnot(is.numeric(num_re) && (length(num_re) == DD1))
     if (!is.null(seed_no))  set.seed(seed_no)
-    D0u <- vector("list", DD)
-    for (d in 1:DD) {
+    D0u <- vector("list", DD1)
+    for (d in 1:DD1) {
       D0u[[d]] <- get_hyper_prior_vcm(vcm_u_scl, rel_var_to_cov, num_re[d])
       D0u[[d]] <- solveme((stats::rWishart(1, n0u, D0u[[d]]))[, , 1])
       colnames(D0u[[d]]) <- paste0("U", 1:num_re[d])
@@ -104,7 +108,7 @@ generate_bet_u <- function(distribution,
     }
     out <- list(true_bet_u = true_bet_u,
                 true_vcm_u = D0u)
-    if (check_dist_quick(DD, DD2)){
+    if (check_dist) {
       out <- list(true_bet_u = list(A = true_bet_u,
                                     B = true_bet_u),
                   true_vcm_u = list(A = D0u,
