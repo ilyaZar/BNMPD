@@ -16,20 +16,39 @@ generate_setup_init_json <- function(params_used, pth_project) {
                            "setup_inits.json")
 
   DD <- get_dimension(params_used, dim = "DD")
+  dist <- get_distribution(params_used)
+  if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+    DD1         <- get_DD1(dist, DD)
+    list_json   <- list()
 
+    list_json_A <- get_list_json_default(params_used, type = "A", DD1)
+    list_json_B <- get_list_json_default(params_used, type = "B", DD1)
+
+    for (d in 1:DD1) {
+      tmp_dd_name <- name_json_dd_elem(type = NULL, d)
+      list_json[[tmp_dd_name]] <- c(list_json_A[d], list_json_B[d])
+    }
+  } else {
+    list_json <- get_list_json_default(params_used, type = NULL, DD)
+  }
+  jsonlite::write_json(list_json, pth_to_json, digits = 8, pretty = TRUE)
+}
+get_list_json_default <- function(params_used, type, DD) {
   list_json <- list()
   for(d in seq_len(DD)) {
-    name_list_elem <- paste0("D", ifelse(d < 10, paste0(0, d), d))
-
-    par_avail <- get_par_avail(params_used, num_d = d)
-
+    name_list_elem <- name_json_dd_elem(type, d)
+    par_avail <- get_par_avail(params_used, type = type, num_d = d)
     par_to_list <- list()
     for (j in names(par_avail)) {
       par_to_list[[j]] <- par_to_list(par_avail[[j]], j, d)
     }
     list_json[[name_list_elem]] <- par_to_list
   }
-  jsonlite::write_json(list_json, pth_to_json, digits = 8, pretty = TRUE)
+  return(list_json)
+}
+name_json_dd_elem <- function(type, d) {
+  if (!is.null(type)) type <- paste0(type, "_")
+  paste0("D", type, ifelse(d < 10, paste0(0, d), d))
 }
 par_to_list <- function(par_val, par_name, num_d) {
   if (par_name == "phi") {
@@ -68,7 +87,7 @@ par_to_list <- function(par_val, par_name, num_d) {
        var =  var,
        val =  val)
 }
-get_par_avail <- function(params_used, num_d) {
+get_par_avail <- function(params_used, type = NULL, num_d) {
   check_pars <- c("phi", "beta_z_lin", "beta_u_lin", "sig_sq", "vcm_u_lin")
   id_avail  <- NULL
   par_avail <- vector("list", length(check_pars))
@@ -77,10 +96,12 @@ get_par_avail <- function(params_used, num_d) {
   for (par_tmp in check_pars) {
     if(check_avail_param(params_used, par_tmp)) {
       if (par_tmp %in% c("phi", "sig_sq")) {tmp_n <- 1} else {tmp_n <- NULL}
-      par_avail[[jj]] <- get_params(params_used,
+      par_avail[[jj]] <- get_params(
+                           params_used,
                            n = tmp_n,
+                           DD = num_d,
                            name_par = par_tmp,
-                           DD = num_d)
+                           DD_TYPE = type)
       id_avail <- c(id_avail, jj)
     }
     jj <- jj + 1
