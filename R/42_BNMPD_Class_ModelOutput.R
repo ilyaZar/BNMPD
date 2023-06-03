@@ -54,6 +54,7 @@ ModelOut <- R6::R6Class("ModelOut",
                                                                  x$meta_info$MM}
                             )
                             )
+                            cat(crayon::green("ALL JOINS SUCCESSFUL."))
                             return(jnd_out)
                           },
                           jn_sig_sq = function(sig_sq_x1, sig_sq_x2) {
