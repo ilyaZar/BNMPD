@@ -41,7 +41,7 @@ pgas <- function(pgas_model,
                  settings_seed = NULL,
                  sim_type = "pmcmc",
                  mod_type = "empirical",
-                 close_cluster = FALSE) {
+                 close_cluster = TRUE) {
   check_settings_input(settings_type, sim_type, mod_type)
   # Initialize environment for parallel execution
   envir_par <- generate_environment_parallel(environment(),
