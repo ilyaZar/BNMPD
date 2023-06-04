@@ -27,19 +27,20 @@ set_new_project_name <- function(project_name, base_name, model_type_obs) {
                          collapse = "_")
   return(project_name)
 }
-get_names_num_simulated <- function(true_params, DD, SIMUL_Z, SIMUL_U) {
+get_names_num_regs_sim <- function(true_params, SIMUL_Z, SIMUL_U) {
+  dist <- get_distribution(true_params)
   if (SIMUL_Z) {
-    tmp_list    <- get_name_num(type = "reg_z", true_params$beta_z_lin, DD)
-    num_regs_z  <- tmp_list$num
-    names_z_reg <- tmp_list$names
+    dim_regs_z  <- get_dim_pars(true_params, "beta_z_lin")
+    names_z_reg <- get_data_out_reg_names(dim_regs_z, "Z", dist)
+    num_regs_z  <- get_num_pars(true_params, "beta_z_lin")
   } else {
     num_regs_z  <- 0
     names_z_reg <- NULL
   }
   if (SIMUL_U) {
-    tmp_list    <- get_name_num(type = "reg_u", true_params$beta_u_lin, DD)
-    num_regs_u  <- tmp_list$num
-    names_u_reg <- tmp_list$names
+    dim_regs_u  <- get_dim_pars(true_params, "beta_u_lin")
+    names_u_reg <- get_data_out_reg_names(dim_regs_u, "U", dist)
+    num_regs_u  <- get_num_pars(true_params, "beta_u_lin")
   } else {
     num_regs_u  <- 0
     names_u_reg <- NULL
@@ -67,28 +68,30 @@ set_project_dir_structure <- function(pth_proj) {
                            "interpretation",
                            "summary")))
   lapply(pth_tmp, dir.create)
-  cat(crayon::green("Setting dirs for simulation project SUCCESSFULL!\n"))
+  cat(crayon::blue("Setting dirs for simulation project SUCCESSFULL!\n"))
   return(invisible(pth_proj))
 }
-get_name_num <- function(type, par, DD) {
-  if (type == "reg_z") {
-    seq_regs <- lapply(par, length)
-    tmp_name <- paste0(paste0(paste0("Z_", sapply(lapply(seq_regs,
-                                                         function(x) {
-                                                           seq_len(x)}),
-                                                  as.character)), "_"),
-                       rep(1:DD, unlist(seq_regs)))
+get_data_out_reg_names <- function(regs_num, regs_type, dist_type) {
+  special_type <- !(dist_type %in% c("normal", "multinomial",
+                                     "dirichlet", "dirichlet_mult"))
+  DD_to_use <- length(regs_num) # !!! WORKS FOR NORMAL AND SPECIAL TYPES !!!
+  prefix <- paste0(regs_type, "_")
+  tmp_01 <- paste0(sapply(lapply(regs_num,
+                                 function(x) {
+                                   seq_len(x)}),
+                          as.character), "_")
+
+  if (special_type) {
+    DD_to_use <- DD_to_use / 2 # !!! HALF OF REG_NUM IS THE CORRECT VALUE !!!
+    DDtimes_A <- head(unlist(regs_num), DD_to_use)
+    DDtimes_B <- tail(unlist(regs_num), DD_to_use)
+    tmp_02 <- c(rep(paste0("A_", 1:DD_to_use), DDtimes_A),
+                rep(paste0("B_", 1:DD_to_use), DDtimes_B))
+  } else {
+    tmp_02 <- rep(1:DD_to_use, unlist(regs_num))
   }
-  if (type == "reg_u") {
-    seq_regs <- lapply(par, nrow)
-    tmp_name <- paste0(paste0(paste0("U_", sapply(lapply(seq_regs,
-                                                         function(x) {
-                                                           seq_len(x)}),
-                                                  as.character)), "_"),
-                       rep(1:DD, unlist(seq_regs)))
-  }
-  list(num = sum(unlist(seq_regs)),
-       names = tmp_name)
+
+  return(paste0(paste0(prefix, tmp_01), tmp_02))
 }
 #' Subset simulated data from [new_dataSim()]
 #'

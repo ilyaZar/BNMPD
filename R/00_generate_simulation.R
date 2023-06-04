@@ -230,8 +230,7 @@ save_simulated_data <- function(pth_project,
   msg_dim_ready(TT, "TT")
   msg_dim_ready(DD, "DD")
 
-  tmp_list <- get_names_num_simulated(true_params, DD,
-                                      SIMUL_Z_BETA, SIMUL_U_BETA)
+  tmp_list <- get_names_num_regs_sim(true_params, SIMUL_Z_BETA, SIMUL_U_BETA)
   num_regs_z <- tmp_list$num$num_regs_z
   num_regs_u <- tmp_list$num$num_regs_u
   names_z_reg <- tmp_list$names$names_z_reg
