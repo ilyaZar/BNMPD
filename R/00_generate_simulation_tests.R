@@ -110,9 +110,9 @@ test_sim_dirs <- function(pth_1, pth_2) {
                  test_input_data = test_input_data,
                  test_rdata = test_rdata,
                  test_main = test_main)
-  if (!all(all_tests)) cat(paste0("Tests fails: ",
-                                  names(which(!all_tests)),
-                                  "\n"))
+  if (!all(all_tests)) cat(crayon::red(paste0("Tests fails: ",
+                                              names(which(!all_tests)),
+                                              "\n")))
   stopifnot(`Some tests failed!` = all(all_tests))
   return(all(all_tests))
 }
@@ -125,5 +125,5 @@ test_dirs_files <- function(pth_to_test) {
 
   check <- identical(test_BU, test_GN)
   stopifnot(`Dirs and filenames not equal in BACKUP and generated` = check)
-  cat(crayon::green("ALL DIR/FILE NAMES CHECKS PASSED !!! \n"))
+  cat(crayon::blue("ALL DIR/FILE NAMES CHECKS PASSED !!! \n"))
 }
