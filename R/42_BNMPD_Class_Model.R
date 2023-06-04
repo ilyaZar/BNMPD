@@ -857,6 +857,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                      paste0(out_name, ".RData"))
                               }
                               save(list = tmp_fn, file = tmp_pth)
+                              cat(crayon::magenta("OUTPUT SAVED.\n"))
 
                               private$update_project_meta()
                               private$update_ModelOut(type = "intermediate")
