@@ -115,6 +115,7 @@ Settings <- R6::R6Class("Settings",
                                               "mpi-core-rh7 or interactive?")
                                 stop(msg)
                               }
+                              msg <- paste("Partition identified as:", tmp_prt)
                             } else if (!check_chp && check_cgs) {
                               checkme <- Sys.info()[["sysname"]]
                                 if ("Linux" == checkme) {
@@ -123,9 +124,13 @@ Settings <- R6::R6Class("Settings",
                                 } else {
                                   stop("IDENTIFY OTHER PLATFORM NAMES!")
                                 }
+                              msg <- paste0("Partition identified as: local-",
+                                            checkme)
                             } else {
-                              msg <- "Unknown hostname: check system!"
+                              msg <- "Unknown platform: check system!"
                             }
+                            cat(paste0(crayon::yellow(msg), "\n",
+                                       crayon::blue("Continue ...\n")))
                             invisible(self)
                           },
                           read_settings_all = function(pth) {
