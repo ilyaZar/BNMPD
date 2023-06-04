@@ -30,7 +30,8 @@
 #'   type is run
 #' @param close_cluster logical; if \code{TRUE} then cluster is closed properly
 #'   after PGAS run via [cleanup_cluster()]; otherwise only the 'options' are
-#'   set back to previous defaults
+#'   set back to previous defaults; defaults to \code{FALSE} for easy use in
+#'   loops
 #'
 #' @return a list object of class "PMCMC" or "MCMC" depending on \code{run_type}
 #'   with components being: all MCMC parameter draws and all drawn state
@@ -41,7 +42,7 @@ pgas <- function(pgas_model,
                  settings_seed = NULL,
                  sim_type = "pmcmc",
                  mod_type = "empirical",
-                 close_cluster = TRUE) {
+                 close_cluster = FALSE) {
   check_settings_input(settings_type, sim_type, mod_type)
   # Initialize environment for parallel execution
   envir_par <- generate_environment_parallel(environment(),
