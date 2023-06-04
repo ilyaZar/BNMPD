@@ -96,7 +96,8 @@ new_dataSim <- function(true_params,
   z <- generate_z_u_container(true_params, NN, TT, DD, "z")
   u <- generate_z_u_container(true_params, NN, TT, DD, "u")
 
-  seed_no <- set_seed_no(true_params, seed_no); set.seed(seed_no);
+  seed_no <- set_seed_no(true_params, seed_no)
+  set.seed(seed_no)
 
   for (n in 1:NN) {
     out_data_tmp <- generate_data_t(nn = n, TT = TT, DD = DD,
