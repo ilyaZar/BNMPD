@@ -215,13 +215,8 @@ save_simulated_data <- function(pth_project,
   zero_states <- true_states
   zero_states[, , ] <- 0
 
-  DISTRIBUTION <- get_type_obs(data_sim)
-  if (any(DISTRIBUTION %in% c("DIRICHLET", "GEN_DIRICHLET", "NORMAL"))) {
-    dist_type <- "type1"
-  } else if (any(DISTRIBUTION %in% c("DIRICHLET_MULT", "GEN_DIRICHLET_MULT",
-                                     "MULTINOMIAL"))) {
-    dist_type <- "type2"
-  }
+
+  dist_type <- get_dist_type_simul(data_sim)
 
   NN <- get_dimension(data_sim, "NN") # Cross sectional length
   TT <- get_dimension(data_sim, "TT") # Time series length
@@ -236,38 +231,57 @@ save_simulated_data <- function(pth_project,
   names_z_reg <- tmp_list$names$names_z_reg
   names_u_reg <- tmp_list$names$names_u_reg
 
-  offset_col <- 2
+  data_out <- generate_data_sim_csv(data_sim, dist_type,
+                                    SIMUL_Z_BETA, SIMUL_U_BETA,
+                                    names_z_reg, names_u_reg,
+                                    num_regs_z, num_regs_u,
+                                    NN, TT, DD)
+  write.csv(data_out, file = pth_data, row.names = FALSE)
+  save(true_states, file = pth_true_states)
+  save(true_params, file = pth_true_params)
+  save(zero_states, file = pth_zero_states)
+  save(defl_params, file = pth_defl_params)
+}
+get_dist_type_simul <- function(data_sim) {
+  DISTRIBUTION <- get_type_obs(data_sim)
+  if (any(DISTRIBUTION %in% c("DIRICHLET", "GEN_DIRICHLET", "NORMAL"))) {
+    dist_type <- "type1"
+  } else if (any(DISTRIBUTION %in% c("DIRICHLET_MULT", "GEN_DIRICHLET_MULT",
+                                     "MULTINOMIAL"))) {
+    dist_type <- "type2"
+  }
+  return(dist_type)
+}
+generate_data_sim_csv <- function(data_sim, dist_type,
+                                  SIMUL_Z_BETA, SIMUL_U_BETA,
+                                  names_z_reg, names_u_reg,
+                                  num_regs_z, num_regs_u,
+                                  NN, TT, DD) {
   if (dist_type == "type1") {
     ncol_out <- DD + num_regs_z + num_regs_u
     data_out_colnames <- c(paste0("Y", 1:DD), names_z_reg, names_u_reg)
 
-    id_col_y <- 1:DD + offset_col
-    if (SIMUL_Z_BETA) id_col_z <- DD + 1:(num_regs_z) + offset_col
-    if (SIMUL_U_BETA) id_col_u <- DD + num_regs_z + 1:(num_regs_u) + offset_col
+    id_col_y <- 1:DD
+    if (SIMUL_Z_BETA) id_col_z <- DD + 1:(num_regs_z)
+    if (SIMUL_U_BETA) id_col_u <- DD + num_regs_z + 1:(num_regs_u)
   } else if (dist_type == "type2") {
     ncol_out <- DD + 1 + num_regs_z + num_regs_u
     data_out_colnames <- c(paste0("Y", 1:DD), "num_counts",
                            names_z_reg, names_u_reg)
 
-    id_col_y <- 1:(DD + 1) + offset_col
-    if (SIMUL_Z_BETA) id_col_z <- (DD + 1) + 1:(num_regs_z) + offset_col
+    id_col_y <- 1:(DD + 1)
+    if (SIMUL_Z_BETA) id_col_z <- (DD + 1) + 1:(num_regs_z)
     if (SIMUL_U_BETA) {
-      id_col_u <- (DD + 1) + num_regs_z + 1:(num_regs_u) + offset_col
+      id_col_u <- (DD + 1) + num_regs_z + 1:(num_regs_u)
     }
   }
   data_out <- matrix(0, nrow = TT * NN, ncol = ncol_out)
   data_out <- as.data.frame(data_out)
-
   names(data_out) <- data_out_colnames
-  vals_cs  <- as.character(paste0("cs_", rep(seq_len(NN), each = TT)))
-  vals_ts  <- rep(1:TT, times = NN)
-  cs_ts    <- tibble::tibble(CS = vals_cs, TS = vals_ts)
-  data_out <- dplyr::bind_cols(cs_ts, data_out)
-
   for (n in 1:NN) {
     id_rows <- TT * (n - 1) + (1:TT)
     if (dist_type == "type1") {
-      tmp_data <- data_sim$data$yraw[, , n]
+      tmp_data <- get_data(data_sim, type = "raw")[, , n]
     } else if (dist_type == "type2") {
       tmp_data <- cbind(get_data(data_sim, type = "raw")[, , n],
                         get_data(data_sim, type = "count")[, n])
@@ -280,11 +294,11 @@ save_simulated_data <- function(pth_project,
       data_out[id_rows, id_col_u] <- get_regs_u(data_sim)[, , n]
     }
   }
-  write.csv(data_out, file = pth_data, row.names = FALSE)
-  save(true_states, file = pth_true_states)
-  save(true_params, file = pth_true_params)
-  save(zero_states, file = pth_zero_states)
-  save(defl_params, file = pth_defl_params)
+  vals_cs  <- as.character(paste0("cs_", rep(seq_len(NN), each = TT)))
+  vals_ts  <- rep(1:TT, times = NN)
+  cs_ts    <- tibble::tibble(CS = vals_cs, TS = vals_ts)
+  data_out <- dplyr::bind_cols(cs_ts, data_out)
+  return(data_out)
 }
 copy_meta_files <- function(pth_to_project, project_name) {
   if (grepl("NORMAL", project_name)) {
