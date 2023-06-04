@@ -21,7 +21,8 @@ generate_simulation_study <- function(data_simulation,
                                       pth_top_level,
                                       project_name = list(prepend = NULL,
                                                           append = NULL),
-                                      overwrite = FALSE) {
+                                      overwrite = FALSE,
+                                      TESTING = FALSE) {
   check_class_data_sim(data_simulation)
   stopifnot(`INIT_AT must be eihter 'true' or 'default'.` =
               INIT_AT %in% c("trues", "default"))
@@ -54,7 +55,7 @@ generate_simulation_study <- function(data_simulation,
   save_simulated_data(pth_to_project, base_name, dataSim,
                       trueParams, zeroParams)
 
-  copy_meta_files(pth_to_project, project_name)
+  copy_meta_files(pth_to_project, project_name, TESTING)
   update_settings_project_yaml(pth_to_project, project_name)
   return(invisible(data_simulation))
 }
@@ -144,7 +145,8 @@ dir_proj_top_level_update <- function(pth_top_lvl, overwrite) {
   } else if (isTRUE(overwrite)) {
     if (dir.exists(pth_top_lvl)) {
       unlink(pth_top_lvl, recursive = TRUE)
-      warning(paste0("Overwriting project structure in: ", pth_top_lvl))
+      cat(crayon::magenta(paste0("Overwriting project structure in: ",
+                                 pth_top_lvl)))
     }
   }
   dir.create(pth_top_lvl, recursive = TRUE)
@@ -300,20 +302,27 @@ generate_data_sim_csv <- function(data_sim, dist_type,
   data_out <- dplyr::bind_cols(cs_ts, data_out)
   return(data_out)
 }
-copy_meta_files <- function(pth_to_project, project_name) {
+copy_meta_files <- function(pth_to_project, project_name, TESTING = FALSE) {
+  tmp_root <- "."
+  if (isTRUE(TESTING)) tmp_root <- "./../.."
   if (grepl("NORMAL", project_name)) {
-    file.copy(from = "./inst/meta-sources/main_run_T01.R",
+    file.copy(from = file.path(tmp_root,
+                               "inst/meta-sources/main_run_T01.R"),
               to = file.path(pth_to_project,
                              paste0("main_run_", project_name, ".R")))
   } else {
-    file.copy(from = "./inst/meta-sources/main_run_T02.R",
+    file.copy(from = file.path(tmp_root,
+                               "inst/meta-sources/main_run_T02.R"),
               to = file.path(pth_to_project,
                              paste0("main_run_", project_name, ".R")))
   }
-  file.copy(from = "./inst/meta-sources/setup_priors.json",
+  file.copy(from = file.path(tmp_root,
+                             "inst/meta-sources/setup_priors.json"),
             to = file.path(pth_to_project, "model", "model-definition"))
-  file.copy(from = "./inst/meta-sources/settings_plattform&sampler.yaml",
+  file.copy(from = file.path(tmp_root,
+                             "inst/meta-sources/settings_plattform&sampler.yaml"),
             to = file.path(pth_to_project, "model", "settings"))
-  file.copy(from = "./inst/meta-sources/settings_project.yaml",
+  file.copy(from = file.path(tmp_root,
+                             "inst/meta-sources/settings_project.yaml"),
             to = file.path(pth_to_project, "model", "settings"))
 }
