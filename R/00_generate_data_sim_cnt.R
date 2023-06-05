@@ -33,7 +33,7 @@ get_output_data_simul <- function(cnt_data,
 
   if (reg_types[["z-linear-regressors"]]) {
     out_data[[2]]$z <- cnt_z
-  } else{
+  } else {
     out_data[[2]]$z <- NULL
   }
   if (reg_types[["u-linear-regressors"]]) {
@@ -52,7 +52,8 @@ get_output_data_simul <- function(cnt_data,
             model_type_lat = attr_name_lat,
             class = class_name)
 }
-# test_name_class <- c("dirichlet", "gen_dirichlet", "multinomial", "dirichlet_mult", "gen_dirichlet_mult", "normal")
+# test_name_class <- c("dirichlet", "gen_dirichlet", "multinomial",
+# "dirichlet_mult", "gen_dirichlet_mult", "normal")
 set_class_name <- function(dist) {
   dist <- gsub("gen", "Gen", dist)
   dist <- gsub("dir", "Dir", dist)
@@ -83,7 +84,7 @@ generate_y_x_containter <- function(distribution, NN, TT, DD, type = "x") {
   check_distribution(distribution)
 
   if (distribution %in% (c("normal", "multinomial",
-                           "dirichlet","dirichlet_mult"))) {
+                           "dirichlet", "dirichlet_mult"))) {
     out_cnt <- array(0, c(TT = TT, DD = DD, NN = NN))
     tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
     dimnames(out_cnt) <- tmp_names
@@ -125,11 +126,17 @@ get_x_y_containter_names <- function(NN, TT, DD) {
 #'   regressor type is not needed.
 generate_z_u_container <- function(true_params, NN, TT, DD, cnt_name) {
   if (cnt_name == "z") {
-    if (isFALSE(check_avail_param(true_params, "beta_z_lin"))) {cnt <- NULL; return(cnt);}
+    if (isFALSE(check_avail_param(true_params, "beta_z_lin"))) {
+      cnt <- NULL
+      return(cnt)
+    }
     dim_bet <- get_dim_pars(true_params, name_par = "beta_z_lin")
     num_bet <- get_num_pars(true_params, name_par = "beta_z_lin")
   } else if (cnt_name == "u") {
-    if (isFALSE(check_avail_param(true_params, "beta_u_lin"))) {cnt <- NULL; return(cnt);}
+    if (isFALSE(check_avail_param(true_params, "beta_u_lin"))) {
+      cnt <- NULL
+      return(cnt)
+    }
     dim_bet <- get_dim_pars(true_params, name_par = "beta_u_lin")
     num_bet <- get_num_pars(true_params, name_par = "beta_u_lin")
   } else {
