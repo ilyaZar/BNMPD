@@ -51,6 +51,17 @@ test_settings <- function(type) {
               pth_tests_raw = pth_tests_raw,
               settings_true_params = settings_true_params))
 }
+#' Generate test infrastructure for data simulation/model directory test
+#'
+#' Run this function with no parameters. It automatically regenerates everything
+#' in "tests/testthat/fixtures/data-simul-model-dirs" i.e. the `*.RData` files
+#' and the `BACKUP` (!with ALL models to compare to!) directories therein.
+#'
+#' So whenever an internal change is necessary, simply re-run this and the
+#' internal change is carried over to the testing infrastructure.
+#'
+#' @return pure side-effect function, see `Description` and `Notes`
+#' @export
 generate_test_data_simul_model_dirs <- function() {
   tmp_boilerplate      <- test_settings(type = "GENERATE")
   mod_dim_list         <- tmp_boilerplate$mod_dim_list
