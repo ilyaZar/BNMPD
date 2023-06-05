@@ -1,7 +1,6 @@
 test_settings <- function(type) {
   if (type == "GENERATE") {
     pth_main <- "./tests/testthat/fixtures"
-
   } else if (type == "TEST") {
     pth_main <- "./fixtures"
   } else {
@@ -22,17 +21,17 @@ test_settings <- function(type) {
                    "DIRICHLET_MULT_NN1_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
                    "DIRICHLET_MULT_NN4_TT5_DD3_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
                    "DIRICHLET_MULT_NN24_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED42_MCMC_only")
-
-  pth_01 <- file.path(pth_main, "data-simul-model-dir/BACKUP",
+  pth_tests <- file.path(pth_main, "data-simul-model-dir")
+  pth_01 <- file.path(pth_tests, "BACKUP",
                       paste0(names_tests, "_BACKUP_TEST"))
-  pth_02 <- file.path(pth_main, "data-simul-model-dir", names_tests)
+  pth_02 <- file.path(pth_tests, names_tests)
   raw_tests <- c("dir_test_00.RData",
                  "dir_test_01.RData",
                  "dir_test_02.RData",
                  "dir_mult_test_00.RData",
                  "dir_mult_test_01.RData",
                  "dir_mult_test_02.RData")
-  pth_tests_raw <- file.path(pth_main, "data-simul-model-dir", raw_tests)
+  pth_tests_raw <- file.path(pth_tests, raw_tests)
 
   settings_true_params <- list(SIMUL_PHI    = TRUE, # FALSE
                                SIMUL_Z_BETA = TRUE, # FALSE
@@ -46,15 +45,23 @@ test_settings <- function(type) {
               seed_data_list = seed_data_list,
               pth_01 = pth_01,
               pth_02 = pth_02,
+              pth_tests = pth_tests,
               pth_tests_raw = pth_tests_raw,
               settings_true_params = settings_true_params))
 }
-generate_test_data_simul_model_dirs <- function(mod_dim_list, mod_dist_list,
-                                                seed_data_list, names_tests,
-                                                pth_01, pth_tests_raw,
-                                                raw_tests,
-                                                settings_true_params) {
-  for (i in 1:6) {
+generate_test_data_simul_model_dirs <- function() {
+  tmp_boilerplate      <- test_settings(type = "GENERATE")
+  mod_dim_list         <- tmp_boilerplate$mod_dim_list
+  mod_dist_list        <- tmp_boilerplate$mod_dist_list
+  seed_data_list       <- tmp_boilerplate$seed_data_list
+  pth_01               <- tmp_boilerplate$pth_01
+  pth_02               <- tmp_boilerplate$pth_02
+  pth_tests            <- tmp_boilerplate$pth_tests
+  pth_tests_raw        <- tmp_boilerplate$pth_tests_raw
+  settings_true_params <- tmp_boilerplate$settings_true_params
+
+  NUM_MODELS <- length(mod_dim_list)
+  for (i in seq_len(NUM_MODELS)) {
     model_dim  <- mod_dim_list[[i]]
     model_dist <- mod_dist_list[[i]]
 
