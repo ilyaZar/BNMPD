@@ -126,4 +126,5 @@ test_dirs_files <- function(pth_to_test) {
   check <- identical(test_BU, test_GN)
   stopifnot(`Dirs and filenames not equal in BACKUP and generated` = check)
   cat(crayon::blue("ALL DIR/FILE NAMES CHECKS PASSED !!! \n"))
+  return(TRUE)
 }
