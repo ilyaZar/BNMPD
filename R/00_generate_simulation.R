@@ -26,7 +26,7 @@ generate_simulation_study <- function(data_simulation,
   check_class_data_sim(data_simulation)
   stopifnot(`INIT_AT must be eihter 'true' or 'default'.` =
               INIT_AT %in% c("trues", "default"))
-  stopifnot(`'pth_to_proj' must be of type character` =
+  stopifnot(`'pth_top_level' must be of type character` =
               is.character(pth_top_level))
   stopifnot(`Arg. 'project_name' must be named list` =
               names(project_name) %in% c("prepend", "append"))
@@ -146,7 +146,7 @@ dir_proj_top_level_update <- function(pth_top_lvl, overwrite) {
     if (dir.exists(pth_top_lvl)) {
       unlink(pth_top_lvl, recursive = TRUE)
       cat(crayon::magenta(paste0("Overwriting project structure in: ",
-                                 pth_top_lvl)))
+                                 pth_top_lvl, "\n")))
     }
   }
   dir.create(pth_top_lvl, recursive = TRUE)

@@ -21,9 +21,10 @@ test_settings <- function(type) {
                    "DIRICHLET_MULT_NN1_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
                    "DIRICHLET_MULT_NN4_TT5_DD3_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
                    "DIRICHLET_MULT_NN24_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED42_MCMC_only")
-  pth_tests <- file.path(pth_main, "data-simul-model-dir")
-  pth_01 <- file.path(pth_tests, "BACKUP",
-                      paste0(names_tests, "_BACKUP_TEST"))
+  pth_tests        <- file.path(pth_main, "data-simul-model-dir")
+  pth_tests_BACKUP <- file.path(pth_tests, "BACKUP")
+  pth_01 <- file.path(pth_tests_BACKUP,
+                      paste0(names_tests, "_TEST"))
   pth_02 <- file.path(pth_tests, names_tests)
   raw_tests <- c("dir_test_00.RData",
                  "dir_test_01.RData",
@@ -46,6 +47,7 @@ test_settings <- function(type) {
               pth_01 = pth_01,
               pth_02 = pth_02,
               pth_tests = pth_tests,
+              pth_tests_BACKUP = pth_tests_BACKUP,
               pth_tests_raw = pth_tests_raw,
               settings_true_params = settings_true_params))
 }
@@ -54,9 +56,10 @@ generate_test_data_simul_model_dirs <- function() {
   mod_dim_list         <- tmp_boilerplate$mod_dim_list
   mod_dist_list        <- tmp_boilerplate$mod_dist_list
   seed_data_list       <- tmp_boilerplate$seed_data_list
-  pth_01               <- tmp_boilerplate$pth_01
-  pth_02               <- tmp_boilerplate$pth_02
-  pth_tests            <- tmp_boilerplate$pth_tests
+  # pth_01               <- tmp_boilerplate$pth_01
+  # pth_02               <- tmp_boilerplate$pth_02
+  # pth_tests            <- tmp_boilerplate$pth_tests
+  pth_tests_BACKUP     <- tmp_boilerplate$pth_tests_BACKUP
   pth_tests_raw        <- tmp_boilerplate$pth_tests_raw
   settings_true_params <- tmp_boilerplate$settings_true_params
 
@@ -99,9 +102,9 @@ generate_test_data_simul_model_dirs <- function() {
       save(dataSimulation2, file = pth_tests_raw[i])
       generate_simulation_study(data_simulation = dataSimulation,
                                 INIT_AT = "default",
-                                pth_top_level = ,
+                                pth_top_level = pth_tests_BACKUP,
                                 project_name = list(prepend = NULL,
-                                                    append = "MCMC_only"),
+                                                    append = "MCMC_only_TEST"),
                                 overwrite = TRUE)
   }
 }
@@ -195,6 +198,9 @@ test_sim_dirs <- function(pth_1, pth_2) {
 
   test_sttgs_pj_01 <- read_sttgs_pj(pth_top_lvl_01)
   test_sttgs_pj_02 <- read_sttgs_pj(pth_top_lvl_02)
+  tmp_char <- nchar(test_sttgs_pj_02$project_name)
+  test_sttgs_pj_01$project_name <- substring(test_sttgs_pj_01$project_name, 1,
+                                             tmp_char)
   test_sttgs_pj    <- identical(test_sttgs_pj_01, test_sttgs_pj_02)
 
   test_input_data_01 <- read_file_input_data(pth_top_lvl_01)
@@ -228,117 +234,10 @@ test_dirs_files <- function(pth_to_test) {
   test_BU <- test_names[grepl("^BACKUP", test_names, perl = TRUE)]
   test_GN <- test_names[grepl("^DIRICHLET", test_names, perl = TRUE)]
 
-  test_BU <- gsub("(BACKUP/|_BACKUP_TEST)", "", test_BU)
+  test_BU <- gsub("(BACKUP/|_BACKUP_TEST|_TEST)", "", test_BU)
 
   check <- identical(test_BU, test_GN)
   stopifnot(`Dirs and filenames not equal in BACKUP and generated` = check)
   cat(crayon::blue("ALL DIR/FILE NAMES CHECKS PASSED !!! \n"))
   return(TRUE)
 }
-
-# library(BNMPD)
-# mod_dim_list <- list(c(NN = 1, TT = 50, DD = 12),
-#                      c(NN = 4, TT = 5, DD = 3),
-#                      c(NN = 24, TT = 50, DD = 12),
-#                      c(NN = 1, TT = 50, DD = 12),
-#                      c(NN = 4, TT = 5, DD = 3),
-#                      c(NN = 24, TT = 50, DD = 12))
-# mod_dist_list <- list("dirichlet", "dirichlet", "dirichlet",
-#                       "dirichlet_mult",  "dirichlet_mult", "dirichlet_mult")
-#
-# seed_data_list <- c(42, 298375, 42, 298375, 298375, 42)
-#
-#
-# names_tests <- c("DIRICHLET_NN1_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED42_MCMC_only",
-#                  "DIRICHLET_NN4_TT5_DD3_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
-#                  "DIRICHLET_NN24_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED42_MCMC_only",
-#                  "DIRICHLET_MULT_NN1_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
-#                  "DIRICHLET_MULT_NN4_TT5_DD3_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
-#                  "DIRICHLET_MULT_NN24_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED42_MCMC_only")
-#
-# pth_01 <- file.path(
-#   "./inst/simulation-studies-tests/BACKUP",
-#   paste0(names_tests, "_BACKUP_TEST"))
-# pth_02 <- file.path(
-#   "./inst/simulation-studies-tests", names_tests)
-#
-# raw_tests <- c("dir_test_00.RData",
-#                "dir_test_01.RData",
-#                "dir_test_02.RData",
-#                "dir_mult_test_00.RData",
-#                "dir_mult_test_01.RData",
-#                "dir_mult_test_02.RData")
-# pth_tests_raw <- file.path("./inst/simulation-studies-tests", raw_tests)
-#
-# settings_true_params <- list(SIMUL_PHI    = TRUE, # FALSE
-#                              SIMUL_Z_BETA = TRUE, # FALSE
-#                              SIMUL_U_BETA = TRUE, # TRUE # FALSE
-#                              # SIMUL_U_BETA = FALSE
-#                              num_z_regs = 3,
-#                              num_u_regs = 2,
-#                              order_p_vec = 1) # 123 #42)
-# TYPE <- "TEST"
-# # TYPE <- "GENERATE"
-# for (i in 1:6) {
-#   model_dim  <- mod_dim_list[[i]]
-#   model_dist <- mod_dist_list[[i]]
-#
-#   ic_list <- check_ic_to_dist(model_dist,
-#                               list(at_z = rep(FALSE, model_dim[3]),
-#                                    at_u = rep(TRUE, model_dim[3])),
-#                               model_dim[["DD"]])
-#
-#   dirichlet_levels <- get_target_dist_levels(distribution = model_dist,
-#                                              DD = model_dim[3],
-#                                              NN = model_dim[1],
-#                                              target_val_fixed = 500)
-#
-#   par_trues <- new_trueParams(distribution = model_dist,
-#                               model_dim = model_dim,
-#                               settings_pars = settings_true_params,
-#                               options = list(dwn_scl = 10,
-#                                              intercepts = ic_list),
-#                               seed_taken = 42)
-#
-#   SEED_NR_DATA <- seed_data_list[i]
-#   dataSimulation <-  new_dataSim(true_params = par_trues,
-#                                  distribution = model_dist,
-#                                  x_levels = dirichlet_levels,
-#                                  X_LOG_SCALE = TRUE,
-#                                  options_include = list(intercept = ic_list,
-#                                                         policy = NULL,
-#                                                         zeros  = NULL),
-#                                  options_plot = list(plt_y = FALSE,
-#                                                      plt_x = FALSE,
-#                                                      plt_x_per_d = FALSE),
-#                                  seed_no = SEED_NR_DATA)
-#
-#   if (TYPE == "TEST") {
-#     load(pth_tests_raw[i])
-#     test_case <- all.equal(dataSimulation, dataSimulation2)
-#
-#     stopifnot(`Failed to veriy` = test_case)
-#
-#     generate_simulation_study(data_simulation = dataSimulation,
-#                               INIT_AT = "default",
-#                               pth_top_level = "./inst/simulation-studies-tests",
-#                               project_name = list(prepend = NULL,
-#                                                   append = "MCMC_only"),
-#                               overwrite = TRUE)
-#
-#     BNMPD:::test_sim_dirs(pth_01[i], pth_02[i])
-#
-#     cat(paste0(crayon::blue("TESTS PASSED FOR: "),
-#                crayon::magenta(basename(pth_01[i])), "\n"))
-#   } else if (TYPE == "GENERATE") {
-#     dataSimulation2 <- dataSimulation
-#     save(dataSimulation2, file = pth_tests_raw[i])
-#     generate_simulation_study(data_simulation = dataSimulation,
-#                               INIT_AT = "default",
-#                               pth_top_level = "./inst/simulation-studies-tests/BACKUP",
-#                               project_name = list(prepend = NULL,
-#                                                   append = "MCMC_only"),
-#                               overwrite = TRUE)
-#   }
-# }
-# BNMPD:::test_dirs_files(pth_to_test = "./inst/simulation-studies-tests")
