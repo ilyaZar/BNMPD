@@ -6,34 +6,6 @@ test_settings <- function(type) {
   } else {
     stop("Unknown value for argument 'type'; use either 'GENERATE' or 'TEST'.")
   }
-  mod_dim_list <- list(c(NN = 1, TT = 50, DD = 12),
-                       c(NN = 4, TT = 5, DD = 3),
-                       c(NN = 24, TT = 50, DD = 12),
-                       c(NN = 1, TT = 50, DD = 12),
-                       c(NN = 4, TT = 5, DD = 3),
-                       c(NN = 24, TT = 50, DD = 12))
-  mod_dist_list <- list("dirichlet", "dirichlet", "dirichlet",
-                        "dirichlet_mult",  "dirichlet_mult", "dirichlet_mult")
-  seed_data_list <- c(42, 298375, 42, 298375, 298375, 42)
-  names_tests <- c("DIRICHLET_NN1_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED42_MCMC_only",
-                   "DIRICHLET_NN4_TT5_DD3_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
-                   "DIRICHLET_NN24_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED42_MCMC_only",
-                   "DIRICHLET_MULT_NN1_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
-                   "DIRICHLET_MULT_NN4_TT5_DD3_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED298375_MCMC_only",
-                   "DIRICHLET_MULT_NN24_TT50_DD12_withAUTO,_withLIN,3_withRE,2_parSEED42_simSEED42_MCMC_only")
-  pth_tests        <- file.path(pth_main, "data-simul-model-dir")
-  pth_tests_BACKUP <- file.path(pth_tests, "BACKUP")
-  pth_01 <- file.path(pth_tests_BACKUP,
-                      paste0(names_tests, "_TEST"))
-  pth_02 <- file.path(pth_tests, names_tests)
-  raw_tests <- c("dir_test_00.RData",
-                 "dir_test_01.RData",
-                 "dir_test_02.RData",
-                 "dir_mult_test_00.RData",
-                 "dir_mult_test_01.RData",
-                 "dir_mult_test_02.RData")
-  pth_tests_raw <- file.path(pth_tests, raw_tests)
-
   settings_true_params <- list(SIMUL_PHI    = TRUE, # FALSE
                                SIMUL_Z_BETA = TRUE, # FALSE
                                SIMUL_U_BETA = TRUE, # TRUE # FALSE
@@ -41,6 +13,28 @@ test_settings <- function(type) {
                                num_z_regs = 3,
                                num_u_regs = 2,
                                order_p_vec = 1) # 123 #42)
+  mod_dim_list <- list(c(NN = 1, TT = 50, DD = 12),
+                       c(NN = 1, TT = 5, DD = 2),
+                       c(NN = 4, TT = 5, DD = 3),
+                       c(NN = 24, TT = 50, DD = 12),
+                       c(NN = 1, TT = 50, DD = 12),
+                       c(NN = 1, TT = 5, DD = 2),
+                       c(NN = 4, TT = 5, DD = 3),
+                       c(NN = 24, TT = 50, DD = 12))
+  mod_dist_list <- c(rep("dirichlet", times = 4),
+                     rep("dirichlet_mult", times = 4))
+  seed_data_list <- rep(c(42, 298375), times = 2 * length(unique(mod_dist_list)))
+  names_tests <- get_names_tests(mod_dist_list, settings_true_params,
+                                 mod_dim_list, seed_data_list)
+
+  pth_tests        <- file.path(pth_main, "data-simul-model-dir")
+  pth_tests_BACKUP <- file.path(pth_tests, "BACKUP")
+  pth_01 <- file.path(pth_tests_BACKUP, paste0(names_tests, "_TEST"))
+  pth_02 <- file.path(pth_tests, names_tests)
+  raw_tests <- c(paste0("dir_test_0", 1:4, ".RData"),
+                 paste0("dir_mult_test_0", 1:4, ".RData"))
+  pth_tests_raw <- file.path(pth_tests, raw_tests)
+
   return(list(mod_dim_list = mod_dim_list,
               mod_dist_list = mod_dist_list,
               seed_data_list = seed_data_list,
@@ -50,6 +44,31 @@ test_settings <- function(type) {
               pth_tests_BACKUP = pth_tests_BACKUP,
               pth_tests_raw = pth_tests_raw,
               settings_true_params = settings_true_params))
+}
+get_names_tests <- function(mod_dist_list, settings_true_params,
+                            mod_dim_list, seed_data_list) {
+  num_cases <- length(mod_dim_list)
+  part_01 <- toupper(paste0(mod_dist_list, "_"))
+  part_02 <- NULL
+  part_03 <- NULL
+  for (i in 1:num_cases) {
+    part_02 <- c(part_02, paste0("NN", mod_dim_list[[i]][["NN"]],
+                                 "_TT", mod_dim_list[[i]][["TT"]],
+                                 "_DD", mod_dim_list[[i]][["DD"]]))
+    part_03 <- "_"
+    if (settings_true_params$SIMUL_PHI) {
+      part_03 <- paste0(part_03, "withAUTO,", settings_true_params$order_p_vec)
+    }
+    if (settings_true_params$SIMUL_Z_BETA) {
+      part_03 <- paste0(part_03, "_withLIN,", settings_true_params$num_z_regs)
+    }
+    if (settings_true_params$SIMUL_U_BETA) {
+      part_03 <- paste0(part_03, "_withRE,", settings_true_params$num_u_regs)
+    }
+  }
+  part_04 <- "_parSEED42"
+  part_05 <- paste0("_simSEED", seed_data_list, "_MCMC_only")
+  paste0(part_01, part_02, part_03, part_04, part_05)
 }
 #' Generate test infrastructure for data simulation/model directory test
 #'
@@ -77,7 +96,7 @@ generate_test_data_simul_model_dirs <- function() {
   NUM_MODELS <- length(mod_dim_list)
   for (i in seq_len(NUM_MODELS)) {
     model_dim  <- mod_dim_list[[i]]
-    model_dist <- mod_dist_list[[i]]
+    model_dist <- mod_dist_list[i]
 
     ic_list <- check_ic_to_dist(model_dist,
                                 list(at_z = rep(FALSE, model_dim[3]),
@@ -109,14 +128,14 @@ generate_test_data_simul_model_dirs <- function() {
                                                        plt_x_per_d = FALSE),
                                    seed_no = SEED_NR_DATA)
 
-      dataSimulation2 <- dataSimulation
-      save(dataSimulation2, file = pth_tests_raw[i])
-      generate_simulation_study(data_simulation = dataSimulation,
-                                INIT_AT = "default",
-                                pth_top_level = pth_tests_BACKUP,
-                                project_name = list(prepend = NULL,
-                                                    append = "MCMC_only_TEST"),
-                                overwrite = TRUE)
+    dataSimulation2 <- dataSimulation
+    save(dataSimulation2, file = pth_tests_raw[i])
+    generate_simulation_study(data_simulation = dataSimulation,
+                              INIT_AT = "default",
+                              pth_top_level = pth_tests_BACKUP,
+                              project_name = list(prepend = NULL,
+                                                  append = "MCMC_only_TEST"),
+                              overwrite = TRUE)
   }
 }
 read_file_main_r <- function(pth) {
