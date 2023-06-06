@@ -96,7 +96,7 @@ get_manual_phi <- function(distribution, phi, DD, NN, order_p_vec) {
     colnames(tmp_phis) <- paste0("NN", 1:NN)
     out_phi[[d]] <- tmp_phis
   }
-  if (check_dist_quick(DD == DD2)) {
+  if (check_special_dist_quick(distribution)) {
     out_phi <- list(A = out_phi[head(seq_len(DD2), n = DD)],
                     B = out_phi[tail(seq_len(DD2), n = DD)])
   }

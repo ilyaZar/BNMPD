@@ -84,14 +84,14 @@ get_target_dist_levels <- function(distribution,
                   nrow = DD2,
                   ncol = NN)
   }
-  out <- set_name_target_vals(out, DD, DD2, NN)
+  out <- set_name_target_vals(out, DD, DD2, NN, distribution)
   return(out)
 }
-set_name_target_vals <- function(out, DD, DD2, NN) {
-  if (DD == DD2) {
+set_name_target_vals <- function(out, DD, DD2, NN, distribution) {
+  if (isFALSE(check_special_dist_quick(distribution))) {
     rownames(out) <- paste0("D", seq_len(DD))
     colnames(out) <- paste0("N", seq_len(NN))
-  } else if (check_dist_quick(DD, DD2)) {
+  } else if (isTRUE(check_special_dist_quick(distribution))) {
     rownames(out) <- c(paste0("A_D", seq_len(DD2 / 2)),
                        paste0("B_D", seq_len(DD2 / 2)))
     colnames(out) <- paste0("N", seq_len(NN))
@@ -131,8 +131,9 @@ get_DD2 <- function(distribution, DD) {
          "gen_dirichlet_mult" = DD * 2 - 2,
          stop("Unknown distribution name"))
 }
-check_dist_quick <- function(DD, DD2) {
-  DD * 2 - 2 == DD2
+check_special_dist_quick <- function(dist) {
+  if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) return(TRUE)
+  return(FALSE)
 }
 #' Options list of included effects.
 #'

@@ -84,7 +84,7 @@ generate_bet_u <- function(distribution,
                            seed_no = 42) {
   DD2 <- get_DD2(distribution, DD)
   DD1 <- get_DD(distribution, DD)
-  check_dist <- check_dist_quick(DD1, DD2)
+  check_dist <- check_special_dist_quick(distribution)
   if (check_dist) DD1 <- DD2 / 2
   true_bet_u <- vector("list", DD1)
   if (from_IW) {
@@ -122,7 +122,7 @@ generate_bet_u <- function(distribution,
       true_bet_u[[d]] <- vals[1:num_re + num_re*(d - 1), , drop = FALSE]
     }
     out <- list(true_bet_u = true_bet_u)
-    if (check_dist_quick(DD, DD2)){
+    if (check_special_dist_quick(distribution)){
       out <- list(true_bet_u = list(A = true_bet_u,
                                     B = true_bet_u))
     }
