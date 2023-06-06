@@ -110,7 +110,7 @@ set_base_name <- function(data_sim) {
   SIMUL_U_BETA <- par_settings[["SIMUL_U_BETA"]]
   num_z_regs   <- par_settings[["num_z_regs"]]
   num_u_regs   <- par_settings[["num_u_regs"]]
-  order_p      <- par_settings[["order_p"]]
+  order_p      <- par_settings[["order_p_vec"]]
 
   tmp_fn <- paste0("NN", dim_model[1], "_TT", dim_model[2], "_DD", dim_model[3])
 
