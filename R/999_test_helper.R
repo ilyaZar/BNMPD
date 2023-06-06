@@ -6,7 +6,8 @@ test_settings <- function(type) {
   } else {
     stop("Unknown value for argument 'type'; use either 'GENERATE' or 'TEST'.")
   }
-  dist_used          <- c("dirichlet", "dirichlet_mult")
+  dist_used          <- c("dirichlet", "dirichlet_mult",
+                          "gen_dirichlet", "gen_dirichlet_mult")
   NUM_DIST           <- length(dist_used)
   mod_dim_list <- list(c(NN = 1, TT = 50, DD = 12),
                        c(NN = 1, TT = 5, DD = 2),
@@ -103,8 +104,9 @@ generate_test_data_simul_model_dirs <- function() {
     model_dist <- mod_dist_list[i]
 
     ic_list <- check_ic_to_dist(model_dist,
-                                list(at_z = rep(FALSE, model_dim[3]),
-                                     at_u = rep(TRUE, model_dim[3])),
+                                get_ic_for_dist(model_dist,
+                                                model_dim[["DD"]],
+                                                TRUE, TRUE),
                                 model_dim[["DD"]])
 
     dirichlet_levels <- get_target_dist_levels(distribution = model_dist,
@@ -266,7 +268,7 @@ test_sim_dirs <- function(pth_1, pth_2) {
 test_dirs_files <- function(pth_to_test) {
   test_names <- list.files(pth_to_test, recursive = TRUE)
   test_BU <- test_names[grepl("^BACKUP", test_names, perl = TRUE)]
-  test_GN <- test_names[grepl("^DIRICHLET", test_names, perl = TRUE)]
+  test_GN <- test_names[grepl("^(GEN_|DIRICHLET)", test_names, perl = TRUE)]
 
   test_BU <- gsub("(BACKUP/|_BACKUP_TEST|_TEST)", "", test_BU)
 
