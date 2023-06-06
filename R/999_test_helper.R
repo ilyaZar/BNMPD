@@ -6,13 +6,12 @@ test_settings <- function(type) {
   } else {
     stop("Unknown value for argument 'type'; use either 'GENERATE' or 'TEST'.")
   }
-  settings_true_params <- list(SIMUL_PHI    = TRUE, # FALSE
-                               SIMUL_Z_BETA = TRUE, # FALSE
-                               SIMUL_U_BETA = TRUE, # TRUE # FALSE
-                               # SIMUL_U_BETA = FALSE
+  settings_true_params <- list(SIMUL_PHI    = TRUE,
+                               SIMUL_Z_BETA = TRUE,
+                               SIMUL_U_BETA = TRUE,
                                num_z_regs = 3,
                                num_u_regs = 2,
-                               order_p_vec = 1) # 123 #42)
+                               order_p_vec = 1)
   mod_dim_list <- list(c(NN = 1, TT = 50, DD = 12),
                        c(NN = 1, TT = 5, DD = 2),
                        c(NN = 4, TT = 5, DD = 3),
