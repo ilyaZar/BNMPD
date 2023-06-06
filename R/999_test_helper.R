@@ -6,22 +6,28 @@ test_settings <- function(type) {
   } else {
     stop("Unknown value for argument 'type'; use either 'GENERATE' or 'TEST'.")
   }
+  dist_used          <- c("dirichlet", "dirichlet_mult")
+  NUM_DIST           <- length(dist_used)
+  mod_dim_list <- list(c(NN = 1, TT = 50, DD = 12),
+                       c(NN = 1, TT = 5, DD = 2),
+                       c(NN = 4, TT = 5, DD = 3),
+                       c(NN = 24, TT = 50, DD = 12))
+  NUM_TESTS_PER_DIST <- length(mod_dim_list)
+  mod_dim_list <- rep(mod_dim_list, times = NUM_DIST)
   settings_true_params <- list(SIMUL_PHI    = TRUE,
                                SIMUL_Z_BETA = TRUE,
                                SIMUL_U_BETA = TRUE,
                                num_z_regs = 3,
                                num_u_regs = 2,
                                order_p_vec = 1)
-  mod_dim_list <- list(c(NN = 1, TT = 50, DD = 12),
-                       c(NN = 1, TT = 5, DD = 2),
-                       c(NN = 4, TT = 5, DD = 3),
-                       c(NN = 24, TT = 50, DD = 12),
-                       c(NN = 1, TT = 50, DD = 12),
-                       c(NN = 1, TT = 5, DD = 2),
-                       c(NN = 4, TT = 5, DD = 3),
-                       c(NN = 24, TT = 50, DD = 12))
-  mod_dist_list <- c(rep("dirichlet", times = 4),
-                     rep("dirichlet_mult", times = 4))
+  raw_tests     <- NULL
+  mod_dist_list <- NULL
+  for (i in 1:NUM_DIST) {
+    raw_tests     <- c(raw_tests, paste0(dist_used[i], "_test_0",
+                                         seq_len(NUM_TESTS_PER_DIST),
+                                         ".RData"))
+    mod_dist_list <- c(mod_dist_list, rep(dist_used[i], NUM_TESTS_PER_DIST))
+  }
   seed_data_list <- rep(c(42, 298375), times = 2 * length(unique(mod_dist_list)))
   names_tests <- get_names_tests(mod_dist_list, settings_true_params,
                                  mod_dim_list, seed_data_list)
@@ -30,8 +36,7 @@ test_settings <- function(type) {
   pth_tests_BACKUP <- file.path(pth_tests, "BACKUP")
   pth_01 <- file.path(pth_tests_BACKUP, paste0(names_tests, "_TEST"))
   pth_02 <- file.path(pth_tests, names_tests)
-  raw_tests <- c(paste0("dir_test_0", 1:4, ".RData"),
-                 paste0("dir_mult_test_0", 1:4, ".RData"))
+
   pth_tests_raw <- file.path(pth_tests, raw_tests)
 
   return(list(mod_dim_list = mod_dim_list,
