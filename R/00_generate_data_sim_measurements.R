@@ -67,10 +67,10 @@ generate_dirichlet_obs <- function(x, NN, TT, out_data) {
 }
 generate_gen_dirichlet_obs <- function(x, NN, TT, DD, out_data) {
   for (n in 1:NN) {
-    xa <- x[, grepl("A", colnames(x)), ]
-    xb <- x[, grepl("B", colnames(x)), ]
-    yraw <- my_r_generalized_dirichlet(alpha = xa[, , n],
-                                       beta = xb[, , n],
+    xa <- x[, grepl("A", colnames(x)), , drop = FALSE]
+    xb <- x[, grepl("B", colnames(x)), , drop = FALSE]
+    yraw <- my_r_generalized_dirichlet(alpha = xa[, , n, drop = FALSE],
+                                       beta = xb[, , n, drop = FALSE],
                                        DD)
     if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
       msg <- paste0("Bad Dirichelet simulation: ",
@@ -96,11 +96,11 @@ generate_gen_dirichlet_mult_obs <- function(x, NN, TT, DD, out_data) {
   for (n in 1:NN) {
     num_counts <- sample(x = 80000:120000, size = TT)
 
-    xa <- x[, grepl("A", colnames(x)), ]
-    xb <- x[, grepl("B", colnames(x)), ]
+    xa <- x[, grepl("A", colnames(x)), , drop = FALSE]
+    xb <- x[, grepl("B", colnames(x)), , drop = FALSE]
 
-    yraw <- my_r_generalized_dirichlet_mult(alpha = xa[, , n],
-                                            beta = xb[, , n],
+    yraw <- my_r_generalized_dirichlet_mult(alpha = xa[, , n, drop = FALSE],
+                                            beta = xb[, , n, drop = FALSE],
                                             DD,
                                             num_counts)
     print(paste0("Simulatiing Gen. Dirichlet Mult. data at cross section: ", n))
@@ -189,18 +189,15 @@ my_r_generalized_dirichlet <- function(alpha, beta, DD) {
   x  <- matrix(0, nrow = TT, ncol = DD)
   for (t in 1:TT) {
     tmp_sum <- 0
-    x[t, 1] <- stats::rbeta(n = 1,
-                            shape1 = alpha[t, 1],
-                            shape2 = beta[t, 1])
-    tmp_sum <- x[t, 1]
-    for (k in 2:(DD - 1)) {
+    for (k in seq_len(DD - 1)) {
       x[t, k] <- stats::rbeta(n = 1,
-                              shape1 = alpha[t, k],
-                              shape2 = beta[t, k]) * (1 - tmp_sum)
+                              shape1 = alpha[t, k, 1],
+                              shape2 = beta[t, k, 1]) * (1 - tmp_sum)
       tmp_sum <- tmp_sum + x[t, k]
     }
+
   }
-  x[, DD] <- 1 - rowSums(x[, 1:(DD - 1)])
+  x[, DD] <- 1 - rowSums(x[, 1:(DD - 1), drop = FALSE])
   return(x)
 }
 #' Generates random samples from a mulinomial distribution
@@ -264,7 +261,7 @@ my_r_generalized_dirichlet_mult <- function(alpha, beta, DD, num_counts) {
   x  <- matrix(0, nrow = TT, ncol = DD)
   for (t in 1:TT) {
     x[t, ] <- MGLM::rgdirmn(n = 1, size = num_counts[t],
-                            alpha[t, ], beta[t, ])
+                            alpha[t, , 1], beta[t, , 1])
   }
   stopifnot(`Total number must equal rowsums in gen. dir. mult simulation` =
               rowSums(x) == num_counts)
