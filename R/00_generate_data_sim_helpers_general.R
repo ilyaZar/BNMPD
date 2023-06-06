@@ -202,6 +202,46 @@ set_opt_include <- function(distribution, includes, NN, DD) {
   names(out_opt) <- paste0("N_", 1:NN)
   return(out_opt)
 }
+#' Returns valid intercept specifications for `trueParams` and `dataSim`
+#'
+#' Currently, only logical flags can be set for z-type (common) or u-type
+#' (individual) intercepts. Logical arguments `at_z` and `at_u` are expanded
+#' to match the dimension `DD` and wrapped according to the type of special
+#' distribution in a corresponding list for output.
+#'
+#' @inheritParams new_trueParams
+#' @param DD integer; give the multivariate dimension
+#' @param at_z logical; if `TRUE` common intercepts are used in parameter
+#'    and simulation setup
+#' @param at_u logical; if `TRUE` individual intercepts are used in parameter
+#'    and simulation setup
+#'
+#' @return a list of appropriate intercept specifications expanded to the
+#'    correct sizes of the `distribution` type; can be further used in the
+#'    [new_trueParams()] and [new_dataSim()] functions; output passes the check
+#'    [check_ic_to_dist()] by construction
+#'
+#' @export
+get_ic_for_dist <- function(distribution, DD, at_z, at_u) {
+  check_distribution(distribution)
+  stopifnot(`Argument value 'at_z' must be logical` = is.logical(at_z))
+  stopifnot(`Argument value 'at_u' must be logical` = is.logical(at_u))
+  stopifnot(`Length of 'at_z' must be one in current impl.` = length(at_z) == 1)
+  stopifnot(`Length of 'at_u' must be one in current impl.` = length(at_u) == 1)
+  SPECIAL_DIST  <- check_special_dist_quick(distribution)
+  if (isTRUE(SPECIAL_DIST)) {
+    DI <- DD - 1
+    ic_list <- list(at_z = list(A = rep(at_z, DI),
+                                B = rep(at_z, DI)),
+                    at_u = list(A = rep(at_u, DI),
+                                B = rep(at_u, DI)))
+  } else if (isFALSE(SPECIAL_DIST)) {
+    DI <- DD
+    ic_list <- list(at_z = rep(at_z, DI),
+                    at_u = rep(at_u, DI))
+  }
+  return(ic_list)
+}
 #' Checks if intercept settings list matches implied length for distribution
 #'
 #' Some distributions have multivariate component dimension \code{DD} but
