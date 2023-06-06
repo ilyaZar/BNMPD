@@ -1,4 +1,4 @@
-#' Generates multivariate (non-linear) panel data for various models.
+#' Generates multivariate panel data for various measurement models
 #'
 #' The measurements (responses, dependent variables) have a Dirichlet,
 #' Multinomial or Dirichlet-Multinomial distribution. The multivariate draws
