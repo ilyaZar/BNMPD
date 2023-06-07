@@ -1,4 +1,4 @@
-ModelOut <- R6::R6Class("ModelOut",
+ModelOut <- R6::R6Class("ModelOut", # nolint:
                         class = FALSE,
                         cloneable = FALSE,
                         portable = FALSE,
@@ -14,10 +14,10 @@ ModelOut <- R6::R6Class("ModelOut",
                           .inits_start  = NULL,
                           .md_out_inits = NULL,
                           join_outputs = function(outs) {
-                            # check if number of elements in outputs are all equal
-                            # check if names of outputs are all equal
-                            # check if dims of outputs (but not mcmc length) are all equal
-                            # outs <- list(...)
+                            # for all outputs (results of PGAS runs):
+                            # check if number of elements are all equal
+                            # check if names are all equal
+                            # check if dims (except for mcmc iters) are equal
                             num_pars <- length(outs[[1]])
                             nme_pars <- names(outs[[1]])
 
@@ -45,20 +45,23 @@ ModelOut <- R6::R6Class("ModelOut",
                                         crayon::yellow("...\n")))
                             }
                             for (tmp_names in names(jnd_out)) {
-                              if(all(is.na(jnd_out[tmp_names]))) {
+                              if (all(is.na(jnd_out[tmp_names]))) {
                                 jnd_out[tmp_names] <- list(NULL)
                               }
                             }
                             jnd_out$meta_info$MM <- sum(sapply(outs,
                                                                function(x) {
-                                                                 x$meta_info$MM}
+                                                                 x$meta_info$MM
+                                                               }
                             )
                             )
                             cat(crayon::magenta("ALL JOINS SUCCESSFUL.\n"))
                             return(jnd_out)
                           },
                           jn_sig_sq = function(sig_sq_x1, sig_sq_x2) {
-                            if (is.null(sig_sq_x1) || is.null(sig_sq_x2)) return(NA)
+                            if (is.null(sig_sq_x1) || is.null(sig_sq_x2)) {
+                              return(NA)
+                            }
                             check_jn_sig_sq(sig_sq_x1, sig_sq_x2)
                             cbind(sig_sq_x1, sig_sq_x2)
                           },
@@ -180,7 +183,7 @@ ModelOut <- R6::R6Class("ModelOut",
                                                             range_iter)
                             out$x <- private$sl_states(out$x, range_iter)
                             for (tmp_names in names(out)) {
-                              if(all(is.na(out[tmp_names]))) {
+                              if (all(is.na(out[tmp_names]))) {
                                 out[tmp_names] <- list(NULL)
                               }
                             }
@@ -218,15 +221,17 @@ ModelOut <- R6::R6Class("ModelOut",
                             }
                             return(out_vcm)
                           },
-                          sl_states = function(x,iter_range) {
+                          sl_states = function(x, iter_range) {
                             x[, , iter_range, , drop = FALSE]
                           },
                           update_output_meta = function(pth_to_output) {
 
                             private$.pth_to_outputs <- pth_to_output
 
-                            tmp_fn_list <- file.path(pth_to_output,
-                                                     list.files(pth_to_output))
+                            tmp_fn_list <- file.path(
+                              pth_to_output,
+                              list.files(pth_to_output,
+                              pattern = ".(R|r)(D|d)ata"))
                             private$.num_out <- length(tmp_fn_list)
 
                             private$.pth_to_md_outs <- tmp_fn_list
@@ -263,22 +268,26 @@ ModelOut <- R6::R6Class("ModelOut",
                           update_params = function(out, num_mcmc, DD, NN,
                                                    num_bet_z, num_bet_u) {
                             par_inits <- list()
-                            par_inits$init_sig_sq <- get_init_sig_sq(out$sig_sq_x,
-                                                                     num_mcmc,
-                                                                     DD)
+                            par_inits$init_sig_sq <- get_init_sig_sq(
+                              out$sig_sq_x,
+                              num_mcmc,
+                              DD)
                             par_inits$init_phi <- get_init_phi(out$phi_x,
                                                                num_mcmc, DD)
-                            par_inits$init_bet_z <- get_init_bet_z_lin(out$bet_z,
-                                                                       num_mcmc,
-                                                                       DD,
-                                                                       num_bet_z)
-                            par_inits$init_bet_u <- get_init_bet_u_lin(out$bet_u,
-                                                                       num_mcmc,
-                                                                       DD, NN,
-                                                                       num_bet_u)
-                            par_inits$init_vcm_bet_u <- get_init_vcm_bet_u(out$vcm_bet_u,
-                                                                           num_mcmc,
-                                                                           DD)
+                            par_inits$init_bet_z <- get_init_bet_z_lin(
+                              out$bet_z,
+                              num_mcmc,
+                              DD,
+                              num_bet_z)
+                            par_inits$init_bet_u <- get_init_bet_u_lin(
+                              out$bet_u,
+                              num_mcmc,
+                              DD, NN,
+                              num_bet_u)
+                            par_inits$init_vcm_bet_u <- get_init_vcm_bet_u(
+                              out$vcm_bet_u,
+                              num_mcmc,
+                              DD)
                             id_to_NULL <- sapply(par_inits, function(x) {
                               all(is.na(x))})
                             par_inits[id_to_NULL] <- list(NULL)
@@ -343,10 +352,12 @@ ModelOut <- R6::R6Class("ModelOut",
                                                 inits_start) {
                             private$update_output_meta(pth_to_output)
                             private$.inits_start <- inits_start
-                            private$.num_bet_z <- sapply(inits_start$par_init$init_bet_z,
-                                                         length)
-                            private$.num_bet_u <- sapply(inits_start$par_init$init_bet_u,
-                                                         nrow)
+                            private$.num_bet_z <- sapply(
+                              inits_start$par_init$init_bet_z,
+                              length)
+                            private$.num_bet_u <- sapply(
+                              inits_start$par_init$init_bet_u,
+                              nrow)
                             if (private$.num_out > 0) {
                               private$update_init_traj_param(private$.num_bet_z,
                                                              private$.num_bet_u)
