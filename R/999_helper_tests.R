@@ -100,8 +100,9 @@ generate_test_data_simul_model_dirs <- function() {
 
   NUM_MODELS <- length(mod_dim_list)
   for (i in seq_len(NUM_MODELS)) {
-    model_dim  <- mod_dim_list[[i]]
-    model_dist <- mod_dist_list[i]
+    model_dim    <- mod_dim_list[[i]]
+    model_dist   <- mod_dist_list[i]
+    SEED_NR_DATA <- seed_data_list[i]
 
     ic_list <- check_ic_to_dist(model_dist,
                                 get_ic_for_dist(model_dist,
@@ -121,7 +122,6 @@ generate_test_data_simul_model_dirs <- function() {
                                                intercepts = ic_list),
                                 seed_taken = 42)
 
-    SEED_NR_DATA <- seed_data_list[i]
     dataSimulation <-  new_dataSim(true_params = par_trues,
                                    distribution = model_dist,
                                    x_levels = dirichlet_levels,
@@ -133,9 +133,7 @@ generate_test_data_simul_model_dirs <- function() {
                                                        plt_x = FALSE,
                                                        plt_x_per_d = FALSE),
                                    seed_no = SEED_NR_DATA)
-
-    dataSimulation2 <- dataSimulation
-    saveRDS(dataSimulation2, file = pth_tests_raw[i])
+    saveRDS(dataSimulation, file = pth_tests_raw[i])
     generate_simulation_study(data_simulation = dataSimulation,
                               INIT_AT = "default",
                               pth_top_level = pth_tests_BACKUP,
@@ -265,7 +263,7 @@ test_sim_dirs <- function(pth_1, pth_2) {
   stopifnot(`Some tests failed!` = all(all_tests))
   return(all(all_tests))
 }
-test_dirs_files <- function(pth_to_test) {
+test_dirs_file_names <- function(pth_to_test) {
   test_names <- list.files(pth_to_test, recursive = TRUE)
   test_BU <- test_names[grepl("^BACKUP", test_names, perl = TRUE)]
   test_GN <- test_names[grepl("^(GEN_|DIRICHLET)", test_names, perl = TRUE)]
