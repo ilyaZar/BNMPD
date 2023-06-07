@@ -579,7 +579,7 @@ ModelDat <- R6::R6Class("ModelDat",
                           #'   (variable names and labels, variable value and
                           #'   labels of these values)
                           #' @param info_dim information on model dimensions
-                          #' @param states_init path to `.Rdata`-file for state
+                          #' @param states_init path to `.rds`-file for state
                           #'   initialization; can be `NULL` in which case the
                           #'   the corresponding method tries to generate
                           #'   reasonable starting values by itself (via

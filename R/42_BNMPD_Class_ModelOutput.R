@@ -231,7 +231,7 @@ ModelOut <- R6::R6Class("ModelOut", # nolint:
                             tmp_fn_list <- file.path(
                               pth_to_output,
                               list.files(pth_to_output,
-                              pattern = ".(R|r)(D|d)ata"))
+                              pattern = ".(R|r)(D|d)(S|s)$"))
                             private$.num_out <- length(tmp_fn_list)
 
                             private$.pth_to_md_outs <- tmp_fn_list
@@ -249,8 +249,7 @@ ModelOut <- R6::R6Class("ModelOut", # nolint:
                             }
 
                             inits_start <- private$.inits_start
-                            tmp <- load(private$.pth_to_md_out_last)
-                            out <- eval(parse(text = paste0("`", tmp, "`")))
+                            out <- readRDS(private$.pth_to_md_out_last)
                             DD_old   <- dim(out$x)[2]
                             num_mcmc <- dim(out$x)[3]
                             NN_old   <- dim(out$x)[4]
@@ -390,28 +389,24 @@ ModelOut <- R6::R6Class("ModelOut", # nolint:
                               stop(msg)
                             }
                             tmp1 <- vector("list", private$.num_out)
-                            tmp2 <- vector("list", private$.num_out)
                             for (i in 1:private$.num_out) {
                               tmpfn <- private$.pth_to_md_outs[[i]]
-                              tmp1[[i]] <- load(tmpfn)
-                              tmp2[[i]] <- eval(parse(text = paste0("`",
-                                                                    tmp1[[i]],
-                                                                    "`")))
+                              tmp1[[i]] <- readRDS(tmpfn)
                               cat(paste(crayon::yellow("Loading output part:"),
                                         crayon::blue(i), "-",
                                         crayon::green(basename(tmpfn)),
                                         "! \n"))
                             }
                             if (is.null(range_iter) && is.null(range_parts)) {
-                              out_all <- private$join_outputs(tmp2)
+                              out_all <- private$join_outputs(tmp1)
                               return(out_all)
                             } else if (!is.null(range_iter) &&
                                        is.null(range_parts)) {
-                              out_all <- private$join_outputs(tmp2)
+                              out_all <- private$join_outputs(tmp1)
                               out <- private$get_iter_out(out_all, range_iter)
                             } else if (is.null(range_iter) &&
                                        !is.null(range_parts)) {
-                              out <- private$get_range_out(tmp2, range_parts)
+                              out <- private$get_range_out(tmp1, range_parts)
                             }
                             return(out)
                           }
