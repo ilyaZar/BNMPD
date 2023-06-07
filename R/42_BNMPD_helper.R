@@ -35,8 +35,8 @@ get_paths_modelBNMPD_input <- function(pth_main) {
   fn_id_states_zero <- grep("states_zero", fn_all)
   pth_states_zero   <- file.path(pth_states, fn_all[fn_id_states_zero])
 
-  pth_params_true   <- file.path(pth_main, "model/input", "true_params.RData")
-  pth_params_defl   <- file.path(pth_main, "model/input", "defl_params.RData")
+  pth_params_true   <- file.path(pth_main, "model/input", "true_params.rds")
+  pth_params_defl   <- file.path(pth_main, "model/input", "defl_params.rds")
 
   out <- list()
   out$pth_project     <- pth_project
