@@ -7,3 +7,4 @@
 ^runma_bash\.sh$
 ^.Rhistory
 ^.vscode$
+^tests$
