@@ -159,9 +159,9 @@ dir_proj_top_level_update <- function(pth_top_lvl, overwrite) {
 #' @param fn_data character giving the filename of the simulated data set
 #'   (saved in \code{.csv}-format); default to "sim_data"
 #' @param fn_true_states character giving the filename of the simulated true
-#'   states (saved in \code{.RData}-format); default to "states_true"
+#'   states (saved in \code{.rds}-format); default to "states_true"
 #' @param fn_zero_states  character giving the filename of the states set all to
-#'   zero (saved in \code{.RData}-format); default to "states_zero"
+#'   zero (saved in \code{.rds}-format); default to "states_zero"
 #'
 #' @return a list of 3:
 #'    \itemize{
@@ -175,8 +175,8 @@ get_file_names_simul_data <- function(fn_main_part,
                                       fn_zero_states = "states_zero") {
 
   fn_data_set <- paste0(fn_data, "_", fn_main_part, ".csv")
-  fn_true_val <- paste0(fn_true_states, "_", fn_main_part, ".RData")
-  fn_zero_val <- paste0(fn_zero_states, "_", fn_main_part, ".RData")
+  fn_true_val <- paste0(fn_true_states, "_", fn_main_part, ".rds")
+  fn_zero_val <- paste0(fn_zero_states, "_", fn_main_part, ".rds")
   return(list(fn_data_set = fn_data_set,
               fn_true_val = fn_true_val,
               fn_zero_val = fn_zero_val))
@@ -209,8 +209,8 @@ save_simulated_data <- function(pth_project,
   pth_data        <- file.path(pth_to_write, fn_data_set)
   pth_true_states <- file.path(pth_to_write, fn_true_states)
   pth_zero_states <- file.path(pth_to_write, fn_zero_states)
-  pth_true_params <- file.path(pth_to_write, "true_params.RData")
-  pth_defl_params <- file.path(pth_to_write, "defl_params.RData")
+  pth_true_params <- file.path(pth_to_write, "true_params.rds")
+  pth_defl_params <- file.path(pth_to_write, "defl_params.rds")
   SIMUL_U_BETA <- !is.null(get_regs_u(data_sim))
   SIMUL_Z_BETA <- !is.null(get_regs_z(data_sim))
   true_states <- get_sim_latent_states(data_sim)
@@ -239,10 +239,10 @@ save_simulated_data <- function(pth_project,
                                     num_regs_z, num_regs_u,
                                     NN, TT, DD)
   write.csv(data_out, file = pth_data, row.names = FALSE)
-  save(true_states, file = pth_true_states)
-  save(true_params, file = pth_true_params)
-  save(zero_states, file = pth_zero_states)
-  save(defl_params, file = pth_defl_params)
+  saveRDS(true_states, file = pth_true_states)
+  saveRDS(true_params, file = pth_true_params)
+  saveRDS(zero_states, file = pth_zero_states)
+  saveRDS(defl_params, file = pth_defl_params)
 }
 get_dist_type_simul <- function(data_sim) {
   DISTRIBUTION <- get_type_obs(data_sim)

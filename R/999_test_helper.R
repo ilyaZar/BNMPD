@@ -26,7 +26,7 @@ test_settings <- function(type) {
   for (i in 1:NUM_DIST) {
     raw_tests     <- c(raw_tests, paste0(dist_used[i], "_test_0",
                                          seq_len(NUM_TESTS_PER_DIST),
-                                         ".RData"))
+                                         ".rds"))
     mod_dist_list <- c(mod_dist_list, rep(dist_used[i], NUM_TESTS_PER_DIST))
   }
   seed_data_list <- rep(c(42, 298375), times = 2 * length(unique(mod_dist_list)))
@@ -78,7 +78,7 @@ get_names_tests <- function(mod_dist_list, settings_true_params,
 #' Generate test infrastructure for data simulation/model directory test
 #'
 #' Run this function with no parameters. It automatically regenerates everything
-#' in "tests/testthat/fixtures/data-simul-model-dirs" i.e. the `*.RData` files
+#' in "tests/testthat/fixtures/data-simul-model-dirs" i.e. the `*.rds` files
 #' and the `BACKUP` (!with ALL models to compare to!) directories therein.
 #'
 #' So whenever an internal change is necessary, simply re-run this and the
@@ -135,7 +135,7 @@ generate_test_data_simul_model_dirs <- function() {
                                    seed_no = SEED_NR_DATA)
 
     dataSimulation2 <- dataSimulation
-    save(dataSimulation2, file = pth_tests_raw[i])
+    saveRDS(dataSimulation2, file = pth_tests_raw[i])
     generate_simulation_study(data_simulation = dataSimulation,
                               INIT_AT = "default",
                               pth_top_level = pth_tests_BACKUP,
@@ -157,16 +157,16 @@ read_file_input_data <- function(pth) {
   fn_data <- file.path(fn_data, list.files(fn_data))
   return(read.csv(fn_data))
 }
-read_files_rdata <- function(pth) {
+read_test_file_rds <- function(pth) {
   pth <- file.path(pth, "model", "input")
   files_rd <- list.files(pth)
-  files_id <- which(grepl("^.*\\.RData", files_rd))
+  files_id <- which(grepl("^.*\\.rds", files_rd))
   files_rd <- files_rd[files_id]
   stopifnot(`Number of possible main_XXX.R files > 1` = length(files_rd) == 4)
 
   out_list_rdata <- vector("list", 4)
   for (i in 1:4) {
-    out_list_rdata[[i]] <- load(file.path(pth, files_rd[i]))
+    out_list_rdata[[i]] <- readRDS(file.path(pth, files_rd[i]))
     out_list_rdata[[i]] <- eval(parse(text = out_list_rdata[[i]]))
   }
   return(out_list_rdata)
@@ -243,8 +243,8 @@ test_sim_dirs <- function(pth_1, pth_2) {
   test_input_data_02 <- read_file_input_data(pth_top_lvl_02)
   test_input_data    <- identical(test_input_data_01, test_input_data_02)
 
-  test_rdata_01 <- read_files_rdata(pth_top_lvl_01)
-  test_rdata_02 <- read_files_rdata(pth_top_lvl_02)
+  test_rdata_01 <- read_test_file_rds(pth_top_lvl_01)
+  test_rdata_02 <- read_test_file_rds(pth_top_lvl_02)
   test_rdata    <- identical(test_rdata_01, test_rdata_02)
 
   test_main_01 <- read_file_main_r(pth_top_lvl_01)
