@@ -120,23 +120,28 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             ##  updating the paths based on main project path
                             ##  provided
                             update_all_file_pths = function() {
-                              private$.pth_to_modeldef <- file.path(private$.pth_to_modeldef,
-                                                                    private$.fn_mddef)
-                              private$.pth_to_projsets <- file.path(private$.pth_to_projsets,
-                                                                    private$.fn_psset)
-                              private$.pth_to_setting1 <- file.path(private$.pth_to_settings,
-                                                                    private$.fn_pfsmp)
-                              private$.pth_to_setting2 <- file.path(private$.pth_to_settings,
-                                                                    private$.fn_prjct)
-                              private$.pth_to_priorset <- file.path(private$.pth_to_priorset,
-                                                                    private$.fn_prset)
-                              private$.pth_to_initsset <- file.path(private$.pth_to_initsset,
-                                                                    private$.fn_inits)
+                              private$.pth_to_modeldef <- file.path(
+                                private$.pth_to_modeldef,
+                                private$.fn_mddef)
+                              private$.pth_to_projsets <- file.path(
+                                private$.pth_to_projsets,
+                                private$.fn_psset)
+                              private$.pth_to_setting1 <- file.path(
+                                private$.pth_to_settings,
+                                private$.fn_pfsmp)
+                              private$.pth_to_setting2 <- file.path(
+                                private$.pth_to_settings,
+                                private$.fn_prjct)
+                              private$.pth_to_priorset <- file.path(
+                                private$.pth_to_priorset,
+                                private$.fn_prset)
+                              private$.pth_to_initsset <- file.path(
+                                private$.pth_to_initsset,
+                                private$.fn_inits)
                               private$.pth_to_p
                               invisible(NULL)
                             },
                             update_file_pth_mdout = function() {
-                              browser()
                               mdout_fls <- list.files(
                                 private$.pth_to_modelout,
                                 pattern = ".(R|r)(D|d)(S|s)$")
@@ -165,41 +170,42 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               tmp_type_obs <- private$.model_type_obs
                               tmp_type_lat <- private$.model_type_lat
                               if (type == "initialization") {
-                                msg <- paste0(crayon::red(
-                                  "Initialization of model:"),
-                                              "\n - ",
-                                              crayon::green(private$.project_id),
-                                              "\n",
-                                              " - response type ",
-                                              crayon::blue(tmp_type_obs),
-                                              " and regressor type ",
-                                              crayon::blue(tmp_type_lat),
-                                              "\n",
-                                              " - part No. ",
-                                              crayon::blue(private$.model_part),
-                                              "\n",
-                                              crayon::green("COMPLETE!\n"))
+                                msg <- paste0(
+                                  crayon::red("Initialization of model:"),
+                                  "\n - ",
+                                  crayon::green(private$.project_id),
+                                  "\n",
+                                  " - response type ",
+                                  crayon::blue(tmp_type_obs),
+                                  " and regressor type ",
+                                  crayon::blue(tmp_type_lat),
+                                  "\n",
+                                  " - part No. ",
+                                  crayon::blue(private$.model_part),
+                                  "\n",
+                                  crayon::green("COMPLETE!\n"))
                               } else if (type == "intermediate") {
                                 private$.ModelOut$update_model_output()
                                 if (private$get_num_mdout() > 0) {
                                   tmp <- private$.ModelOut$get_model_inits_mdout()
-                                  private$.ModelDat$update_md_inits(tmp$traj_init,
-                                                                    tmp$par_init)
+                                  private$.ModelDat$update_md_inits(
+                                    tmp$traj_init,
+                                    tmp$par_init)
                                 }
-                                msg <- paste0(crayon::red(
-                                  "Updating output of model:"),
-                                              "\n - ",
-                                              crayon::green(private$.project_id),
-                                              "\n",
-                                              " - response type ",
-                                              crayon::blue(tmp_type_obs),
-                                              " and regressor type ",
-                                              crayon::blue(tmp_type_lat),
-                                              "\n",
-                                              " - part No. ",
-                                              crayon::blue(private$.model_part),
-                                              "\n",
-                                              crayon::green(" for PGAS run!\n"))
+                                msg <- paste0(
+                                  crayon::red("Updating output of model:"),
+                                  "\n - ",
+                                  crayon::green(private$.project_id),
+                                  "\n",
+                                  " - response type ",
+                                  crayon::blue(tmp_type_obs),
+                                  " and regressor type ",
+                                  crayon::blue(tmp_type_lat),
+                                  "\n",
+                                  " - part No. ",
+                                  crayon::blue(private$.model_part),
+                                  "\n",
+                                  crayon::green(" for PGAS run!\n"))
                               }
                               cat(msg)
                             },
