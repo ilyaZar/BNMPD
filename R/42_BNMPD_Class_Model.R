@@ -881,27 +881,40 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @param out_pgas as returned from PGAS function
                             #' @param out_name character string giving file name
                             #'   to save output to (optional)
+                            #' @param AUTO_INIT logical; if `TRUE`
+                            #'   re-initializes the model object so that is
+                            #'   automatically ready for the next PGAS run (via
+                            #'   `$load_modeldata_runtime_pgas()` to be passed
+                            #'   to [pgas()]); if `FALSE` this is skipped and
+                            #'   the model output is saved without any further
+                            #'   interaction with the model object
                             save_pgas_model_out = function(out_pgas,
-                                                           out_name = NULL) {
-                              tmp_fn <- private$update_file_pth_mdout()
-                              assign(tmp_fn, out_pgas)
+                                                           out_name = NULL,
+                                                           AUTO_INIT = TRUE) {
+                              stopifnot(`Arg. 'AUTO_INIT' not logical`
+                                = is.logical(AUTO_INIT))
+                              private$update_file_pth_mdout()
 
                               if (is.null(out_name)) {
-                                tmp_pth <- normalizePath(
-                                  paste0(private$.fn_mdout,
-                                  ".rds"))
+                                tmp_pth_fn <- paste0(private$.fn_mdout, ".rds")
                               } else {
-                                tmp_pth <- normalizePath(
+                                tmp_pth_fn <- file.path(
                                   dirname(private$.fn_mdout),
                                   paste0(out_name, ".rds"))
                               }
+
                               saveRDS(
-                                eval(parse(text = tmp_fn)),
-                                file = tmp_pth)
+                                out_pgas,
+                                file = tmp_pth_fn)
                               cat(crayon::magenta("OUTPUT SAVED.\n"))
 
-                              private$update_project_meta()
-                              private$update_ModelOut(type = "intermediate")
+                              if (isTRUE(AUTO_INIT)) {
+                                private$update_project_meta()
+                                private$update_ModelOut(type = "intermediate")
+                                return(invisible(TRUE))
+                              } else if (isFALSE(AUTO_INIT)) {
+                                return(invisible(TRUE))
+                              }
                             }
                           )
 )
