@@ -156,7 +156,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$.fn_mdout <- file.path(
                                 private$.pth_to_modelout,
                                 fn_name)
-                              return(fn_name)
+                              return(invisible(fn_name))
                             },
                             update_project_meta = function() {
                               tmp_info <- private$.ModelDef$get_project_meta()
@@ -316,6 +316,20 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   which is the default that indicates that no
                             #'   "true" parameters are available or a path to
                             #'   the true parameters in a simulation setting
+                            #' @param AUTO_INIT logical; if `TRUE` model output
+                            #'   initialization is invoked after new object
+                            #'   instantization: this constructs additionally
+                            #'   starting input for the next PGAS run, which
+                            #'   is taken from previous output, or, startup
+                            #'   setting from the json-file).
+                            #'
+                            #'   The input can be loaded via $.get_model_output`
+                            #'   and passed to [run_pgas()]. Sometimes `FALSE`
+                            #'   makes sense to explore the model class per-se.
+                            #'
+                            #'   Defaults to `TRUE` as most often invoked for
+                            #'   subsequent PGAS runs invoked immediately after
+                            #'   object creation.
                             #'
                             #' @examples
                             #' \dontrun{`ModelBNMPD$new(getwd())`}
@@ -323,7 +337,10 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                   path_to_states_init = NULL,
                                                   path_to_states_true = NULL,
                                                   path_to_params_init = NULL,
-                                                  path_to_params_true = NULL) {
+                                                  path_to_params_true = NULL,
+                                                  AUTO_INIT = TRUE) {
+                              stopifnot(`Arg. 'AUTO_INIT' muste be logical`
+                                = is.logical(AUTO_INIT))
                               if (!is.null(path_to_states_init)) {
                                 private$.states_init <- readRD(
                                   path_to_states_init)
@@ -381,8 +398,10 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               cat("ModelHistory successful\n")
                               private$update_project_meta()
                               cat("Update project meta successful.\n")
-                              private$update_ModelOut(type = "initialization")
-                              cat("Update model output successful.\n")
+                              if (isTRUE(AUTO_INIT)) {
+                                private$update_ModelOut(type = "initialization")
+                                cat("Update model output successful.\n")
+                              }
                             },
                             #' @description Returns "raw" data set.
                             #'
