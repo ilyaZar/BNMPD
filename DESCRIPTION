@@ -25,11 +25,11 @@ Imports:
     utils,
     Rcpp,
     R6,
-    colorDF,
     magrittr (>= 1.5),
+    rlang,
+    tibble,
     yaml,
-    sjlabelled,
-    Rmpi,
+    jsonlite,
     snow,
     parallel
 Suggests: 
@@ -38,7 +38,7 @@ Suggests:
     gtools,
     dplyr,
     devtools (>= 2.2.2.9000),
-    testthat (>= 3.0.0),
+    testthat (>= 3.0.0)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
