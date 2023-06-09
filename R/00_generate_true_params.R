@@ -185,21 +185,6 @@ get_par_settings <- function(true_params) {
   check_class_true_params(true_params)
   attr(true_params, which = "meta_info")[["PAR_SETTINGS"]]
 }
-#' Access to meta information for object of class "trueParams"
-#'
-#' Specifically, getting seed number used during bet_u_lin and VCM value
-#' simulation.
-#'
-#' @inheritParams get_seed
-#' @inheritParams get_meta_info
-#'
-#' @return seed number of attribute of \code{class} "trueParams"; the random
-#'    seed during beta_u type value construction and corresponding VCMs
-#' @export
-get_seed.trueParams <- function(true_params, type = NULL) {
-  check_class_true_params(true_params)
-  attr(true_params, which = "meta_info")[["SEED_NO"]]
-}
 #' S3 method for generic 'get_dimension' for class "trueParams"
 #'
 #' See [get_dimension()] for details.

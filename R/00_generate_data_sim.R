@@ -227,45 +227,6 @@ get_type_lat <- function(data_sim) {
   check_class_data_sim(data_sim)
   attr(data_sim, "model_type_lat")
 }
-#' Generic function to get the seed
-#'
-#' Dispatches on class \code{trueParams} or \code{dataSim}.
-#'
-#' @param obj an object of class \code{trueParams} or \code{dataSim}; see
-#'    details of corresponding S3 methods
-#' @param type a character: either "data_sim", returning the seed used for data
-#'   simulation, or "true_params" returning the seed for generation of the
-#'   underlying \code{trueParams} object; this is only useful for
-#'   \code{get_seed.dataSim} i.e. \code{get_seed()} applied to type
-#'   \code{dataSim}; defaults to "data_sim" but will be ignored when first
-#'   argument is \code{class=="trueParams"}
-#'
-#'
-#' @return an \code{integer} giving the underlying seed number(s)
-#' @export
-get_seed <- function(obj, type = "data_sim") {
-  stopifnot(`Arg. 'type' must be either 'data_sim' or 'true_params'` =
-            (type %in% c("data_sim", "true_params")))
-  UseMethod("get_seed")
-}
-#' Helper function to set the seed
-#'
-#' @inheritParams get_seed
-#' @inheritParams get_true_params_obj
-#'
-#' @return an \code{integer} giving the underlying seed number(s)
-#' @export
-get_seed.dataSim <- function(data_sim, type = "data_sim") {
-  check_class_data_sim(data_sim)
-
-  if (type == "data_sim") return(attr(data_sim, "SEED_NO"))
-  if (type == "true_params") return(get_seed(get_true_params_obj(data_sim)))
-  return(invisible(NULL))
-}
-set_seed_no <- function(true_params, seed_no) {
-  if (is.null(seed_no)) seed_no <- get_seed(true_params)
-  return(seed_no)
-}
 #' Generic function to model dimension meta info
 #'
 #' Dispatches on class \code{trueParams}, \code{trueParamsDirichlet},
