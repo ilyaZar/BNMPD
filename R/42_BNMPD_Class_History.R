@@ -1,3 +1,11 @@
+#' Class representing a history of a BNMPD-model
+#'
+#' @description must be documented
+#' @details As the default, construction of an object instance should be done
+#'   from an R-Script that is in the same directory as the other project files.
+#'   It is possible, though, to construct an object when called from a different
+#'   directory and providing the path to the project files via
+#'   \code{path_to_project} to the `.$new()`-constructor as first argument.
 History <- R6::R6Class("History",
                         class = FALSE,
                         cloneable = FALSE,
@@ -14,6 +22,22 @@ History <- R6::R6Class("History",
                           .info = NULL
                         ),
                         public = list(
+                          #' @description class initializer
+                          #'
+                          #' @param path_to_history character string; path to
+                          #'   directory where history files are stored; passed
+                          #'   internally via [`ModelBNMPD`] that constructs
+                          #'   this class; defaults to usually something like
+                          #'   "model/history"
+                          #'
+                          #' @param current_settings settings as generated via
+                          #'   `$get_settings_set()`, a method from the
+                          #'   [`Settings`]-class
+                          #'
+                          #' @param current_info defunct. usually `NULL` but
+                          #'   might be useful later, so keep there since this
+                          #'   class is used internally only
+                          #'
                           initialize = function(path_to_history,
                                                 current_settings,
                                                 current_info) {
@@ -27,10 +51,18 @@ History <- R6::R6Class("History",
                             private$.settings <- current_settings
                             private$.info     <- current_info
                         },
+                        #' @description View error log.
+                        #'
+                        #' @details retrieves the error log written by CHEOPS
+                        #'   into the directory specified in the batch-file
                         view_history_error = function() {
                             file.edit(private$.pth_err,
                                       editor = "vim")
                         },
+                        #' @description View log file
+                        #'
+                        #' @details retrieves the log-file written by CHEOPS
+                        #'   into the directory specified in the batch-file
                         view_history_log = function() {
                             file.edit(private$.pth_log,
                                       editor = "vim")
