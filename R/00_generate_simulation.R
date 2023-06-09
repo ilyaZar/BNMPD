@@ -59,6 +59,14 @@ generate_simulation_study <- function(data_simulation,
   update_settings_project_yaml(pth_to_project, project_name)
   return(invisible(data_simulation))
 }
+#' Helper that generates zero/default paramters
+#'
+#' Parameters are of class `trueParams`
+#'
+#' @inheritParams new_dataSim
+#'
+#' @return an object of class `trueParams` with entries all zero or some default
+#'   values for its data containers
 get_zero_or_defaults <- function(true_params) {
   check_class_true_params(true_params)
   zero_params <- true_params
