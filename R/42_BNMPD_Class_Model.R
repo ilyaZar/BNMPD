@@ -610,9 +610,9 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   \code{./model/output/...}
                             #'
                             #' @param range_iter integer sequence as defined in
-                            #'   \code{ModelOutput$get_model_output()}[ModelOutput]
+                            #'   \code{ModelOut$get_model_output()}[ModelOut]
                             #' @param range_parts integer sequence as defined in
-                            #'   \code{ModelOutput$get_model_output()}[ModelOutput]
+                            #'   \code{ModelOut$get_model_output()}[ModelOut]
                             #'
                             get_model_output = function(range_iter = NULL,
                                                         range_parts = NULL) {
