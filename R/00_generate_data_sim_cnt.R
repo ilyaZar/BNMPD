@@ -75,6 +75,8 @@ set_class_name <- function(dist) {
 #' a list element can be \code{NULL} indicating that this element is not needed.
 #'
 #' @inheritParams new_dataSim
+#' @inheritParams generate_data_t
+#' @inheritParams set_opt_include
 #' @param type character: either "x" or "y"
 #'
 #' @return a list of two; \code{data} and \code{states} where the former can
@@ -118,6 +120,8 @@ get_x_y_containter_names <- function(NN, TT, DD) {
 #' (\code{par}).
 #'
 #' @inheritParams new_dataSim
+#' @inheritParams generate_data_t
+#' @inheritParams set_opt_include
 #' @param cnt_name a character: either "z" for z-type regressors or
 #'   "u" for the random effects container; other input gives an error
 #'

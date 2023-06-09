@@ -41,9 +41,7 @@ set_x_levels <- function(true_params, x_levels, X_LOG_SCALE) {
 #' 30, 40 - are reasonable target parameters for the Dirichlet taken as
 #' `alpha_1=30`, `alpha_2=30`, `and alpha_3=40`.
 #'
-#'
-#' @param DD integer giving the multivariate dimension
-#' @param NN number of cross sectional units (repetitions of target values)
+#' @inheritParams new_phi
 #' @param tuning_parameters a set of tuning parameters that generate a
 #'   reasonably spaced sequence of target values
 #' @inheritParams new_dataSim
@@ -140,9 +138,10 @@ check_special_dist_quick <- function(dist) {
 #' Refer to intercept specifications (either at z-type regressors or random
 #' effects), policy dummies, or zero specifications.
 #'
+#' @inheritParams new_dataSim
+#' @inheritParams new_phi
 #' @param includes a list of three elements named: 'intercept',
 #'   'policy', and 'zeros'
-#' @inheritParams new_dataSim
 #'
 #' @return a list of the same structure as includes but with elements adjusted
 #'   for model dimension; \code{includes} is a list of \code{NULL} elements,
