@@ -4,6 +4,17 @@ check_settings_input <- function(st_type, sm_type, md_type) {
   stopifnot(`Unknown mod_type...` = md_type %in% c("empirical", "simulation"))
   return(invisible(NULL))
 }
+#' Performs a cluster cleanup
+#'
+#' This includes setting warning/error printing options back to original and
+#' closing cluster of type `PSOCK` or `MPI` if `close = TRUE`. The function
+#' prints informative messages to the user too.
+#'
+#' @param pe the environment that contains the cluster object
+#' @param close logical; if `TRUE` then cluster cleanup is performed; otherwise
+#'   only the options are re-set
+#'
+#' @return pure side effect function for cluster cleanup; returns invisibly
 cleanup_cluster <- function(pe, close = TRUE) {
   stopifnot(`Arg. close must be logical.` = is.logical(close))
   cat("PGAS finished!\n")
@@ -17,6 +28,7 @@ cleanup_cluster <- function(pe, close = TRUE) {
   }
   options(warn = 0)
   cat("Resetting options!\n")
+  return(invisible(pe))
 }
 generate_environment_parallel <- function(envir_current,
                                           type = NULL,
