@@ -12,6 +12,11 @@
 #'   characterizing the simulation study (e.g. set \code{append = "MCMC_only"})
 #' @param overwrite logical; if \code{TRUE} then implied project directory is
 #'   overwritten when it exists, otherwise an error is thrown
+#' @param TESTING local; if `TRUE` then meta files for model-dir setup are
+#'   copied with different relative paths that allows to use this functions
+#'   inside tests; `{testthat}` type tests start relative to the `test/testthat`
+#'    directory so relative paths need adjustments and `testthat::test()` or
+#'    `testthat::test_file()` run smoothly
 #'
 #' @return side effect function generating directories and files for simulation
 #'   study and copying data/template files into corresponding directories
