@@ -132,8 +132,6 @@ cbpf_as_dm_r <- function(N, TT, DD,
 #' @param TT time series dimension
 #' @param DD number of Dirichlet fractions/shares i.e. categories
 #' @param y measurements: Dirichlet fractions/shares
-#' @param num_counts measurements: Dirichlet-multinomial total counts per time
-#'   period (\code{T}-dimensional vector)
 #' @param Regs_beta  result of regressor values i.e. z_{t} (matrix) multiplied
 #'   by parameters/coefficients (vector) over ALL \code{d=1...DD} components
 #' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
