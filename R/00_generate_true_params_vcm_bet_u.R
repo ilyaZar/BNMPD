@@ -50,8 +50,8 @@ get_num_reg_seq <- function(num_u_regs, DD) {
 }
 #' Generates random effects per cross sectional unit (e.g. US-state)
 #'
-#' @param DD dimension of the latent state process
-#' @param NN number of cross sectional units
+#' @inheritParams new_trueParams
+#' @inheritParams new_phi
 #' @param from_IW logical; if \code{TRUE}, then random effects (per dimension of
 #'   the state process \code{d=1,...,DD}) are generated from an IW-distribution
 #'   with internally specified degrees of freedom and scale matrix s.th. per d,
@@ -59,6 +59,11 @@ get_num_reg_seq <- function(num_u_regs, DD) {
 #' @param num_re integer vector of dimension \code{DD} if \code{from_IW == TRUE}
 #'   or a scalar integer value if \code{from_IW == FALSE} that specifies the
 #'   number of random effects per component \code{d=1,...,DD}
+#' @param vcm_u_scl numeric tuning parameter to scale the variance elements in
+#'   the VCM
+#' @param rel_var_to_cov numeric tuning parameter to scale the covariance
+#'   elements relative to the variance in the VCM
+#' @param n0u degrees of freedom for the (inverted) Wishart distributions
 #' @param seed_no integer; random seed to set at the beginning, set \code{NULL}
 #'   if not required
 #'

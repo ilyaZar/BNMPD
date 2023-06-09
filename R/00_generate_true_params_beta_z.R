@@ -36,6 +36,7 @@ new_bet_z <- function(SIMUL_Z_BETA,
 #' Get default values for true \code{beta_z_lin} parameters in simulation
 #'
 #' @inheritParams get_default_sig_sq
+#' @inheritParams new_bet_z
 #' @param num inter giving number of regressor components (if
 #'   \code{length(num) == 1}, then each code{beta_z_lin} gets the same number;
 #'   else must be a vector satisfying \code{length(num) == DD})

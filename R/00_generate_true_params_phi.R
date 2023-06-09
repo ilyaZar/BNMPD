@@ -2,8 +2,10 @@
 #'
 #' @param SIMUL_PHI logical; if \code{TRUE}, then phi-parameters are generated
 #' @inheritParams new_trueParams
-#' @param DD number of multivariate components
-#' @param NN number of cross sectional units
+#' @param DD number of multivariate components; see documentation for parameter
+#'   `model_dim` from [new_trueParams()]
+#' @param NN number of cross sectional units; see documentation for parameter
+#'   `model_dim` from [new_trueParams()]
 #' @param order_p_vec a numeric vector of length 1 or \code{DD} giving the
 #'    order(s) of autoregression per component \code{d=1,...,DD}. If length 1,
 #'    then a single number is used for all multivariate components. If a special
@@ -76,6 +78,7 @@ get_default_phi <- function(distribution, DD, NN, order_p_vec) {
 #' Helper to extend user input to full container class.
 #'
 #' @inheritParams get_default_phi
+#' @inheritParams new_phi
 #'
 #' @return a list of length \code{DD} with elements being matrices of dimension
 #'   \code{order_p_vec[d] x NN} containing the true parameter values for phi

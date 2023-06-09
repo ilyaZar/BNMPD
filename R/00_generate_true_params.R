@@ -11,7 +11,9 @@
 #'    latter generates the latent states without link-function and measurement/
 #'    response transformations, which is useful e.g. when testing the pure Gibbs
 #'    sampler)
-#' @param dim_model a vector with three components: \code{NN x TT x DD}
+#' @param model_dim a vector with three integer components: \code{NN x TT x DD}
+#'    giving the number of cross sectional units (`NN`), the time series legnth
+#'    (`TT`) and the number of multivariate components (`DD`)
 #' @param sig_sq a vector of length \code{DD} and strictly positive elements; if
 #'    \code{NULL}, then defaults are generated (see [get_default_sig_sq])
 #' @param phi a vector of length \code{DD} with elements between 0 and 1; if
@@ -44,7 +46,6 @@
 #'   length DD indicating whether the corresponding component (either at z or u)
 #'   should have an intercept
 #' @param seed_taken the seed used for drawing random effects
-#' @inheritParams new_dataSim
 #'
 #' @return an object of class "\code{trueParams}" which is a list of three: true
 #'   parameter values as a list, meta information such as model dimension, the
@@ -332,6 +333,9 @@ check_true_params_distribution <- function(obj) {
 #'    to use DD-A, DD-B or both slice(s) of multivariate component; only
 #'    applicable for special distributions such as generalized Dirichlet or
 #'    generalized Multinomial Dirichlet
+#' @param drop logical; to be passed down to other functions that make use of
+#'   accessor operands such as `[[` where sometimes the `drop` argument must be
+#'   set to `TRUE` or `FALSE` for correct value access
 #'
 #' @return sliced parameters for some cross sectional unit \code{n}
 #' @export
