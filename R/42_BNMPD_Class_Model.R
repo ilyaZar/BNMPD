@@ -185,7 +185,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                   "\n",
                                   crayon::green("COMPLETE!\n"))
                               } else if (type == "intermediate") {
-                                private$.ModelOut$update_model_output()
+                                private$.ModelOut$get_model_inits_mdout()
                                 if (private$get_num_mdout() > 0) {
                                   tmp <- private$.ModelOut$get_model_inits_mdout()
                                   private$.ModelDat$update_md_inits(

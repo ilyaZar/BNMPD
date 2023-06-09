@@ -1,4 +1,12 @@
-ModelOut <- R6::R6Class("ModelOut", # nolint:
+#' Class representing a history of a BNMPD-model
+#'
+#' @description must be documented
+#' @details As the default, construction of an object instance should be done
+#'   from an R-Script that is in the same directory as the other project files.
+#'   It is possible, though, to construct an object when called from a different
+#'   directory and providing the path to the project files via
+#'   \code{path_to_project} to the `.$new()`-constructor as first argument.
+ModelOut <- R6::R6Class("ModelOut",
                         class = FALSE,
                         cloneable = FALSE,
                         portable = FALSE,
@@ -347,6 +355,16 @@ ModelOut <- R6::R6Class("ModelOut", # nolint:
                           }
                         ),
                         public = list(
+                          #' @description class initializer
+                          #'
+                          #' @param pth_to_output character string; path to
+                          #'   directory where model output is stored; passed
+                          #'   internally via [`ModelBNMPD`] that constructs
+                          #'   this class; defaults to usually something like
+                          #'   "model/output"
+                          #' @param inits_start initial starting values as
+                          #'   generated via `$get_model_inits_start()`, a
+                          #'   method from the [`ModelDat`]-class
                           initialize = function(pth_to_output,
                                                 inits_start) {
                             private$update_output_meta(pth_to_output)
@@ -362,6 +380,13 @@ ModelOut <- R6::R6Class("ModelOut", # nolint:
                                                              private$.num_bet_u)
                             }
                           },
+                          #' @description updates model output by resetting the
+                          #'   `.num_out`, `.pth_to_md_outs` and
+                          #'   `.pth_to_md_out_last` (via `update_output_meta()`)
+                          #'   and setting initial parameter and state values
+                          #'   for next `[pgas()]` run (via
+                          #'   `update_init_traj_param()`)
+                          #'
                           get_model_inits_mdout = function() {
                             private$update_output_meta(private$.pth_to_outputs)
                             if (private$.num_out > 0) {
@@ -370,16 +395,26 @@ ModelOut <- R6::R6Class("ModelOut", # nolint:
                             }
                             private$.md_out_inits
                           },
+                          #' @description getter for the internal field
+                          #'   `.num_out` which counts the number of outputs
+                          #'   i.e. `.rds`files stored in `model/output`
+                          #'
                           get_num_outs = function() {
                             private$.num_out
                           },
-                          update_model_output = function() {
-                            private$update_output_meta(private$.pth_to_outputs)
-                            if (private$.num_out > 0) {
-                              private$update_init_traj_param(private$.num_bet_z,
-                                                             private$.num_bet_u)
-                            }
-                          },
+                          #' @description helper function to join the model
+                          #'   outputs into a big output file for further
+                          #'   processing; either by stored parts (that are
+                          #'   living inside `model/output`) or by iteration;
+                          #'   computes the model parts that are relevant for
+                          #'   the iteration ranges and outputs the result if
+                          #'   both arguments are `NULL` a full join is
+                          #'   performed which can be time-consuming
+                          #'
+                          #' @param range_iter integer vector giving the
+                          #'   iteration ranges
+                          #' @param range_parts integer vector giving the
+                          #'   iteration parts
                           get_model_output = function(range_iter = NULL,
                                                       range_parts = NULL) {
                             if (!is.null(range_iter) && !is.null(range_parts)) {
