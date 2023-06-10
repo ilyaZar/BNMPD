@@ -3,6 +3,9 @@
 #' @inheritParams new_dataSim
 #' @inheritParams set_new_project_name
 #' @param pth_project path to top-level project directory
+#' @param model_type concatenated from [get_type_obs()], [get_type_lat()]:
+#'    `c(model_type_obs = get_type_obs(dataSim),
+#'       model_type_lat = get_type_lat(dataSim))`
 #'
 #' @return side effect function that writes a 'yaml'-config file to path
 #' @export
