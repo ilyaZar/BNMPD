@@ -135,7 +135,7 @@ load_model <- function(env_model, to_env) {
   for(n in use_model_names) {
     assign(n, get(n, env_model), to_env)
   }
-  rm(pgas_model, envir = parent.frame())
+  rm("pgas_model", envir = parent.frame())
   options(warn = 1)
   if (isTRUE(env_model$smc_parallel) && is.null(env_model$cluster_type)) {
     stop("Cluster type not specified although 'smc_parallel=TRUE'.")
