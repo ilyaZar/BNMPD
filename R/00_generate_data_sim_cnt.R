@@ -160,16 +160,16 @@ get_dim_names_cnt_z_u <- function(true_params, cnt_name, dim_bet, TT, NN, DD) {
   } else if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     DD1_tmp <- get_DD2(dist, DD) / 2
 
-    dim_bet_A_part <- as.vector(unlist(sapply(head(dim_bet, DD1_tmp),
+    dim_bet_A_part <- as.vector(unlist(sapply(utils::head(dim_bet, DD1_tmp),
                                               seq_len, simplify = TRUE)))
-    dim_bet_B_part <- as.vector(unlist(sapply(tail(dim_bet, DD1_tmp),
+    dim_bet_B_part <- as.vector(unlist(sapply(utils::tail(dim_bet, DD1_tmp),
                                               seq_len, simplify = TRUE)))
     z_part <- paste0(cnt_name, c(dim_bet_A_part, dim_bet_B_part))
     type_p <- c(rep("_A", each = length(dim_bet_A_part)),
                 rep("_B", times = length(dim_bet_B_part)))
     d_part <- paste0("_d", rep(c(1:DD1_tmp, 1:DD1_tmp),
-                               c(head(dim_bet, DD1_tmp),
-                                 tail(dim_bet, DD1_tmp))))
+                               c(utils::head(dim_bet, DD1_tmp),
+                                 utils::tail(dim_bet, DD1_tmp))))
     tmp_names <- paste0(z_part, type_p, d_part)
   }
   return(list(paste0("t_", seq_len(TT)),

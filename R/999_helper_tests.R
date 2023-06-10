@@ -153,7 +153,7 @@ read_file_main_r <- function(pth) {
 read_file_input_data <- function(pth) {
   fn_data <- file.path(pth, "model", "input", "datasets")
   fn_data <- file.path(fn_data, list.files(fn_data))
-  return(read.csv(fn_data))
+  return(utils::read.csv(fn_data))
 }
 read_test_file_rds <- function(pth) {
   pth <- file.path(pth, "model", "input")

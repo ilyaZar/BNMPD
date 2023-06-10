@@ -42,9 +42,12 @@ set_x_levels <- function(true_params, x_levels, X_LOG_SCALE) {
 #' `alpha_1=30`, `alpha_2=30`, `and alpha_3=40`.
 #'
 #' @inheritParams new_phi
+#' @inheritParams new_dataSim
+#' @param target_val_fixed the target level values for the latent state process
+#'   to fluctuate around; a value of 500 usually works best (in combination with
+#'   other tuning values) when simulating data
 #' @param tuning_parameters a set of tuning parameters that generate a
 #'   reasonably spaced sequence of target values
-#' @inheritParams new_dataSim
 #'
 #' @return a matrix of dimension \code{NN x DD}, with each row being the target
 #'   levels (currently all the same)

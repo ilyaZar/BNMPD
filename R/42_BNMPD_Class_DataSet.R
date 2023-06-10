@@ -70,7 +70,7 @@ DataSet <- R6::R6Class(classname = "DataSet",
                            message("Loading data: ",
                                    pth_to_data_chosen,
                                    "\n...")
-                           data_chosen <- read.csv(pth_to_data_chosen)
+                           data_chosen <- utils::read.csv(pth_to_data_chosen)
                            if(print_data) print(tibble::tibble(data_chosen))
                            message(crayon::green("Data successfully loaded!"))
                            return(data_chosen)

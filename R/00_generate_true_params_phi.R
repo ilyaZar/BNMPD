@@ -100,8 +100,8 @@ get_manual_phi <- function(distribution, phi, DD, NN, order_p_vec) {
     out_phi[[d]] <- tmp_phis
   }
   if (check_special_dist_quick(distribution)) {
-    out_phi <- list(A = out_phi[head(seq_len(DD2), n = DD)],
-                    B = out_phi[tail(seq_len(DD2), n = DD)])
+    out_phi <- list(A = out_phi[utils::head(seq_len(DD2), n = DD)],
+                    B = out_phi[utils::tail(seq_len(DD2), n = DD)])
   }
   return(out_phi)
 }

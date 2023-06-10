@@ -17,7 +17,7 @@ get_used_or_zeros <- function(trueParams, zeroParams, INIT_AT = INIT_AT) {
 #'   [generate_simulation_study()]
 #' @param base_name character string giving the base-name as set via
 #'   [set_base_name()]
-#' @param model_type a named character string specifying the
+#' @param model_type_obs a named character string specifying the
 #'   model type observations (e.g. 'DIRICHLET")
 #'
 #' @return character string giving the updated project name
@@ -83,8 +83,8 @@ get_data_out_reg_names <- function(regs_num, regs_type, dist_type) {
 
   if (special_type) {
     DD_to_use <- DD_to_use / 2 # !!! HALF OF REG_NUM IS THE CORRECT VALUE !!!
-    DDtimes_A <- head(unlist(regs_num), DD_to_use)
-    DDtimes_B <- tail(unlist(regs_num), DD_to_use)
+    DDtimes_A <- utils::head(unlist(regs_num), DD_to_use)
+    DDtimes_B <- utils::tail(unlist(regs_num), DD_to_use)
     tmp_02 <- c(rep(paste0("A_", 1:DD_to_use), DDtimes_A),
                 rep(paste0("B_", 1:DD_to_use), DDtimes_B))
   } else {
