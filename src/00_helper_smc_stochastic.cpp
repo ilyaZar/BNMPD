@@ -31,8 +31,6 @@ arma::uvec resample(const arma::colvec& weights,
 //'
 //' @param weights arma::colvec of dimension \code{N} storing particle weights
 //' @param N number of particles (int)
-//' @param id_as_lnspc a arma::uvec starting from 1:N; redundant if R::sample()
-//'   is used but necessary for the Armadillo functionality
 //'
 //' @return returns sampled index (as double; check if int-type could be used)
 //'

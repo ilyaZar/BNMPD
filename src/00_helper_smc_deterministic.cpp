@@ -95,8 +95,6 @@ double w_as_c(const arma::mat& mean_diff,
 //' @param N number of particles (int)
 //' @param DD number of state components (dirichlet fractions or number of
 //'   components in the multivariate latent state component) (int)
-//' @param num_counts number of overall counts per t=1,...,TT (part of the
-//'   measurement data) i.e. a scalar int-value for the current time period
 //' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
 //'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
 //' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
@@ -393,6 +391,10 @@ arma::vec w_log_cbpf_m(const int& N,
 //' overflows.
 //'
 //' @param w \code{arma::vec} vector of log-weights which will be normalized
+//' @param w_type a character string giving the weight type that's checked e.g.
+//'   can be "particle" or "ancestor" meaning particle or ancestor weights;
+//'   will be passed further to [check_weights()] as second argument
+//'
 //' @return an \code{arma::vec} vector of the same dimension as the input
 //'   \code{w} that contains the normalized weights
 //'
@@ -418,9 +420,11 @@ arma::vec w_normalize_cpp(const arma::vec& w, std::string w_type) {
 //'
 //' @param w_log a numeric vector of weights to check
 //' @param w_type a character string giving the weight type that's checked e.g.
-//'   can be "particle" or "ancestor" meaning particle or ancesotr weights
+//'   can be "particle" or "ancestor" meaning particle or ancestor weights; if
+//'   called from top level function the prefix "normalized" is appended to
+//'   indicate that 'normalized' (summing to unity) particle weights are checked
 //'
-//' @return void return; hrows error or prints warning and modifies in place
+//' @return void return; throws error or prints warning and modifies in place
 //'   the problematic weights
 //'
 // [[Rcpp::export]]
@@ -446,9 +450,11 @@ void check_weights(arma::vec& w_log, const std::string w_type) {
 //'
 //' Throws error, warning, message etc.
 //'
-//' @param w_info a std::string giving the weight type to paste into final
+//' @param w_type a std::string giving the weight type to paste into final
 //'   message
 //' @param m_info a std::string to be transformed to a string.
+//' @param m_type a std::string giving the type of the message return; either
+//'   "warning" or "error"
 //'
 //' @return void return; prints message i.e. side effect function
 //'
