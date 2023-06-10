@@ -98,6 +98,8 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
 #' @param regs_z Z regressors sliced over corresponding \code{d} component
 #' @param U regressor matrix of random effects
 #' @param TT number of timer periods
+#' @param dim_bet_z for a given `d`, the current dimension of bet_z component
+#'   to access
 #' @param prior_vcm_bet_z covariance matrix prior for the variance of the
 #'   \code{beta_z} coefficient
 #' @param iter_range_NN iteration range i.e. the cross sectional components
@@ -211,6 +213,7 @@ sample_sig_sq_x_alr <- function(phi_x,
 #'
 #' @inheritParams sample_bet_z_alr
 #' @inheritParams sample_sig_sq_x_alr
+#' @inheritParams sample_vcm_bet_u
 #'
 #' @return a sample of random effects of dimension \code{dim_bet_u x NN}
 #' @export

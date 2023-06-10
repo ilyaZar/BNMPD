@@ -4,14 +4,13 @@
 #' vectors and adding up. The result needs to be passed to the SMC sampler. This
 #' is the version for linear and random effect type regressors.
 #'
+#' @inheritParams sample_bet_z_alr
 #' @param Z Z regressor matrix sliced at corresponding component \code{d}
 #' @param U U regressor matrix sliced at corresponding component \code{d}
 #' @param id_uet id of \code{d}-component random effects regressor matrix
 #' @param bet_z m'th sample of beta coefficient of the state component \code{d}
 #' @param bet_u m'th sample of beta coefficient of the state component \code{d}
 #' @param id_bet_u id of \code{d}-component random effects
-#' @param iter_range_NN iteration range i.e. the cross sectional components
-#'   that are actually contributing to \code{d}
 #'
 #' @return a vector of dimension \code{TT x NN}, containing the corresponding
 #'   multiplication result for the d'th component

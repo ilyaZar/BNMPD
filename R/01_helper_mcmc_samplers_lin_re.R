@@ -109,7 +109,7 @@ sample_sig_sq_x_lr <- function(bet_z,
 #' The covariance matrix of random effects is per component \code{d} of the
 #' DD-dimensional latent state process and drawn from the inverse Wishart.
 #'
-#' @param inheritParams sample_bet_z_alr
+#' @inheritParams sample_bet_z_alr
 #' @param id_reg_z a vector of 2; Z regressor id for components \code{d} and
 #'   \code{d + 1}
 #'

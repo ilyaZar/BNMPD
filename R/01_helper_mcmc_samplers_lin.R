@@ -72,7 +72,8 @@ sample_sig_sq_x_l <- function(bet_z,
 #'
 #' This is the linear-only reg-type sampler.
 #'
-#' @param inheritParams sample_bet_all
+#' @inheritParams sample_bet_z_alr
+#' @inheritParams sample_bet_z_lr
 #'
 #' @return a sample
 #' @export
