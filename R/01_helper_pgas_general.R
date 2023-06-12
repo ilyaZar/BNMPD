@@ -72,7 +72,7 @@ get_smc_internal <- function(obs_type, smc_type) {
   }
   if (obs_type == "DIRICHLET") {
     grep_smc <- paste0(grep_smc, "as_d_cpp_par")
-  } else if (obs_type == "DIRICHLET-MULT") {
+  } else if (obs_type == "DIRICHLET_MULT") {
     grep_smc <- paste0(grep_smc, "as_dm_cpp_par")
   }
   grep_smc <- paste0("BNMPD:::", grep_smc)
