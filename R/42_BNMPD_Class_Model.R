@@ -342,7 +342,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               stopifnot(`Arg. 'AUTO_INIT' muste be logical`
                                 = is.logical(AUTO_INIT))
                               if (!is.null(path_to_states_init)) {
-                                private$.states_init <- readRD(
+                                private$.states_init <- readRDS(
                                   path_to_states_init)
                               }
                               if (!is.null(path_to_states_true)) {
