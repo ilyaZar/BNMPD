@@ -374,7 +374,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                   path_to_params_init)
                                 generate_setup_init_json(
                                   private$.params_init,
-                                  private$.pth_to_initsset)
+                                  private$.pth_to_proj )
                               }
 
                               private$.DataSet  <- DataSet$new(
@@ -633,7 +633,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             set_param_inits = function(pth_to_inits) {
                               private$.params_init <- readRDS(pth_to_inits)
                               generate_setup_init_json(private$.params_init,
-                                                       private$.pth_to_initsset)
+                                                       private$.pth_to_proj)
                               private$.ModelDat <- update_modelDat()
                             },
                             #' @description Print "raw" data set.
