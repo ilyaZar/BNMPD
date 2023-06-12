@@ -89,15 +89,19 @@ get_args_list_smc_internal <- function(pe, mm) {
               regs_beta_all = pe$Regs_beta,
               sig_sq_x = pe$sig_sq_x[, mm],
               phi_x = pe$phi_x[, mm],
-              x_r_all = pe$X[ , , mm, ])
-  if (pe$model_type_obs == "DIRICHLET-MULT") out$num_counts <- pe$num_counts
+              x_r_all = array(pe$X[ , , mm, ], dim = dim(pe$X)[-3]))
+  if (pe$model_type_obs %in% c("DIRICHLET_MULT",
+                               "GEN_DIRICHLET_MULT",
+                               "MULTINOMIAL")) {
+    out$num_counts <- pe$num_counts
+  }
   return(out)
 }
 update_args_list_smc_internal <- function(pe, args_list, mm) {
   args_list$regs_beta_all <- pe$Regs_beta
   args_list$sig_sq_x      <- pe$sig_sq_x[, mm]
   args_list$phi_x         <- pe$phi_x[, mm]
-  args_list$x_r_all       <- pe$X[ , , mm - 1, ]
+  args_list$x_r_all       <- array(pe$X[ , , mm - 1, ], dim = dim(pe$X)[-3])
   return(args_list)
 }
 load_model <- function(env_model, to_env) {
