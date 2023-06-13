@@ -142,12 +142,16 @@ generate_test_data_simul_model_dirs <- function() {
                               overwrite = TRUE)
   }
 }
-read_file_main_r <- function(pth) {
-  main_rf <- list.files(pth)
-  main_id <- which(grepl("^.*\\.R", main_rf))
-  stopifnot(`Number of possible main_XXX.R files > 1` = length(main_id) == 1)
-
-  read_rf <- readLines(file.path(pth, main_rf[main_id]))
+read_file_r <- function(pth, type) {
+  file_rf <- list.files(pth)
+  if (type == "main") {
+    file_id <- which(grepl("^main_run.*\\.R", file_rf))
+    stopifnot(`Possible main_run_*.R files > 1` = length(file_id) == 1)
+  } else if (type == "diagnostics") {
+    file_id <- which(grepl("^main_diagnostics.*\\.R", file_rf))
+    stopifnot(`Possible main_diagnostics_*.R files > 1` = length(file_id) == 1)
+  }
+  read_rf <- readLines(file.path(pth, file_rf[file_id]))
   return(read_rf)
 }
 read_file_input_data <- function(pth) {
@@ -245,9 +249,13 @@ test_sim_dirs <- function(pth_1, pth_2) {
   test_rdata_02 <- read_test_file_rds(pth_top_lvl_02)
   test_rdata    <- identical(test_rdata_01, test_rdata_02)
 
-  test_main_01 <- read_file_main_r(pth_top_lvl_01)
-  test_main_02 <- read_file_main_r(pth_top_lvl_02)
-  test_main <- identical(test_main_01, test_main_02)
+  test_main_run_01 <- read_file_r(pth_top_lvl_01, type = "main")
+  test_main_run_02 <- read_file_r(pth_top_lvl_02, type = "main")
+  test_main_run <- identical(test_main_run_01, test_main_run_02)
+
+  test_main_diagn_01 <- read_file_r(pth_top_lvl_01, type = "diagnostics")
+  test_main_diagn_02 <- read_file_r(pth_top_lvl_02, type = "diagnostics")
+  test_main_diagn <- identical(test_main_diagn_01, test_main_diagn_02)
 
   all_tests <- c(test_setup_inits = test_setup_inits,
                  test_model_def = test_model_def,
@@ -256,7 +264,8 @@ test_sim_dirs <- function(pth_1, pth_2) {
                  test_sttgs_pj = test_sttgs_pj,
                  test_input_data = test_input_data,
                  test_rdata = test_rdata,
-                 test_main = test_main)
+                 test_main_run = test_main_run,
+                 test_main_diagn = test_main_diagn)
   if (!all(all_tests)) cat(crayon::red(paste0("Tests fails: ",
                                               names(which(!all_tests)),
                                               "\n")))
