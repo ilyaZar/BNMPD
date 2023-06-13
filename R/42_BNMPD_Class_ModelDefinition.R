@@ -116,15 +116,27 @@ ModelDef <- R6::R6Class("ModelDef",
                           check_reg_avail = function(model_raw,
                                                      num_mc,
                                                      reg_name) {
+                            DIST_SPECIAL <- check_special_dist_quick(
+                              model_raw$model_type_obs)
                             rng_names <- seq(from = private$.yaml_offset + 1,
                                              to = length(private$.model_raw),
                                              by = 1)
                             model_raw_tmp <- model_raw[rng_names]
-                            checks <- lapply(model_raw_tmp[seq_len(num_mc)],
-                                             function(x) {
-                                               any(names(x) == reg_name)
-                                             })
-                            checks <- unlist(checks)
+
+                            if (isTRUE(DIST_SPECIAL)) {
+                              checks <- check_reg_avail_spc(
+                                model_raw_tmp,
+                                num_mc,
+                                reg_name
+                              )
+                            } else if (isFALSE(DIST_SPECIAL)) {
+                              checks <- check_reg_avail_def(
+                                model_raw_tmp,
+                                num_mc,
+                                reg_name
+                              )
+                            }
+
                             if (all(checks)) {
                               return(TRUE)
                             } else if (any(checks)) {
@@ -135,6 +147,26 @@ ModelDef <- R6::R6Class("ModelDef",
                                              "which may be fine ..."))
                               return(FALSE)
                             }
+                          },
+                          check_reg_avail_def = function(mod, mc, reg_name) {
+                            sapply(mod[seq_len(mc)],
+                                   function(x) {
+                                     any(names(x) == reg_name)
+                                   })
+                          },
+                          check_reg_avail_spc =function(mod, mc, reg_name) {
+                            sapply(mod[seq_len(mc - 1)],
+                                   function(x) {
+                                     id_check_A <- grep("DA_", names(x))
+                                     id_check_B <- grep("DB_", names(x))
+                                     c1 <- any(
+                                       names(x[[id_check_A]]) == reg_name
+                                     )
+                                     c2 <- any(
+                                       names(x[[id_check_B]]) == reg_name
+                                       )
+                                     c1 && c2
+                                   })
                           },
                           set_cs_ts = function() {
                             tmpcs <- private$.model_raw[["cross_section_used"]]
