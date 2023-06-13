@@ -112,10 +112,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             data_to_use   <- private$.data_raw %>%
                               dplyr::filter(.data[[cs_var]] %in% cs_val) %>%
                               dplyr::filter(.data[[ts_var]] %in% ts_val) %>%
-                              dplyr::select(.data[[cs_var]],
-                                            .data[[ts_var]],
-                                            tidyselect::all_of(c(y_use,
-                                                                 zu_use))) %>%
+                              dplyr::select(
+                                tidyselect::all_of(
+                                  c(cs_var, ts_var, y_use, zu_use))) %>%
                               tibble::tibble() %>%
                               sjlabelled::set_label(label = data_labels)
                             check_unbalanced(data_to_use)
