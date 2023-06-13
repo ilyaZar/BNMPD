@@ -131,8 +131,8 @@ ModelDat <- R6::R6Class("ModelDat",
                                             "and/or \n  ",
                                             "time series lengths as ",
                                             "specified via the ",
-                                            "model_definition.yaml-file:\n  ",
-                                            "number of rows inconsistent:\n  ",
+                                            "model_definition.yaml-file:\n",
+                                            "number of rows inconsistent:\n",
                                             "DO NOT specify more ",
                                             "cross section or time series ",
                                             "than actually given in the ",
@@ -145,9 +145,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             if(check != ncol(data_to_use)) {
                               msg <- paste0("Possible missmatch between ",
                                             "dimension of ",
-                                            "dataset to use and column\n  ",
+                                            "dataset to use and column\n ",
                                             "numbers as specified via the ",
-                                            "model_definition.yaml-file:\n  ",
+                                            "model_definition.yaml-file:\n ",
                                             "various reasons possible...")
                               stop(msg)
                             }
