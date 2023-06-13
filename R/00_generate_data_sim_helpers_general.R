@@ -134,6 +134,7 @@ get_DD2 <- function(distribution, DD) {
 }
 check_special_dist_quick <- function(dist) {
   if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) return(TRUE)
+  if (dist %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT")) return(TRUE)
   return(FALSE)
 }
 #' Options list of included effects.
