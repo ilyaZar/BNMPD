@@ -64,12 +64,13 @@ ModelDef <- R6::R6Class("ModelDef",
                             }
                           },
                           set_var_lab = function() {
-                            check_u_avail <- check_reg_avail(private$.model_raw,
-                                                             private$.num_mc,
-                                                             "u_reg")
                             check_z_avail <- check_reg_avail(private$.model_raw,
                                                              private$.num_mc,
                                                              "z_reg")
+                            check_u_avail <- check_reg_avail(private$.model_raw,
+                                                             private$.num_mc,
+                                                             "u_reg")
+
                             tmp_reg_cnts <- get_reg_mod_raw_all(
                               private$.model_raw,
                               check_z_avail,
@@ -142,14 +143,14 @@ ModelDef <- R6::R6Class("ModelDef",
                                      )
                                      c2 <- any(
                                        names(x[[id_check_B]]) == reg_name
-                                       )
+                                     )
                                      c1 && c2
                                    })
                           },
                           get_reg_mod_raw_all = function(mod_raw,
-                                                          Z_AVAIL,
-                                                          U_AVAIL,
-                                                          num_mc) {
+                                                         Z_AVAIL,
+                                                         U_AVAIL,
+                                                         num_mc) {
                             y_list <- vector("character", num_mc)
                             y_labs <- vector("character", num_mc)
                             if (Z_AVAIL) z_list <- list()
@@ -157,26 +158,33 @@ ModelDef <- R6::R6Class("ModelDef",
 
                             SPECIAL_TYPE <- check_special_dist_quick(
                               mod_raw$model_type_obs)
-                            # if (isTRUE(SPECIAL_TYPE)) num_mc <- num_mc - 1
+                            CHECK_BR <- TRUE
                             for (i in 1:num_mc) {
                               id <- i + private$.yaml_offset
                               y_list[i] <- mod_raw[[id]][["y_var"]]
                               y_labs[i] <- mod_raw[[id]][["y_lab"]]
 
-                              if (Z_AVAIL) {
+                              if (SPECIAL_TYPE && i == num_mc) CHECK_BR <- FALSE
+                              if (Z_AVAIL && CHECK_BR) {
                                 z_list[[i]] <- get_reg_mod_raw_dd(
                                   mod_raw,
                                   "z_reg",
                                   SPECIAL_TYPE,
                                   id)
                               }
-                              if (U_AVAIL) {
+                              if (U_AVAIL && CHECK_BR) {
                                 u_list[[i]] <- get_reg_mod_raw_dd(
                                   mod_raw,
                                   "u_reg",
                                   SPECIAL_TYPE,
                                   id)
                               }
+                            }
+                            if (SPECIAL_TYPE) {
+                              if (Z_AVAIL) z_list <- unlist(z_list,
+                                                            recursive = FALSE)
+                              if (U_AVAIL) u_list <- unlist(u_list,
+                                                            recursive = FALSE)
                             }
                             return(list(y_list = y_list,
                                         y_labs = y_labs,
@@ -188,9 +196,21 @@ ModelDef <- R6::R6Class("ModelDef",
                                                         SPECIAL_TYPE,
                                                         dd) {
                             if (isTRUE(SPECIAL_TYPE)) {
-                              tmp_reg <- mod_raw[[dd]][[reg_name]]
-                              out <- tmp_reg[["var"]]
-                              names(out) <- tmp_reg[["lab"]]
+                              out <- list()
+                              tmp_mod_dd <- mod_raw[[dd]]
+
+                              id         <- grep("DA_", names(tmp_mod_dd))
+                              tmp_reg    <- tmp_mod_dd[[id]][[reg_name]]
+                              nm_out     <- names(tmp_mod_dd)[id]
+                              out[[nm_out]] <- tmp_reg[["var"]]
+                              names(out[[nm_out]]) <- tmp_reg[["lab"]]
+
+                              id         <- grep("DB_", names(tmp_mod_dd))
+                              tmp_reg    <- tmp_mod_dd[[id]][[reg_name]]
+                              nm_out     <- names(tmp_mod_dd)[id]
+                              out[[nm_out]]        <- tmp_reg[["var"]]
+                              names(out[[nm_out]]) <- tmp_reg[["lab"]]
+
                               return(out)
                             } else if (isFALSE(SPECIAL_TYPE)) {
                               tmp_reg <- mod_raw[[dd]][[reg_name]]
