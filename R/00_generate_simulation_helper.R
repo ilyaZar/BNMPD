@@ -85,8 +85,8 @@ get_data_out_reg_names <- function(regs_num, regs_type, dist_type) {
     DD_to_use <- DD_to_use / 2 # !!! HALF OF REG_NUM IS THE CORRECT VALUE !!!
     DDtimes_A <- utils::head(unlist(regs_num), DD_to_use)
     DDtimes_B <- utils::tail(unlist(regs_num), DD_to_use)
-    tmp_02 <- c(rep(paste0("A_", 1:DD_to_use), DDtimes_A),
-                rep(paste0("B_", 1:DD_to_use), DDtimes_B))
+    tmp_02 <- c(rep(paste0("A", 1:DD_to_use), DDtimes_A),
+                rep(paste0("B", 1:DD_to_use), DDtimes_B))
   } else {
     tmp_02 <- rep(1:DD_to_use, unlist(regs_num))
   }
