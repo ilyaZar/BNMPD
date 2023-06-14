@@ -384,7 +384,6 @@ ModelDat <- R6::R6Class("ModelDat",
                                                            par_name,
                                                            type = NULL,
                                                            dim_mat = NULL) {
-                            browser()
                             DD <- length(data_inits)
                             out_init <- vector("list", DD)
 
