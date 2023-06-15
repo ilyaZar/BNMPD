@@ -69,12 +69,40 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.pth_to_priors <- pth_prior
                             private$.pth_to_inits  <- pth_inits
                           },
-                          copy_env = function(to_env = NULL, from_env) {
-                            if (is.null(to_env)) to_env <- new.env()
-                            for(n in ls(from_env, all.names = TRUE)) {
-                              assign(n, get(n, from_env), to_env)
-                            }
-                            invisible(to_env)
+                          initialize_data_dimensions = function(dimensions) {
+                            private$.TT <- dimensions["TT"]
+                            private$.NN <- dimensions["NN"]
+                            private$.DD <- dimensions["DD"]
+                            private$.data_dimensions <- new.env()
+                            private$.data_dimensions$TT <- private$.TT
+                            private$.data_dimensions$NN <- private$.NN
+                            private$.data_dimensions$DD <- private$.DD
+                            invisible(self)
+                          },
+                          initialize_var_names = function(info_y,
+                                                          info_z,
+                                                          info_u) {
+                            private$.var_y <- info_y$var_y
+                            private$.var_z <- info_z$var_z
+                            private$.var_u <- info_u$var_u
+
+                            private$.lab_y <- info_y$lab_y
+                            private$.lab_z <- info_z$lab_z
+                            private$.lab_u <- info_u$lab_u
+
+                            invisible(self)
+                          },
+                          initialize_cs_ts = function(info_cs, info_ts) {
+                            private$.cs_name_var <- info_cs$cs_name_var
+                            private$.cs_name_lab <- info_cs$cs_name_lab
+                            private$.ts_name_var <- info_ts$ts_name_var
+                            private$.ts_name_lab <- info_ts$ts_name_lab
+                            private$.cs_var_val  <- info_cs$cs_var_val
+                            private$.cs_var_lab  <- info_cs$cs_var_lab
+                            private$.ts_var_val  <- info_ts$ts_var_val
+                            private$.ts_var_lab  <- info_ts$ts_var_lab
+
+                            invisible(self)
                           },
                           initialize_data_raw = function(data_set) {
                             private$.data_raw <- data_set
@@ -178,7 +206,6 @@ ModelDat <- R6::R6Class("ModelDat",
                             }
                             # END CONSISTENCY CHECKS
                             private$.data_subset_used <- data_to_use
-
                             invisible(self)
                           },
                           check_unbalanced = function(data_tmp) {
@@ -198,27 +225,9 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           initialize_data_internal = function() {
                             # Preparing measurement data:
-                            y_t <- array(NA_real_, c(private$.TT,
-                                                     private$.DD,
-                                                     private$.NN))
-                            for (i in 1:private$.NN) {
-                              data_slice_states <- private$.data_subset_used %>%
-                                dplyr::filter(.data[[private$.cs_name_var]] == private$.cs_var_val[i])
-                              tmp_y <- dplyr::select(data_slice_states,
-                                                     tidyselect::all_of(unname(private$.var_y)))
-                              y_t[, , i] <- as.matrix(tmp_y)
-                            }
-                            y_t <- replace(y_t, y_t < 0 , abs(y_t[y_t < 0]))
-                            if (private$.COUNTS_TRUE) {
-                              num_counts <- matrix(private$.data_subset_used[[private$.count_name]],
-                                                   nrow = private$.TT,
-                                                   ncol = private$.NN)
-                            }
-                            #
-                            #
-                            #
-                            #
-                            #
+                            data_internal <- initialize_data_internal_yt()
+                            y_t        <- data_internal$`y_t`
+                            num_counts <- data_internal$num_counts
                             # Preparing regressor data:
                             if (!is.null(private$.var_z)) {
                               dim_zet <- sapply(private$.var_z,
@@ -304,40 +313,32 @@ ModelDat <- R6::R6Class("ModelDat",
 
                             invisible(self)
                           },
-                          initialize_var_names = function(info_y,
-                                                          info_z,
-                                                          info_u) {
-                            private$.var_y <- info_y$var_y
-                            private$.var_z <- info_z$var_z
-                            private$.var_u <- info_u$var_u
-
-                            private$.lab_y <- info_y$lab_y
-                            private$.lab_z <- info_z$lab_z
-                            private$.lab_u <- info_u$lab_u
-
-                            invisible(self)
-                          },
-                          initialize_cs_ts = function(info_cs, info_ts) {
-                            private$.cs_name_var <- info_cs$cs_name_var
-                            private$.cs_name_lab <- info_cs$cs_name_lab
-                            private$.ts_name_var <- info_ts$ts_name_var
-                            private$.ts_name_lab <- info_ts$ts_name_lab
-                            private$.cs_var_val  <- info_cs$cs_var_val
-                            private$.cs_var_lab  <- info_cs$cs_var_lab
-                            private$.ts_var_val  <- info_ts$ts_var_val
-                            private$.ts_var_lab  <- info_ts$ts_var_lab
-
-                            invisible(self)
-                          },
-                          initialize_data_dimensions = function(dimensions) {
-                            private$.TT <- dimensions["TT"]
-                            private$.NN <- dimensions["NN"]
-                            private$.DD <- dimensions["DD"]
-                            private$.data_dimensions <- new.env()
-                            private$.data_dimensions$TT <- private$.TT
-                            private$.data_dimensions$NN <- private$.NN
-                            private$.data_dimensions$DD <- private$.DD
-                            invisible(self)
+                          initialize_data_internal_yt = function() {
+                            y_t <- array(NA_real_,
+                                         c(private$.TT,
+                                           private$.DD,
+                                           private$.NN))
+                            tmp_var_y <- unname(private$.var_y)
+                            tmp_nm_cs <- private$.cs_name_var
+                            for (i in 1:private$.NN) {
+                              cs_val_i <- private$.cs_var_val[i]
+                              y_t[, , i] <- private$.data_subset_used %>%
+                                dplyr::filter(
+                                  .data[[tmp_nm_cs]] == cs_val_i) %>%
+                                dplyr::select(
+                                  tidyselect::all_of(tmp_var_y)) %>%
+                                as.matrix()
+                            }
+                            y_t <- replace(y_t, y_t < 0 , abs(y_t[y_t < 0]))
+                            if (private$.COUNTS_TRUE) {
+                              num_counts <- matrix(
+                                private$.data_subset_used[[private$.count_name]],
+                                nrow = private$.TT,
+                                ncol = private$.NN)
+                            } else {
+                              num_counts = NULL
+                            }
+                            return(list(y_t = y_t, num_counts = num_counts))
                           },
                           initialize_data_priors = function(pth_priors) {
                             tmp <- jsonlite::fromJSON(private$.pth_to_priors)
