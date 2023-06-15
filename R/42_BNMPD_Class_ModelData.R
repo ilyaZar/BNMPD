@@ -1,8 +1,20 @@
-#' R6 Class representing a model data of a BNMPD model
+#' R6 Class representing model data of a BNMPD model
 #'
 #' @description Defines a model data class that contains observations,
 #'   regressors, prior settings, initialization values etc. It is a field of the
-#'   base BNMPD model class
+#'   base BNMPD model class used to store compactly model data such as latent
+#'   state initialization values, parameter initialization values, prior values,
+#'   raw data, and variable names/labels.
+#'
+#'   It is basically a storage class being fed largely by information
+#'   [`ModelDef`] (that parses the model definition files containing the
+#'   labels/variable names used, time series, cross sectional and multivariate
+#'   components and other metadata). Information on the raw data comes from
+#'   [`DataSet`] and is combined with the model definition to get the internal
+#'   data set representation later used in [`pgas()`]. The latter also gets
+#'   state/param initialization from here (which in turn read the through
+#'   [`ModelBNMPD`]).
+#'
 #' @details This class is not intended for direct interaction but rather has
 #'   getters/setters wrapped in the base BNMPD model class.
 ModelDat <- R6::R6Class("ModelDat",
