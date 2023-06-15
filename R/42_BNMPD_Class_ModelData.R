@@ -183,13 +183,18 @@ ModelDat <- R6::R6Class("ModelDat",
                             invisible(self)
                           },
                           check_unbalanced = function(data_tmp) {
-                            iter_TT <- unique(data_tmp[[private$.ts_name_var]])
-                            NN      <- length(unique(data_tmp[[private$.cs_name_var]]))
-                            msg <- "Possibly unbalanced panel."
+                            iter_TT <- unique(
+                              data_tmp[[private$.ts_name_var]]
+                            )
+                            true_NN <- length(
+                              unique(data_tmp[[private$.cs_name_var]])
+                            )
+                            tt_check <- data_tmp[[private$.ts_name_var]]
                             for(t in iter_TT) {
-                              check_NN <- nrow(data_tmp %>%
-                                                 dplyr::filter(.data[[private$.ts_name_var]]==t))
-                              if (check_NN != NN) stop(msg)
+                              check_NN <- sum(tt_check == t)
+                              if (check_NN != true_NN) {
+                                stop("Possibly unbalanced panel.")
+                              }
                             }
                           },
                           initialize_data_internal = function() {
@@ -228,7 +233,9 @@ ModelDat <- R6::R6Class("ModelDat",
                               },
                               dim_zet)
                               if (isFALSE(check_dim_zet)) {
-                                stop("Z-type regressor dims unequal. Reconsider!")
+                                msg <- paste0("Z-type regressor dims unequal.",
+                                              " Reconsider!")
+                                stop(msg)
                               }
                               id_zet <- unname(c(0, cumsum(dim_zet)))
                               Z <- array(NA_real_,
@@ -490,10 +497,11 @@ ModelDat <- R6::R6Class("ModelDat",
                                                                  params_init) {
 
                             state_inits <- private$get_states_init(states_init)
-                            param_inits <- private$get_params_init(params_init,
-                                                                   private$.pth_to_inits,
-                                                                   NN = private$.data_dimensions$NN,
-                                                                   DD = private$.data_dimensions$DD)
+                            param_inits <- private$get_params_init(
+                              params_init,
+                              private$.pth_to_inits,
+                              NN = private$.data_dimensions$NN,
+                              DD = private$.data_dimensions$DD)
 
                             private$.data_inits_start <- list()
                             private$.data_inits_start$par_init  <- param_inits
@@ -617,8 +625,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                                 info_ts,
                                                 info_dim,
                                                 states_init = NULL) {
-                            private$initialize_paths(pth_prior,
-                                                     pth_inits)
+                            private$initialize_paths(pth_prior, pth_inits)
                             private$initialize_data_dimensions(info_dim)
                             private$initialize_var_names(info_y, info_z, info_u)
                             private$initialize_cs_ts(info_cs, info_ts)
@@ -630,9 +637,6 @@ ModelDat <- R6::R6Class("ModelDat",
                                                                 NULL)
                             private$initialize_data_meta()
                           },
-                          # get_model_data_raw = function() {
-                          #   private$.data_raw
-                          # },
                           #' Getter for model meta-data
                           #'
                           #' @description Currently only zero/avail indicators.
@@ -693,10 +697,12 @@ ModelDat <- R6::R6Class("ModelDat",
                           #'   in a PGAS run.
                           #' @details see the inits-settings file for details.
                           get_model_inits_start = function() {
-                            private$.data_inits_start$par_init <- private$get_params_init(private$.data_inits_start$par_init,
-                                                                                          private$.pth_to_inits,
-                                                                                          NN = private$.data_dimensions$NN,
-                                                                                          DD = private$.data_dimensions$DD)
+                            tmp <- private$get_params_init(
+                              private$.data_inits_start$par_init,
+                              private$.pth_to_inits,
+                              NN = private$.data_dimensions$NN,
+                              DD = private$.data_dimensions$DD)
+                            private$.data_inits_start$par_init <- tmp
                             private$.data_inits_start
                           },
                           #' Getter for initialization values
