@@ -275,11 +275,11 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                   cs_var_val=private$.ModelDef$get_cs_var_val(),
                                   cs_var_lab=private$.ModelDef$get_cs_var_lab()),
                                 list(ts_name_var = private$.ModelDef$get_ts_name_var(),
-                                                ts_name_lab = private$.ModelDef$get_ts_name_lab(),
-                                                ts_var_val  = private$.ModelDef$get_ts_var_val(),
-                                                ts_var_lab  = private$.ModelDef$get_ts_var_lab()),
-                                           private$.ModelDef$get_dimension(),
-                                           private$.states_init)
+                                     ts_name_lab = private$.ModelDef$get_ts_name_lab(),
+                                     ts_var_val  = private$.ModelDef$get_ts_var_val(),
+                                     ts_var_lab  = private$.ModelDef$get_ts_var_lab()),
+                                private$.ModelDef$get_dimension(),
+                                private$.states_init)
                             }
                           ),
                           public = list(
@@ -340,22 +340,9 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                   path_to_params_true = NULL,
                                                   AUTO_INIT = TRUE) {
                               stopifnot(`Arg. 'AUTO_INIT' muste be logical`
-                                = is.logical(AUTO_INIT))
-                              if (!is.null(path_to_states_init)) {
-                                private$.states_init <- readRDS(
-                                  path_to_states_init)
-                              }
-                              if (!is.null(path_to_states_true)) {
-                                private$.states_true <- readRDS(
-                                  path_to_states_true)
-                              }
-                              if (!is.null(path_to_params_true)) {
-                                private$.params_true <- readRDS(
-                                  path_to_params_true)
-                              }
-
-                              private$.pth_to_proj <- path_to_project
-
+                                        = is.logical(AUTO_INIT))
+                              private$.pth_to_proj <- normalizePath(
+                                path_to_project)
                               private$update_all_dir_pths()
                               private$validate_dirs(private$.pth_to_proj,
                                                     private$.pth_to_data,
@@ -369,13 +356,22 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                      private$.pth_to_priorset,
                                                      private$.pth_to_initsset,
                                                      private$.pth_to_projsets)
-                              if (!is.null(path_to_params_init)) {
-                                private$.params_init <- readRDS(
-                                  path_to_params_init)
-                                generate_setup_init_json(
-                                  private$.params_init,
-                                  private$.pth_to_proj )
-                              }
+
+                              private$.states_init <- read_rds(
+                                path_to_states_init
+                              )
+                              private$.states_true <- read_rds(
+                                path_to_states_true
+                              )
+                              private$.params_true <- read_rds(
+                                path_to_params_true
+                              )
+                              private$.params_init <- read_rds(
+                                path_to_params_init
+                              )
+                              generate_setup_init_json(
+                                    private$.params_init,
+                                    private$.pth_to_proj)
 
                               private$.DataSet  <- DataSet$new(
                                 private$.pth_to_data)
@@ -450,8 +446,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                        function(x) {
                                                          !is.null(x)
                                                        }
-                                                       )
-                                                )
+                              )
+                              )
                               tmp_pars <- names(tmp_pars)
 
                               dims <- private$.ModelDef$get_dimension()
@@ -465,7 +461,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               if (any(grepl("phi", tmp_pars))) {
                                 order_p <- private$get_order_p()
                                 phi <- paste0(paste0("phi_x_", 1:order_p),
-                                                    rep(1:DD_tmp, each = order_p))
+                                              rep(1:DD_tmp, each = order_p))
                               } else {
                                 phi <- NULL
                               }
@@ -528,8 +524,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                         function(x){
                                                           !is.null(x)
                                                         }
-                                                        )
-                                                 )
+                              )
+                              )
                               lab_names <- lab_names[idtaken]
                               par_names <- par_names[idtaken]
                               return(list(par_lab_names = lab_names,
@@ -892,7 +888,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                            out_name = NULL,
                                                            AUTO_INIT = TRUE) {
                               stopifnot(`Arg. 'AUTO_INIT' not logical`
-                                = is.logical(AUTO_INIT))
+                                        = is.logical(AUTO_INIT))
                               private$update_file_pth_mdout()
 
                               if (is.null(out_name)) {

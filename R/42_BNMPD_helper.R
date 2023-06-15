@@ -70,3 +70,8 @@ get_paths_modelBNMPD_results <- function(pth_main) {
   out$fnm_plots <- fnm_plots
   return(out)
 }
+read_rds <- function(pth_from) {
+  if (!is.null(pth_from)) {
+    return(readRDS(normalizePath(pth_from)))
+  }
+}
