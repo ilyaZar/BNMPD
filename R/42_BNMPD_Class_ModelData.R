@@ -82,7 +82,7 @@ ModelDat <- R6::R6Class("ModelDat",
                               private$.COUNTS_TRUE <- TRUE
                             }
                           },
-                          initialize_data_used = function() {
+                          initialize_data_subset_used = function() {
                             if (private$.COUNTS_TRUE) {
                               y_use  <- c(unname(private$.var_y),
                                           private$.count_name)
@@ -119,7 +119,6 @@ ModelDat <- R6::R6Class("ModelDat",
                             if(tmp_check == 0){
                               stop("Can not find values in TS.")
                             }
-
                             tmp_test <- unique(private$.data_raw[[cs_var]])
                             if(!all(cs_val %in% tmp_test)) {
                               stop("Some values in CS not found...")
@@ -538,19 +537,15 @@ ModelDat <- R6::R6Class("ModelDat",
                             }
                             colnames(zero_ind_nn) <- private$.cs_var_val
                             rownames(zero_ind_nn) <- private$.var_y
-                            # zero_ind_dd <- private$transform_zero_ind(zero_ind_nn)
                             zero_ind_dd <- apply(zero_ind_nn, 1,
                                                  which, simplify = FALSE)
-                            # zero_ind_nn <- private$transform_zero_ind(t(zero_ind_nn))
                             zero_ind_nn <- apply(t(zero_ind_nn), 1,
                                                  which, simplify = FALSE)
 
                             colnames(avail_ind_nn) <- private$.cs_var_val
                             rownames(avail_ind_nn) <- private$.var_y
-                            # avail_ind_dd <- private$transform_zero_ind(avail_ind_nn)
                             avail_ind_dd <- apply(avail_ind_nn, 1,
                                                   which, simplify = FALSE)
-                            # avail_ind_nn <- private$transform_zero_ind(t(avail_ind_nn))
                             avail_ind_nn <- apply(t(avail_ind_nn), 1,
                                                   which, simplify = FALSE)
 
@@ -575,22 +570,10 @@ ModelDat <- R6::R6Class("ModelDat",
                               names(out[[i]]) <- col_names[out[[i]]]
                             }
                             return(out)
-                            # REASON THIS FUNCTION EXISTS - apply DOES NOT HAVE
-                            # A simplify argument for R<4.1.0
-                            # DOES NOT WORK ON CHEOPS CLUSTER DEVEL PLATFORM!!!
-                            # zero_ind_dd <- apply(zero_ind_nn, 1,
-                            #                      which, simplify = FALSE)
-                            # zero_ind_nn <- apply(t(zero_ind_nn), 1,
-                            #                      which, simplify = FALSE)
-                            #
-                            # avail_ind_dd <- apply(avail_ind_nn, 1,
-                            #                       which, simplify = FALSE)
-                            # avail_ind_nn <- apply(t(avail_ind_nn), 1,
-                            #                       which, simplify = FALSE)
                           }
                         ),
                         public = list(
-                          #' Class initializer.
+                          #' @description Class initializer
                           #'
                           #' @param pth_prior path to prior settings json-file
                           #' @param pth_inits path to initialization settings
@@ -630,16 +613,15 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$initialize_var_names(info_y, info_z, info_u)
                             private$initialize_cs_ts(info_cs, info_ts)
                             private$initialize_data_raw(data_set)
-                            private$initialize_data_used()
+                            private$initialize_data_subset_used()
                             private$initialize_data_internal()
                             private$initialize_data_priors()
                             private$initialize_data_inits_start(states_init,
                                                                 NULL)
                             private$initialize_data_meta()
                           },
-                          #' Getter for model meta-data
-                          #'
-                          #' @description Currently only zero/avail indicators.
+                          #' @description Getter for model meta-data. Currently
+                          #'   only zero/avail indicators.
                           #'
                           #' @details Zero-indicators: which components in the
                           #'   multivariate D are zero. Avail-indicators: which
@@ -649,23 +631,25 @@ ModelDat <- R6::R6Class("ModelDat",
                           get_model_data_meta = function() {
                             private$.data_meta
                           },
-                          #' Getter for data subset used for estimation.
+                          #' @description Getter for data subset used for
+                          #'   estimation. This is in contrast to the content of
+                          #'   `get_model_data_internal()` a human readable
+                          #'   version of the actual data (subset) used for
+                          #'   estimation. Usually a subset of the raw data
+                          #'   `.csv`-file. Convenient to have a look if the
+                          #'   model definition parsed is in line with the data
+                          #'   subset generated.
                           #'
-                          #' @description The model-settings file determine the
+                          #' @details The model-settings file determines the
                           #'   internal labels and the subset of cross section
-                          #'   and time series used in estimation.
-                          #' @details The raw data set can differ based on the
-                          #'   specifics of the model-settings files, see the
-                          #'   files for details.
-                          #'
+                          #'   and time series used in estimation, as well as
+                          #'   all of the regressors (all `z/u`-types).
                           get_model_data_subset_used = function() {
                             private$.data_subset_used
                           },
-                          #' Getter for internal data.
-                          #'
-                          #' @description Internal data in specific format used
+                          #' @description Getter for internal data as used in
+                          #'   [`pgas()`] Internal data in specific format used
                           #'   by PGAS estimation functions
-                          #'
                           #' @details no additional information provided
                           #'   compared to the `get_model_data_subset_used`
                           #'   member of this class, just a different format
@@ -673,26 +657,20 @@ ModelDat <- R6::R6Class("ModelDat",
                           get_model_data_internal = function() {
                             private$.data_internal
                           },
-                          #' Getter for dimension of the data set
-                          #'
                           #' @description Getter for dimension of the data set
-                          #'   used for estimation which may change due to
-                          #'   data subsetting as defined in the model-settings
+                          #'   used for estimation which may change due to data
+                          #'   subsetting as defined in the model-settings
                           #'   files.
                           #' @details see the settings files for details.
                           get_model_data_dimensions = function() {
                             private$.data_dimensions
                           },
-                          #' Getter for the model prior setup
-                          #'
                           #' @description Getter for the model prior setup
                           #'   used for estimation.
                           #' @details see the prior-settings file for details.
                           get_model_prior_setup = function() {
                             private$.data_priors
                           },
-                          #' Getter for initialization values
-                          #'
                           #' @description Getter for initialization values used
                           #'   in a PGAS run.
                           #' @details see the inits-settings file for details.
@@ -705,11 +683,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_inits_start$par_init <- tmp
                             private$.data_inits_start
                           },
-                          #' Getter for initialization values
-                          #'
-                          #' @description Initializes parameters and state
-                          #'   values (i.e. retrieves them)
-                          #' @details so be called by [ModelBNMPD]
+                          #' @description Getter for initialization values of
+                          #'   parameters and latent states.
+                          #' @details to be called by [ModelBNMPD]
                           #'
                           #' @param states_init initial states (see private
                           #'   method \code{initialize_data_inits_start}) for
