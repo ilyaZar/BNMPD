@@ -2,7 +2,7 @@
 #'
 #' @description Defines a model data class that contains observations,
 #'   regressors, prior settings, initialization values etc. It is a field of the
-#'   base BNMPD model class used to store compactly model data such as latent
+#'   base [`ModelBNMPD`] class used to store compactly model data such as latent
 #'   state initialization values, parameter initialization values, prior values,
 #'   raw data, and variable names/labels.
 #'
@@ -14,6 +14,20 @@
 #'   data set representation later used in [`pgas()`]. The latter also gets
 #'   state/param initialization from here (which in turn read the through
 #'   [`ModelBNMPD`]).
+#'
+#'   After collecting above information during class instantiation:
+#'
+#'      - private$initialize_paths(pth_prior, pth_inits)
+#'      - private$initialize_data_dimensions(info_dim)
+#'      - private$initialize_var_names(info_y, info_z, info_u)
+#'      - private$initialize_cs_ts(info_cs, info_ts)
+#'      - private$initialize_data_raw(data_set)
+#'
+#'   this class checks that the model definition and raw data set provided are
+#'   consistent e.g. cross section/time series names, regressor variable names
+#'   etc. are present in the supplied raw data set. Based on this, the internal
+#'   data representation for [`pgas()`] is constructed and access for this and
+#'   metadata is provided by the public getters.
 #'
 #' @details This class is not intended for direct interaction but rather has
 #'   getters/setters wrapped in the base BNMPD model class.
