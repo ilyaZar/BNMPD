@@ -280,6 +280,40 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                      ts_var_lab  = private$.ModelDef$get_ts_var_lab()),
                                 private$.ModelDef$get_dimension(),
                                 private$.states_init)
+                            },
+                            set_dirs_files_mod = function(pth_project,
+                                                          pth_states_init,
+                                                          pth_states_true,
+                                                          pth_params_init,
+                                                          pth_params_true) {
+                              private$.pth_to_proj <- normalizePath(
+                                pth_project)
+                              private$update_all_dir_pths()
+                              private$validate_dirs(private$.pth_to_proj,
+                                                    private$.pth_to_data,
+                                                    private$.pth_to_settings,
+                                                    private$.pth_to_modeldef,
+                                                    private$.pth_to_projsets)
+                              private$update_all_file_pths()
+                              private$validate_files(private$.pth_to_setting1,
+                                                     private$.pth_to_setting2,
+                                                     private$.pth_to_modeldef,
+                                                     private$.pth_to_priorset,
+                                                     private$.pth_to_initsset,
+                                                     private$.pth_to_projsets)
+
+                              private$.states_init <- read_rds(
+                                pth_states_init
+                              )
+                              private$.states_true <- read_rds(
+                                pth_states_true
+                              )
+                              private$.params_true <- read_rds(
+                                pth_params_true
+                              )
+                              private$.params_init <- read_rds(
+                                pth_params_init
+                              )
                             }
                           ),
                           public = list(
@@ -341,34 +375,11 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                   AUTO_INIT = TRUE) {
                               stopifnot(`Arg. 'AUTO_INIT' muste be logical`
                                         = is.logical(AUTO_INIT))
-                              private$.pth_to_proj <- normalizePath(
-                                path_to_project)
-                              private$update_all_dir_pths()
-                              private$validate_dirs(private$.pth_to_proj,
-                                                    private$.pth_to_data,
-                                                    private$.pth_to_settings,
-                                                    private$.pth_to_modeldef,
-                                                    private$.pth_to_projsets)
-                              private$update_all_file_pths()
-                              private$validate_files(private$.pth_to_setting1,
-                                                     private$.pth_to_setting2,
-                                                     private$.pth_to_modeldef,
-                                                     private$.pth_to_priorset,
-                                                     private$.pth_to_initsset,
-                                                     private$.pth_to_projsets)
-
-                              private$.states_init <- read_rds(
-                                path_to_states_init
-                              )
-                              private$.states_true <- read_rds(
-                                path_to_states_true
-                              )
-                              private$.params_true <- read_rds(
-                                path_to_params_true
-                              )
-                              private$.params_init <- read_rds(
-                                path_to_params_init
-                              )
+                              set_dirs_files_mod(path_to_project,
+                                                 path_to_states_init,
+                                                 path_to_states_true,
+                                                 path_to_params_init,
+                                                 path_to_params_true)
                               generate_setup_init_json(
                                     private$.params_init,
                                     private$.pth_to_proj)
