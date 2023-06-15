@@ -75,22 +75,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               }
                               tmp
                             },
-                            copy_envs = function(to_env = NULL, ...) {
-                              if (is.null(to_env)) to_env <- new.env()
-                              from_env <- list(...)
-                              num_env <- length(from_env)
-                              for (i in 1:num_env) {
-                                private$copy_env(to_env, from_env[[i]])
-                              }
-                              return(to_env)
-                            },
-                            copy_env = function(to_env = NULL, from_env) {
-                              if (is.null(to_env)) to_env <- new.env()
-                              for (n in ls(from_env, all.names = TRUE)) {
-                                assign(n, get(n, from_env), to_env)
-                              }
-                              invisible(to_env)
-                            },
                             ## @description update private dir-path fields of
                             ##   Model-class
                             ## @details internal use; pure side effect function
@@ -393,6 +377,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 private$.pth_to_modeldef,
                                 private$.pth_to_projsets)
                               cat("ModelDef successful\n")
+                              browser()
                               private$.ModelDat <- update_modelDat()
                               cat("ModelDat successful\n")
                               private$.ModelOut <- ModelOut$new(
@@ -764,7 +749,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   PGAS function for inference.
                             load_modeldata_internal = function() {
                               out <- private$.ModelDat$get_model_data_internal()
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             #' @description Loads true states into environment
@@ -775,7 +760,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             load_true_states = function() {
                               out <- private$.states_true
                               out <- list2env(list(true_states = out))
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             #' @description Prints the current settings to the
@@ -787,7 +772,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             load_true_params = function() {
                               out <- private$.params_true
                               out <- list2env(list(true_params = out))
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             #' @description Prints the current settings to the
@@ -799,7 +784,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             load_init_params = function() {
                               out <- private$.params_true
                               out <- list2env(list(true_params = out))
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             #' @description Loads model prior setup.
@@ -809,7 +794,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   environment
                             load_modeldata_prior_setup = function() {
                               out <- private$.ModelDat$get_model_prior_setup()
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             #' @description Loads model initialization values.
@@ -820,7 +805,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             load_modeldata_inits_setup = function() {
                               out <- self$get_modeldata_inits_setup()
                               out <- list2env(as.list(out))
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             #' @description Loads model meta data
@@ -839,7 +824,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               out$model_type_lat <- tmp2[3]
                               out$model_type_smc <- tmp3[["csmc_type"]]
                               out <- list2env(as.list(out))
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             #' @description Loads model dimensions.
@@ -852,12 +837,12 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               out <-private$.ModelDat$get_model_data_dimensions()
                               # out2 <-private$.ModelDef$get_dimension()
                               out <- list2env(as.list(out))
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             # load_model_definition_labs_vars = function() {
                             #   out <-private$.ModelDef$get_settings_set()
-                            #   private$copy_env(parent.frame(), out)
+                            #   copy_env(parent.frame(), out)
                             #   invisible(self)
                             # },
                             #' @description  Loads current settings.
@@ -879,7 +864,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               out <- out[id_rel]
                               names(out) <- names_internal
                               out <- list2env(out)
-                              private$copy_env(parent.frame(), out)
+                              copy_env(parent.frame(), out)
                               invisible(self)
                             },
                             #' @description Saves output from a PGAS run to

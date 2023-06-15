@@ -1,3 +1,12 @@
+copy_envs <- function(to_env = NULL, ...) {
+  if (is.null(to_env)) to_env <- new.env()
+  from_env <- list(...)
+  num_env <- length(from_env)
+  for (i in 1:num_env) {
+    private$copy_env(to_env, from_env[[i]])
+  }
+  return(to_env)
+}
 copy_env = function(to_env = NULL, from_env) {
   if (is.null(to_env)) to_env <- new.env()
   for(n in ls(from_env, all.names = TRUE)) {
