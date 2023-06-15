@@ -11,6 +11,10 @@
 #' @return pure side-effect function that generates the \code{json}-file
 #' @export
 generate_setup_init_json <- function(params_used, pth_project) {
+  if (is.null(params_used)) {
+    cat(crayon::blue("No first argument 'params_used': no json-file generated"))
+    return(invisible(params_used))
+  }
   pth_to_json <- file.path(pth_project, "model",
                            "model-definition",
                            "setup_inits.json")
@@ -32,6 +36,7 @@ generate_setup_init_json <- function(params_used, pth_project) {
     list_json <- get_list_json_default(params_used, type = NULL, DD)
   }
   jsonlite::write_json(list_json, pth_to_json, digits = 8, pretty = TRUE)
+  return(invisible(params_used))
 }
 get_list_json_default <- function(params_used, type, DD) {
   list_json <- list()
