@@ -507,9 +507,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_inits_start$traj_init <- state_inits
                           },
                           initialize_data_meta = function() {
-                            # First type of meta data: availability indices
+                            # Type of meta data: availability indices
                             #   - indicate the number of present components
-                            #   i.e. those that are not permanently zero
+                            # i.e. those that are not permanently zero
                             tmp_y <- private$.data_internal$data$`y_t`
                             zero_ind_nn <- apply(tmp_y, c(3),
                                                  function(x) {
@@ -575,6 +575,10 @@ ModelDat <- R6::R6Class("ModelDat",
                         public = list(
                           #' @description Class initializer
                           #'
+                          #' @details Read the internal comments in the function
+                          #'   body to understand what happens exactly. It is
+                          #'   important and not easy.
+                          #'
                           #' @param pth_prior path to prior settings json-file
                           #' @param pth_inits path to initialization settings
                           #'   json-file
@@ -608,16 +612,30 @@ ModelDat <- R6::R6Class("ModelDat",
                                                 info_ts,
                                                 info_dim,
                                                 states_init = NULL) {
+                            # The following side effect functions simply load
+                            # the information from ModelDef and DataSet into
+                            # this class.
                             private$initialize_paths(pth_prior, pth_inits)
                             private$initialize_data_dimensions(info_dim)
                             private$initialize_var_names(info_y, info_z, info_u)
                             private$initialize_cs_ts(info_cs, info_ts)
                             private$initialize_data_raw(data_set)
+                            # The following functions start to check if the the
+                            # information from ModelDef and DataSet are
+                            # consistent.
+                            # 1. Model dim checks, name checks on cross section,
+                            # time series all y-z-u variables. Resulting data
+                            # subset should match the model dimension:
                             private$initialize_data_subset_used()
+                            # 2. Parse the internal data subset from above into
+                            # form that is used pgas()
                             private$initialize_data_internal()
+                            # 3. initialize priors
                             private$initialize_data_priors()
+                            # 4. initiliaze states and parameters
                             private$initialize_data_inits_start(states_init,
                                                                 NULL)
+                            # 5. Type of meta data so far: avail/zero indicators
                             private$initialize_data_meta()
                           },
                           #' @description Getter for model meta-data. Currently
