@@ -615,7 +615,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$initialize_data_internal()
                             # 3. initialize priors
                             private$initialize_data_priors()
-                            # 4. initiliaze states and parameters
+                            # 4. initialize states and parameters
                             private$initialize_data_inits_start(states_init,
                                                                 NULL)
                             # 5. Type of meta data so far: avail/zero indicators
