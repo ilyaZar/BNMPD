@@ -281,7 +281,7 @@ ModelOut <- R6::R6Class("ModelOut",
                               DD)
                             par_inits$init_phi <- get_init_phi(out$phi_x,
                                                                num_mcmc, DD)
-                            par_inits$init_bet_z <- get_init_bet_z_lin(
+                            par_inits$init_beta_z_lin <- get_init_bet_z_lin(
                               out$bet_z,
                               num_mcmc,
                               DD,
@@ -370,10 +370,10 @@ ModelOut <- R6::R6Class("ModelOut",
                             private$update_output_meta(pth_to_output)
                             private$.inits_start <- inits_start
                             private$.num_bet_z <- sapply(
-                              inits_start$par_init$init_bet_z,
+                              inits_start$par_init$init_beta_z_lin,
                               length)
                             private$.num_bet_u <- sapply(
-                              inits_start$par_init$init_bet_u,
+                              inits_start$par_init$init_beta_u_lin,
                               nrow)
                             if (private$.num_out > 0) {
                               private$update_init_traj_param(private$.num_bet_z,

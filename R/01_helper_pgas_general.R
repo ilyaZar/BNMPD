@@ -235,7 +235,7 @@ initialize_data_containers <- function(par_init,
       id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
       id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
       id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
-      bet_z[id_betz_tmp, 1] <- par_init[["init_bet_z"]][[d]]
+      bet_z[id_betz_tmp, 1] <- par_init[["init_beta_z_lin"]][[d]]
       prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + order_p)
     } else if (z_null && !phi_null) {
       prior_vcm_bet_z[[d]]  <- diag(1 / 1000, order_p)
@@ -252,7 +252,7 @@ initialize_data_containers <- function(par_init,
       prior_vcm_bet_u1[d]   <- dim_bet_u[d]
       dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u1[d]
 
-      vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_bet_u"]][[d]]
+      vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_u_lin"]][[d]]
     }
     if (!phi_null) {
       id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
@@ -275,7 +275,7 @@ initialize_data_containers <- function(par_init,
         Z_beta[, d, n] <- Zmat2 %*% betz2
       }
       if (!u_null) {
-        bet_u[id_betu_tmp, 1, n] <- par_init[["init_bet_u"]][[d]][, n]
+        bet_u[id_betu_tmp, 1, n] <- par_init[["init_beta_u_lin"]][[d]][, n]
         regs_u[, id_regs_u_tmp, n] <- U[(order_p + 1):TT, id_uet_tmp, n]
         Umat <- matrix(U[(order_p + 1):TT,
                          id_uet_tmp, n,
@@ -327,7 +327,7 @@ initialize_data_containers <- function(par_init,
 initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
   vec_obj  <- character(0)
   if (!z_null) {
-    dim_bet_z <- sapply(par_init[["init_bet_z"]], length, simplify = TRUE)
+    dim_bet_z <- sapply(par_init[["init_beta_z_lin"]], length, simplify = TRUE)
     dim_zet   <- dim_bet_z
     id_bet_z  <- c(0, cumsum(dim_bet_z))
     id_zet    <- c(0, cumsum(dim_bet_z))
@@ -340,7 +340,7 @@ initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
                  "id_bet_z", "id_zet", "id_reg_z")
   }
   if (!u_null) {
-    dim_bet_u <- sapply(par_init[["init_bet_u"]], nrow)
+    dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
     dim_uet   <- dim_bet_u
     id_bet_u  <- c(0, cumsum(dim_bet_u))
     id_uet    <- c(0, cumsum(dim_bet_u))
@@ -361,11 +361,11 @@ initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
   invisible(to_env)
 }
 initialize_dims2 <- function(par_init, U, DD) {
-  dim_bet_z <- sapply(par_init[["init_bet_z"]],
+  dim_bet_z <- sapply(par_init[["init_beta_z_lin"]],
                       length,
                       simplify = TRUE)
   if (!is.null(U)) {
-    dim_bet_u <- sapply(par_init[["init_bet_u"]], nrow)
+    dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
   } else {
     dim_bet_u <- rep(2, times = DD)
   }
