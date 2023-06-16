@@ -335,9 +335,8 @@ ModelDat <- R6::R6Class("ModelDat",
                             TT  <- private$.TT
                             NN  <- private$.NN
                             DD  <- private$.DD
-
                             # zero_lower_bound <- 0.001
-                            scl <- rep(1, times = DD)
+                            scl  <- rep(1, times = DD)
                             init <- array(0, c(TT, DD, NN))
                             options(warn = 2)
                             for (i in 1:NN) {
@@ -347,7 +346,9 @@ ModelDat <- R6::R6Class("ModelDat",
                                   init[, d, i] <- init_tmp
                                   # init[, d, i] <- zero_lower_bound
                                 } else {
-                                  init[, d, i] <- tryCatch(log(init_tmp/scl[d]))
+                                  init[, d, i] <- tryCatch(
+                                    log(init_tmp / scl[d])
+                                  )
                                 }
                               }
                             }
@@ -478,59 +479,33 @@ ModelDat <- R6::R6Class("ModelDat",
                           initialize_data_inits_start = function(states_init,
                                                                  params_init) {
 
-                            state_inits <- private$get_states_init(states_init)
+                            state_inits <- private$get_states_init(
+                              states_init
+                            )
                             param_inits <- private$get_params_init(
                               params_init,
                               private$.pth_to_inits,
                               NN = private$.data_dimensions$NN,
-                              DD = private$.data_dimensions$DD)
+                              DD = private$.data_dimensions$DD
+                            )
 
                             private$.data_inits_start <- list()
                             private$.data_inits_start$par_init  <- param_inits
                             private$.data_inits_start$traj_init <- state_inits
                           },
                           initialize_data_meta = function() {
-                            # Type of meta data: availability indices
-                            #   - indicate the number of present components
-                            # i.e. those that are not permanently zero
+                            # Type of meta data:
+                            # availability indices indicate the number of
+                            # present components i.e. those that are not
+                            # permanently zero
                             tmp_y <- private$.data_internal$data$`y_t`
-                            zero_ind_nn <- apply(tmp_y, c(3),
-                                                 function(x) {
-                                                   apply(x, 2,
-                                                         function(y) {
-                                                           all(y == 0)
-                                                         })
-                                                 })
-                            if (!is.matrix(zero_ind_nn)) {
-                              zero_ind_nn <- matrix(zero_ind_nn,
-                                                    nrow = dim(tmp_y)[2],
-                                                    ncol = dim(tmp_y)[3])
-                            }
-                            avail_ind_nn <- apply(tmp_y, c(3),
-                                                  function(x) {
-                                                    apply(x, 2,
-                                                          function(y) {
-                                                            all(y != 0)
-                                                          })
-                                                  })
-                            if (!is.matrix(avail_ind_nn)) {
-                              avail_ind_nn <- matrix(avail_ind_nn,
-                                                     nrow = dim(tmp_y)[2],
-                                                     ncol = dim(tmp_y)[3])
-                            }
-                            colnames(zero_ind_nn) <- private$.cs_var_val
-                            rownames(zero_ind_nn) <- private$.var_y
-                            zero_ind_dd <- apply(zero_ind_nn, 1,
-                                                 which, simplify = FALSE)
-                            zero_ind_nn <- apply(t(zero_ind_nn), 1,
-                                                 which, simplify = FALSE)
+                            zero_ind    <- get_ind(tmp_y, "zeros")
+                            zero_ind_nn <- zero_ind[["ind_nn"]]
+                            zero_ind_dd <- zero_ind[["ind_dd"]]
 
-                            colnames(avail_ind_nn) <- private$.cs_var_val
-                            rownames(avail_ind_nn) <- private$.var_y
-                            avail_ind_dd <- apply(avail_ind_nn, 1,
-                                                  which, simplify = FALSE)
-                            avail_ind_nn <- apply(t(avail_ind_nn), 1,
-                                                  which, simplify = FALSE)
+                            avail_ind    <- get_ind(tmp_y, "avail")
+                            avail_ind_nn <- avail_ind[["ind_nn"]]
+                            avail_ind_dd <- avail_ind[["ind_dd"]]
 
                             inds <- list()
                             inds$avail_ind_nn  <- avail_ind_nn
@@ -540,18 +515,32 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_meta <- inds
                             invisible(self)
                           },
-                          transform_zero_ind = function(inds) {
-                            num_rows <- nrow(inds)
-                            row_names <- rownames(inds)
-                            col_names <- colnames(inds)
+                          get_ind = function(y_to_ind, type) {
+                            g <- switch(
+                                  type,
+                                  zeros = function(y) {
+                                            all(y == 0)
+                                          },
+                                  avail = function(y) {
+                                            all(y != 0)
+                                          },
+                                  "Unknown argument value; check internals."
+                                  )
+                            if (is.character(f)) stop(g)
 
-                            out <- vector("list", num_rows)
-                            names(out) <-row_names
-
-                            for (i in 1:num_rows) {
-                              out[[i]] <- which(inds[i, , drop = FALSE])
-                              names(out[[i]]) <- col_names[out[[i]]]
+                            h <- function(x) {apply(x, 2, g)}
+                            out <- apply(y_to_ind, c(3), h)
+                            if (!is.matrix(out)) {
+                              out <- matrix(
+                                out,
+                                nrow = dim(tmp_y)[2],
+                                ncol = dim(tmp_y)[3])
                             }
+                            colnames(out) <- private$.cs_var_val
+                            rownames(out) <- private$.var_y
+                            out2 <- apply(out, 1, which, simplify = FALSE)
+                            out  <- apply(t(out), 1, which, simplify = FALSE)
+                            out  <- list(ind_nn = out, ind_dd = out2)
                             return(out)
                           }
                         ),
