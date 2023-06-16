@@ -225,47 +225,11 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           initialize_data_internal = function() {
                             # Preparing measurement data:
-                            data_internal <- initialize_data_internal_yt()
-                            y_t        <- data_internal$`y_t`
-                            num_counts <- data_internal$num_counts
+                            data_int <- private$initialize_data_int_yt()
+                            y_t      <- data_int$`y_t`
+                            ncs      <- data_int$num_counts
                             # Preparing regressor data:
-                            if (!is.null(private$.var_z)) {
-                              dim_zet <- sapply(private$.var_z,
-                                                length)
-                              check_dim_zet <- Reduce(function(x, y) {
-                                if (identical(x, y)) {
-                                  return(x)
-                                } else {
-                                  FALSE
-                                }
-                              },
-                              dim_zet)
-                              if (isFALSE(check_dim_zet)) {
-                                msg <- paste0("Z-type regressor dims unequal.",
-                                              " Reconsider!")
-                                stop(msg)
-                              }
-                              id_zet <- unname(c(0, cumsum(dim_zet)))
-                              Z <- array(NA_real_,
-                                         dim = c(TT = private$.TT,
-                                                 DD = id_zet[private$.DD + 1],
-                                                 NN = private$.NN))
-                              for (d in 1:private$.DD) {
-                                for (i in 1:private$.NN) {
-                                  data_slice_states   <- private$.data_subset_used %>%
-                                    dplyr::filter(.data[[private$.cs_name_var]] %in% private$.cs_var_val[i])
-                                  tmp_Z <- dplyr::select(data_slice_states,
-                                                         private$.var_z[[d]])
-                                  Z[, (id_zet[d] + 1):id_zet[d + 1], i] <- as.matrix(tmp_Z)
-                                }
-                              }
-                              dim(Z) <- unname(dim(Z))
-                              dim(Z) <- c(TT = dim(Z)[1],
-                                          DD = dim(Z)[2],
-                                          NN = dim(Z)[3])
-                            } else {
-                              Z <- NULL
-                            }
+                            Z <- private$get_z_regs(private$.data_subset_used)
                             if (!is.null(private$.var_u)) {
                               dim_uet <- sapply(private$.var_u, length)
                               check_dim_uet <- Reduce(function(x, y) {
@@ -299,21 +263,22 @@ ModelDat <- R6::R6Class("ModelDat",
                             } else {
                               U <- NULL
                             }
-                            private$.data_internal            <- list()
-                            private$.data_internal$data       <- list()
+                            private$.data_internal     <- list()
+                            private$.data_internal$`Z` <- Z
+                            private$.data_internal$`U` <- U
+                            private$.data_internal$NN  <- private$.NN
+                            private$.data_internal$TT  <- private$.TT
+                            private$.data_internal$DD  <- private$.DD
+
+                            private$.data_internal$data <- list()
                             private$.data_internal$data$`y_t` <- y_t
                             if (private$.COUNTS_TRUE) {
-                              private$.data_internal$data$`num_counts` <- num_counts
+                              private$.data_internal$data$`num_counts` <- ncs
                             }
-                            private$.data_internal$`Z`        <- Z
-                            private$.data_internal$`U`        <- U
-                            private$.data_internal$NN         <- private$.NN
-                            private$.data_internal$TT         <- private$.TT
-                            private$.data_internal$DD         <- private$.DD
 
                             invisible(self)
                           },
-                          initialize_data_internal_yt = function() {
+                          initialize_data_int_yt = function() {
                             y_t <- array(NA_real_,
                                          c(private$.TT,
                                            private$.DD,
@@ -339,6 +304,49 @@ ModelDat <- R6::R6Class("ModelDat",
                               num_counts = NULL
                             }
                             return(list(y_t = y_t, num_counts = num_counts))
+                          },
+                          get_z_regs = function(df) {
+                            if (is.null(private$.var_z)) return(NULL)
+                            id_zet <- private$get_id_zet()
+                            Z <- private$get_z_cnt(id_zet)
+                            cs_nm_var <- private$.cs_name_var
+                            for (d in 1:private$.DD) {
+                              tmp_id_d <- (id_zet[d] + 1):id_zet[d + 1]
+                              for (i in 1:private$.NN) {
+                                cs_var_val <- private$.cs_var_val[i]
+                                Z[, tmp_id_d, i] <- df %>%
+                                  dplyr::filter(
+                                    .data[[cs_nm_var]] %in% cs_var_val) %>%
+                                  dplyr::select(
+                                    private$.var_z[[d]]) %>%
+                                  as.matrix()
+                              }
+                            }
+                            return(Z)
+                          },
+                          get_id_zet = function() {
+                            dim_zet <- sapply(private$.var_z,
+                                              length)
+                            check_dim_zet <- Reduce(function(x, y) {
+                              if (identical(x, y)) {
+                                return(x)
+                              } else {
+                                FALSE
+                              }
+                            },
+                            dim_zet)
+                            if (isFALSE(check_dim_zet)) {
+                              msg <- paste0("Z-type regressor dims unequal.",
+                                            " Reconsider!")
+                              stop(msg)
+                            }
+                            unname(c(0, cumsum(dim_zet)))
+                          },
+                          get_z_cnt = function(id_z) {
+                            out <- array(NA_real_,
+                                     dim = c(TT = unname(private$.TT),
+                                             DD = unname(id_z[private$.DD + 1]),
+                                             NN = unname(private$.NN)))
                           },
                           initialize_data_priors = function(pth_priors) {
                             tmp <- jsonlite::fromJSON(private$.pth_to_priors)
