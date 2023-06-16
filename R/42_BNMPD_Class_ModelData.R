@@ -358,42 +358,28 @@ ModelDat <- R6::R6Class("ModelDat",
                           get_params_init = function(params_init, pth) {
                             if (!is.null(params_init)) return(params_init)
                             init <- jsonlite::fromJSON(pth)
-
-                            init_sig_sq <- init_par_vec(
+                            MAX_NUM_PAR <- 5
+                            par_init <- vector("list", MAX_NUM_PAR)
+                            par_names <- c("phi",
+                                           "beta_z_lin", "beta_u_lin",
+                                           "vcm_u_lin")
+                            par_types <- c("listof-vec", "listof-vec",
+                                           "listof-mat", "listof-mat")
+                            names(par_init) <- c("init_sig_sq", "init_phi",
+                                                 "init_bet_z", "init_bet_u",
+                                                 "init_vcm_bet_u")
+                            par_init[[1]] <- init_par_vec(
                               init,
                               "sig_sq",
                               "listof-vec"
                             )
-                            init_phi <- init_par_list(
-                              init,
-                              "phi",
-                              "listof-vec"
+                            par_init[2:MAX_NUM_PAR] <- mapply(
+                              init_par_list,
+                              rep(list(init), MAX_NUM_PAR - 1),
+                              par_names,
+                              par_types,
+                              SIMPLIFY = FALSE
                             )
-                            init_bet_z <- init_par_list(
-                              init,
-                              "beta_z_lin",
-                              "listof-vec"
-                            )
-                            init_bet_u <- init_par_list(
-                              init,
-                              "beta_u_lin",
-                              "listof-mat"
-                            )
-                            init_vcm_bet_u <- init_par_list(
-                              init,
-                              "vcm_u_lin",
-                              "listof-mat"
-                            )
-
-                            par_init <- vector("list", 5)
-                            par_init[[1]] <- init_sig_sq
-                            if (!is.null(init_phi)) par_init[[2]] <- init_phi
-                            if (!is.null(init_bet_z)) par_init[[3]] <- init_bet_z
-                            if (!is.null(init_bet_u)) par_init[[4]] <- init_bet_u
-                            if (!is.null(init_vcm_bet_u)) par_init[[5]] <- init_vcm_bet_u
-                            names(par_init) <- c("init_sig_sq", "init_phi",
-                                                 "init_bet_z", "init_bet_u",
-                                                 "init_vcm_bet_u")
                             return(par_init)
                           },
                           init_param_vals = function(data_inits,
@@ -501,7 +487,6 @@ ModelDat <- R6::R6Class("ModelDat",
                               params_init,
                               private$.pth_to_inits
                             )
-
                             private$.data_inits_start <- list()
                             private$.data_inits_start$par_init  <- param_inits
                             private$.data_inits_start$traj_init <- state_inits

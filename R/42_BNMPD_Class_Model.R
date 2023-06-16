@@ -832,7 +832,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   member that retrieves the model dimensions
                             #'   \code{T,N,D}.
                             load_modeldata_dimensions = function() {
-                              # browser()
                               out <-private$.ModelDat$get_model_data_dimensions()
                               # out2 <-private$.ModelDef$get_dimension()
                               out <- list2env(as.list(out))

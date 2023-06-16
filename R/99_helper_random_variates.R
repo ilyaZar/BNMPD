@@ -13,7 +13,6 @@ rnorm_fast_n1 <- function(mu, Sigma, len) {
 
   tol <- sqrt(.Machine$double.eps)
   if (!isSymmetric(Sigma, tol = tol, check.attributes = FALSE)) {
-    browser()
     warning("Sigma must be a symmetric matrix")
   }
   eS <- eigen(Sigma, symmetric = TRUE)
