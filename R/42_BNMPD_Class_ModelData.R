@@ -40,7 +40,7 @@ ModelDat <- R6::R6Class("ModelDat",
                           .pth_to_inits = NULL,
                           .data_raw = NULL,
                           .COUNTS_TRUE = FALSE,
-                          .count_name = "num_counts",
+                          .count_nm = "num_counts",
                           .data_subset_used = NULL,
                           .data_internal = NULL,
                           .data_dimensions  = NULL,
@@ -106,16 +106,16 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           initialize_data_raw = function(data_set) {
                             private$.data_raw <- data_set
-                            if (any(private$.count_name %in% names(data_set))) {
+                            if (any(private$.count_nm %in% names(data_set))) {
                               private$.COUNTS_TRUE <- TRUE
                             }
                           },
                           initialize_data_subset_used = function() {
                             if (private$.COUNTS_TRUE) {
                               y_use  <- c(unname(private$.var_y),
-                                          private$.count_name)
+                                          private$.count_nm)
                               y_lab <- c(private$.lab_y,
-                                         private$.count_name)
+                                         private$.count_nm)
                             } else {
                               y_use  <- unname(private$.var_y)
                               y_lab <- private$.lab_y
@@ -270,7 +270,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             y_t <- replace(y_t, y_t < 0 , abs(y_t[y_t < 0]))
                             if (private$.COUNTS_TRUE) {
                               num_counts <- matrix(
-                                private$.data_subset_used[[private$.count_name]],
+                                private$.data_subset_used[[private$.count_nm]],
                                 nrow = private$.TT,
                                 ncol = private$.NN)
                             } else {
@@ -478,7 +478,6 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           initialize_data_inits_start = function(states_init,
                                                                  params_init) {
-
                             state_inits <- private$get_states_init(
                               states_init
                             )
@@ -517,15 +516,15 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           get_ind = function(y_to_ind, type) {
                             g <- switch(
-                                  type,
-                                  zeros = function(y) {
-                                            all(y == 0)
-                                          },
-                                  avail = function(y) {
-                                            all(y != 0)
-                                          },
-                                  "Unknown argument value; check internals."
-                                  )
+                              type,
+                              zeros = function(y) {
+                                all(y == 0)
+                              },
+                              avail = function(y) {
+                                all(y != 0)
+                              },
+                              "Unknown argument value; check internals."
+                            )
                             if (is.character(f)) stop(g)
 
                             h <- function(x) {apply(x, 2, g)}
