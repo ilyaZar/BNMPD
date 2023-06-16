@@ -36,6 +36,9 @@ ModelDat <- R6::R6Class("ModelDat",
                         cloneable = FALSE,
                         portable = FALSE,
                         private = list(
+                          .project_meta = NULL,
+                          .DIST_SPECIAL = NULL,
+                          .DIST_NAME = NULL,
                           .pth_to_priors = NULL,
                           .pth_to_inits = NULL,
                           .data_raw = NULL,
@@ -65,14 +68,29 @@ ModelDat <- R6::R6Class("ModelDat",
                           .NN = NULL,
                           .TT = NULL,
                           .DD = NULL,
+                          .DD2 = NULL,
+                          initialize_project_meta = function(project_meta) {
+                            browser()
+                            private$.project_meta <- project_meta
+                            private$.DIST_SPECIAL <- check_special_dist_quick(
+                              project_meta[["model_type_obs"]]
+                            )
+                            private$.DIST_NAME <- tolower(
+                              project_meta[["model_type_obs"]]
+                            )
+                          },
                           initialize_paths = function(pth_prior, pth_inits) {
                             private$.pth_to_priors <- pth_prior
                             private$.pth_to_inits  <- pth_inits
                           },
                           initialize_data_dimensions = function(dimensions) {
-                            private$.TT <- dimensions["TT"]
-                            private$.NN <- dimensions["NN"]
-                            private$.DD <- dimensions["DD"]
+                            private$.TT  <- dimensions["TT"]
+                            private$.NN  <- dimensions["NN"]
+                            private$.DD  <- dimensions["DD"]
+                            private$.DD2 <- get_DD2(
+                              private$.DIST_NAME,
+                              private$.DD
+                            )
                             private$.data_dimensions <- new.env()
                             private$.data_dimensions$TT <- private$.TT
                             private$.data_dimensions$NN <- private$.NN
@@ -258,7 +276,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                            private$.NN))
                             tmp_var_y <- unname(private$.var_y)
                             tmp_nm_cs <- private$.cs_name_var
-                            for (i in 1:private$.NN) {
+                            for (i in seq_len(private$.NN)) {
                               cs_val_i <- private$.cs_var_val[i]
                               y_t[, , i] <- private$.data_subset_used %>%
                                 dplyr::filter(
@@ -283,9 +301,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             cs_nm_var <- private$.cs_name_var
                             id_tmp    <- private$get_z_u_ids(var)
                             out       <- private$get_z_u_cnt(id_tmp)
-                            for (d in 1:private$.DD) {
+                            for (d in seq_len(private$.DD)) {
                               tmp_id_d <- (id_tmp[d] + 1):id_tmp[d + 1]
-                              for (i in 1:private$.NN) {
+                              for (i in seq_len(private$.NN)) {
                                 cs_var_val <- private$.cs_var_val[i]
                                 out[, tmp_id_d, i] <- df %>%
                                   dplyr::filter(
@@ -332,15 +350,14 @@ ModelDat <- R6::R6Class("ModelDat",
                               return(states_init)
                             }
                             y_t <- private$.data_internal$data[["y_t"]]
-                            TT  <- private$.TT
-                            NN  <- private$.NN
-                            DD  <- private$.DD
                             # zero_lower_bound <- 0.001
-                            scl  <- rep(1, times = DD)
-                            init <- array(0, c(TT, DD, NN))
+                            scl  <- rep(1, times = private$.DD)
+                            init <- array(0, c(private$.TT,
+                                               private$.DD,
+                                               private$.NN))
                             options(warn = 2)
-                            for (i in 1:NN) {
-                              for (d in 1:DD) {
+                            for (i in seq_len(private$.NN)) {
+                              for (d in seq_len(private$.DD)) {
                                 init_tmp <- abs(y_t[, d, i])
                                 if(all(init_tmp == 0)) {
                                   init[, d, i] <- init_tmp
@@ -386,11 +403,10 @@ ModelDat <- R6::R6Class("ModelDat",
                                                      par_name,
                                                      type = NULL,
                                                      dim_mat = NULL) {
-                            DD <- length(data_inits)
-                            out_init <- vector("list", DD)
+                            out_init <- vector("list", private$.DD)
 
                             if (type == "listof-vec") {
-                              for(i in seq_len(DD)) {
+                              for(i in seq_len(private$.DD)) {
                                 tmp_vals <-  data_inits[[i]][[par_name]]$val
                                 if (!is.null(tmp_vals)) {
                                   out_init[[i]] <- tmp_vals
@@ -402,7 +418,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                 msg <- "No 'dim_mat' argument for 'listof-mat'."
                                 stop(msg)
                               }
-                              for(i in seq_len(DD)) {
+                              for(i in seq_len(private$.DD)) {
                                 tmp_vals <- data_inits[[i]][[par_name]]$val
                                 if (is.null(tmp_vals)) {
                                   tmp_vals <- NA_real_
@@ -549,11 +565,14 @@ ModelDat <- R6::R6Class("ModelDat",
                           #'   body to understand what happens exactly. It is
                           #'   important and not easy.
                           #'
+                          #' @param project_meta meta data about the project
+                          #'   from [`ModelDef`], most importantly the
+                          #'   observation distribution
                           #' @param pth_prior path to prior settings json-file
                           #' @param pth_inits path to initialization settings
                           #'   json-file
                           #' @param data_set the raw data set as stored within
-                          #'   the [BNMPD::DataSet()] class
+                          #'   the [DataSet()] class
                           #' @param info_y information on observations (variable
                           #'   name and label)
                           #' @param info_z information on z-type regressors
@@ -572,7 +591,8 @@ ModelDat <- R6::R6Class("ModelDat",
                           #'   the corresponding method tries to generate
                           #'   reasonable starting values by itself (via
                           #'   transformations of the measurements)
-                          initialize = function(pth_prior,
+                          initialize = function(project_meta,
+                                                pth_prior,
                                                 pth_inits,
                                                 data_set,
                                                 info_y,
@@ -585,6 +605,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             # The following side effect functions simply load
                             # the information from ModelDef and DataSet into
                             # this class.
+                            private$initialize_project_meta(project_meta)
                             private$initialize_paths(pth_prior, pth_inits)
                             private$initialize_data_dimensions(info_dim)
                             private$initialize_var_names(info_y, info_z, info_u)

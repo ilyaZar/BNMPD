@@ -243,6 +243,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             },
                             update_modelDat = function() {
                               ModelDat$new(
+                                private$.ModelDef$get_project_meta(),
                                 private$.pth_to_priorset,
                                 private$.pth_to_initsset,
                                 private$.DataSet$get_data_set(),
