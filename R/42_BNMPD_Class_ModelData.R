@@ -355,35 +355,35 @@ ModelDat <- R6::R6Class("ModelDat",
                             options(warn = 0)
                             return(init)
                           },
-                          get_params_init = function(params_init, pth, NN, DD) {
+                          get_params_init = function(params_init, pth) {
                             if (!is.null(params_init)) return(params_init)
+                            init <- jsonlite::fromJSON(pth)
 
-                            inits <- jsonlite::fromJSON(pth)
-                            init_sig_sq <- matrix(0, nrow = DD, ncol = 1)
-                            init_sig_sq[, 1] <- initialize_par_vec(inits,
-                                                                   "sig_sq",
-                                                                   "listof-vec")
-
-                            init_phi <- initialize_par_list(inits,
-                                                            "phi",
-                                                            "listof-vec")
-
-                            dim_zet <- get_dim_reg(inits, "beta_z_lin")
-                            init_bet_z <- initialize_par_list(inits,
-                                                              "beta_z_lin",
-                                                              "listof-vec")
-
-                            dim_u   <- get_dim_reg(inits, "beta_u_lin")
-                            dim_uet <- list(dim_u, rep(NN, times = DD))
-                            init_bet_u <- initialize_par_list(inits,
-                                                              "beta_u_lin",
-                                                              "listof-mat",
-                                                              dim_uet)
-                            dim_u_vcm <- list(dim_u, dim_u)
-                            init_vcm_bet_u <- initialize_par_list(inits,
-                                                                  "vcm_u_lin",
-                                                                  "listof-mat",
-                                                                  dim_u_vcm)
+                            init_sig_sq <- init_par_vec(
+                              init,
+                              "sig_sq",
+                              "listof-vec"
+                            )
+                            init_phi <- init_par_list(
+                              init,
+                              "phi",
+                              "listof-vec"
+                            )
+                            init_bet_z <- init_par_list(
+                              init,
+                              "beta_z_lin",
+                              "listof-vec"
+                            )
+                            init_bet_u <- init_par_list(
+                              init,
+                              "beta_u_lin",
+                              "listof-mat"
+                            )
+                            init_vcm_bet_u <- init_par_list(
+                              init,
+                              "vcm_u_lin",
+                              "listof-mat"
+                            )
 
                             par_init <- vector("list", 5)
                             par_init[[1]] <- init_sig_sq
@@ -396,10 +396,10 @@ ModelDat <- R6::R6Class("ModelDat",
                                                  "init_vcm_bet_u")
                             return(par_init)
                           },
-                          initialize_param_vals = function(data_inits,
-                                                           par_name,
-                                                           type = NULL,
-                                                           dim_mat = NULL) {
+                          init_param_vals = function(data_inits,
+                                                     par_name,
+                                                     type = NULL,
+                                                     dim_mat = NULL) {
                             DD <- length(data_inits)
                             out_init <- vector("list", DD)
 
@@ -431,42 +431,58 @@ ModelDat <- R6::R6Class("ModelDat",
                             if (all(sapply(out_init, is.null))) out_init <- NULL
                             return(out_init)
                           },
-                          initialize_par_vec = function(data_inits,
-                                                        par_name,
-                                                        type = NULL,
-                                                        dim_mat = NULL) {
-                            unlist(private$initialize_param_vals(data_inits,
-                                                                 par_name,
-                                                                 type,
-                                                                 dim_mat))
+                          init_par_vec = function(data_inits,
+                                                  par_name,
+                                                  type = NULL) {
+                            out_val <- unlist(private$init_param_vals(
+                              data_inits,
+                              par_name,
+                              type)
+                            )
+                            out_cnt <- matrix(0, nrow = private$.DD, ncol = 1)
+                            out_cnt[, 1] <- out_val
+                            return(out_cnt)
                           },
-                          initialize_par_list = function(data_inits,
-                                                         par_name,
-                                                         type = NULL,
-                                                         dim_mat = NULL) {
-                            tmp <- private$initialize_param_vals(data_inits,
-                                                                 par_name,
-                                                                 type,
-                                                                 dim_mat)
+                          init_par_list = function(data_inits,
+                                                   par_name,
+                                                   type = NUL) {
+                            dim_mat <- private$get_dim_mat(data_inits, par_name)
+                            tmp <- private$init_param_vals(
+                              data_inits,
+                              par_name,
+                              type,
+                              dim_mat
+                            )
                             return(tmp)
                           },
-                          get_dim_reg = function(data_list_init, reg_name) {
-                            DD <- length(data_list_init)
-                            num_regs <- vector("numeric", DD)
-
-                            for(i in seq_len(DD)) {
-                              tmp_list <- data_list_init[[i]][[reg_name]]
-                              err_msg <- paste0("Unequal number of params in: ",
+                          get_dim_mat = function(init_list, reg_name) {
+                            if (!(reg_name %in% c("beta_u_lin", "vcm_u_lin"))) {
+                              return(NULL)
+                            }
+                            num_regs <- private$get_dim_reg(init_list)
+                            if (reg_name == "beta_u_lin") {
+                              dim_out <- list(
+                                num_regs,
+                                rep(private$.NN, times = private$.DD)
+                              )
+                            } else if (reg_name == "vcm_u_lin") {
+                              dim_out <- list(num_regs, num_regs)
+                            }
+                            return(dim_out)
+                          },
+                          get_dim_reg = function(init_list,
+                                                 reg_name = "beta_u_lin") {
+                            num_regs <- vector("numeric", private$.DD)
+                            for(i in seq_len(private$.DD)) {
+                              tmp_list <- init_list[[i]][[reg_name]]
+                              err_msg <- paste0("Unequal num. of params in: ",
                                                 reg_name,
                                                 ". See setup_inits.json file!")
                               if (reg_name == "beta_u_lin") {
                                 check_me <- all.equal(length(tmp_list$lab),
                                                       length(tmp_list$var))
                               } else {
-                                check_me <- (all.equal(length(tmp_list$lab),
-                                                       length(tmp_list$var)) &&
-                                               all.equal(length(tmp_list$var),
-                                                         length(tmp_list$val)))
+                                stop("Not yet implemented; maybe not needed.")
                               }
                               if (!check_me) {
                                 stop(err_msg)
@@ -483,9 +499,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             )
                             param_inits <- private$get_params_init(
                               params_init,
-                              private$.pth_to_inits,
-                              NN = private$.data_dimensions$NN,
-                              DD = private$.data_dimensions$DD
+                              private$.pth_to_inits
                             )
 
                             private$.data_inits_start <- list()
@@ -666,9 +680,8 @@ ModelDat <- R6::R6Class("ModelDat",
                           get_model_inits_start = function() {
                             tmp <- private$get_params_init(
                               private$.data_inits_start$par_init,
-                              private$.pth_to_inits,
-                              NN = private$.data_dimensions$NN,
-                              DD = private$.data_dimensions$DD)
+                              private$.pth_to_inits
+                            )
                             private$.data_inits_start$par_init <- tmp
                             private$.data_inits_start
                           },

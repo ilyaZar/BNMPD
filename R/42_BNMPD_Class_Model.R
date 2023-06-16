@@ -377,7 +377,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 private$.pth_to_modeldef,
                                 private$.pth_to_projsets)
                               cat("ModelDef successful\n")
-                              browser()
                               private$.ModelDat <- update_modelDat()
                               cat("ModelDat successful\n")
                               private$.ModelOut <- ModelOut$new(
