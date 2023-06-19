@@ -70,7 +70,6 @@ ModelDat <- R6::R6Class("ModelDat",
                           .DD = NULL,
                           .DD2 = NULL,
                           initialize_project_meta = function(project_meta) {
-                            browser()
                             private$.project_meta <- project_meta
                             private$.DIST_SPECIAL <- check_special_dist_quick(
                               project_meta[["model_type_obs"]]
@@ -349,28 +348,38 @@ ModelDat <- R6::R6Class("ModelDat",
                             if (!is.null(states_init)) {
                               return(states_init)
                             }
-                            y_t <- private$.data_internal$data[["y_t"]]
-                            # zero_lower_bound <- 0.001
-                            scl  <- rep(1, times = private$.DD)
+                            scl  <- rep(1, times = private$.DD2)
                             init <- array(0, c(private$.TT,
-                                               private$.DD,
+                                               private$.DD2,
                                                private$.NN))
                             options(warn = 2)
                             for (i in seq_len(private$.NN)) {
-                              for (d in seq_len(private$.DD)) {
-                                init_tmp <- abs(y_t[, d, i])
+                              init_tmp <- get_init_tmp_y(
+                                private$.data_internal$data[["y_t"]], i
+                              )
+                              for (d in seq_len(private$.DD2)) {
                                 if(all(init_tmp == 0)) {
-                                  init[, d, i] <- init_tmp
-                                  # init[, d, i] <- zero_lower_bound
+                                  init[, d, i] <- init_tmp[, d]
+                                  # init[, d, i] <- 0.001 # "zero_lower_bound"
                                 } else {
                                   init[, d, i] <- tryCatch(
-                                    log(init_tmp / scl[d])
+                                    log(init_tmp[, d] / scl[d])
                                   )
                                 }
                               }
                             }
                             options(warn = 0)
                             return(init)
+                          },
+                          get_init_tmp_y = function(y_t, i) {
+                            init_tmp <- abs(y_t[, , i])
+                            if (private$.DIST_SPECIAL) {
+                              init_tmp <- init_tmp[, rep(1:ncol(init_tmp),
+                                                         each = 2)]
+                              rm_last  <- (ncol(init_tmp) - 1):ncol(init_tmp)
+                              init_tmp <- init_tmp[, -rm_last]
+                            }
+                            return(init_tmp)
                           },
                           get_params_init = function(params_init, pth) {
                             if (!is.null(params_init)) return(params_init)
@@ -407,10 +416,10 @@ ModelDat <- R6::R6Class("ModelDat",
                                                      par_name,
                                                      type = NULL,
                                                      dim_mat = NULL) {
-                            out_init <- vector("list", private$.DD)
+                            out_init <- vector("list", private$.DD2)
 
                             if (type == "listof-vec") {
-                              for(i in seq_len(private$.DD)) {
+                              for(i in seq_len(private$.DD2)) {
                                 tmp_vals <-  data_inits[[i]][[par_name]]$val
                                 if (!is.null(tmp_vals)) {
                                   out_init[[i]] <- tmp_vals
@@ -422,7 +431,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                 msg <- "No 'dim_mat' argument for 'listof-mat'."
                                 stop(msg)
                               }
-                              for(i in seq_len(private$.DD)) {
+                              for(i in seq_len(private$.DD2)) {
                                 tmp_vals <- data_inits[[i]][[par_name]]$val
                                 if (is.null(tmp_vals)) {
                                   tmp_vals <- NA_real_
@@ -445,7 +454,7 @@ ModelDat <- R6::R6Class("ModelDat",
                               par_name,
                               type)
                             )
-                            out_cnt <- matrix(0, nrow = private$.DD, ncol = 1)
+                            out_cnt <- matrix(0, nrow = private$.DD2, ncol = 1)
                             out_cnt[, 1] <- out_val
                             return(out_cnt)
                           },
@@ -469,7 +478,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             if (reg_name == "beta_u_lin") {
                               dim_out <- list(
                                 num_regs,
-                                rep(private$.NN, times = private$.DD)
+                                rep(private$.NN, times = private$.DD2)
                               )
                             } else if (reg_name == "vcm_u_lin") {
                               dim_out <- list(num_regs, num_regs)
@@ -478,8 +487,8 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           get_dim_reg = function(init_list,
                                                  reg_name = "beta_u_lin") {
-                            num_regs <- vector("numeric", private$.DD)
-                            for(i in seq_len(private$.DD)) {
+                            num_regs <- vector("numeric", private$.DD2)
+                            for(i in seq_len(private$.DD2)) {
                               tmp_list <- init_list[[i]][[reg_name]]
                               err_msg <- paste0("Unequal num. of params in: ",
                                                 reg_name,
