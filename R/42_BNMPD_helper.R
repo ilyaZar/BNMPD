@@ -84,3 +84,82 @@ read_rds <- function(pth_from) {
     return(readRDS(normalizePath(pth_from)))
   }
 }
+#' A helper function to name output parts
+#'
+#' Helps in naming output parts if [pgas()] runs are obtained sequentially for a
+#' specific model. Takes the path to the model dir as first argument (`pth`),
+#' computes the number of `.rds`-files in the directory `pth/model` which is the
+#' usual place to store the intermediate outputs. The next output name is
+#' determined as the next part number i.e. if there are six files (representing
+#' output parts 001-006) present, then the next output name will contain a
+#' "XXX_part_007_YYY" where "XXX" and "YYY" are the `prefix` and `suffix`
+#' argument to this function.
+#'
+#' For `part_num = NULL` the default behavior in `Description` is generated as
+#' return value, otherwise must be set e.g. an integer `part_num = 1`. The
+#' argument `prefix`, `part_num`, and `suffix` are automatically concatenated by
+#' "_". Thus there is no need for something like `prefix = "out_"`, just use
+#' `prefix = "out"`, see usage
+#'
+#' @param pth character string; gives the path to the model
+#' @param prefix character; a prefix to pre-pend the output name e.g. "out"
+#' @param part_num defaults to `NULL` which is appropriate if the correct part
+#'   number should be automatically inferred (see `Details`)
+#' @param suffix character; a suffix to post-pend the output name e.g.
+#'   "N100000_CHEOPS-MPI"
+#'
+#' @return character giving the new file name to save the next output part;
+#'   it is a plain file name, not a path because the
+#'   `save_pgas_model_out(.)`-member function of the class [`ModelBNMPD`]
+#'   automatically infers the full path from the file name
+#' @export
+#'
+#'@examples
+#'\dontrun{
+#' get_out_part_namer(
+#'   pth = pth_model,
+#'   prefix = "out",
+#'   suffix = "N100000_CHEOPS-MPI"
+#'  )
+#'}
+get_out_part_namer <- function(pth, prefix, part_num = NULL, suffix) {
+  tmp_fn_names <- list.files(
+    file.path(
+      normalizePath(pth),
+      "model"
+    ),
+    pattern = "*.rds"
+  )
+  if (is.null(part_num)) {
+    num_fn <- length(tmp_fn_names)
+    num_part <- formatC(num_fn + 1, width = 3, format = "d", flag = "0")
+  } else {
+    if (!identical(tmp_fn_names, character())) {
+      stop("There are already some output parts present in the model dir ...")
+    }
+    if (!is.numeric(num_part)) stop("Arg. 'num_part' must be numeric.")
+    num_part <- formatC(num_part, width = 3, format = "d", flag = "0")
+  }
+  paste0(prefix, "_", basename(pth), "_part_", num_part, "_", suffix)
+}
+#' Automatically determine model path from opened file or project run
+#'
+#' If run inside R-Studio GUI this function returns the source path of the
+#' currently opened file which is a reliable way to tell the model path.
+#'
+#' The source files where this function is used normally live in the top model
+#' dir, hence this works. Otherwise, it is assumed that you have `cd` to the
+#' directory and the output of `[base::getwd()]` is used!
+#'
+#' @return a character string giving the inferred model path (see `Details`)
+#' @export
+get_path_to_model <- function() {
+  if (.Platform$GUI == "RStudio") {
+    return(dirname(rstudioapi::getSourceEditorContext()$path))
+  } else {
+    cat(crayon::yellow("Not in R-Studio GUI which still might work.\n"))
+    cat(crayon::blue("Set path to model directory via 'getwd()' which is:\n"))
+    cat(crayon::green(getwd()))
+    return(getwd())
+  }
+}
