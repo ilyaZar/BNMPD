@@ -12,7 +12,7 @@
 #' @export
 generate_setup_init_json <- function(params_used, pth_project) {
   if (is.null(params_used)) {
-    cat(crayon::blue("No first argument 'params_used': no json-file generated"))
+    cat(crayon::blue("Arg.'params_used' (e.g. 'params_init') is NULL.\n"))
     return(invisible(params_used))
   }
   pth_to_json <- file.path(pth_project, "model",
