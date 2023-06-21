@@ -159,7 +159,7 @@ get_path_to_model <- function() {
   } else {
     cat(crayon::yellow("Not in R-Studio GUI which still might work.\n"))
     cat(crayon::blue("Set path to model directory via 'getwd()' which is:\n"))
-    cat(crayon::green(getwd()))
+    cat(crayon::green(getwd()), "\n")
     return(getwd())
   }
 }
