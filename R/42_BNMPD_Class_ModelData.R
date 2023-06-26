@@ -428,7 +428,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             return(init_tmp)
                           },
                           get_params_init = function(params_init, pth) {
-                            if (!is.null(params_init)) return(params_init)
+                            if (isFALSE(is.null(params_init))) return(params_init)
                             init        <- read_init_from_json(pth)
                             MAX_NUM_PAR <- 5
                             par_init  <- vector("list", MAX_NUM_PAR)
