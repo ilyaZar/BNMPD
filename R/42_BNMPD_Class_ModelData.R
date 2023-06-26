@@ -454,7 +454,10 @@ ModelDat <- R6::R6Class("ModelDat",
                           read_init_from_json = function(pth) {
                             init <- jsonlite::fromJSON(pth)
                             if (private$.DIST_SPECIAL) {
-                              init <- unlist(init, recursive = FALSE)
+                              init <- unlist(
+                                init,
+                                recursive = FALSE,
+                                use.names = FALSE)
                             }
                             return(init)
                           },
