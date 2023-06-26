@@ -323,7 +323,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             cs_nm_var <- private$.cs_name_var
                             id_tmp    <- private$get_z_u_ids(var)
                             out       <- private$get_z_u_cnt(id_tmp)
-                            for (d in seq_len(private$.DD)) {
+                            for (d in seq_len(private$.DD2)) {
                               tmp_id_d <- (id_tmp[d] + 1):id_tmp[d + 1]
                               for (i in seq_len(private$.NN)) {
                                 cs_var_val <- private$.cs_var_val[i]
@@ -337,6 +337,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                   as.matrix()
                               }
                             }
+                            dimnames(out) <- set_dim_names_z_u_regs(out, var)
                             return(out)
                           },
                           get_z_u_ids = function(var) {
@@ -359,8 +360,30 @@ ModelDat <- R6::R6Class("ModelDat",
                           get_z_u_cnt = function(id) {
                             out <- array(NA_real_,
                                          dim = c(TT = unname(private$.TT),
-                                                 DD = id[private$.DD + 1],
+                                                 DD = id[private$.DD2 + 1],
                                                  NN = unname(private$.NN)))
+                          },
+                          set_dim_names_z_u_regs = function(cnt_reg, var_reg) {
+                            tmp_dim  <- dim(cnt_reg)
+                            TT_names <- paste0("t_", seq_len(tmp_dim[[1]]))
+                            tmp_nm_DD_1 <- unlist(
+                              lapply(
+                                lapply(var_reg, length),
+                                function(x) {
+                                  paste0("k", seq_len(x))
+                                  }
+                                ),
+                              use.names = FALSE
+                            )
+                            tmp_nm_DD_2 <- rep(names(var_reg),
+                                               times = sapply(
+                                                 var_reg,
+                                                 length))
+                            DD_names <- paste0(tmp_nm_DD_1, "_", tmp_nm_DD_2)
+                            NN_names <- paste0("n_", seq_len(tmp_dim[[3]]))
+                            list(TT_names,
+                                 DD_names,
+                                 NN_names)
                           },
                           initialize_data_priors = function(pth_priors) {
                             tmp <- jsonlite::fromJSON(private$.pth_to_priors)

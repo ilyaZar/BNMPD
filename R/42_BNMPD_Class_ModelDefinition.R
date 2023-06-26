@@ -180,11 +180,18 @@ ModelDef <- R6::R6Class("ModelDef",
                                   id)
                               }
                             }
-                            if (SPECIAL_TYPE) {
+                            if (isTRUE(SPECIAL_TYPE)) {
                               if (Z_AVAIL) z_list <- unlist(z_list,
                                                             recursive = FALSE)
                               if (U_AVAIL) u_list <- unlist(u_list,
                                                             recursive = FALSE)
+                            } else if (isFALSE(SPECIAL_TYPE)) {
+                              tmp_names <- private$set_lab_var_name(
+                                private$.yaml_offset,
+                                names(mod_raw)
+                              )
+                              if (Z_AVAIL) names(z_list) <- tmp_names
+                              if (U_AVAIL) names(u_list) <- tmp_names
                             }
                             return(list(y_list = y_list,
                                         y_labs = y_labs,
@@ -218,6 +225,9 @@ ModelDef <- R6::R6Class("ModelDef",
                               names(out) <- tmp_reg[["lab"]]
                               return(out)
                             }
+                          },
+                          set_lab_var_name = function(yml_off, set_names) {
+                            set_names[-seq_len(yml_off)]
                           },
                           set_cs_ts = function() {
                             tmpcs <- private$.model_raw[["cross_section_used"]]
