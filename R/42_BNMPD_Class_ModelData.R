@@ -242,7 +242,7 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           initialize_data_internal = function() {
                             # Preparing measurement data:
-                            data_int <- private$initialize_data_int_yt()
+                            data_int <- private$initialize_data_int_y()
                             y_t      <- data_int$`y_t`
                             ncs      <- data_int$num_counts
                             # Preparing regressor data:
@@ -268,7 +268,7 @@ ModelDat <- R6::R6Class("ModelDat",
 
                             invisible(self)
                           },
-                          initialize_data_int_yt = function() {
+                          initialize_data_int_y = function() {
                             y_t <- array(NA_real_,
                                          c(private$.TT,
                                            private$.DD,
@@ -285,15 +285,38 @@ ModelDat <- R6::R6Class("ModelDat",
                                 as.matrix()
                             }
                             y_t <- replace(y_t, y_t < 0 , abs(y_t[y_t < 0]))
+                            y_t <- dim_name_data_int_y(y_t)
                             if (private$.COUNTS_TRUE) {
                               num_counts <- matrix(
                                 private$.data_subset_used[[private$.count_nm]],
                                 nrow = private$.TT,
                                 ncol = private$.NN)
+                              rownames(num_counts) <- paste0(
+                                "t_",
+                                seq_len(private$.TT)
+                              )
+                              colnames(num_counts) <- paste0(
+                                "n_",
+                                seq_len(private$.NN)
+                              )
                             } else {
                               num_counts = NULL
                             }
                             return(list(y_t = y_t, num_counts = num_counts))
+                          },
+                          dim_name_data_int_y = function(yt,
+                                                         rnames = "t_",# r = row
+                                                         cnames = "d_",# c = col
+                                                         lnames = "n_"# l = last
+                          ) {
+                            tmp <- dim(yt)
+                            dim_names_taken <- list(
+                              paste0(rnames, seq_len(tmp[[1]])),
+                              paste0(cnames, seq_len(tmp[[2]])),
+                              paste0(lnames, seq_len(tmp[[3]]))
+                            )
+                            dimnames(yt) <- dim_names_taken
+                            return(yt)
                           },
                           get_z_u_regs = function(df, var) {
                             if (is.null(var)) return(NULL)
