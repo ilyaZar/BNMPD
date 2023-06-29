@@ -449,7 +449,60 @@ ModelDat <- R6::R6Class("ModelDat",
                               par_types,
                               SIMPLIFY = FALSE
                             )
+                            par_init <- set_dimnames_param_init(par_init)
                             return(par_init)
+                          },
+                          set_dimnames_param_init = function(pars) {
+                            num_pars <- length(pars)
+                            dm_n <- paste0("n_", seq_len(private$.NN))
+                            if (isTRUE(private$.DIST_SPECIAL)) {
+                              dm_d <- c(
+                                paste0("DA_", formatC(
+                                  seq_len(private$.DD2 / 2),
+                                  width = 2,
+                                  format = "d",
+                                  flag = "0")
+                                ),
+                                paste0("DB_", formatC(
+                                  seq_len(private$.DD2 / 2),
+                                  width = 2,
+                                  format = "d",
+                                  flag = "0")
+                                )
+                              )
+                              dm_d <- dm_d[order(substr(dm_d, 4, 6))]
+                            } else if (isFALSE(private$.DIST_SPECIAL)) {
+                              dm_d <-  paste0(
+                                "D_",
+                                formatC(
+                                  seq_len(private$.DD2),
+                                  width = 2,
+                                  format = "d",
+                                  flag = "0")
+                              )
+                            }
+                            colnames(pars[["init_sig_sq"]]) <- dm_n[1]
+                            rownames(pars[["init_sig_sq"]]) <- dm_d
+
+                            names(pars[["init_phi"]])        <- dm_d
+                            names(pars[["init_beta_z_lin"]]) <- dm_d
+                            names(pars[["init_beta_u_lin"]]) <- dm_d
+                            names(pars[["init_vcm_u_lin"]])  <- dm_d
+                            for (d in seq_len(private$.DD2)) {
+                              dm_re <- paste0(
+                                "re_",
+                                seq_len(
+                                  length(pars[["init_beta_u_lin"]][[d]][, 1])
+                                )
+                              )
+
+                              colnames(pars[["init_beta_u_lin"]][[d]]) <- dm_n
+                              rownames(pars[["init_beta_u_lin"]][[d]]) <- dm_re
+
+                              colnames(pars[["init_vcm_u_lin"]][[d]])  <- dm_re
+                              rownames(pars[["init_vcm_u_lin"]][[d]])  <- dm_re
+                            }
+                            return(pars)
                           },
                           read_init_from_json = function(pth) {
                             init <- jsonlite::fromJSON(pth)
