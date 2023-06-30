@@ -91,9 +91,10 @@ ModelDat <- R6::R6Class("ModelDat",
                               private$.DD
                             )
                             private$.data_dimensions <- new.env()
-                            private$.data_dimensions$TT <- private$.TT
-                            private$.data_dimensions$NN <- private$.NN
-                            private$.data_dimensions$DD <- private$.DD
+                            private$.data_dimensions$TT  <- private$.TT
+                            private$.data_dimensions$NN  <- private$.NN
+                            private$.data_dimensions$DD  <- private$.DD
+                            private$.data_dimensions$DD2 <- private$.DD2
                             invisible(self)
                           },
                           initialize_var_names = function(info_y,
@@ -259,6 +260,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_internal$NN  <- private$.NN
                             private$.data_internal$TT  <- private$.TT
                             private$.data_internal$DD  <- private$.DD
+                            private$.data_internal$DD2 <- private$.D2
 
                             private$.data_internal$data <- list()
                             private$.data_internal$data$`y_t` <- y_t
@@ -449,7 +451,7 @@ ModelDat <- R6::R6Class("ModelDat",
                               par_types,
                               SIMPLIFY = FALSE
                             )
-                            par_init <- set_dimnames_param_init(par_init)
+                            # par_init <- set_dimnames_param_init(par_init)
                             return(par_init)
                           },
                           set_dimnames_param_init = function(pars) {
@@ -487,7 +489,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             names(pars[["init_phi"]])        <- dm_d
                             names(pars[["init_beta_z_lin"]]) <- dm_d
                             names(pars[["init_beta_u_lin"]]) <- dm_d
-                            names(pars[["init_vcm_u_lin"]])  <- dm_d
+                            # names(pars[["init_vcm_u_lin"]])  <- dm_d
                             for (d in seq_len(private$.DD2)) {
                               dm_re <- paste0(
                                 "re_",
