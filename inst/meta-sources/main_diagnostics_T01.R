@@ -2,10 +2,9 @@ library(Rmpi)
 library(BNMPD)
 library(pmcmcDiagnostics)
 
-pth_model <- dirname(rstudioapi::getSourceEditorContext()$path)
-# pth_model <- getwd()
-pths_in  <- BNMPD::get_paths_modelBNMPD_input(pth_model)
-pths_ou  <- BNMPD::get_paths_modelBNMPD_results(pth_model)
+pth_mod <- get_path_to_model()
+pths_in <- get_paths_modelBNMPD_input(pth_mod)
+pths_ou <- get_paths_modelBNMPD_results(pth_mod)
 
 model <- BNMPD::ModelBNMPD$new(path_to_project = pths_in$pth_project,
                                path_to_states_init = NULL,
