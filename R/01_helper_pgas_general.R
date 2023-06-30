@@ -106,17 +106,17 @@ update_args_list_smc_internal <- function(pe, args_list, mm) {
 }
 load_model <- function(env_model, to_env) {
   # to_env <- parent.frame()
-  nn_list_dd <- lapply(env_model$avail_indicator_nn, function(x) x - 1)
-  dd_list_nn <- env_model$avail_indicator_dd
-  env_model$nn_list_dd <- nn_list_dd
-  env_model$dd_list_nn <- dd_list_nn
-  y <- env_model$data[[1]]
-  env_model$y <- y
+
+  env_model$nn_list_dd <- lapply(env_model$avail_indicator_nn, function(x) x - 1)
+  env_model$dd_list_nn <- env_model$avail_indicator_dd
+
+  env_model$y <- env_model$data[[1]]
   if (length(env_model$data) == 2) {
-    num_counts <- env_model$data[[2]]
-    env_model$num_counts <- num_counts
+    env_model$num_counts <- env_model$data[[2]]
   }
+
   order_p_tmp <- get_lag_order(env_model)
+
   initialize_data_containers(env_model$par_init,
                              env_model$traj_init,
                              env_model$priors,
@@ -124,6 +124,7 @@ load_model <- function(env_model, to_env) {
                              env_model$U,
                              env_model$TT,
                              env_model$DD,
+                             env_model$DD2,
                              env_model$NN,
                              env_model$MM,
                              order_p_tmp,
@@ -166,7 +167,7 @@ initialize_data_containers <- function(par_init,
                                        traj_init,
                                        priors,
                                        Z, U,
-                                       TT, DD, NN, MM,
+                                       TT, DD, DD2, NN, MM,
                                        order_p,
                                        to_env) {
   u_null <- TRUE
@@ -176,28 +177,28 @@ initialize_data_containers <- function(par_init,
   phi_null <- TRUE
   if (!is.null(par_init[["init_phi"]][[1]])) phi_null <- FALSE
 
-  initialize_dims(par_init, u_null, z_null, phi_null, DD, order_p)
+  initialize_dims(par_init, u_null, z_null, phi_null, DD2, order_p)
 
-  out_cpf           <- matrix(0, nrow = TT, ncol = DD)
-  X                 <- array(0, dim = c(TT, DD, MM, NN))
-  Regs_beta         <- array(0, c(TT, DD, NN))
-  vcm_x_errors_rhs  <- vector("list", DD)
-  sig_sq_x          <- matrix(0, nrow = DD, ncol = MM)
-  # X2      <- array(0, dim = c(TT, DD, MM, NN))
+  out_cpf           <- matrix(0, nrow = TT, ncol = DD2)
+  X                 <- array(0, dim = c(TT, DD2, MM, NN))
+  Regs_beta         <- array(0, c(TT, DD2, NN))
+  vcm_x_errors_rhs  <- vector("list", DD2)
+  sig_sq_x          <- matrix(0, nrow = DD2, ncol = MM)
+  # X2      <- array(0, dim = c(TT, DD2, MM, NN))
   if (!phi_null) {
-    phi_x <- matrix(0, nrow = order_p * DD, ncol = MM)
+    phi_x <- matrix(0, nrow = order_p * DD2, ncol = MM)
   } else {
     phi_x <- NULL
   }
   if (!z_null) {
     bet_z    <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
-    prior_vcm_bet_z   <- vector("list", DD)
+    prior_vcm_bet_z   <- vector("list", DD2)
 
-    Z_beta    <- array(0, c(TT, DD, NN))
-    regs_z    <- array(0, c(TT - order_p, sum(dim_zet) + DD * order_p, NN))
+    Z_beta    <- array(0, c(TT, DD2, NN))
+    regs_z    <- array(0, c(TT - order_p, sum(dim_zet) + DD2 * order_p, NN))
   } else if (z_null && !phi_null) {
     bet_z <- NULL
-    prior_vcm_bet_z   <- vector("list", DD)
+    prior_vcm_bet_z   <- vector("list", DD2)
   } else {
     bet_z <- NULL
     prior_vcm_bet_z <- NULL
@@ -208,16 +209,16 @@ initialize_data_containers <- function(par_init,
     dim(bet_u) <- c(dim_u = tmp_dim[1],
                     MM = tmp_dim[2],
                     NN = tmp_dim[3])
-    prior_vcm_bet_u1  <- numeric(DD)
-    prior_vcm_bet_u2  <- vector("list", DD)
-    dof_vcm_bet_u     <- numeric(DD)
-    vcm_bet_u         <- vector("list", DD)
-    vcm_x_errors_lhs  <- vector("list", DD)
+    prior_vcm_bet_u1  <- numeric(DD2)
+    prior_vcm_bet_u2  <- vector("list", DD2)
+    dof_vcm_bet_u     <- numeric(DD2)
+    vcm_bet_u         <- vector("list", DD2)
+    vcm_x_errors_lhs  <- vector("list", DD2)
 
-    U_beta    <- array(0, c(TT, DD, NN))
-    regs_u    <- array(0, c(TT - order_p, sum(dim_uet) + DD * order_p, NN))
+    U_beta    <- array(0, c(TT, DD2, NN))
+    regs_u    <- array(0, c(TT - order_p, sum(dim_uet) + DD2 * order_p, NN))
   }
-  for (d in 1:DD) {
+  for (d in 1:DD2) {
     vcm_x_errors_rhs[[d]] <- matrix(0, nrow = TT - order_p, ncol = TT - order_p)
     if (!u_null) {
       vcm_x_errors_lhs[[d]] <- array(0, c(TT - order_p, TT - order_p, NN))
@@ -229,8 +230,8 @@ initialize_data_containers <- function(par_init,
   prior_ig_b     <- priors[["prior_ig_b"]]
   ## I. Initialize states to deterministic starting values,
   ## Initialize parameters and regressor values
-  ## PER COMPONENT d,...,DD and for each d, per cross section n,..., NN
-  for (d in 1:DD) {
+  ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
+  for (d in 1:DD2) {
     if (!z_null) {
       id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
       id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
@@ -260,10 +261,10 @@ initialize_data_containers <- function(par_init,
     }
     sig_sq_x[d, 1] <- par_init[["init_sig_sq"]][d, 1]
     for (n in 1:NN) {
-      if (all.equal(dim(traj_init), as.integer(c(TT, DD, NN)),
+      if (all.equal(dim(traj_init), as.integer(c(TT, DD2, NN)),
                     check.attributes = FALSE)) {
         X[ , d, 1, n]  <- traj_init[, d, n]
-      } else if (all.equal(dim(traj_init), as.integer(c(DD, NN)),
+      } else if (all.equal(dim(traj_init), as.integer(c(DD2, NN)),
                            check.attributes = FALSE)) {
         X[ , d, 1, n]  <- traj_init[d, n]
       }
@@ -354,39 +355,6 @@ initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
     vec_obj <- c(vec_obj, "id_phi")
   }
   to_env   <- parent.frame()
-  from_env <- environment()
-  for(n in vec_obj) {
-    assign(n, get(n, from_env), to_env)
-  }
-  invisible(to_env)
-}
-initialize_dims2 <- function(par_init, U, DD) {
-  dim_bet_z <- sapply(par_init[["init_beta_z_lin"]],
-                      length,
-                      simplify = TRUE)
-  if (!is.null(U)) {
-    dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
-  } else {
-    dim_bet_u <- rep(2, times = DD)
-  }
-  dim_zet <- dim_bet_z
-  dim_uet <- dim_bet_u
-
-  id_bet_z  <- c(0, cumsum(dim_bet_z))
-  id_zet    <- c(0, cumsum(dim_zet))
-  if (!is.null(par_init[["phi"]])) {
-    id_reg_z  <- c(0, cumsum(dim_zet + 1))
-  } else {
-    id_reg_z  <- c(0, cumsum(dim_zet))
-  }
-
-
-  id_bet_u  <- c(0, cumsum(dim_bet_u))
-  id_uet    <- c(0, cumsum(dim_uet))
-
-  to_env  <- parent.frame()
-  vec_obj <- c("dim_bet_z", "dim_bet_u", "dim_zet", "dim_uet",
-               "id_bet_z", "id_bet_u", "id_zet", "id_uet", "id_reg_z")
   from_env <- environment()
   for(n in vec_obj) {
     assign(n, get(n, from_env), to_env)
