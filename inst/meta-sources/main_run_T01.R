@@ -2,9 +2,9 @@ library(parallel)
 library(Rmpi)
 library(BNMPD)
 
-pth_model <- dirname(rstudioapi::getSourceEditorContext()$path)
-pths_in  <- BNMPD::get_paths_modelBNMPD_input(pth_model)
-pths_ou  <- BNMPD::get_paths_modelBNMPD_results(pth_model)
+pth_mod <- get_path_to_model()
+pths_in <- get_paths_modelBNMPD_input(pth_mod)
+pths_ou <- get_paths_modelBNMPD_results(pth_mod)
 
 model <- BNMPD::ModelBNMPD$new(path_to_project = pths_in$pth_project,
                                path_to_states_init = pths_in$pth_states_true,
