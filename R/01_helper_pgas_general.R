@@ -296,11 +296,7 @@ initialize_data_containers <- function(par_init,
       }
     }
   }
-  dim(X) <- unname(dim(X))
-  dim(X) <- c(TT = dim(X)[1],
-              DD = dim(X)[2],
-              MM = dim(X)[3],
-              NN = dim(X)[4])
+  X <- set_cnt_meta_X(X)
   # to_env  <- parent.frame()
   vec_obj <- c("order_p",
                "prior_ig_a",
@@ -360,6 +356,20 @@ initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
     assign(n, get(n, from_env), to_env)
   }
   invisible(to_env)
+}
+set_cnt_meta_X <- function(X) {
+  dim(X) <- unname(dim(X))
+  dim(X) <- c(TT = dim(X)[1],
+              DD = dim(X)[2],
+              MM = dim(X)[3],
+              NN = dim(X)[4])
+  dimnames(X) <- list(
+    paste0("t_", seq_len(dim(X)[[1]])),
+    paste0("d_", seq_len(dim(X)[[2]])),
+    paste0("m_", seq_len(dim(X)[[3]])),
+    paste0("n_", seq_len(dim(X)[[4]]))
+  )
+  return(X)
 }
 prepare_cluster <- function(pe, mm = 1) {
   pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
