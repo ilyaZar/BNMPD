@@ -179,11 +179,11 @@ initialize_data_containers <- function(par_init,
 
   initialize_dims(par_init, u_null, z_null, phi_null, DD2, order_p)
 
-  out_cpf           <- matrix(0, nrow = TT, ncol = DD2)
-  X                 <- set_cnt_X(TT, DD2, MM, NN)
-  Regs_beta         <- array(0, c(TT, DD2, NN))
-  vcm_x_errors_rhs  <- vector("list", DD2)
-  sig_sq_x          <- set_cnt_sig_sq_x(DD2, MM)
+  out_cpf          <- matrix(0, nrow = TT, ncol = DD2)
+  X                <- set_cnt_X(TT, DD2, MM, NN)
+  Regs_beta        <- array(0, c(TT, DD2, NN))
+  vcm_x_errors_rhs <- vector("list", DD2)
+  sig_sq_x         <- set_cnt_sig_sq_x(DD2, MM)
   # X2      <- array(0, dim = c(TT, DD2, MM, NN))
   if (!phi_null) {
     phi_x <- set_cnt_phi_x(order_p, DD2, MM)
@@ -204,11 +204,12 @@ initialize_data_containers <- function(par_init,
     prior_vcm_bet_z <- NULL
   }
   if (!u_null) {
-    bet_u    <- set_cnt_bet_u(dim_bet_u, MM, NN)
-    prior_vcm_bet_u1  <- numeric(DD2)
-    prior_vcm_bet_u2  <- vector("list", DD2)
-    dof_vcm_bet_u     <- numeric(DD2)
-    vcm_bet_u         <- vector("list", DD2)
+    bet_u            <- set_cnt_bet_u(dim_bet_u, MM, NN)
+    prior_vcm_bet_u1 <- numeric(DD2)
+    prior_vcm_bet_u2 <- vector("list", DD2)
+    dof_vcm_bet_u    <- numeric(DD2)
+    vcm_bet_u        <- set_cnt_vcm_bet_u(DD2, dim_bet_u, MM)
+
     vcm_x_errors_lhs  <- vector("list", DD2)
 
     U_beta    <- array(0, c(TT, DD2, NN))
@@ -218,7 +219,6 @@ initialize_data_containers <- function(par_init,
     vcm_x_errors_rhs[[d]] <- matrix(0, nrow = TT - order_p, ncol = TT - order_p)
     if (!u_null) {
       vcm_x_errors_lhs[[d]] <- array(0, c(TT - order_p, TT - order_p, NN))
-      vcm_bet_u[[d]]        <- array(0, c(dim_bet_u[d], dim_bet_u[d], MM))
     }
   }
   # Initialize priors:
@@ -380,8 +380,8 @@ set_cnt_phi_x <- function(order_p, DD, MM) {
   colnames(phi_x) <- paste0("m_", seq_len(ncol(phi_x)))
   return(phi_x)
 }
-set_cnt_bet_u <- function(dim_bet_u, MM, NN) {
-  bet_u <- array(0, c(sum(dim_bet_u), MM, NN))
+set_cnt_bet_u <- function(dim_u, MM, NN) {
+  bet_u <- array(0, c(sum(dim_u), MM, NN))
   dim(bet_u) <- unname(dim(bet_u))
   dim(bet_u) <- c(DDxRE = dim(bet_u)[1],
                   MM = dim(bet_u)[2],
@@ -389,13 +389,13 @@ set_cnt_bet_u <- function(dim_bet_u, MM, NN) {
   dd_names <- paste0(
     rep(
       paste0("d_",
-             seq_len(length(dim_bet_u))),
-      times = dim_bet_u
+             seq_len(length(dim_u))),
+      times = dim_u
     ),
     "_",
     paste0(
       "re_",
-      unlist(lapply(dim_bet_u, function(x) {seq_len(x)}))
+      unlist(lapply(dim_u, function(x) {seq_len(x)}))
     )
   )
   dimnames(bet_u) <- list(
@@ -405,26 +405,43 @@ set_cnt_bet_u <- function(dim_bet_u, MM, NN) {
   )
   return(bet_u)
 }
-set_cnt_bet_z <- function(dim, MM) {
-  bet_z <- matrix(0, nrow = sum(dim), ncol = MM)
+set_cnt_bet_z <- function(dim_z, MM) {
+  bet_z <- matrix(0, nrow = sum(dim_z), ncol = MM)
   dim(bet_z) <- unname(dim(bet_z))
   dim(bet_z) <- c(DDxk = dim(bet_z)[1],
                   MM = dim(bet_z)[2])
   dd_names <- paste0(
     rep(
       paste0("d_",
-             seq_len(length(dim))),
-      times = dim
+             seq_len(length(dim_z))),
+      times = dim_z
     ),
     "_",
     paste0(
       "k_",
-      unlist(lapply(dim, function(x) {seq_len(x)}))
+      unlist(lapply(dim_z, function(x) {seq_len(x)}))
     )
   )
   rownames(bet_z) <- dd_names
   colnames(bet_z) <- paste0("m_", seq_len(dim(bet_z)[[2]]))
   return(bet_z)
+}
+set_cnt_vcm_bet_u <- function(DD, dim_u, MM) {
+  vcm_bet_u        <- vector("list", DD)
+  names(vcm_bet_u) <- paste0("DD_", seq_len(DD))
+  for (d in seq_len(DD)) {
+    vcm_bet_u[[d]]  <- array(0, c(dim_u[d], dim_u[d], MM))
+    dim(vcm_bet_u[[d]]) <- unname(dim(vcm_bet_u[[d]]))
+    dim(vcm_bet_u[[d]]) <- c(RE = dim(vcm_bet_u[[d]])[1],
+                             RE = dim(vcm_bet_u[[d]])[2],
+                             MM = dim(vcm_bet_u[[d]])[3])
+    dimnames(vcm_bet_u[[d]]) <- list(
+      paste0("re_", seq_len(dim_u[d])),
+      paste0("re_", seq_len(dim_u[d])),
+      paste0("m_", seq_len(MM))
+    )
+  }
+  vcm_bet_u
 }
 prepare_cluster <- function(pe, mm = 1) {
   pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
