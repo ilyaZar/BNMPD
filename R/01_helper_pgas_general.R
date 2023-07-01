@@ -204,11 +204,7 @@ initialize_data_containers <- function(par_init,
     prior_vcm_bet_z <- NULL
   }
   if (!u_null) {
-    bet_u    <- array(0, c(sum(dim_bet_u), MM, NN))
-    tmp_dim <- unname(dim(bet_u))
-    dim(bet_u) <- c(dim_u = tmp_dim[1],
-                    MM = tmp_dim[2],
-                    NN = tmp_dim[3])
+    bet_u    <- set_cnt_bet_u(dim_bet_u, MM, NN)
     prior_vcm_bet_u1  <- numeric(DD2)
     prior_vcm_bet_u2  <- vector("list", DD2)
     dof_vcm_bet_u     <- numeric(DD2)
@@ -383,6 +379,31 @@ set_cnt_phi_x <- function(order_p, DD, MM) {
   rownames(phi_x) <- paste0("d_", seq_len(nrow(phi_x)))
   colnames(phi_x) <- paste0("m_", seq_len(ncol(phi_x)))
   return(phi_x)
+}
+set_cnt_bet_u <- function(dim_bet_u, MM, NN) {
+  bet_u <- array(0, c(sum(dim_bet_u), MM, NN))
+  dim(bet_u) <- unname(dim(bet_u))
+  dim(bet_u) <- c(DDxRE = dim(bet_u)[1],
+                  MM = dim(bet_u)[2],
+                  NN = dim(bet_u)[3])
+  dd_names <- paste0(
+    rep(
+      paste0("d_",
+             seq_len(length(dim_bet_u))),
+      times = dim_bet_u
+    ),
+    "_",
+    paste0(
+      "re_",
+      unlist(lapply(dim_bet_u, function(x) {seq_len(x)}))
+    )
+    )
+  dimnames(bet_u) <- list(
+    dd_names,
+    paste0("m_", seq_len(dim(bet_u)[[2]])),
+    paste0("n_", seq_len(dim(bet_u)[[3]]))
+  )
+  return(bet_u)
 }
 prepare_cluster <- function(pe, mm = 1) {
   pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
