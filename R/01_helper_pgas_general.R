@@ -180,13 +180,13 @@ initialize_data_containers <- function(par_init,
   initialize_dims(par_init, u_null, z_null, phi_null, DD2, order_p)
 
   out_cpf           <- matrix(0, nrow = TT, ncol = DD2)
-  X                 <- array(0, dim = c(TT, DD2, MM, NN))
+  X                 <- set_cnt_X(TT, DD2, MM, NN)
   Regs_beta         <- array(0, c(TT, DD2, NN))
   vcm_x_errors_rhs  <- vector("list", DD2)
-  sig_sq_x          <- matrix(0, nrow = DD2, ncol = MM)
+  sig_sq_x          <- set_cnt_sig_sq_x(DD2, MM)
   # X2      <- array(0, dim = c(TT, DD2, MM, NN))
   if (!phi_null) {
-    phi_x <- matrix(0, nrow = order_p * DD2, ncol = MM)
+    phi_x <- set_cnt_phi_x(order_p, DD2, MM)
   } else {
     phi_x <- NULL
   }
@@ -296,7 +296,7 @@ initialize_data_containers <- function(par_init,
       }
     }
   }
-  X <- set_cnt_meta_X(X)
+
   # to_env  <- parent.frame()
   vec_obj <- c("order_p",
                "prior_ig_a",
@@ -357,7 +357,8 @@ initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
   }
   invisible(to_env)
 }
-set_cnt_meta_X <- function(X) {
+set_cnt_X <- function(TT, DD, MM, NN) {
+  X <- array(0, dim = c(TT, DD, MM, NN))
   dim(X) <- unname(dim(X))
   dim(X) <- c(TT = dim(X)[1],
               DD = dim(X)[2],
@@ -370,6 +371,18 @@ set_cnt_meta_X <- function(X) {
     paste0("n_", seq_len(dim(X)[[4]]))
   )
   return(X)
+}
+set_cnt_sig_sq_x <- function(DD, MM) {
+  sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
+  rownames(sig_sq_x) <- paste0("d_", seq_len(nrow(sig_sq_x)))
+  colnames(sig_sq_x) <- paste0("m_", seq_len(ncol(sig_sq_x)))
+  return(sig_sq_x)
+}
+set_cnt_phi_x <- function(order_p, DD, MM) {
+  phi_x <- matrix(0, nrow = order_p * DD, ncol = MM)
+  rownames(phi_x) <- paste0("d_", seq_len(nrow(phi_x)))
+  colnames(phi_x) <- paste0("m_", seq_len(ncol(phi_x)))
+  return(phi_x)
 }
 prepare_cluster <- function(pe, mm = 1) {
   pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
