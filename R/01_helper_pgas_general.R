@@ -183,13 +183,10 @@ initialize_data_containers <- function(par_init,
   X                <- set_cnt_X(TT, DD2, MM, NN)
   Regs_beta        <- array(0, c(TT, DD2, NN))
   vcm_x_errors_rhs <- vector("list", DD2)
-  sig_sq_x         <- set_cnt_sig_sq_x(DD2, MM)
+  sig_sq_x         <- set_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
   # X2      <- array(0, dim = c(TT, DD2, MM, NN))
-  if (!phi_null) {
-    phi_x <- set_cnt_phi_x(order_p, DD2, MM)
-  } else {
-    phi_x <- NULL
-  }
+  phi_x <- set_cnt_phi_x(phi_null, par_init[["init_phi"]],
+                         id_phi, order_p, DD2, MM)
   if (!z_null) {
     bet_z    <- set_cnt_bet_z(dim_bet_z, MM)
     prior_vcm_bet_z   <- vector("list", DD2)
@@ -251,11 +248,7 @@ initialize_data_containers <- function(par_init,
 
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_u_lin"]][[d]]
     }
-    if (!phi_null) {
-      id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
-      phi_x[id_phi_tmp, 1] <- par_init[["init_phi"]][[d]]
-    }
-    sig_sq_x[d, 1] <- par_init[["init_sig_sq"]][d, 1]
+
     for (n in 1:NN) {
       if (all.equal(dim(traj_init), as.integer(c(TT, DD2, NN)),
                     check.attributes = FALSE)) {
@@ -365,16 +358,24 @@ set_cnt_X <- function(TT, DD, MM, NN) {
   )
   return(X)
 }
-set_cnt_sig_sq_x <- function(DD, MM) {
+set_cnt_sig_sq_x <- function(sig_sq_vals, DD, MM) {
   sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
   rownames(sig_sq_x) <- paste0("d_", seq_len(nrow(sig_sq_x)))
   colnames(sig_sq_x) <- paste0("m_", seq_len(ncol(sig_sq_x)))
+  for (d in seq_len(DD)) {
+    sig_sq_x[d, 1] <- sig_sq_vals[d, 1]
+  }
   return(sig_sq_x)
 }
-set_cnt_phi_x <- function(order_p, DD, MM) {
+set_cnt_phi_x <- function(phi_null, phi_vals, id_phi, order_p, DD, MM) {
+  if (isTRUE(phi_null)) return(NULL)
   phi_x <- matrix(0, nrow = order_p * DD, ncol = MM)
   rownames(phi_x) <- paste0("d_", seq_len(nrow(phi_x)))
   colnames(phi_x) <- paste0("m_", seq_len(ncol(phi_x)))
+  for (d in 1:DD) {
+    id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
+    phi_x[id_phi_tmp, 1] <- phi_vals[[d]]
+  }
   return(phi_x)
 }
 set_cnt_bet_u <- function(dim_u, MM, NN) {
