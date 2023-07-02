@@ -7,7 +7,7 @@ sample_all_params.auto_lin <- function(pe, mm) {
   order_p <- pe$order_p
   for (d in 1:pe$DD) {
     id_phi_tmp  <- (pe$id_phi[d] + 1):pe$id_phi[d + 1]
-    id_betz_tmp <- (pe$id_bet_z[d] + 1):pe$id_bet_z[d + 1]
+    id_betz_tmp <- (pe$id_zet[d] + 1):pe$id_zet[d + 1]
     id_zet_tmp  <- (pe$id_zet[d] + 1):pe$id_zet[d + 1]
 
     # id_regs_z_tmp <- (pe$id_reg_z[d] + 1 + (d - 1) * order_p):(pe$id_reg_z[d + 1] + order_p * d)

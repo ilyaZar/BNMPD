@@ -5,7 +5,7 @@
 #' @export
 sample_all_params.lin_re <- function(pe, mm) {
   for (d in 1:pe$DD) {
-    id_betz_tmp <- (pe$id_bet_z[d] + 1):pe$id_bet_z[d + 1]
+    id_betz_tmp <- (pe$id_zet[d] + 1):pe$id_zet[d + 1]
     id_betu_tmp <- (pe$id_bet_u[d] + 1):pe$id_bet_u[d + 1]
     id_zet_tmp  <- (pe$id_zet[d] + 1):pe$id_zet[d + 1]
     id_uet_tmp  <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]

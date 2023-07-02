@@ -229,7 +229,7 @@ initialize_data_containers <- function(par_init,
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
   for (d in 1:DD2) {
     if (!z_null) {
-      id_betz_tmp <- (id_bet_z[d] + 1):id_bet_z[d + 1]
+      id_betz_tmp <- (id_zet[d] + 1):id_zet[d + 1]
       id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
       id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
       bet_z[id_betz_tmp, 1] <- par_init[["init_beta_z_lin"]][[d]]
@@ -299,7 +299,7 @@ initialize_data_containers <- function(par_init,
                "prior_ig_b",
                "X", "out_cpf", "sig_sq_x", "Regs_beta")
   if (!z_null) {
-    vec_obj <- c(vec_obj, "dim_bet_z", "id_bet_z", "id_zet", "id_reg_z",
+    vec_obj <- c(vec_obj, "dim_bet_z", "id_zet", "id_reg_z",
                  "prior_vcm_bet_z",  "regs_z", "bet_z")
   }
   if (!u_null) {
@@ -322,15 +322,13 @@ initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
   if (!z_null) {
     dim_bet_z <- sapply(par_init[["init_beta_z_lin"]], length, simplify = TRUE)
     dim_zet   <- dim_bet_z
-    id_bet_z  <- c(0, cumsum(dim_bet_z))
     id_zet    <- c(0, cumsum(dim_bet_z))
     if (!phi_null) {
       id_reg_z  <- c(0, cumsum(dim_bet_z + order_p))
     } else {
       id_reg_z  <- c(0, cumsum(dim_bet_z))
     }
-    vec_obj <- c(vec_obj, "dim_bet_z", "dim_zet",
-                 "id_bet_z", "id_zet", "id_reg_z")
+    vec_obj <- c(vec_obj, "dim_bet_z", "dim_zet", "id_zet", "id_reg_z")
   }
   if (!u_null) {
     dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
