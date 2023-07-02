@@ -287,25 +287,9 @@ initialize_data_containers <- function(par_init,
   }
 
   # to_env  <- parent.frame()
-  vec_obj <- c("order_p",
-               "prior_ig_a",
-               "prior_ig_b",
-               "X", "out_cpf", "sig_sq_x", "Regs_beta")
-  if (!z_null) {
-    vec_obj <- c(vec_obj, "dim_bet_z", "id_zet", "id_reg_z",
-                 "prior_vcm_bet_z",  "regs_z", "bet_z")
-  }
-  if (!u_null) {
-    vec_obj <- c(vec_obj, "U", "dim_bet_u", "id_uet",
-                 "dof_vcm_bet_u", "prior_vcm_bet_u2",
-                 "vcm_bet_u", "bet_u")
-  }
-  if (!phi_null) {
-    vec_obj <- c(vec_obj,  "id_phi", "phi_x")
-    if (z_null) vec_obj <- c(vec_obj,  "id_phi", "prior_vcm_bet_z")
-  }
+  pgas_obj <- get_objs_pgas(phi_null, z_null, u_null)
   from_env <- environment()
-  for(n in vec_obj) {
+  for(n in pgas_obj) {
     assign(n, get(n, from_env), to_env)
   }
   invisible(to_env)
@@ -463,4 +447,24 @@ update_states <- function(pe, cbpf_output, mm, CHECK_CL_ORDER = FALSE) {
   for (n in 1:pe$NN) {
     pe$X[ , , mm, n] <- cbpf_output[[n]]
   }
+}
+get_objs_pgas <- function(phi_null, z_null, u_null) {
+  vec_obj <- c("order_p",
+               "prior_ig_a",
+               "prior_ig_b",
+               "X", "out_cpf", "sig_sq_x", "Regs_beta")
+  if (!z_null) {
+    vec_obj <- c(vec_obj, "dim_bet_z", "id_zet", "id_reg_z",
+                 "prior_vcm_bet_z",  "regs_z", "bet_z")
+  }
+  if (!u_null) {
+    vec_obj <- c(vec_obj, "U", "dim_bet_u", "id_uet",
+                 "dof_vcm_bet_u", "prior_vcm_bet_u2",
+                 "vcm_bet_u", "bet_u")
+  }
+  if (!phi_null) {
+    vec_obj <- c(vec_obj,  "id_phi", "phi_x")
+    if (z_null) vec_obj <- c(vec_obj,  "id_phi", "prior_vcm_bet_z")
+  }
+  return(vec_obj)
 }
