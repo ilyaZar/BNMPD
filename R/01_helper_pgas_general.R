@@ -184,7 +184,6 @@ initialize_data_containers <- function(par_init,
   Regs_beta        <- array(0, c(TT, DD2, NN))
   vcm_x_errors_rhs <- vector("list", DD2)
   sig_sq_x         <- set_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
-  # X2      <- array(0, dim = c(TT, DD2, MM, NN))
   phi_x <- set_cnt_phi_x(phi_null, par_init[["init_phi"]],
                          id_phi, order_p, DD2, MM)
   if (!z_null) {
@@ -257,7 +256,6 @@ initialize_data_containers <- function(par_init,
                            check.attributes = FALSE)) {
         X[ , d, 1, n]  <- traj_init[d, n]
       }
-      # X2[ , d, 1, n] <- traj_init[d, n]
       if (!z_null) {
         regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
         Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
@@ -286,7 +284,6 @@ initialize_data_containers <- function(par_init,
     }
   }
 
-  # to_env  <- parent.frame()
   pgas_obj <- get_objs_pgas(phi_null, z_null, u_null)
   from_env <- environment()
   for(n in pgas_obj) {
