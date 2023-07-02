@@ -5,7 +5,7 @@
 #' @export
 sample_all_params.re <- function(pe, mm) {
   for (d in 1:pe$DD) {
-    id_betu_tmp <- (pe$id_bet_u[d] + 1):pe$id_bet_u[d + 1]
+    id_betu_tmp <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]
     id_uet_tmp  <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]
 
     dd_range_nn <- pe$dd_list_nn[[d]]
@@ -41,8 +41,8 @@ sample_all_params.re <- function(pe, mm) {
                                            TT = pe$TT,
                                            bet_u = pe$bet_u[, mm, ,
                                                             drop = FALSE],
-                                           id_bet_u = c(pe$id_bet_u[d],
-                                                        pe$id_bet_u[d + 1]),
+                                           id_uet = c(pe$id_uet[d],
+                                                        pe$id_uet[d + 1]),
                                            iter_range_NN = 1:pe$NN)
   }
   cat("MCMC iteration number:", mm, "\n")

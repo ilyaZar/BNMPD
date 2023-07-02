@@ -7,16 +7,15 @@
 #' @inheritParams sample_bet_z_alr
 #' @param Z Z regressor matrix sliced at corresponding component \code{d}
 #' @param U U regressor matrix sliced at corresponding component \code{d}
-#' @param id_uet id of \code{d}-component random effects regressor matrix
+#' @param id_uet id of \code{d}-component random effects
 #' @param bet_z m'th sample of beta coefficient of the state component \code{d}
 #' @param bet_u m'th sample of beta coefficient of the state component \code{d}
-#' @param id_bet_u id of \code{d}-component random effects
 #'
 #' @return a vector of dimension \code{TT x NN}, containing the corresponding
 #'   multiplication result for the d'th component
 #' @export
 get_regs_beta <- function(Z, U, id_uet, TT,
-                          bet_z, bet_u, id_bet_u,
+                          bet_z, bet_u,
                           iter_range_NN) {
   # browser()
   NN <- length(iter_range_NN)
@@ -27,7 +26,7 @@ get_regs_beta <- function(Z, U, id_uet, TT,
   for (n in iter_range_NN) {
     Z_tmp <- Z[, , n]
     U_tmp <- matrix(U[, (id_uet[1] + 1):id_uet[2], n, drop = FALSE], nrow = TT)
-    bet_u_tmp <- matrix(bet_u[(id_bet_u[1] + 1):id_bet_u[2], , n, drop = FALSE])
+    bet_u_tmp <- matrix(bet_u[(id_uet[1] + 1):id_uet[2], , n, drop = FALSE])
 
     Z_beta[, n]    <- Z_tmp %*% bet_z
     U_beta[, n]    <- U_tmp %*% bet_u_tmp
@@ -69,14 +68,13 @@ get_regs_beta_l <- function(Z, TT, bet_z, iter_range_NN) {
 #'   multiplication result for the d'th component
 #' @export
 get_regs_beta_r <- function(U, id_uet, TT,
-                            bet_u, id_bet_u,
-                            iter_range_NN) {
+                            bet_u, iter_range_NN) {
   NN <- length(iter_range_NN)
   U_beta    <- matrix(0, nrow = TT, ncol = NN)
   Regs_beta <- matrix(0, nrow = TT, ncol = NN)
   for (n in iter_range_NN) {
     U_tmp <- matrix(U[, (id_uet[1] + 1):id_uet[2], n, drop = FALSE], nrow = TT)
-    bet_u_tmp <- matrix(bet_u[(id_bet_u[1] + 1):id_bet_u[2], , n, drop = FALSE])
+    bet_u_tmp <- matrix(bet_u[(id_uet[1] + 1):id_uet[2], , n, drop = FALSE])
     Regs_beta[, n] <- U_tmp %*% bet_u_tmp
   }
   return(Regs_beta)

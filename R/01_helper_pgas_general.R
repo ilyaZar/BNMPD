@@ -238,7 +238,7 @@ initialize_data_containers <- function(par_init,
       prior_vcm_bet_z[[d]]  <- diag(1 / 1000, order_p)
     }
     if (!u_null) {
-      id_betu_tmp <- (id_bet_u[d] + 1):id_bet_u[d + 1]
+      id_betu_tmp <- (id_uet[d] + 1):id_uet[d + 1]
       id_uet_tmp  <- (id_uet[d] + 1):id_uet[d + 1]
       if (phi_null) {
         id_regs_u_tmp <-  (id_uet[d] + 1):(id_uet[d + 1])
@@ -303,7 +303,7 @@ initialize_data_containers <- function(par_init,
                  "prior_vcm_bet_z",  "regs_z", "bet_z")
   }
   if (!u_null) {
-    vec_obj <- c(vec_obj, "U", "dim_bet_u", "id_bet_u", "id_uet",
+    vec_obj <- c(vec_obj, "U", "dim_bet_u", "id_uet",
                  "dof_vcm_bet_u", "prior_vcm_bet_u2",
                  "vcm_bet_u", "bet_u")
   }
@@ -333,9 +333,8 @@ initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
   if (!u_null) {
     dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
     dim_uet   <- dim_bet_u
-    id_bet_u  <- c(0, cumsum(dim_bet_u))
     id_uet    <- c(0, cumsum(dim_bet_u))
-    vec_obj   <- c(vec_obj, "dim_bet_u", "dim_uet", "id_bet_u", "id_uet")
+    vec_obj   <- c(vec_obj, "dim_bet_u", "dim_uet", "id_uet")
   } # else {
   #   dim_bet_u <- rep(2, times = DD)
   # }
