@@ -41,7 +41,7 @@ get_output_data_simul <- function(cnt_data,
   } else {
     out_data[[2]]$u <- NULL
   }
-  out_data[[3]] <- cnt_states
+  out_data[[3]] <- reorder_states(cnt_states, type = dist)
 
   attr(out_data[[1]], which = "model_type_obs") <- attr_name_obs
   attr(out_data[[3]], which = "model_type_lat") <- attr_name_lat
@@ -51,6 +51,18 @@ get_output_data_simul <- function(cnt_data,
             model_type_obs = attr_name_obs,
             model_type_lat = attr_name_lat,
             class = class_name)
+}
+reorder_states <- function(states, type) {
+  if (type %in% c("dirichlet", "normal", "multinomial", "dirichlet_mult")) {
+    return(states)
+  } else if (type %in% c("gen_dirichlet",
+                         "gen_dirichlet_mult")) {
+    order(substring(colnames(states), 3, 5))
+    out_states <- states[, order(substring(colnames(states), 3, 5)), ]
+  } else {
+    stop("Unknown distribution/type of states to re-order.")
+  }
+  return(out_states)
 }
 # test_name_class <- c("dirichlet", "gen_dirichlet", "multinomial",
 # "dirichlet_mult", "gen_dirichlet_mult", "normal")
