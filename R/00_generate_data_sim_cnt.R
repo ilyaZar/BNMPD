@@ -88,30 +88,39 @@ generate_y_x_containter <- function(distribution, NN, TT, DD, type = "x") {
   if (distribution %in% (c("normal", "multinomial",
                            "dirichlet", "dirichlet_mult"))) {
     out_cnt <- array(0, c(TT = TT, DD = DD, NN = NN))
-    tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
+    tmp_names <- get_x_y_containter_names(NN = NN, TT = TT,
+                                          DD = DD, type = "default-x-y")
     dimnames(out_cnt) <- tmp_names
   } else if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     if (type == "x") {
       DD2_tmp   <- get_DD2(distribution, DD)
-      DD1_tmp   <- DD2_tmp / 2
       out_cnt   <- array(0, c(TT = TT, DD2 = DD2_tmp, NN = NN))
-      tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD1_tmp)
-      tmp_names[[2]] <- c(paste0("A_", tmp_names[[2]]),
-                          paste0("B_", tmp_names[[2]]))
+      tmp_names <- get_x_y_containter_names(NN = NN, TT = TT,
+                                            DD = DD2_tmp, type = "special-x-y")
       dimnames(out_cnt) <- tmp_names
     } else if (type == "y") {
       out_cnt   <- array(0, c(TT = TT, DD = DD, NN = NN))
-      tmp_names <- get_x_y_containter_names(NN = NN, TT = TT, DD = DD)
+      tmp_names <- get_x_y_containter_names(NN = NN, TT = TT,
+                                            DD = DD, type = "default-x-y")
       dimnames(out_cnt) <- tmp_names
     }
   }
   return(out_cnt)
 }
-get_x_y_containter_names <- function(NN, TT, DD) {
-  names_out <- list(paste0("t_", seq_len(TT)),
-                    paste0("d_", seq_len(DD)),
-                    paste0("n_", seq_len(NN)))
-  return(names_out)
+get_x_y_containter_names <- function(NN, TT, DD, type) {
+  if (type == "default-x-y") {
+    return(list(paste0("t_", seq_len(TT)),
+                paste0("d_", seq_len(DD)),
+                paste0("n_", seq_len(NN))))
+  } else if (type == "special-x-y") {
+    DD_tmp <- DD / 2
+    dd_seq <- formatC(seq_len(DD_tmp), width = 2, format = "d", flag = "0")
+
+    out_names <- list(paste0("t_", seq_len(TT)),
+                      c(paste0("DA_", dd_seq),
+                        paste0("DB_", dd_seq)),
+                      paste0("n_", seq_len(NN)))
+  }
 }
 #' Generate container for regressors.
 #'
