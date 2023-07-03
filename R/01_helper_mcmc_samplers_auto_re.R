@@ -59,8 +59,6 @@ sample_all_params.auto_re <- function(pe, mm) {
                                            TT = pe$TT,
                                            bet_u = pe$bet_u[, mm, ,
                                                             drop = FALSE],
-                                           id_uet = c(pe$id_uet[d],
-                                                      pe$id_uet[d + 1]),
                                            iter_range_NN = 1:pe$NN)
   }
   cat("MCMC iteration number:", mm, "\n")
