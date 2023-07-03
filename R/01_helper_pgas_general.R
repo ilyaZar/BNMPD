@@ -177,7 +177,7 @@ initialize_data_containers <- function(par_init,
   phi_null <- TRUE
   if (!is.null(par_init[["init_phi"]][[1]])) phi_null <- FALSE
 
-  initialize_dims(par_init, u_null, z_null, phi_null, DD2, order_p)
+  dims <- initialize_dims(par_init, u_null, z_null, phi_null, DD2, order_p)
 
   out_cpf          <- matrix(0, nrow = TT, ncol = DD2)
   X                <- set_cnt_X(TT, DD2, MM, NN)
@@ -185,13 +185,13 @@ initialize_data_containers <- function(par_init,
   vcm_x_errors_rhs <- vector("list", DD2)
   sig_sq_x         <- set_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
   phi_x <- set_cnt_phi_x(phi_null, par_init[["init_phi"]],
-                         id_phi, order_p, DD2, MM)
+                         dims[["id_phi"]], order_p, DD2, MM)
   if (!z_null) {
-    bet_z    <- set_cnt_bet_z(dim_bet_z, MM)
+    bet_z    <- set_cnt_bet_z(dims[["dim_bet_z"]], MM)
     prior_vcm_bet_z   <- vector("list", DD2)
 
-    Z_beta    <- array(0, c(TT, DD2, NN))
-    regs_z    <- array(0, c(TT - order_p, sum(dim_zet) + DD2 * order_p, NN))
+    Z_beta <- array(0, c(TT, DD2, NN))
+    regs_z <- array(0, c(TT - order_p, sum(dims[["dim_zet"]]) + DD2 * order_p, NN))
   } else if (z_null && !phi_null) {
     bet_z <- NULL
     prior_vcm_bet_z   <- vector("list", DD2)
@@ -200,16 +200,16 @@ initialize_data_containers <- function(par_init,
     prior_vcm_bet_z <- NULL
   }
   if (!u_null) {
-    bet_u            <- set_cnt_bet_u(dim_bet_u, MM, NN)
+    bet_u            <- set_cnt_bet_u(dims[["dim_bet_u"]], MM, NN)
     prior_vcm_bet_u1 <- numeric(DD2)
     prior_vcm_bet_u2 <- vector("list", DD2)
     dof_vcm_bet_u    <- numeric(DD2)
-    vcm_bet_u        <- set_cnt_vcm_bet_u(DD2, dim_bet_u, MM)
+    vcm_bet_u        <- set_cnt_vcm_bet_u(DD2, dims[["dim_bet_u"]], MM)
 
     vcm_x_errors_lhs  <- vector("list", DD2)
 
-    U_beta    <- array(0, c(TT, DD2, NN))
-    regs_u    <- array(0, c(TT - order_p, sum(dim_uet) + DD2 * order_p, NN))
+    U_beta <- array(0, c(TT, DD2, NN))
+    regs_u <- array(0, c(TT - order_p, sum(dims[["dim_uet"]]) + DD2 * order_p, NN))
   }
   for (d in 1:DD2) {
     vcm_x_errors_rhs[[d]] <- matrix(0, nrow = TT - order_p, ncol = TT - order_p)
@@ -225,24 +225,24 @@ initialize_data_containers <- function(par_init,
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
   for (d in 1:DD2) {
     if (!z_null) {
-      id_betz_tmp <- (id_zet[d] + 1):id_zet[d + 1]
-      id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
-      id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
+      id_betz_tmp <- (dims[["id_zet"]][d] + 1):dims[["id_zet"]][d + 1]
+      id_zet_tmp  <- (dims[["id_zet"]][d] + 1):dims[["id_zet"]][d + 1]
+      id_regs_z_tmp <- (dims[["id_zet"]][d] + 1 + order_p * d):(dims[["id_zet"]][d + 1] + order_p * d)
       bet_z[id_betz_tmp, 1] <- par_init[["init_beta_z_lin"]][[d]]
-      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + order_p)
+      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dims[["dim_bet_z"]][d] + order_p)
     } else if (z_null && !phi_null) {
       prior_vcm_bet_z[[d]]  <- diag(1 / 1000, order_p)
     }
     if (!u_null) {
-      id_betu_tmp <- (id_uet[d] + 1):id_uet[d + 1]
-      id_uet_tmp  <- (id_uet[d] + 1):id_uet[d + 1]
+      id_betu_tmp <- (dims[["id_uet"]][d] + 1):dims[["id_uet"]][d + 1]
+      id_uet_tmp  <- (dims[["id_uet"]][d] + 1):dims[["id_uet"]][d + 1]
       if (phi_null) {
-        id_regs_u_tmp <-  (id_uet[d] + 1):(id_uet[d + 1])
+        id_regs_u_tmp <-  (dims[["id_uet"]][d] + 1):(dims[["id_uet"]][d + 1])
       } else {
-        id_regs_u_tmp <- (id_uet[d] + 1 + 1 * d):(id_uet[d + 1] + 1 * d)
+        id_regs_u_tmp <- (dims[["id_uet"]][d] + 1 + 1 * d):(dims[["id_uet"]][d + 1] + 1 * d)
       }
-      prior_vcm_bet_u2[[d]] <- diag(1 / 1000, dim_bet_u[d])
-      prior_vcm_bet_u1[d]   <- dim_bet_u[d]
+      prior_vcm_bet_u2[[d]] <- diag(1 / 1000, dims[["dim_bet_u"]][d])
+      prior_vcm_bet_u1[d]   <- dims[["dim_bet_u"]][d]
       dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u1[d]
 
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_u_lin"]][[d]]
@@ -258,7 +258,7 @@ initialize_data_containers <- function(par_init,
       }
       if (!z_null) {
         regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
-        Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
+        Zmat2 <- Z[, (dims[["id_zet"]][d] + 1):dims[["id_zet"]][d + 1], n]
         betz2 <- bet_z[id_betz_tmp, 1]
         Z_beta[, d, n] <- Zmat2 %*% betz2
       }
@@ -284,45 +284,53 @@ initialize_data_containers <- function(par_init,
     }
   }
 
-  pgas_obj <- get_objs_pgas(phi_null, z_null, u_null)
   from_env <- environment()
-  for(n in pgas_obj) {
-    assign(n, get(n, from_env), to_env)
-  }
+  get_env_pgas(to_env, from_env, phi_null, z_null, u_null, dims)
   invisible(to_env)
 }
 initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
-  vec_obj  <- character(0)
-  if (!z_null) {
-    dim_bet_z <- sapply(par_init[["init_beta_z_lin"]], length, simplify = TRUE)
-    dim_zet   <- dim_bet_z
-    id_zet    <- c(0, cumsum(dim_bet_z))
-    if (!phi_null) {
-      id_reg_z  <- c(0, cumsum(dim_bet_z + order_p))
-    } else {
-      id_reg_z  <- c(0, cumsum(dim_bet_z))
-    }
-    vec_obj <- c(vec_obj, "dim_bet_z", "dim_zet", "id_zet", "id_reg_z")
+  out_dims <- list()
+  out_dims <- c(out_dims, get_zet_dims(par_init, z_null, phi_null, order_p))
+  out_dims <- c(out_dims, get_uet_dims(u_null, par_init))
+  out_dims <- c(out_dims, get_phi_dims(phi_null, par_init, order_p, DD))
+  return(out_dims)
+}
+get_zet_dims <- function(par_init, z_null, phi_null, order_p) {
+  if (z_null) return(NULL)
+  dim_bet_z <- sapply(par_init[["init_beta_z_lin"]], length, simplify = TRUE)
+  dim_zet   <- dim_bet_z
+  id_zet    <- c(0, cumsum(dim_bet_z))
+  if (!phi_null) {
+    id_reg_z  <- c(0, cumsum(dim_bet_z + order_p))
+  } else {
+    id_reg_z  <- c(0, cumsum(dim_bet_z))
   }
-  if (!u_null) {
-    dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
-    dim_uet   <- dim_bet_u
-    id_uet    <- c(0, cumsum(dim_bet_u))
-    vec_obj   <- c(vec_obj, "dim_bet_u", "dim_uet", "id_uet")
-  } # else {
-  #   dim_bet_u <- rep(2, times = DD)
-  # }
-  if(!phi_null) {
-    dim_phi <- rep(order_p, times = DD)
-    id_phi  <- c(0, cumsum(dim_phi))
-    vec_obj <- c(vec_obj, "id_phi")
-  }
-  to_env   <- parent.frame()
-  from_env <- environment()
-  for(n in vec_obj) {
-    assign(n, get(n, from_env), to_env)
-  }
-  invisible(to_env)
+  out_zet_dims <- list(
+    dim_bet_z = dim_bet_z,
+    dim_zet = dim_zet,
+    id_zet = id_zet,
+    id_reg_z = id_reg_z
+  )
+  return(out_zet_dims)
+}
+get_uet_dims <- function(u_null, par_init) {
+  if (u_null) return(NULL)
+  dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
+  dim_uet   <- dim_bet_u
+  id_uet    <- c(0, cumsum(dim_bet_u))
+  # dim_bet_u <- rep(2, times = DD)
+  out_uet_dims <- list(
+    dim_bet_u = dim_bet_u,
+    dim_uet = dim_uet,
+    id_uet = id_uet
+  )
+  return(out_uet_dims)
+}
+get_phi_dims <- function(phi_null, par_init, order_p, DD) {
+  if (phi_null) return(NULL)
+  dim_phi <- rep(order_p, times = DD)
+  id_phi  <- c(0, cumsum(dim_phi))
+  return(list(id_phi = id_phi))
 }
 set_cnt_X <- function(TT, DD, MM, NN) {
   X <- array(0, dim = c(TT, DD, MM, NN))
@@ -445,23 +453,40 @@ update_states <- function(pe, cbpf_output, mm, CHECK_CL_ORDER = FALSE) {
     pe$X[ , , mm, n] <- cbpf_output[[n]]
   }
 }
-get_objs_pgas <- function(phi_null, z_null, u_null) {
-  vec_obj <- c("order_p",
+get_objs_pgas <- function(phi_null, z_null, u_null, dims) {
+  dims_out <- list()
+  vec_objs <- c("order_p",
                "prior_ig_a",
                "prior_ig_b",
                "X", "out_cpf", "sig_sq_x", "Regs_beta")
   if (!z_null) {
-    vec_obj <- c(vec_obj, "dim_bet_z", "id_zet", "id_reg_z",
-                 "prior_vcm_bet_z",  "regs_z", "bet_z")
+    dims_out$dim_bet_z <- dims[['dim_bet_z']]
+    dims_out$id_zet    <- dims[['id_zet']]
+    dims_out$id_reg_z  <- dims[['id_reg_z']]
+    vec_objs <- c(vec_objs, "prior_vcm_bet_z",  "regs_z", "bet_z")
   }
   if (!u_null) {
-    vec_obj <- c(vec_obj, "U", "dim_bet_u", "id_uet",
-                 "dof_vcm_bet_u", "prior_vcm_bet_u2",
-                 "vcm_bet_u", "bet_u")
+    dims_out$dim_bet_u <- dims[['dim_bet_u']]
+    dims_out$id_uet    <- dims[['id_uet']]
+    vec_objs <- c(vec_objs, "U", "dof_vcm_bet_u",
+                  "prior_vcm_bet_u2", "vcm_bet_u", "bet_u")
   }
   if (!phi_null) {
-    vec_obj <- c(vec_obj,  "id_phi", "phi_x")
-    if (z_null) vec_obj <- c(vec_obj,  "id_phi", "prior_vcm_bet_z")
+    dims_out$id_phi <- dims[['id_phi']]
+    vec_objs <- c(vec_objs, "phi_x")
+    if (z_null) vec_objs <- c(vec_objs, "prior_vcm_bet_z")
   }
-  return(vec_obj)
+  return(list(vec_objs = vec_objs,
+              dims_out = dims_out))
+}
+get_env_pgas <- function(env_to, env_from, phi_null, z_null, u_null, dims) {
+  pgas_obj    <- get_objs_pgas(phi_null, z_null, u_null, dims)
+  from_env_02 <- list2env(pgas_obj[["dims_out"]])
+  for(n in pgas_obj[["vec_objs"]]) {
+    assign(n, get(n, env_from), env_to)
+  }
+  for(n in names(pgas_obj[["dims_out"]])) {
+    assign(n, get(n, from_env_02), env_to)
+  }
+  invisible(env_to)
 }
