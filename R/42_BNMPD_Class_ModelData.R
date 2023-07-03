@@ -287,7 +287,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                 as.matrix()
                             }
                             y_t <- replace(y_t, y_t < 0 , abs(y_t[y_t < 0]))
-                            y_t <- dim_name_data_int_y(y_t)
+                            y_t <- private$dim_name_data_int_y(y_t)
                             if (private$.COUNTS_TRUE) {
                               num_counts <- matrix(
                                 private$.data_subset_used[[private$.count_nm]],
@@ -339,7 +339,10 @@ ModelDat <- R6::R6Class("ModelDat",
                                   as.matrix()
                               }
                             }
-                            dimnames(out) <- set_dim_names_z_u_regs(out, var)
+                            dimnames(out) <- private$set_dim_names_z_u_regs(
+                              out,
+                              var
+                            )
                             return(out)
                           },
                           get_z_u_ids = function(var) {
