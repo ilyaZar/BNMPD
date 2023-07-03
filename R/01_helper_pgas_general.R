@@ -183,7 +183,6 @@ initialize_data_containers <- function(par_init,
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
   out_cpf   <- matrix(0, nrow = TT, ncol = DD2)
   X         <- generate_cnt_X(traj_init, TT, DD2, MM, NN)
-  Regs_beta <- array(0, c(TT, DD2, NN))
   sig_sq_x  <- set_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
   phi_x     <- set_cnt_phi_x(phi_null, par_init[["init_phi"]],
                              dims[["id_phi"]], order_p, DD2, MM)
@@ -205,17 +204,9 @@ initialize_data_containers <- function(par_init,
   prior_ig_a <- cnt_priors[["prior_ig_a"]]
   prior_ig_b <- cnt_priors[["prior_ig_b"]]
   ## III. Pre-compute Regs %*% beta for Z/U type regressors
-  for (d in 1:DD2) {
-    for (n in 1:NN) {
-      if (!u_null && !z_null) {
-        Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
-      } else  if (!z_null && u_null) {
-        Regs_beta[, d, n] <- Z_beta[, d, n]
-      } else if (!u_null && z_null) {
-        Regs_beta[, d, n] <- U_beta[, d, n]
-      }
-    }
-  }
+  Regs_beta <- generate_cnt_regs_beta(Z_beta, U_beta,
+                                      u_null, z_null,
+                                      TT, DD2, NN)
   from_env <- environment()
   get_env_pgas(to_env, from_env, phi_null, z_null, u_null, dims)
   invisible(to_env)
@@ -474,6 +465,21 @@ generate_cnt_priors <- function(priors, NN, TT, order_p) {
   prior_ig_b     <- priors[["prior_ig_b"]]
   return(list(prior_ig_a = prior_ig_a,
               prior_ig_b = prior_ig_b))
+}
+generate_cnt_regs_beta <- function(Z_beta, U_beta, u_null, z_null, TT, DD, NN) {
+  Regs_beta <- array(0, c(TT, DD, NN))
+  for (d in 1:DD) {
+    for (n in 1:NN) {
+      if (!u_null && !z_null) {
+        Regs_beta[, d, n] <- Z_beta[, d, n] + U_beta[, d, n]
+      } else  if (!z_null && u_null) {
+        Regs_beta[, d, n] <- Z_beta[, d, n]
+      } else if (!u_null && z_null) {
+        Regs_beta[, d, n] <- U_beta[, d, n]
+      }
+    }
+  }
+  return(Regs_beta)
 }
 prepare_cluster <- function(pe, mm = 1) {
   pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
