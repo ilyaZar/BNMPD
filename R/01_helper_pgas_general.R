@@ -180,7 +180,7 @@ initialize_data_containers <- function(par_init,
   dims <- initialize_dims(par_init, u_null, z_null, phi_null, DD2, order_p)
 
   out_cpf          <- matrix(0, nrow = TT, ncol = DD2)
-  X                <- set_cnt_X(TT, DD2, MM, NN)
+  X                <- generate_cnt_X(traj_init, TT, DD2, MM, NN)
   Regs_beta        <- array(0, c(TT, DD2, NN))
   vcm_x_errors_rhs <- vector("list", DD2)
   sig_sq_x         <- set_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
@@ -212,8 +212,9 @@ initialize_data_containers <- function(par_init,
     }
   }
   # Initialize priors:
-  prior_ig_a     <- priors[["prior_ig_a"]] + NN * (TT - order_p) / 2
-  prior_ig_b     <- priors[["prior_ig_b"]]
+  cnt_priors <- generate_cnt_priors(priors, NN, TT, order_p)
+  prior_ig_a <- cnt_priors[["prior_ig_a"]]
+  prior_ig_b <- cnt_priors[["prior_ig_b"]]
   ## I. Initialize states to deterministic starting values,
   ## Initialize parameters and regressor values
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
@@ -233,13 +234,6 @@ initialize_data_containers <- function(par_init,
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_u_lin"]][[d]]
     }
     for (n in 1:NN) {
-      if (all.equal(dim(traj_init), as.integer(c(TT, DD2, NN)),
-                    check.attributes = FALSE)) {
-        X[ , d, 1, n]  <- traj_init[, d, n]
-      } else if (all.equal(dim(traj_init), as.integer(c(DD2, NN)),
-                           check.attributes = FALSE)) {
-        X[ , d, 1, n]  <- traj_init[d, n]
-      }
       if (!u_null) {
         bet_u[id_betu_tmp, 1, n] <- par_init[["init_beta_u_lin"]][[d]][, n]
         regs_u[, id_regs_u_tmp, n] <- U[(order_p + 1):TT, id_uet_tmp, n]
@@ -310,7 +304,7 @@ get_phi_dims <- function(phi_null, par_init, order_p, DD) {
   id_phi  <- c(0, cumsum(dim_phi))
   return(list(id_phi = id_phi))
 }
-set_cnt_X <- function(TT, DD, MM, NN) {
+generate_cnt_X <- function(traj_init, TT, DD, MM, NN) {
   X <- array(0, dim = c(TT, DD, MM, NN))
   dim(X) <- unname(dim(X))
   dim(X) <- c(TT = dim(X)[1],
@@ -323,6 +317,17 @@ set_cnt_X <- function(TT, DD, MM, NN) {
     paste0("m_", seq_len(dim(X)[[3]])),
     paste0("n_", seq_len(dim(X)[[4]]))
   )
+  for (d in seq_len(DD)) {
+    for (n in 1:NN) {
+      if (all.equal(dim(traj_init), as.integer(c(TT, DD, NN)),
+                    check.attributes = FALSE)) {
+        X[ , d, 1, n]  <- traj_init[, d, n]
+      } else if (all.equal(dim(traj_init), as.integer(c(DD, NN)),
+                           check.attributes = FALSE)) {
+        X[ , d, 1, n]  <- traj_init[d, n]
+      }
+    }
+  }
   return(X)
 }
 set_cnt_sig_sq_x <- function(sig_sq_vals, DD, MM) {
@@ -446,6 +451,12 @@ set_cnt_vcm_bet_u <- function(DD, dim_u, MM) {
     )
   }
   vcm_bet_u
+}
+generate_cnt_priors <- function(priors, NN, TT, order_p) {
+  prior_ig_a     <- priors[["prior_ig_a"]] + NN * (TT - order_p) / 2
+  prior_ig_b     <- priors[["prior_ig_b"]]
+  return(list(prior_ig_a = prior_ig_a,
+              prior_ig_b = prior_ig_b))
 }
 prepare_cluster <- function(pe, mm = 1) {
   pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
