@@ -183,9 +183,9 @@ initialize_data_containers <- function(par_init,
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
   out_cpf   <- matrix(0, nrow = TT, ncol = DD2)
   X         <- generate_cnt_X(traj_init, TT, DD2, MM, NN)
-  sig_sq_x  <- set_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
-  phi_x     <- set_cnt_phi_x(phi_null, par_init[["init_phi"]],
-                             dims[["id_phi"]], order_p, DD2, MM)
+  sig_sq_x  <- generate_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
+  phi_x     <- generate_cnt_phi_x(phi_null, par_init[["init_phi"]],
+                                  dims[["id_phi"]], order_p, DD2, MM)
   cnt_z     <- generate_cnt_z(z_null, phi_null, par_init, Z,
                               dims, order_p, TT, DD2, NN, MM)
   cnt_u     <- generate_cnt_u(u_null, phi_null, par_init, U,
@@ -281,7 +281,7 @@ generate_cnt_X <- function(traj_init, TT, DD, MM, NN) {
   }
   return(X)
 }
-set_cnt_sig_sq_x <- function(sig_sq_vals, DD, MM) {
+generate_cnt_sig_sq_x <- function(sig_sq_vals, DD, MM) {
   sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
   rownames(sig_sq_x) <- paste0("d_", seq_len(nrow(sig_sq_x)))
   colnames(sig_sq_x) <- paste0("m_", seq_len(ncol(sig_sq_x)))
@@ -290,7 +290,7 @@ set_cnt_sig_sq_x <- function(sig_sq_vals, DD, MM) {
   }
   return(sig_sq_x)
 }
-set_cnt_phi_x <- function(phi_null, phi_vals, id_phi, order_p, DD, MM) {
+generate_cnt_phi_x <- function(phi_null, phi_vals, id_phi, order_p, DD, MM) {
   if (isTRUE(phi_null)) return(NULL)
   phi_x <- matrix(0, nrow = order_p * DD, ncol = MM)
   rownames(phi_x) <- paste0("d_", seq_len(nrow(phi_x)))
