@@ -186,19 +186,13 @@ initialize_data_containers <- function(par_init,
   sig_sq_x         <- set_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
   phi_x <- set_cnt_phi_x(phi_null, par_init[["init_phi"]],
                          dims[["id_phi"]], order_p, DD2, MM)
-  if (!z_null) {
-    bet_z    <- set_cnt_bet_z(dims[["dim_bet_z"]], MM)
-    prior_vcm_bet_z   <- vector("list", DD2)
+  cnt_z  <- generate_cnt_z(z_null, phi_null, par_init, Z,
+                           dims, order_p, TT, DD2, NN, MM)
+  bet_z  <- cnt_z[["bet_z"]]
+  Z_beta <- cnt_z[["Z_beta"]]
+  regs_z <- cnt_z[["regs_z"]]
+  prior_vcm_bet_z <- cnt_z[["prior_vcm_bet_z"]]
 
-    Z_beta <- array(0, c(TT, DD2, NN))
-    regs_z <- array(0, c(TT - order_p, sum(dims[["dim_zet"]]) + DD2 * order_p, NN))
-  } else if (z_null && !phi_null) {
-    bet_z <- NULL
-    prior_vcm_bet_z   <- vector("list", DD2)
-  } else {
-    bet_z <- NULL
-    prior_vcm_bet_z <- NULL
-  }
   if (!u_null) {
     bet_u            <- set_cnt_bet_u(dims[["dim_bet_u"]], MM, NN)
     prior_vcm_bet_u1 <- numeric(DD2)
@@ -224,15 +218,6 @@ initialize_data_containers <- function(par_init,
   ## Initialize parameters and regressor values
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
   for (d in 1:DD2) {
-    if (!z_null) {
-      id_betz_tmp <- (dims[["id_zet"]][d] + 1):dims[["id_zet"]][d + 1]
-      id_zet_tmp  <- (dims[["id_zet"]][d] + 1):dims[["id_zet"]][d + 1]
-      id_regs_z_tmp <- (dims[["id_zet"]][d] + 1 + order_p * d):(dims[["id_zet"]][d + 1] + order_p * d)
-      bet_z[id_betz_tmp, 1] <- par_init[["init_beta_z_lin"]][[d]]
-      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dims[["dim_bet_z"]][d] + order_p)
-    } else if (z_null && !phi_null) {
-      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, order_p)
-    }
     if (!u_null) {
       id_betu_tmp <- (dims[["id_uet"]][d] + 1):dims[["id_uet"]][d + 1]
       id_uet_tmp  <- (dims[["id_uet"]][d] + 1):dims[["id_uet"]][d + 1]
@@ -247,7 +232,6 @@ initialize_data_containers <- function(par_init,
 
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_u_lin"]][[d]]
     }
-
     for (n in 1:NN) {
       if (all.equal(dim(traj_init), as.integer(c(TT, DD2, NN)),
                     check.attributes = FALSE)) {
@@ -255,12 +239,6 @@ initialize_data_containers <- function(par_init,
       } else if (all.equal(dim(traj_init), as.integer(c(DD2, NN)),
                            check.attributes = FALSE)) {
         X[ , d, 1, n]  <- traj_init[d, n]
-      }
-      if (!z_null) {
-        regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
-        Zmat2 <- Z[, (dims[["id_zet"]][d] + 1):dims[["id_zet"]][d + 1], n]
-        betz2 <- bet_z[id_betz_tmp, 1]
-        Z_beta[, d, n] <- Zmat2 %*% betz2
       }
       if (!u_null) {
         bet_u[id_betu_tmp, 1, n] <- par_init[["init_beta_u_lin"]][[d]][, n]
@@ -392,26 +370,65 @@ set_cnt_bet_u <- function(dim_u, MM, NN) {
   )
   return(bet_u)
 }
-set_cnt_bet_z <- function(dim_z, MM) {
-  bet_z <- matrix(0, nrow = sum(dim_z), ncol = MM)
-  dim(bet_z) <- unname(dim(bet_z))
-  dim(bet_z) <- c(DDxk = dim(bet_z)[1],
-                  MM = dim(bet_z)[2])
-  dd_names <- paste0(
-    rep(
-      paste0("d_",
-             seq_len(length(dim_z))),
-      times = dim_z
-    ),
-    "_",
-    paste0(
-      "k_",
-      unlist(lapply(dim_z, function(x) {seq_len(x)}))
+generate_cnt_z <- function(z_null, phi_null, par_init, Z, dim_all, order_p, TT, DD, NN, MM) {
+  if (!z_null) {
+    dim_zet   <- dim_all[["dim_zet"]]
+    dim_bet_z <- dim_all[["dim_bet_z"]]
+    id_zet    <- dim_all[["id_zet"]]
+    regs_z <- array(0, c(TT - order_p, sum(dim_zet) + DD * order_p, NN))
+    bet_z  <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
+    Z_beta <- array(0, c(TT, DD, NN))
+    prior_vcm_bet_z   <- vector("list", DD)
+
+    dim(bet_z) <- unname(dim(bet_z))
+    dim(bet_z) <- c(DDxk = dim(bet_z)[1],
+                    MM = dim(bet_z)[2])
+    dd_names <- paste0(
+      rep(
+        paste0("d_",
+               seq_len(length(dim_bet_z))),
+        times = dim_bet_z
+      ),
+      "_",
+      paste0(
+        "k_",
+        unlist(lapply(dim_bet_z, function(x) {seq_len(x)}))
+      )
     )
-  )
-  rownames(bet_z) <- dd_names
-  colnames(bet_z) <- paste0("m_", seq_len(dim(bet_z)[[2]]))
-  return(bet_z)
+    rownames(bet_z) <- dd_names
+    colnames(bet_z) <- paste0("m_", seq_len(dim(bet_z)[[2]]))
+
+    for (d in seq_len(DD)) {
+      id_betz_tmp <- (id_zet[d] + 1):id_zet[d + 1]
+      id_zet_tmp  <- (id_zet[d] + 1):id_zet[d + 1]
+      id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
+      bet_z[id_betz_tmp, 1] <- par_init[["init_beta_z_lin"]][[d]]
+      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + order_p)
+      for (n in seq_len(NN)) {
+        regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
+        Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
+        betz2 <- bet_z[id_betz_tmp, 1]
+        Z_beta[, d, n] <- Zmat2 %*% betz2
+      }
+    }
+  } else if (z_null && !phi_null) {
+    bet_z  <- NULL
+    regs_z <- NULL
+    Z_beta <- NULL
+    prior_vcm_bet_z   <- vector("list", DD)
+    for (d in seq_len(DD)) {
+      prior_vcm_bet_z[[d]]  <- diag(1 / 1000, order_p)
+    }
+  } else {
+    bet_z  <- NULL
+    regs_z <- NULL
+    Z_beta <- NULL
+    prior_vcm_bet_z <- NULL
+  }
+  return(list(bet_z = bet_z,
+              regs_z = regs_z,
+              Z_beta = Z_beta,
+              prior_vcm_bet_z = prior_vcm_bet_z))
 }
 set_cnt_vcm_bet_u <- function(DD, dim_u, MM) {
   vcm_bet_u        <- vector("list", DD)
@@ -456,9 +473,9 @@ update_states <- function(pe, cbpf_output, mm, CHECK_CL_ORDER = FALSE) {
 get_objs_pgas <- function(phi_null, z_null, u_null, dims) {
   dims_out <- list()
   vec_objs <- c("order_p",
-               "prior_ig_a",
-               "prior_ig_b",
-               "X", "out_cpf", "sig_sq_x", "Regs_beta")
+                "prior_ig_a",
+                "prior_ig_b",
+                "X", "out_cpf", "sig_sq_x", "Regs_beta")
   if (!z_null) {
     dims_out$dim_bet_z <- dims[['dim_bet_z']]
     dims_out$id_zet    <- dims[['id_zet']]
