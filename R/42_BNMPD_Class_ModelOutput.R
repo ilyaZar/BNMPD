@@ -418,9 +418,17 @@ ModelOut <- R6::R6Class("ModelOut",
                           get_model_output = function(range_iter = NULL,
                                                       range_parts = NULL) {
                             if (!is.null(range_iter) && !is.null(range_parts)) {
-                              msg <- paste0("Can not have both arguments, ",
+                              msg <- paste0("BNMPD: ",
+                                            "Can not have both arguments, ",
                                             "'range_iter' and 'range_parts' ",
                                             "set to non-NULL.")
+                              stop(msg)
+                            }
+                            if (private$.num_out == 0) {
+                              msg <- paste0(
+                                "BNMPD: ",
+                                "The 'model/output/' directory",
+                                " does not have any output files.")
                               stop(msg)
                             }
                             tmp1 <- vector("list", private$.num_out)
