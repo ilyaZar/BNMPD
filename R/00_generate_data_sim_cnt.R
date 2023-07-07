@@ -58,7 +58,7 @@ reorder_states <- function(states, type) {
   } else if (type %in% c("gen_dirichlet",
                          "gen_dirichlet_mult")) {
     order(substring(colnames(states), 3, 5))
-    out_states <- states[, order(substring(colnames(states), 3, 5)), ]
+    out_states <- states[, order(substring(colnames(states), 3, 5)), , drop = FALSE]
   } else {
     stop("Unknown distribution/type of states to re-order.")
   }
