@@ -170,6 +170,7 @@ initialize_data_containers <- function(par_init,
                                        TT, DD, DD2, NN, MM,
                                        order_p,
                                        to_env) {
+  SPECIAL_DIST <- check_special_dist_quick(to_env$model_type_obs)
   u_null <- TRUE
   if (!is.null(U)) u_null <- FALSE
   z_null <- TRUE
@@ -181,7 +182,7 @@ initialize_data_containers <- function(par_init,
   ## I. Initialize states to deterministic starting values,
   ## Initialize parameters and regressor values
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
-  out_cpf   <- matrix(0, nrow = TT, ncol = DD2)
+  out_cpf   <- generate_cnt_out_cpf(SPECIAL_DIST, TT, DD2)
   X         <- generate_cnt_X(traj_init, TT, DD2, MM, NN)
   sig_sq_x  <- generate_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
   phi_x     <- generate_cnt_phi_x(phi_null, par_init[["init_phi"]],
@@ -254,6 +255,23 @@ get_phi_dims <- function(phi_null, par_init, order_p, DD) {
   dim_phi <- rep(order_p, times = DD)
   id_phi  <- c(0, cumsum(dim_phi))
   return(list(id_phi = id_phi))
+}
+generate_cnt_out_cpf <- function(SPECIAL_DIST, TT, DD) {
+  out <- matrix(0, nrow = TT, ncol = DD)
+  rownames(out) <- paste0("t_", seq_len(TT))
+  if (isFALSE(SPECIAL_DIST)) {
+    colnames(out) <- paste0("d_", seq_len(DD))
+  } else if(isTRUE(SPECIAL_DIST)) {
+    colnames(out) <- paste0(
+      c("A_", "B_"),
+      formatC(
+        rep(seq_len(DD / 2), each = 2),
+        width = 2,
+        format = "d",
+        flag = "0")
+    )
+  }
+  out
 }
 generate_cnt_X <- function(traj_init, TT, DD, MM, NN) {
   X <- array(0, dim = c(TT, DD, MM, NN))
