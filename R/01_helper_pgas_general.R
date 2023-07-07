@@ -183,7 +183,7 @@ initialize_data_containers <- function(par_init,
   ## Initialize parameters and regressor values
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
   out_cpf   <- generate_cnt_out_cpf(SPECIAL_DIST, TT, DD2)
-  X         <- generate_cnt_X(traj_init, TT, DD2, MM, NN)
+  X         <- generate_cnt_X(traj_init, SPECIAL_DIST, TT, DD2, MM, NN)
   sig_sq_x  <- generate_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
   phi_x     <- generate_cnt_phi_x(phi_null, par_init[["init_phi"]],
                                   dims[["id_phi"]], order_p, DD2, MM)
@@ -259,33 +259,31 @@ get_phi_dims <- function(phi_null, par_init, order_p, DD) {
 generate_cnt_out_cpf <- function(SPECIAL_DIST, TT, DD) {
   out <- matrix(0, nrow = TT, ncol = DD)
   rownames(out) <- paste0("t_", seq_len(TT))
-  if (isFALSE(SPECIAL_DIST)) {
-    colnames(out) <- paste0("d_", seq_len(DD))
-  } else if(isTRUE(SPECIAL_DIST)) {
-    colnames(out) <- paste0(
-      c("A_", "B_"),
-      formatC(
-        rep(seq_len(DD / 2), each = 2),
-        width = 2,
-        format = "d",
-        flag = "0")
-    )
-  }
+  colnames(out) <- dd_names_formatter(SPECIAL_DIST, DD)
   out
 }
-generate_cnt_X <- function(traj_init, TT, DD, MM, NN) {
+generate_cnt_X <- function(traj_init, SPECIAL_DIST, TT, DD, MM, NN) {
   X <- array(0, dim = c(TT, DD, MM, NN))
   dim(X) <- unname(dim(X))
   dim(X) <- c(TT = dim(X)[1],
               DD = dim(X)[2],
               MM = dim(X)[3],
               NN = dim(X)[4])
-  dimnames(X) <- list(
-    paste0("t_", seq_len(dim(X)[[1]])),
-    paste0("d_", seq_len(dim(X)[[2]])),
-    paste0("m_", seq_len(dim(X)[[3]])),
-    paste0("n_", seq_len(dim(X)[[4]]))
-  )
+  if (isFALSE(SPECIAL_DIST)) {
+    dimnames(X) <- list(
+      paste0("t_", seq_len(dim(X)[[1]])),
+      paste0("d_", seq_len(dim(X)[[2]])),
+      paste0("m_", seq_len(dim(X)[[3]])),
+      paste0("n_", seq_len(dim(X)[[4]]))
+    )
+  } else if (isTRUE(SPECIAL_DIST)) {
+    dimnames(X) <- list(
+      paste0("t_", seq_len(dim(X)[[1]])),
+      paste0("d_", dd_names_formatter(SPECIAL_DIST, DD)),
+      paste0("m_", seq_len(dim(X)[[3]])),
+      paste0("n_", seq_len(dim(X)[[4]]))
+    )
+  }
   for (d in seq_len(DD)) {
     for (n in 1:NN) {
       if (all.equal(dim(traj_init), as.integer(c(TT, DD, NN)),
@@ -558,4 +556,18 @@ get_env_pgas <- function(env_to, env_from, phi_null, z_null, u_null, dims) {
     assign(n, get(n, from_env_02), env_to)
   }
   invisible(env_to)
+}
+dd_names_formatter <- function(SPECIAL_DIST, DD) {
+  if (isFALSE(SPECIAL_DIST)) {
+    paste0("d_", seq_len(DD))
+  } else if(isTRUE(SPECIAL_DIST)) {
+    paste0(
+      c("A_", "B_"),
+      formatC(
+        rep(seq_len(DD / 2), each = 2),
+        width = 2,
+        format = "d",
+        flag = "0")
+    )
+  }
 }
