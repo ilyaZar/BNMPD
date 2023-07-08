@@ -189,8 +189,15 @@ initialize_data_containers <- function(par_init,
     DD2,
     MM
   )
-  phi_x     <- generate_cnt_phi_x(phi_null, par_init[["init_phi"]],
-                                  dims[["id_phi"]], order_p, DD2, MM)
+  phi_x <- generate_cnt_phi_x(
+    phi_null,
+    par_init[["init_phi"]],
+    DIST_SPECIAL,
+    dims[["id_phi"]],
+    order_p,
+    DD2,
+    MM
+  )
   cnt_z     <- generate_cnt_z(z_null, phi_null, par_init, Z,
                               dims, order_p, TT, DD2, NN, MM)
   cnt_u     <- generate_cnt_u(u_null, phi_null, par_init, U,
@@ -310,10 +317,11 @@ generate_cnt_sig_sq_x <- function(sig_sq_vals, DIST_SPECIAL, DD, MM) {
   }
   return(sig_sq_x)
 }
-generate_cnt_phi_x <- function(phi_null, phi_vals, id_phi, order_p, DD, MM) {
+generate_cnt_phi_x <- function(phi_null, phi_vals, DIST_SPECIAL,
+                               id_phi, order_p, DD, MM) {
   if (isTRUE(phi_null)) return(NULL)
   phi_x <- matrix(0, nrow = order_p * DD, ncol = MM)
-  rownames(phi_x) <- paste0("d_", seq_len(nrow(phi_x)))
+  rownames(phi_x) <- dd_names_formatter(DIST_SPECIAL, DD)
   colnames(phi_x) <- paste0("m_", seq_len(ncol(phi_x)))
   for (d in 1:DD) {
     id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
