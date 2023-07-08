@@ -280,21 +280,12 @@ generate_cnt_X <- function(traj_init, DIST_SPECIAL, TT, DD, MM, NN) {
               DD = dim(X)[2],
               MM = dim(X)[3],
               NN = dim(X)[4])
-  if (isFALSE(DIST_SPECIAL)) {
     dimnames(X) <- list(
       paste0("t_", seq_len(dim(X)[[1]])),
-      paste0("d_", seq_len(dim(X)[[2]])),
+      dd_names_formatter(DIST_SPECIAL, DD),
       paste0("m_", seq_len(dim(X)[[3]])),
       paste0("n_", seq_len(dim(X)[[4]]))
     )
-  } else if (isTRUE(DIST_SPECIAL)) {
-    dimnames(X) <- list(
-      paste0("t_", seq_len(dim(X)[[1]])),
-      paste0("d_", dd_names_formatter(DIST_SPECIAL, DD)),
-      paste0("m_", seq_len(dim(X)[[3]])),
-      paste0("n_", seq_len(dim(X)[[4]]))
-    )
-  }
   for (d in seq_len(DD)) {
     for (n in 1:NN) {
       if (all.equal(dim(traj_init), as.integer(c(TT, DD, NN)),
