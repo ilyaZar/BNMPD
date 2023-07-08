@@ -198,9 +198,9 @@ initialize_data_containers <- function(par_init,
     DD2,
     MM
   )
-  cnt_z     <- generate_cnt_z(z_null, phi_null, par_init, Z,
-                              dims, order_p, TT, DD2, NN, MM)
-  cnt_u     <- generate_cnt_u(u_null, phi_null, par_init, U,
+  cnt_z     <- generate_cnt_z(DIST_SPECIAL, z_null, phi_null, par_init,
+                              Z, dims, order_p, TT, DD2, NN, MM)
+  cnt_u     <- generate_cnt_u(DIST_SPECIAL, u_null, phi_null, par_init, U,
                               dims, order_p, TT, DD2, NN, MM)
   bet_z  <- cnt_z[["bet_z"]]
   Z_beta <- cnt_z[["Z_beta"]]
@@ -320,7 +320,7 @@ generate_cnt_phi_x <- function(phi_null, phi_vals, DIST_SPECIAL,
   }
   return(phi_x)
 }
-set_cnt_bet_u <- function(dim_u, MM, NN) {
+set_cnt_bet_u <- function(DIST_SPECIAL, dim_u, DD, MM, NN) {
   bet_u <- array(0, c(sum(dim_u), MM, NN))
   dim(bet_u) <- unname(dim(bet_u))
   dim(bet_u) <- c(DDxRE = dim(bet_u)[1],
@@ -328,8 +328,7 @@ set_cnt_bet_u <- function(dim_u, MM, NN) {
                   NN = dim(bet_u)[3])
   dd_names <- paste0(
     rep(
-      paste0("d_",
-             seq_len(length(dim_u))),
+      dd_names_formatter(DIST_SPECIAL, DD),
       times = dim_u
     ),
     "_",
@@ -345,7 +344,8 @@ set_cnt_bet_u <- function(dim_u, MM, NN) {
   )
   return(bet_u)
 }
-generate_cnt_z <- function(z_null, phi_null, par_init, Z, dim_all, order_p, TT, DD, NN, MM) {
+generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
+                           Z, dim_all, order_p, TT, DD, NN, MM) {
   if (!z_null) {
     dim_zet   <- dim_all[["dim_zet"]]
     dim_bet_z <- dim_all[["dim_bet_z"]]
@@ -358,10 +358,10 @@ generate_cnt_z <- function(z_null, phi_null, par_init, Z, dim_all, order_p, TT, 
     dim(bet_z) <- unname(dim(bet_z))
     dim(bet_z) <- c(DDxk = dim(bet_z)[1],
                     MM = dim(bet_z)[2])
-    dd_names <- paste0(
+    browser()
+    dd_names <-paste0(
       rep(
-        paste0("d_",
-               seq_len(length(dim_bet_z))),
+        dd_names_formatter(DIST_SPECIAL, DD),
         times = dim_bet_z
       ),
       "_",
@@ -405,7 +405,8 @@ generate_cnt_z <- function(z_null, phi_null, par_init, Z, dim_all, order_p, TT, 
               Z_beta = Z_beta,
               prior_vcm_bet_z = prior_vcm_bet_z))
 }
-generate_cnt_u <- function(u_null, phi_null, par_init, U, dim_all, order_p, TT, DD, NN, MM){
+generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
+                           U, dim_all, order_p, TT, DD, NN, MM) {
   if (isTRUE(u_null)) {
     bet_u            <- NULL
     vcm_bet_u        <- NULL
@@ -416,11 +417,11 @@ generate_cnt_u <- function(u_null, phi_null, par_init, U, dim_all, order_p, TT, 
     dim_bet_u <- dim_all[["dim_bet_u"]]
     id_uet    <- dim_all[["id_uet"]]
 
-    bet_u            <- set_cnt_bet_u(dim_bet_u, MM, NN)
+    bet_u            <- set_cnt_bet_u(DIST_SPECIAL, dim_bet_u, DD, MM, NN)
     prior_vcm_bet_u1 <- numeric(DD)
     prior_vcm_bet_u2 <- vector("list", DD)
     dof_vcm_bet_u    <- numeric(DD)
-    vcm_bet_u        <- set_cnt_vcm_bet_u(DD, dim_bet_u, MM)
+    vcm_bet_u        <- set_cnt_vcm_bet_u(DIST_SPECIAL, DD, dim_bet_u, MM)
 
     vcm_x_errors_lhs <- vector("list", DD)
     U_beta <- array(0, c(TT, DD, NN))
@@ -462,9 +463,17 @@ generate_cnt_u <- function(u_null, phi_null, par_init, U, dim_all, order_p, TT, 
               U_beta = U_beta
   ))
 }
-set_cnt_vcm_bet_u <- function(DD, dim_u, MM) {
+set_cnt_vcm_bet_u <- function(DIST_SPECIAL, DD, dim_u, MM) {
   vcm_bet_u        <- vector("list", DD)
-  names(vcm_bet_u) <- paste0("DD_", seq_len(DD))
+  if (isTRUE(DIST_SPECIAL)) {
+    seq_dd <- formatC(seq_len(DD / 2), width = 2, format = "d", flag = "0")
+    names(vcm_bet_u) <- paste0(
+      paste0("DA_", seq_dd),
+      paste0("DB_", seq_dd)
+    )
+  } else if (isFALSE(DIST_SPECIAL)) {
+    names(vcm_bet_u) <- paste0("DD_", seq_len(DD))
+  }
   for (d in seq_len(DD)) {
     vcm_bet_u[[d]]  <- array(0, c(dim_u[d], dim_u[d], MM))
     dim(vcm_bet_u[[d]]) <- unname(dim(vcm_bet_u[[d]]))
@@ -564,13 +573,11 @@ dd_names_formatter <- function(DIST_SPECIAL, DD) {
   if (isFALSE(DIST_SPECIAL)) {
     paste0("d_", seq_len(DD))
   } else if(isTRUE(DIST_SPECIAL)) {
-    paste0(
-      c("A_", "B_"),
-      formatC(
+    dd_seq <- formatC(
         rep(seq_len(DD / 2), each = 2),
         width = 2,
         format = "d",
         flag = "0")
-    )
+   paste0(c("DA_", "DB_"), dd_seq)
   }
 }
