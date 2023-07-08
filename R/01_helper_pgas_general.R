@@ -170,7 +170,7 @@ initialize_data_containers <- function(par_init,
                                        TT, DD, DD2, NN, MM,
                                        order_p,
                                        to_env) {
-  SPECIAL_DIST <- check_special_dist_quick(to_env$model_type_obs)
+  DIST_SPECIAL <- check_special_dist_quick(to_env$model_type_obs)
   u_null <- TRUE
   if (!is.null(U)) u_null <- FALSE
   z_null <- TRUE
@@ -182,9 +182,13 @@ initialize_data_containers <- function(par_init,
   ## I. Initialize states to deterministic starting values,
   ## Initialize parameters and regressor values
   ## PER COMPONENT d,...,DD2 and for each d, per cross section n,..., NN
-  out_cpf   <- generate_cnt_out_cpf(SPECIAL_DIST, TT, DD2)
-  X         <- generate_cnt_X(traj_init, SPECIAL_DIST, TT, DD2, MM, NN)
-  sig_sq_x  <- generate_cnt_sig_sq_x(par_init[["init_sig_sq"]], DD2, MM)
+  out_cpf   <- generate_cnt_out_cpf(DIST_SPECIAL, TT, DD2)
+  X         <- generate_cnt_X(traj_init, DIST_SPECIAL, TT, DD2, MM, NN)
+  sig_sq_x  <- generate_cnt_sig_sq_x(
+    par_init[["init_sig_sq"]], DIST_SPECIAL,
+    DD2,
+    MM
+  )
   phi_x     <- generate_cnt_phi_x(phi_null, par_init[["init_phi"]],
                                   dims[["id_phi"]], order_p, DD2, MM)
   cnt_z     <- generate_cnt_z(z_null, phi_null, par_init, Z,
@@ -256,30 +260,30 @@ get_phi_dims <- function(phi_null, par_init, order_p, DD) {
   id_phi  <- c(0, cumsum(dim_phi))
   return(list(id_phi = id_phi))
 }
-generate_cnt_out_cpf <- function(SPECIAL_DIST, TT, DD) {
+generate_cnt_out_cpf <- function(DIST_SPECIAL, TT, DD) {
   out <- matrix(0, nrow = TT, ncol = DD)
   rownames(out) <- paste0("t_", seq_len(TT))
-  colnames(out) <- dd_names_formatter(SPECIAL_DIST, DD)
+  colnames(out) <- dd_names_formatter(DIST_SPECIAL, DD)
   out
 }
-generate_cnt_X <- function(traj_init, SPECIAL_DIST, TT, DD, MM, NN) {
+generate_cnt_X <- function(traj_init, DIST_SPECIAL, TT, DD, MM, NN) {
   X <- array(0, dim = c(TT, DD, MM, NN))
   dim(X) <- unname(dim(X))
   dim(X) <- c(TT = dim(X)[1],
               DD = dim(X)[2],
               MM = dim(X)[3],
               NN = dim(X)[4])
-  if (isFALSE(SPECIAL_DIST)) {
+  if (isFALSE(DIST_SPECIAL)) {
     dimnames(X) <- list(
       paste0("t_", seq_len(dim(X)[[1]])),
       paste0("d_", seq_len(dim(X)[[2]])),
       paste0("m_", seq_len(dim(X)[[3]])),
       paste0("n_", seq_len(dim(X)[[4]]))
     )
-  } else if (isTRUE(SPECIAL_DIST)) {
+  } else if (isTRUE(DIST_SPECIAL)) {
     dimnames(X) <- list(
       paste0("t_", seq_len(dim(X)[[1]])),
-      paste0("d_", dd_names_formatter(SPECIAL_DIST, DD)),
+      paste0("d_", dd_names_formatter(DIST_SPECIAL, DD)),
       paste0("m_", seq_len(dim(X)[[3]])),
       paste0("n_", seq_len(dim(X)[[4]]))
     )
@@ -297,9 +301,9 @@ generate_cnt_X <- function(traj_init, SPECIAL_DIST, TT, DD, MM, NN) {
   }
   return(X)
 }
-generate_cnt_sig_sq_x <- function(sig_sq_vals, DD, MM) {
+generate_cnt_sig_sq_x <- function(sig_sq_vals, DIST_SPECIAL, DD, MM) {
   sig_sq_x <- matrix(0, nrow = DD, ncol = MM)
-  rownames(sig_sq_x) <- paste0("d_", seq_len(nrow(sig_sq_x)))
+  rownames(sig_sq_x) <- dd_names_formatter(DIST_SPECIAL, DD)
   colnames(sig_sq_x) <- paste0("m_", seq_len(ncol(sig_sq_x)))
   for (d in seq_len(DD)) {
     sig_sq_x[d, 1] <- sig_sq_vals[d, 1]
@@ -557,10 +561,10 @@ get_env_pgas <- function(env_to, env_from, phi_null, z_null, u_null, dims) {
   }
   invisible(env_to)
 }
-dd_names_formatter <- function(SPECIAL_DIST, DD) {
-  if (isFALSE(SPECIAL_DIST)) {
+dd_names_formatter <- function(DIST_SPECIAL, DD) {
+  if (isFALSE(DIST_SPECIAL)) {
     paste0("d_", seq_len(DD))
-  } else if(isTRUE(SPECIAL_DIST)) {
+  } else if(isTRUE(DIST_SPECIAL)) {
     paste0(
       c("A_", "B_"),
       formatC(
