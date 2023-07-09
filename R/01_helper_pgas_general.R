@@ -347,18 +347,20 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
     dim_bet_z <- dim_all[["dim_bet_z"]]
     id_zet    <- dim_all[["id_zet"]]
 
-    bet_z  <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
+    bet_z  <- gernerate_cnt_bet_z(DIST_SPECIAL, DD, MM, dim_bet_z)
     regs_z <- array(0, c(TT - order_p, sum(dim_zet) + DD * order_p, NN))
+    dimnames(regs_z) <- get_regs_z_dimnames(
+      DIST_SPECIAL,
+      TT,
+      DD,
+      NN,
+      order_p,
+      dim_bet_z
+    )
     Z_beta <- array(0, c(TT, DD, NN))
 
     prior_vcm_bet_z        <- vector("list", DD)
     names(prior_vcm_bet_z) <- dd_names_formatter2(DIST_SPECIAL, DD)
-
-    dd_names   <- dd_kk_names_formatter(DIST_SPECIAL, DD, dim_bet_z, "k_")
-    dim(bet_z) <- unname(dim(bet_z))
-    dim(bet_z) <- c(DDxk = dim(bet_z)[1], MM = dim(bet_z)[2])
-    rownames(bet_z) <- dd_names
-    colnames(bet_z) <- paste0("m_", seq_len(dim(bet_z)[[2]]))
 
     for (d in seq_len(DD)) {
       id_betz_tmp <- (id_zet[d] + 1):id_zet[d + 1]
@@ -395,6 +397,15 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
               regs_z = regs_z,
               Z_beta = Z_beta,
               prior_vcm_bet_z = prior_vcm_bet_z))
+}
+gernerate_cnt_bet_z <- function(DIST_SPECIAL, DD, MM, dim_bet_z) {
+  out_bet_z <- matrix(0, nrow = sum(dim_bet_z), ncol = MM)
+  dd_names <- dd_kk_names_formatter(DIST_SPECIAL, DD, dim_bet_z, "k_")
+  dim(out_bet_z) <- unname(dim(out_bet_z))
+  dim(out_bet_z) <- c(DDxk = dim(out_bet_z)[1], MM = dim(out_bet_z)[2])
+  rownames(out_bet_z) <- dd_names
+  colnames(out_bet_z) <- paste0("m_", seq_len(dim(out_bet_z)[[2]]))
+  return(out_bet_z)
 }
 generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
                            U, dim_all, order_p, TT, DD, NN, MM) {
