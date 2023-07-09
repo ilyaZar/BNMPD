@@ -371,19 +371,20 @@ ModelDat <- R6::R6Class("ModelDat",
                           set_dim_names_z_u_regs = function(cnt_reg, var_reg) {
                             tmp_dim  <- dim(cnt_reg)
                             TT_names <- paste0("t_", seq_len(tmp_dim[[1]]))
-                            tmp_nm_DD_1 <- unlist(
+
+                            tmp_nm_DD_1 <- rep(names(var_reg),
+                                               times = sapply(
+                                                 var_reg,
+                                                 length))
+                            tmp_nm_DD_2 <- unlist(
                               lapply(
                                 lapply(var_reg, length),
                                 function(x) {
                                   paste0("k", seq_len(x))
-                                  }
-                                ),
+                                }
+                              ),
                               use.names = FALSE
                             )
-                            tmp_nm_DD_2 <- rep(names(var_reg),
-                                               times = sapply(
-                                                 var_reg,
-                                                 length))
                             DD_names <- paste0(tmp_nm_DD_1, "_", tmp_nm_DD_2)
                             NN_names <- paste0("n_", seq_len(tmp_dim[[3]]))
                             list(TT_names,
