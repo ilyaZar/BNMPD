@@ -583,8 +583,9 @@ dd_names_formatter2 <- function(DIST_SPECIAL, DD) {
       width = 2,
       format = "d",
       flag = "0")
-    paste0(c("DA_", "DB_"), dd_seq)
+    dd_seq <- paste0(c("DA_", "DB_"), dd_seq)
   }
+  return(dd_seq)
 }
 dd_kk_names_formatter <- function(DIST_SPECIAL, DD, num_regs, prefix_reg) {
   paste0(
