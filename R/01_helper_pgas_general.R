@@ -330,20 +330,8 @@ generate_cnt_phi_x <- function(phi_null, phi_vals, DIST_SPECIAL,
 set_cnt_bet_u <- function(DIST_SPECIAL, dim_u, DD, MM, NN) {
   bet_u <- array(0, c(sum(dim_u), MM, NN))
   dim(bet_u) <- unname(dim(bet_u))
-  dim(bet_u) <- c(DDxRE = dim(bet_u)[1],
-                  MM = dim(bet_u)[2],
-                  NN = dim(bet_u)[3])
-  dd_names <- paste0(
-    rep(
-      dd_names_formatter(DIST_SPECIAL, DD),
-      times = dim_u
-    ),
-    "_",
-    paste0(
-      "re_",
-      unlist(lapply(dim_u, function(x) {seq_len(x)}))
-    )
-  )
+  dim(bet_u) <- c(DDxRE = dim(bet_u)[1], MM = dim(bet_u)[2], NN = dim(bet_u)[3])
+  dd_names <- dd_kk_names_formatter(DIST_SPECIAL, DD, dim_u, "re_")
   dimnames(bet_u) <- list(
     dd_names,
     paste0("m_", seq_len(dim(bet_u)[[2]])),
@@ -363,19 +351,8 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
     prior_vcm_bet_z   <- vector("list", DD)
 
     dim(bet_z) <- unname(dim(bet_z))
-    dim(bet_z) <- c(DDxk = dim(bet_z)[1],
-                    MM = dim(bet_z)[2])
-    dd_names <-paste0(
-      rep(
-        dd_names_formatter(DIST_SPECIAL, DD),
-        times = dim_bet_z
-      ),
-      "_",
-      paste0(
-        "k_",
-        unlist(lapply(dim_bet_z, function(x) {seq_len(x)}))
-      )
-    )
+    dim(bet_z) <- c(DDxk = dim(bet_z)[1], MM = dim(bet_z)[2])
+    dd_names <- dd_kk_names_formatter(DIST_SPECIAL, DD, dim_bet_z, "k_")
     rownames(bet_z) <- dd_names
     colnames(bet_z) <- paste0("m_", seq_len(dim(bet_z)[[2]]))
 
@@ -598,4 +575,17 @@ dd_names_formatter <- function(DIST_SPECIAL, DD) {
         flag = "0")
    paste0(c("DA_", "DB_"), dd_seq)
   }
+}
+dd_kk_names_formatter <- function(DIST_SPECIAL, DD, num_regs, prefix_reg) {
+  paste0(
+    rep(
+      dd_names_formatter(DIST_SPECIAL, DD),
+      times = num_regs
+    ),
+    "_",
+    paste0(
+      prefix_reg,
+      unlist(lapply(num_regs, function(x) {seq_len(x)}))
+    )
+  )
 }
