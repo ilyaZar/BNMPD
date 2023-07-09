@@ -216,9 +216,16 @@ initialize_data_containers <- function(par_init,
   prior_ig_a <- cnt_priors[["prior_ig_a"]]
   prior_ig_b <- cnt_priors[["prior_ig_b"]]
   ## III. Pre-compute Regs %*% beta for Z/U type regressors
-  Regs_beta <- generate_cnt_regs_beta(Z_beta, U_beta,
-                                      u_null, z_null,
-                                      TT, DD2, NN)
+  Regs_beta <- generate_cnt_regs_beta(
+    DIST_SPECIAL,
+    Z_beta,
+    U_beta,
+    u_null,
+    z_null,
+    TT,
+    DD2,
+    NN
+  )
   from_env <- environment()
   get_env_pgas(to_env, from_env, phi_null, z_null, u_null, dims)
   invisible(to_env)
@@ -358,7 +365,6 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
     dim(bet_z) <- unname(dim(bet_z))
     dim(bet_z) <- c(DDxk = dim(bet_z)[1],
                     MM = dim(bet_z)[2])
-    browser()
     dd_names <-paste0(
       rep(
         dd_names_formatter(DIST_SPECIAL, DD),
@@ -494,7 +500,8 @@ generate_cnt_priors <- function(priors, NN, TT, order_p) {
   return(list(prior_ig_a = prior_ig_a,
               prior_ig_b = prior_ig_b))
 }
-generate_cnt_regs_beta <- function(Z_beta, U_beta, u_null, z_null, TT, DD, NN) {
+generate_cnt_regs_beta <- function(DIST_SPECIAL, Z_beta, U_beta,
+                                   u_null, z_null, TT, DD, NN) {
   Regs_beta <- array(0, c(TT, DD, NN))
   for (d in 1:DD) {
     for (n in 1:NN) {
@@ -507,6 +514,15 @@ generate_cnt_regs_beta <- function(Z_beta, U_beta, u_null, z_null, TT, DD, NN) {
       }
     }
   }
+  dim(Regs_beta) <- unname(dim(Regs_beta))
+  dim(Regs_beta) <- c(TT = dim(Regs_beta)[1],
+                      DD = dim(Regs_beta)[2],
+                      NN = dim(Regs_beta)[3])
+  dimnames(Regs_beta) <- list(
+    paste0("t_", seq_len(TT)),
+    dd_names_formatter(DIST_SPECIAL, DD),
+    paste0("n_", seq_len(NN))
+  )
   return(Regs_beta)
 }
 prepare_cluster <- function(pe, mm = 1) {
