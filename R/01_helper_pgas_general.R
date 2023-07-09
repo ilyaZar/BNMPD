@@ -366,6 +366,10 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
       id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
       bet_z[id_betz_tmp, 1] <- par_init[["init_beta_z_lin"]][[d]]
       prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + order_p)
+      names_phi_x_bet_z <- c(paste0("p_" , seq_len(order_p)),
+                             paste0("k_" , seq_len(dim_bet_z[d])))
+      rownames(prior_vcm_bet_z[[d]]) <- names_phi_x_bet_z
+      colnames(prior_vcm_bet_z[[d]]) <- names_phi_x_bet_z
       for (n in seq_len(NN)) {
         regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
         Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
