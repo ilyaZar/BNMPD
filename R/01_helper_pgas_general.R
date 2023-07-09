@@ -471,15 +471,17 @@ generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
 }
 set_cnt_vcm_bet_u <- function(DIST_SPECIAL, DD, dim_u, MM) {
   vcm_bet_u        <- vector("list", DD)
-  if (isTRUE(DIST_SPECIAL)) {
-    seq_dd <- formatC(seq_len(DD / 2), width = 2, format = "d", flag = "0")
-    names(vcm_bet_u) <- paste0(
-      paste0("DA_", seq_dd),
-      paste0("DB_", seq_dd)
-    )
-  } else if (isFALSE(DIST_SPECIAL)) {
-    names(vcm_bet_u) <- paste0("DD_", seq_len(DD))
+  if (isFALSE(DIST_SPECIAL)) {
+    dd_seq <- paste0("DD_", seq_len(DD))
+  } else if(isTRUE(DIST_SPECIAL)) {
+    dd_seq <- formatC(
+      rep(seq_len(DD / 2), each = 2),
+      width = 2,
+      format = "d",
+      flag = "0")
+    paste0(c("DA_", "DB_"), dd_seq)
   }
+  names(vcm_bet_u) <- dd_seq
   for (d in seq_len(DD)) {
     vcm_bet_u[[d]]  <- array(0, c(dim_u[d], dim_u[d], MM))
     dim(vcm_bet_u[[d]]) <- unname(dim(vcm_bet_u[[d]]))
