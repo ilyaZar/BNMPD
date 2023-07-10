@@ -70,11 +70,14 @@ get_smc_internal <- function(obs_type, smc_type) {
   if (smc_type == "bpf") {
     grep_smc <- "cbpf_"
   }
-  if (obs_type == "DIRICHLET") {
-    grep_smc <- paste0(grep_smc, "as_d_cpp_par")
-  } else if (obs_type == "DIRICHLET_MULT") {
-    grep_smc <- paste0(grep_smc, "as_dm_cpp_par")
-  }
+  grep_smc <- switch(
+    obs_type,
+    MULTINOMIAL = paste0(grep_smc, "as_m_cpp_par"),
+    DIRICHLET = paste0(grep_smc, "as_d_cpp_par"),
+    DIRICHLET_MULT = paste0(grep_smc, "as_dm_cpp_par"),
+    GEN_DIRICHLET = paste0(grep_smc, "as_gd_cpp_par"),
+    GEN_DIRICHLET_MULT = paste0(grep_smc, "as_gdm_cpp_par")
+  )
   grep_smc <- paste0("BNMPD:::", grep_smc)
   return(eval(parse(text = grep_smc)))
 }
