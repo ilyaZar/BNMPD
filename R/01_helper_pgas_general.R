@@ -250,9 +250,9 @@ get_zet_dims <- function(par_init, z_null, phi_null, order_p) {
     id_reg_z  <- c(0, cumsum(dim_bet_z))
   }
   out_zet_dims <- list(
-    dim_bet_z = dim_bet_z,
     id_zet = id_zet,
-    id_reg_z = id_reg_z
+    id_reg_z = id_reg_z,
+    dim_bet_z = dim_bet_z
   )
   return(out_zet_dims)
 }
@@ -260,10 +260,9 @@ get_uet_dims <- function(u_null, par_init) {
   if (u_null) return(NULL)
   dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
   id_uet    <- c(0, cumsum(dim_bet_u))
-  # dim_bet_u <- rep(2, times = DD)
   out_uet_dims <- list(
-    dim_bet_u = dim_bet_u,
-    id_uet = id_uet
+    id_uet = id_uet,
+    dim_bet_u = dim_bet_u
   )
   return(out_uet_dims)
 }
