@@ -348,15 +348,7 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
     id_zet    <- dim_all[["id_zet"]]
 
     bet_z  <- gernerate_cnt_bet_z(DIST_SPECIAL, DD, MM, dim_bet_z)
-    regs_z <- array(0, c(TT - order_p, sum(dim_zet) + DD * order_p, NN))
-    dimnames(regs_z) <- get_regs_z_dimnames(
-      DIST_SPECIAL,
-      TT,
-      DD,
-      NN,
-      order_p,
-      dim_bet_z
-    )
+    regs_z <- gernerate_cnt_regs_z(DIST_SPECIAL, TT, DD, NN, order_p, dim_zet)
     Z_beta <- array(0, c(TT, DD, NN))
 
     prior_vcm_bet_z        <- vector("list", DD)
@@ -406,6 +398,18 @@ gernerate_cnt_bet_z <- function(DIST_SPECIAL, DD, MM, dim_bet_z) {
   rownames(out_bet_z) <- dd_names
   colnames(out_bet_z) <- paste0("m_", seq_len(dim(out_bet_z)[[2]]))
   return(out_bet_z)
+}
+gernerate_cnt_regs_z <- function(DIST_SPECIAL, TT, DD, NN, order_p, dim_arg) {
+  out_regs_z <- array(0, c(TT - order_p, sum(dim_arg) + DD * order_p, NN))
+  dimnames(out_regs_z) <- get_regs_z_dimnames(
+    DIST_SPECIAL,
+    TT,
+    DD,
+    NN,
+    order_p,
+    dim_arg
+  )
+  return(out_regs_z)
 }
 generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
                            U, dim_all, order_p, TT, DD, NN, MM) {
@@ -609,5 +613,28 @@ dd_kk_names_formatter <- function(DIST_SPECIAL, DD, num_regs, prefix_reg) {
       prefix_reg,
       unlist(lapply(num_regs, function(x) {seq_len(x)}))
     )
+  )
+}
+dd_kk_names_formatter2 <- function(DIST_SPECIAL, DD, order_p, num_regs_z,
+                                   prefix_phi, prefix_regs_z) {
+  order_p_list <- as.list(rep(order_p, times = DD))
+  part_1 <- rep(
+    dd_names_formatter(DIST_SPECIAL, DD),
+    times = num_regs_z + order_p
+  )
+  part_2 <- lapply(order_p_list, function(x) {paste0(prefix_phi, seq_len(x))})
+  part_3 <- lapply(num_regs_z, function(x) {paste0(prefix_regs_z, seq_len(x))})
+  jn_part_2_3 <- NULL
+  for (d in seq_len(DD)) {
+    jn_part_2_3 <- c(jn_part_2_3, c(part_2[[d]], part_3[[d]]))
+  }
+  paste0(part_1, "_", jn_part_2_3)
+}
+get_regs_z_dimnames <- function(DIST_SPECIAL, TT, DD, NN, order_p, dim_bet_z) {
+  list(
+    paste0("t_", seq_len(TT - order_p)),
+    dd_kk_names_formatter2(
+      DIST_SPECIAL, DD, order_p, dim_bet_z, "p_", "k_"),
+    paste0("n_", seq_len(NN))
   )
 }
