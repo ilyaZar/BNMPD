@@ -287,12 +287,12 @@ generate_cnt_X <- function(traj_init, DIST_SPECIAL, TT, DD, MM, NN) {
               DD = dim(X)[2],
               MM = dim(X)[3],
               NN = dim(X)[4])
-    dimnames(X) <- list(
-      paste0("t_", seq_len(dim(X)[[1]])),
-      dd_names_formatter(DIST_SPECIAL, DD),
-      paste0("m_", seq_len(dim(X)[[3]])),
-      paste0("n_", seq_len(dim(X)[[4]]))
-    )
+  dimnames(X) <- list(
+    paste0("t_", seq_len(dim(X)[[1]])),
+    dd_names_formatter(DIST_SPECIAL, DD),
+    paste0("m_", seq_len(dim(X)[[3]])),
+    paste0("n_", seq_len(dim(X)[[4]]))
+  )
   for (d in seq_len(DD)) {
     for (n in 1:NN) {
       if (all.equal(dim(traj_init), as.integer(c(TT, DD, NN)),
@@ -582,11 +582,11 @@ dd_names_formatter <- function(DIST_SPECIAL, DD) {
     paste0("d_", seq_len(DD))
   } else if(isTRUE(DIST_SPECIAL)) {
     dd_seq <- formatC(
-        rep(seq_len(DD / 2), each = 2),
-        width = 2,
-        format = "d",
-        flag = "0")
-   paste0(c("DA_", "DB_"), dd_seq)
+      rep(seq_len(DD / 2), each = 2),
+      width = 2,
+      format = "d",
+      flag = "0")
+    paste0(c("DA_", "DB_"), dd_seq)
   }
 }
 dd_names_formatter2 <- function(DIST_SPECIAL, DD) {
