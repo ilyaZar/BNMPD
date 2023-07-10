@@ -243,7 +243,6 @@ initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
 get_zet_dims <- function(par_init, z_null, phi_null, order_p) {
   if (z_null) return(NULL)
   dim_bet_z <- sapply(par_init[["init_beta_z_lin"]], length, simplify = TRUE)
-  dim_zet   <- dim_bet_z
   id_zet    <- c(0, cumsum(dim_bet_z))
   if (!phi_null) {
     id_reg_z  <- c(0, cumsum(dim_bet_z + order_p))
@@ -252,7 +251,6 @@ get_zet_dims <- function(par_init, z_null, phi_null, order_p) {
   }
   out_zet_dims <- list(
     dim_bet_z = dim_bet_z,
-    dim_zet = dim_zet,
     id_zet = id_zet,
     id_reg_z = id_reg_z
   )
@@ -261,12 +259,10 @@ get_zet_dims <- function(par_init, z_null, phi_null, order_p) {
 get_uet_dims <- function(u_null, par_init) {
   if (u_null) return(NULL)
   dim_bet_u <- sapply(par_init[["init_beta_u_lin"]], nrow)
-  dim_uet   <- dim_bet_u
   id_uet    <- c(0, cumsum(dim_bet_u))
   # dim_bet_u <- rep(2, times = DD)
   out_uet_dims <- list(
     dim_bet_u = dim_bet_u,
-    dim_uet = dim_uet,
     id_uet = id_uet
   )
   return(out_uet_dims)
@@ -346,12 +342,11 @@ set_cnt_bet_u <- function(DIST_SPECIAL, dim_u, DD, MM, NN) {
 generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
                            Z, dim_all, order_p, TT, DD, NN, MM) {
   if (!z_null) {
-    dim_zet   <- dim_all[["dim_zet"]]
     dim_bet_z <- dim_all[["dim_bet_z"]]
     id_zet    <- dim_all[["id_zet"]]
 
     bet_z  <- gernerate_cnt_bet_z(DIST_SPECIAL, DD, MM, dim_bet_z)
-    regs_z <- gernerate_cnt_regs_z(DIST_SPECIAL, TT, DD, NN, order_p, dim_zet)
+    regs_z <- gernerate_cnt_regs_z(DIST_SPECIAL, TT, DD, NN, order_p, dim_bet_z)
     Z_beta <- array(0, c(TT, DD, NN))
 
     prior_vcm_bet_z        <- vector("list", DD)
@@ -419,10 +414,9 @@ generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
   if (isTRUE(u_null)) {
     bet_u            <- NULL
     vcm_bet_u        <- NULL
-    prior_vcm_bet_u2 <- NULL
     dof_vcm_bet_u    <- NULL
+    prior_vcm_bet_u2 <- NULL
   } else if (isFALSE(u_null)) {
-    dim_uet   <- dim_all[["dim_uet"]]
     dim_bet_u <- dim_all[["dim_bet_u"]]
     id_uet    <- dim_all[["id_uet"]]
 
@@ -434,7 +428,7 @@ generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
 
     vcm_x_errors_lhs <- vector("list", DD)
     U_beta <- array(0, c(TT, DD, NN))
-    regs_u <- array(0, c(TT - order_p, sum(dim_uet) + DD * order_p, NN))
+    regs_u <- array(0, c(TT - order_p, sum(dim_bet_u) + DD * order_p, NN))
 
     for (d in 1:DD) {
       vcm_x_errors_lhs[[d]] <- array(0, c(TT - order_p, TT - order_p, NN))
