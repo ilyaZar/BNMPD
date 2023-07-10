@@ -28,3 +28,4 @@
 /inst/simulation-studies-tests/*
 /inst/generate-artificial-datasets/*
 ./04-results/*
+/docs/*
