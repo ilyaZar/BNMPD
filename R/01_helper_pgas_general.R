@@ -84,15 +84,17 @@ get_smc_internal <- function(obs_type, smc_type) {
 get_args_list_smc_internal <- function(pe, mm) {
   smc_internal <- get_smc_internal(obs_type = pe$model_type_obs,
                                    smc_type = pe$model_type_smc)
+  x_r_all_tmp <- array(pe$X[ , , mm, ], dim = dim(pe$X)[-3])
+  dimnames(x_r_all_tmp) <- dimnames(pe$X)[-3]
   out <- list(cl = pe$cl, x = pe$task_indices,
               fun = smc_internal,
               nn_list_dd = pe$nn_list_dd,
-              N = pe$N, TT = pe$TT, DD = pe$DD,
+              N = pe$N, TT = pe$TT, DD = pe$DD, DD2 = pe$DD2,
               y_all = pe$y,
               regs_beta_all = pe$Regs_beta,
               sig_sq_x = pe$sig_sq_x[, mm],
               phi_x = pe$phi_x[, mm],
-              x_r_all = array(pe$X[ , , mm, ], dim = dim(pe$X)[-3]))
+              x_r_all = x_r_all_tmp)
   if (pe$model_type_obs %in% c("DIRICHLET_MULT",
                                "GEN_DIRICHLET_MULT",
                                "MULTINOMIAL")) {
