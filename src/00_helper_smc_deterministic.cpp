@@ -550,9 +550,9 @@ arma::uvec compute_id_x_avl(int DD_all, int DD_avl, const arma::uvec& id) {
     return(id);
   }
 }
-arma::uvec compute_id_w(int N, int DD2, const arma::uvec& id,
+arma::uvec compute_id_w(int N, int DD_avl, const arma::uvec& id,
                         const Rcpp::IntegerVector& dd_rng){
-    arma::uvec id_weights(DD2 * N);
+    arma::uvec id_weights(DD_avl * N);
     arma::uvec tmp_ls(N);
     int tmp_iter = 0;
     for (auto d : dd_rng) {
