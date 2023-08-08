@@ -27,6 +27,8 @@ arma::uvec compute_id_x(int DD, int N);
 arma::uvec compute_id_x2(int DD, int DD2, const arma::uvec& id);
 arma::uvec compute_id_w(int N, int DD2, const arma::uvec& id,
                         const Rcpp::IntegerVector& dd_rng);
+Rcpp::IntegerVector compute_dd_range_x(const Rcpp::IntegerVector& dd_range_y);
+int compute_DD2(int DD);
 arma::vec f_cpp(const arma::vec& x_tt,
                 const double& phi_x,
                 const double& regs_add);

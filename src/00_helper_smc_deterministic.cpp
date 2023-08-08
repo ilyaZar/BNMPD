@@ -562,6 +562,16 @@ arma::uvec compute_id_w(int N, int DD2, const arma::uvec& id,
     }
     return(id_weights);
 }
+Rcpp::IntegerVector compute_dd_range_x(const Rcpp::IntegerVector& dd_range_y) {
+  int DD = dd_range_y.size();
+  int DD2 = compute_DD2(DD);
+  Rcpp::IntegerVector out_dd_range_x(DD2, 0);
+  for (int d = 0; d < DD - 2; ++d) {
+    out_dd_range_x[d] = dd_range_y[d];
+    out_dd_range_x[d + 1] = dd_range_y[d] + 1;
+  }
+  return(out_dd_range_x);
+}
 arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
                         const Rcpp::IntegerVector& dd_rng,
                         const arma::vec& phi, const arma::vec& sig_sq,
@@ -580,4 +590,7 @@ arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
                                                          N);
    }
    return(mean_diff);
+}
+int compute_DD2(int DD) {
+  return(2 * DD - 2);
 }
