@@ -57,10 +57,12 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   arma::mat xa(DD2*N, TT, arma::fill::zeros);
   arma::umat a(N, TT, arma::fill::zeros);
   // container due to varying component numbers in 1:DD per cross section
-  Rcpp::IntegerVector dd_range;
-  arma::uvec dd_range_uvec(Rcpp::as<arma::uvec>(dd_range));
-  arma::uvec id_x = compute_id_x(DD2, N);
-  arma::uvec id_x2;
+  Rcpp::IntegerVector dd_range_y;
+  Rcpp::IntegerVector dd_range_x;
+  arma::uvec dd_range_y_uvec(Rcpp::as<arma::uvec>(dd_range_y));
+  arma::uvec dd_range_x_uvec(Rcpp::as<arma::uvec>(dd_range_x));
+  arma::uvec id_x_all = compute_id_x_all(DD2, N);
+  arma::uvec id_x_avl;
   arma::uvec id_w;
   // some fixed containers
   arma::mat mean_diff(N, DD2, arma::fill::zeros);
@@ -73,11 +75,14 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ///////////////////////////// 0. DATA CONTAINERS ///////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     // adjustments for possibly missing components in 1:DD given cross section j
-    dd_range = nn_list_dd(j);
-    dd_range_uvec = Rcpp::as<arma::uvec>(Rcpp::wrap(dd_range));
-    int DD3 = dd_range.size();
-    id_x2 = compute_id_x2(DD, DD3, id_x);
-    id_w = compute_id_w(N, DD3, id_x, dd_range);
+    dd_range_y = nn_list_dd(j);
+    dd_range_x = compute_dd_range_x(nn_list_dd(j));
+    dd_range_y_uvec = Rcpp::as<arma::uvec>(Rcpp::wrap(dd_range_y));
+    dd_range_x_uvec = Rcpp::as<arma::uvec>(Rcpp::wrap(dd_range_x));
+    int DD_y_avl = dd_range_y.size();
+    int DD_x_avl = dd_range_x.size();
+    id_x_avl = compute_id_x_avl(DD2, DD_x_avl, id_x_all);
+    id_w = compute_id_w(N, DD_x_avl, id_x_all, dd_range_x);
     // data slices for selected cross sectional unit j
     y = y_all.slice(j);
     Regs_beta = regs_beta_all.slice(j);
@@ -93,7 +98,7 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ///////////////////////// I. INITIALIZATION (t = 0) ////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     // Sample initial particles from prior; weights = 1/N (since y_{t=0} = NA)
-    sample_init(dd_range, Regs_beta, phi_x, sig_sq_x, N, id_x, xa);
+    sample_init(dd_range_x, Regs_beta, phi_x, sig_sq_x, N, id_x_all, xa);
     w_norm.fill(1.0/N);
     ////////////////////////////////////////////////////////////////////////////
     /////////////////// II. FIRST PERIOD APPROXIMATION (t = 1) /////////////////
@@ -101,20 +106,20 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     // resampling
     a.col(0) = resample(w_norm, N, id_as_lnspc);
     // propagation
-    mean_diff = bpf_propagate(N, DD, 0, 0, id_x, dd_range,
+    mean_diff = bpf_propagate(N, DD2, 0, 0, id_x_all, dd_range_x,
                               phi_x, sig_sq_x, Regs_beta,
                               xa, x_r, a.col(0));
     // conditioning
-    set_conditional_value(xa, x_r, dd_range, id_x, 0);
+    set_conditional_value(xa, x_r, dd_range_x, id_x_all, 0);
     // ancestor sampling; not necessary but may improve results
-    // a(N - 1, 0) = w_as_c(mean_diff.cols(dd_range_uvec),
+    // a(N - 1, 0) = w_as_c(mean_diff.cols(dd_range_x_uvec),
     //                      vcm_diag, w_log, N, id_as_lnspc);
     // weighting
     t_word(0) = 0;
-    w_log = w_log_cbpf_d(N, DD3,
-                         y.submat(t_word, dd_range_uvec),
+    w_log = w_log_cbpf_d(N, DD_x_avl,
+                         y.submat(t_word, dd_range_y_uvec),
                          xa.submat(id_w, t_word),
-                         id_x2);
+                         id_x_avl);
     w_norm = w_normalize_cpp(w_log, "particle");
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS ///////////////////
@@ -123,24 +128,26 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
       // resampling
       a.col(t) = resample(w_norm, N, id_as_lnspc);
       // propagation
-      mean_diff = bpf_propagate(N, DD, t, t - 1, id_x, dd_range,
+      mean_diff = bpf_propagate(N, DD2, t, t - 1, id_x_all, dd_range_x,
                                 phi_x, sig_sq_x, Regs_beta,
                                 xa, x_r, a.col(t));
       // conditioning
-      set_conditional_value(xa, x_r, dd_range, id_x, t);
+      set_conditional_value(xa, x_r, dd_range_x, id_x_all, t);
       // ancestor sampling
-      a(N - 1, t) = w_as_c(mean_diff.cols(dd_range_uvec),
-        pow(sig_sq_x.elem(dd_range_uvec).t(), -1),
+      a(N - 1, t) = w_as_c(mean_diff.cols(dd_range_x_uvec),
+        pow(sig_sq_x.elem(dd_range_x_uvec).t(), -1),
         w_log, N, id_as_lnspc);
       // weighting
       t_word(0) = t;
       w_log = w_log_cbpf_d(N, DD2,
-                           y.submat(t_word, dd_range_uvec),
+                           y.submat(t_word, dd_range_y_uvec),
                            xa.submat(id_w, t_word),
-                           id_x2);
+                           id_x_avl);
       w_norm = w_normalize_cpp(w_log, "particle");
     }
-    x_out_list(jj) = draw_trajectory(N, TT, DD, dd_range, id_x,
+    x_out_list(jj) = draw_trajectory(N, TT, DD2,
+               dd_range_x,
+               id_x_all,
                xa, a, w_norm);
     jj++;
   }
