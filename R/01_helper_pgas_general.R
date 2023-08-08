@@ -89,12 +89,15 @@ get_args_list_smc_internal <- function(pe, mm) {
   out <- list(cl = pe$cl, x = pe$task_indices,
               fun = smc_internal,
               nn_list_dd = pe$nn_list_dd,
-              N = pe$N, TT = pe$TT, DD = pe$DD, DD2 = pe$DD2,
+              N = pe$N, TT = pe$TT, DD = pe$DD,
               y_all = pe$y,
               regs_beta_all = pe$Regs_beta,
               sig_sq_x = pe$sig_sq_x[, mm],
               phi_x = pe$phi_x[, mm],
               x_r_all = x_r_all_tmp)
+  if (pe$model_type_obs %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT")) {
+    out$DD2 <- pe$DD2
+  }
   if (pe$model_type_obs %in% c("DIRICHLET_MULT",
                                "GEN_DIRICHLET_MULT",
                                "MULTINOMIAL")) {
