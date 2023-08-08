@@ -116,10 +116,10 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     //                      vcm_diag, w_log, N, id_as_lnspc);
     // weighting
     t_word(0) = 0;
-    w_log = w_log_cbpf_d(N, DD_x_avl,
-                         y.submat(t_word, dd_range_y_uvec),
-                         xa.submat(id_w, t_word),
-                         id_x_avl);
+    w_log = w_log_cbpf_gd(N, DD_x_avl,
+                          y.submat(t_word, dd_range_y_uvec),
+                          xa.submat(id_w, t_word),
+                          id_x_avl);
     w_norm = w_normalize_cpp(w_log, "particle");
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS ///////////////////
@@ -139,10 +139,10 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
         w_log, N, id_as_lnspc);
       // weighting
       t_word(0) = t;
-      w_log = w_log_cbpf_d(N, DD2,
-                           y.submat(t_word, dd_range_y_uvec),
-                           xa.submat(id_w, t_word),
-                           id_x_avl);
+      w_log = w_log_cbpf_gd(N, DD2,
+                            y.submat(t_word, dd_range_y_uvec),
+                            xa.submat(id_w, t_word),
+                            id_x_avl);
       w_norm = w_normalize_cpp(w_log, "particle");
     }
     x_out_list(jj) = draw_trajectory(N, TT, DD2,
