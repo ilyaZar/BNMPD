@@ -58,7 +58,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   // container due to varying component numbers in 1:DD per cross section
   Rcpp::IntegerVector dd_range;
   arma::uvec dd_range_uvec(Rcpp::as<arma::uvec>(dd_range));
-  arma::uvec id_x = compute_id_x(DD, N);
+  arma::uvec id_x = compute_id_x_all(DD, N);
   arma::uvec id_x2;
   arma::uvec id_w;
   // some fixed containers
@@ -75,7 +75,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     dd_range = nn_list_dd(j);
     dd_range_uvec = Rcpp::as<arma::uvec>(Rcpp::wrap(dd_range));
     int DD2 = dd_range.size();
-    id_x2 = compute_id_x2(DD, DD2, id_x);
+    id_x2 = compute_id_x_avl(DD, DD2, id_x);
     id_w = compute_id_w(N, DD2, id_x, dd_range);
     // data slices for selected cross sectional unit j
     y = y_all.slice(j);

@@ -535,14 +535,14 @@ arma::mat draw_trajectory(int N, int TT, int DD,
   }
   return(x_out);
 }
-arma::uvec compute_id_x(int DD, int N) {
+arma::uvec compute_id_x_all(int DD, int N) {
   arma::uvec id(DD + 1);
   for (int d = 0; d < DD+1; ++d) {
       id(d) = d*N;
   }
   return(id);
 }
-arma::uvec compute_id_x2(int DD, int DD2, const arma::uvec& id) {
+arma::uvec compute_id_x_avl(int DD, int DD2, const arma::uvec& id) {
   int drop_num = DD - DD2;
   if (drop_num > 0) {
     return(id.head(DD2 + 1));
