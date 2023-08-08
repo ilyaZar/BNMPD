@@ -535,17 +535,17 @@ arma::mat draw_trajectory(int N, int TT, int DD,
   }
   return(x_out);
 }
-arma::uvec compute_id_x_all(int DD, int N) {
-  arma::uvec id(DD + 1);
-  for (int d = 0; d < DD+1; ++d) {
+arma::uvec compute_id_x_all(int DD_all, int N) {
+  arma::uvec id(DD_all + 1);
+  for (int d = 0; d < DD_all+1; ++d) {
       id(d) = d*N;
   }
   return(id);
 }
-arma::uvec compute_id_x_avl(int DD, int DD2, const arma::uvec& id) {
-  int drop_num = DD - DD2;
+arma::uvec compute_id_x_avl(int DD_all, int DD_avl, const arma::uvec& id) {
+  int drop_num = DD_all - DD_avl;
   if (drop_num > 0) {
-    return(id.head(DD2 + 1));
+    return(id.head(DD_avl + 1));
   } else {
     return(id);
   }
