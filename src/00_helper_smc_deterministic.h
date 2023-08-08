@@ -48,6 +48,11 @@ arma::vec w_log_cbpf_d(const int& N,
                        const arma::rowvec& y,
                        const arma::vec& xa,
                        const arma::uvec& id_x);
+arma::vec w_log_cbpf_gd(const int& N,
+                        const int& DD2,
+                        const arma::rowvec& y,
+                        const arma::vec& xa,
+                        const arma::uvec& id_x);
 // arma::vec w_log_cbpf_d_bh(const int& N,
 //                           const int& DD,
 //                           const arma::rowvec& y,

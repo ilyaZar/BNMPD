@@ -140,6 +140,59 @@ arma::vec w_log_cbpf_d(const int& N,
   check_weights(w_log, weight_type);
   return(w_log);
 }
+//' SMC log-weights for the generalized Dirichlet
+//'
+//' Computes normalized Bootstrap-particle weights for the generalized
+//' Dirichlet model.
+//'
+//' @param N number of particles (int)
+//' @param DD2 number of state components (number of components in the
+//'     multivariate latent state component) (int)
+//' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+//'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+//' @param xa particle state vector; \code{NxDD2}-dimensional arma::vec (as the
+//'   whole state vector has \code{DD2} components and \code{N} is the number of
+//'   particles)
+//' @param id_x index vector giving the location of the N-dimensional components
+//'   for each subcomponent d=1,...,DD2 within the \code{NxDD2} dimensional
+//'   \code{xa}
+//' @return particle log-weights
+//'
+// [[Rcpp::export]]
+arma::vec w_log_cbpf_gd(const int& N,
+                        const int& DD2,
+                        const arma::rowvec& y,
+                        const arma::vec& xa,
+                        const arma::uvec& id_x) {
+  const std::string weight_type = "particle";
+  arma::vec log_lhs;
+  arma::vec log_rhs;
+  arma::vec w_log;
+  arma::vec w_tilde;
+
+  arma::mat y_mat(N, DD2, arma::fill::zeros);
+  y_mat.each_row() += y;
+  arma::mat alphas(N, DD2);
+  for (int d = 0; d < DD2; ++d) {
+    alphas.col(d) = xa.subvec(id_x(d), id_x(d + 1) - 1);
+  }
+  alphas = exp(alphas);
+
+  arma::vec sum_alphas(N);
+  sum_alphas = sum(alphas, 1);
+
+  arma::mat alphas_add_y;
+  alphas_add_y = alphas;
+  alphas_add_y.each_row() += y;
+
+  log_lhs = lgamma(sum_alphas) - sum(lgamma(alphas), 1);
+  log_rhs = sum((alphas - 1) % log(y_mat), 1);
+  // Rcpp::Rcout << "rhs is " << std::endl << log_rhs << std::endl;
+
+  w_log   = log_lhs + log_rhs;
+  check_weights(w_log, weight_type);
+  return(w_log);
+}
 // //' SMC log-weights for the Dirichlet model; the BH-version
 // //'
 // //' Computes normalized bootrstrap particle weights; same as
