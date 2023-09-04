@@ -78,9 +78,9 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     // adjustments for possibly missing components in 1:DD given cross section j
     dd_range = nn_list_dd(j);
     dd_range_uvec = Rcpp::as<arma::uvec>(Rcpp::wrap(dd_range));
-    int DD2 = dd_range.size();
-    id_x_avl = compute_id_x_avl(DD, DD2, id_x_all);
-    id_w = compute_id_w(N, DD2, id_x_all, dd_range);
+    int DD_avail = dd_range.size();
+    id_x_avl = compute_id_x_avl(DD, DD_avail, id_x_all);
+    id_w = compute_id_w(N, DD_avail, id_x_all, dd_range);
     // data slices for selected cross sectional unit j
     y = y_all.slice(j);
     num_counts = num_counts_all.col(j);
@@ -98,7 +98,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ////////////////////////////////////////////////////////////////////////////
     // Sample initial particles from prior; weights = 1/N (since y_{t=0} = NA)
     sample_init(dd_range, Regs_beta, phi_x, sig_sq_x, N, id_x_all, xa);
-    w_norm.fill(1.0/N);
+    w_norm.fill(1.0 / N);
     ////////////////////////////////////////////////////////////////////////////
     /////////////////// II. FIRST PERIOD APPROXIMATION (t = 1) /////////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     //                      vcm_diag, w_log, N, id_as_lnspc);
     // weighting
     t_word(0) = 0;
-    w_log = w_log_cbpf_dm(N, DD2,
+    w_log = w_log_cbpf_dm(N, DD_avail,
                           num_counts(0), y.submat(t_word, dd_range_uvec),
                           xa.submat(id_w, t_word),
                           id_x_avl);
@@ -138,7 +138,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                            w_log, N, id_as_lnspc);
       // weighting
       t_word(0) = t;
-      w_log = w_log_cbpf_dm(N, DD2,
+      w_log = w_log_cbpf_dm(N, DD_avail,
                             num_counts(t), y.submat(t_word, dd_range_uvec),
                             xa.submat(id_w, t_word),
                             id_x_avl);
