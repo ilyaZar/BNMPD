@@ -180,8 +180,7 @@ set_opt_include <- function(distribution, includes, NN, DD) {
   if (is.null(zeros)) {
     zeros <- rep(list(NULL), times = NN)
   } else {
-    # zeros <- check_zero_list(zeros)
-    stop("not yet implemented")
+    zeros <- check_zero_to_dist(distribution, DD, NN, zeros)
   }
   out_opt <- vector("list", length = NN)
   for (n in 1:NN) {
@@ -354,6 +353,20 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
     stopifnot(`Length of component 'u_z' must be 'DD'` = length(check_at_u) == DD)
   }
   return(intercepts)
+}
+check_zero_to_dist <- function(distribution, DD, NN, zero_list) {
+  check_distribution(distribution, FORCE_SCALAR = TRUE)
+  if (DD <= 2) stop("Cannot implement zeros when DD <= 2.")
+  stopifnot(`Arg. 'zero_list' must be length NN` = length(zero_list) == NN)
+
+  DD_use <- ifelse(check_special_dist_quick(distribution),
+                   get_DD2(distribution, DD),
+                   DD)
+  stopifnot(`Elements in arg. 'zero_list' must be length DD` =
+              all(sapply(zero_list, length) == DD_use))
+  stopifnot(`Elements in arg. 'zero_list' must be logical` =
+              isTRUE(all(sapply(zero_list, is.logical))))
+  return(zero_list)
 }
 #' #' Convenient generator for list of intercepts
 #' #'
