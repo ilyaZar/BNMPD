@@ -41,8 +41,6 @@
 #'   constant level regressor
 #' @param intercept_u logical; if \code{TRUE} includes an intercept term i.e. a
 #'   constant level regressor
-#' @param policy_dummy logical; if \code{TRUE} includes a dummy that jumps from
-#'   zero to one (e.g. a policy or other jump effect to be modelled)
 #' @param zero_pattern double with possible values 1, 2, 3 or 4:
 #'   \itemize{
 #'     \item{1: }{A dummy pattern that starts at the beginning with zeros and
@@ -71,7 +69,7 @@ generate_x_z_u <- function(TT,
                            modelling_reg_types,
                            intercept_z,
                            intercept_u,
-                           policy_dummy = FALSE,
+                           # policy_dummy = FALSE,
                            zero_pattern = NULL,
                            drift = FALSE) {
   if (!modelling_reg_types[["autoregression"]]) phi_x <- 0;
@@ -101,7 +99,7 @@ generate_x_z_u <- function(TT,
                            x_sd_within = x_sd_within,
                            x_sd_among = x_sd_among,
                            intercept = intercept_z,
-                           policy_dummy = policy_dummy,
+                           # policy_dummy = policy_dummy,
                            zero_pattern = NULL)
   } else {
     z <- NULL
@@ -121,7 +119,7 @@ generate_x_z_u <- function(TT,
                            x_sd_within = x_sd_within,
                            x_sd_among = x_sd_among,
                            intercept = intercept_u,
-                           policy_dummy = policy_dummy,
+                           # policy_dummy = policy_dummy,
                            zero_pattern = NULL)
   } else {
     u <- NULL
@@ -197,17 +195,18 @@ simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT, order_p) {
 #' @param x_sd_among standard deviations for the regressor value simulation
 #'   among regressor components (for a given cross section)
 #' @param intercept logical; if \code{TRUE}, then an intercept is included
-#' @param policy_dummy logical; if \code{TRUE}, then a policy dummy is included
 #' @param zero_pattern double with possible values 1, 2, 3 or 4:
 #'   \itemize{
-#'     \item{1: }{A dummy pattern that starts at the beginning with zeros and
+#'     \item{1: }{A dummy pattern representing structural zeros i.e. only zeros
+#'     present}
+#'     \item{2: }{A dummy pattern that starts at the beginning with zeros and
 #'     jumps after half of the overall time period}
-#'     \item{2: }{A dummy pattern that starts at the beginning with ones and
+#'     \item{3: }{A dummy pattern that starts at the beginning with ones and
 #'     plummets to zeros after half of the overall time period}
-#'     \item{3: }{A dummy pattern that starts at the beginning with one, then
+#'     \item{4: }{A dummy pattern that starts at the beginning with one, then
 #'     plummets to zeros after a third of the overall time periods, and then
 #'     reverts back to ones for the last third of the time}
-#'     \item{4: }{A dummy pattern that starts at the beginning with zeros,
+#'     \item{5: }{A dummy pattern that starts at the beginning with zeros,
 #'     then jumps to ones after a third of the overall time periods, and then
 #'     reverts back to zeros for the last third of the time}
 #'   }
@@ -215,19 +214,24 @@ simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT, order_p) {
 #' @return a matrix of regressors of dimension \code{TT} \eqn{x} \code{dim_bet}
 generate_reg_vals <- function(TT, bet_reg, dim_reg,
                               x_level, x_sd_within, x_sd_among,
-                              intercept, policy_dummy, zero_pattern = NULL) {
+                              intercept, zero_pattern = NULL) {
   # order_p <- length(phi_x)
-  dummy_to_use <- get_pattern_policy_zeros(policy_dummy, zero_pattern, TT)
-
+  if (is.null(zero_pattern)) {
+    ZERO_PATTERN <- FALSE
+    dummy_to_use <- NULL
+  } else {
+    ZERO_PATTERN <- TRUE
+    get_pattern_policy_zeros(zero_pattern, TT)
+  }
   # reg_means <- stats::rnorm(max(dim_reg - 3, 0), mean = 0, sd = x_sd_among)
-  if (!intercept && !policy_dummy) {
+  if (!intercept && isFALSE(ZERO_PATTERN)) {
     weights <- rep(1/dim_reg, times = dim_reg) #(abs(bet_reg)/sum(abs(bet_reg)))
     reg_means <- x_level * weights
     reg_means <- reg_means / bet_reg
     # num_add_sims <- max(min(2, dim_reg - 1), 0)
     # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
     #                reg_means)
-  } else if (intercept && !policy_dummy) {
+  } else if (intercept && isFALSE(ZERO_PATTERN)) {
     bet_tmp <- bet_reg[-1]
     dim_tmp <- length(bet_tmp)
     x_lvl_tmp <- x_level - bet_reg[1]
@@ -238,13 +242,13 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg,
     # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
     #                reg_means)
     # if (dim_reg > 1) reg_means <- c(1, reg_means); message("Appr. simul. type1")
-  } else if (!intercept && policy_dummy) {
+  } else if (!intercept && isTRUE(ZERO_PATTERN)) {
     stop("Not yet implemented.")
     # num_add_sims <- max(min(2, dim_reg - 2), 0)
     # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
     #                reg_means)
     # if (dim_reg > 1) reg_means <- c(0, reg_means); message("Appr. simul. type2")
-  } else if (intercept && policy_dummy) {
+  } else if (intercept && isTRUE(ZERO_PATTERN)) {
     stop("Not yet implemented.")
     # if (dim_reg < 2) stop("Can't simulate intercept&policy_dummy for dim < 2!")
     # num_add_sims <- max(min(2, dim_reg - 3), 0)
@@ -266,26 +270,30 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg,
                           ncol = reg_len,
                           byrow = TRUE)
 
-  if (intercept && !policy_dummy) regs <- cbind(1, regs)
-  if (!intercept && policy_dummy) stop("Not yet implemented.") # regs[, 1] <- policy_dummy
-  if (intercept && policy_dummy)  stop("Not yet implemented.") # regs[, 1:2] <- c(1, policy_dummy)
+  if (intercept && isFALSE(ZERO_PATTERN)) regs <- cbind(1, regs)
+  if (!intercept && isTRUE(ZERO_PATTERN)) stop("Not yet implemented.") # regs[, 1] <- policy_dummy
+  if (intercept && isTRUE(ZERO_PATTERN))  stop("Not yet implemented.") # regs[, 1:2] <- c(1, policy_dummy)
 
   return(regs)
 }
-get_pattern_policy_zeros <- function(policy_dummy, zero_pattern, TT) {
-  if (policy_dummy) {
+get_pattern_policy_zeros <- function(zero_pattern, TT) {
+  # Case I: we have policiy dummmies and zeros of different types
+  if (!is.null(zero_pattern) && is.numeric(zero_pattern)) {
     if (zero_pattern == 1) {
+      dummy_to_use <- c(rep(0, times = TT))
+    }
+    if (zero_pattern == 2) {
       dummy_to_use <- c(rep(0, times = round(0.5*TT, digits = 0)),
                         rep(1, times = TT - round(0.5*TT, digits = 0)))
-    } else if (zero_pattern == 2) {
+    } else if (zero_pattern == 3) {
       dummy_to_use <- c(rep(1, times = TT - round(0.5*TT, digits = 0)),
                         rep(0, times = round(0.5*TT, digits = 0)))
-    } else if (zero_pattern == 3) {
+    } else if (zero_pattern == 4) {
       my_third <-  round(1/3*TT, digits = 0)
       dummy_to_use <- c(rep(1, times = my_third),
                         rep(0, times = my_third),
                         rep(1, times = TT - 2*my_third))
-    } else if (zero_pattern == 4) {
+    } else if (zero_pattern == 5) {
       my_third <-  round(1/3*TT, digits = 0)
       dummy_to_use <- c(rep(0, times = my_third),
                         rep(1, times = my_third),

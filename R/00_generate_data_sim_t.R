@@ -19,9 +19,6 @@
 #'   \item{\code{include_intercept: }}{logical vector of dimension \code{DD}; if
 #'   \code{TRUE} include an intercept at the cross sectional unit for component
 #'   \code{d}}
-#'   \item{\code{include_policy: }}{logical vector of dimension \code{DD}; if
-#'   \code{TRUE} include a policy dummy at the cross sectional unit for
-#'   component \code{d}}
 #'   \item{\code{include_zeros: }}{numeric vector of dimension \code{DD} with
 #'   values 1, 2, 3 or 4:
 #'   \itemize{
@@ -95,17 +92,18 @@ get_out_data_t <- function(x_states, z_regs, u_regs) {
 sim_type_run_default <- function(true_params, options_include, x_levels,
                                  modelling_reg_types, nn, TT, DD,
                                  x, z, u, DD_TYPE = NULL) {
+  # browser()
   if (!is.null(DD_TYPE)) {
     x_levels_tmp  <- x_levels[grepl(DD_TYPE, names(x_levels))]
     intercept_z  <- options_include$intercept$at_z[[DD_TYPE]]
     intercept_u  <- options_include$intercept$at_u[[DD_TYPE]]
-    policy_dummy <- options_include$policy[[DD_TYPE]]
+    # policy_dummy <- options_include$policy[[DD_TYPE]]
     zero_pattern <- options_include$include_zeros
   } else {
     x_levels_tmp <- x_levels
     intercept_z  <- options_include$intercept$at_z
     intercept_u  <- options_include$intercept$at_u
-    policy_dummy <- options_include$policy
+    # policy_dummy <- options_include$policy
     zero_pattern <- options_include$include_zeros
   }
   for (d in 1:DD) {
@@ -124,7 +122,7 @@ sim_type_run_default <- function(true_params, options_include, x_levels,
       options_reg_simul = opt_taken,
       intercept_z = intercept_z[d],
       intercept_u = intercept_u[d],
-      policy_dummy   = policy_dummy[d],
+      # policy_dummy   = policy_dummy[d],
       zero_pattern   = zero_pattern[d])
 
     x[, d] <- res$x

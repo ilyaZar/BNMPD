@@ -19,12 +19,12 @@
 #'   and the random number generation for the states is performed in logs
 #' @param options_include a list of options for various effects:
 #'   \itemize{
-#'      \item{\code{intercept: }}{logical vector of dimension \code{DD};
-#'      if \code{TRUE} include an intercept at the cross sectional unit for
-#'      component \code{d}}
-#'      \item{\code{policy: }}{logical vector of dimension \code{DD}; if
-#'      \code{TRUE} include a policy dummy at the cross sectional unit for
-#'      component \code{d}}
+#'      \item{\code{intercept: }}{a list of logical vectors as defined by
+#'      [generate_ic_list()] and checked via [check_ic_list()] to represent
+#'      intercept generation;
+#'      list elements are logical, and if `TRUE`, include an intercept at the
+#'      cross sectional unit for component `d`; `FALSE` does not include an
+#'      intercept}
 #'      \item{\code{zeros: }}{numeric vector of dimension \code{DD} with
 #'      values 1, 2, 3 or 4:
 #'      \itemize{
@@ -73,12 +73,13 @@ new_dataSim <- function(true_params,
                         x_levels,
                         X_LOG_SCALE,
                         options_include = list(intercept = NULL,
-                                               policy = NULL,
+                                               # policy = NULL,
                                                zeros = NULL),
                         options_plot = list(measurements = FALSE,
                                             states = FALSE,
                                             states_each_d = FALSE),
                         seed_no = NULL) {
+  # browser()
   check_class_true_params(true_params)
   check_true_params_distribution(true_params)
 

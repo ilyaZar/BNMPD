@@ -152,50 +152,50 @@ check_special_dist_quick <- function(dist) {
 #'   then the default specifications are returned (see the function body)
 set_opt_include <- function(distribution, includes, NN, DD) {
   intercept <- includes$intercept
-  policy    <- includes$policy
   zeros     <- includes$zeros
 
   dist_special <- distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")
   if (is.null(intercept)) {
     stop("Can not set intercept to 'NULL'; we do not provide defaults yet.")
   }
-  if (is.null(policy)) {
-    if (dist_special) {
-      tmp_DD <- get_DD(distribution, DD)
-      policy <- matrix(FALSE, nrow = tmp_DD, ncol = NN)
-      rownames(policy) <- paste0("d_", seq_len(tmp_DD))
-      colnames(policy) <- paste0("n_", seq_len(NN))
-      policy <- list(A = policy, B = policy)
-    } else {
-      policy <- matrix(FALSE, nrow = DD, ncol = NN)
-      rownames(policy) <- paste0("d_", seq_len(DD))
-      colnames(policy) <- paste0("n_", seq_len(NN))
-    }
+  # if (is.null(policy)) {
+  #   if (dist_special) {
+  #     tmp_DD <- get_DD(distribution, DD)
+  #     policy <- matrix(FALSE, nrow = tmp_DD, ncol = NN)
+  #     rownames(policy) <- paste0("d_", seq_len(tmp_DD))
+  #     colnames(policy) <- paste0("n_", seq_len(NN))
+  #     policy <- list(A = policy, B = policy)
+  #   } else {
+  #     policy <- matrix(FALSE, nrow = DD, ncol = NN)
+  #     rownames(policy) <- paste0("d_", seq_len(DD))
+  #     colnames(policy) <- paste0("n_", seq_len(NN))
+  #   }
     # policy_modelling    <- cbind(c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
     #                              c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE))
-  }
+  # }
   if (is.null(zeros)) {
-    zeros <- NULL
-    # zeros      <- c(1:4, 1, 2) # rep(4, times = DD) # c(1, 2, 3, 4, 1, 2)
-    # names(zeros) <- paste0("d_", seq_len(DD))
+    zeros <- rep(list(NULL), times = NN)
+  } else {
+    # zeros <- check_zero_list(zeros)
+    stop("not yet implemented")
   }
   out_opt <- vector("list", length = NN)
   for (n in 1:NN) {
-    policy_tmp <- if (dist_special) {
-      list(A = policy[["A"]][, n, drop = TRUE],
-           B = policy[["B"]][, n, drop = TRUE])
-    } else {
-      policy[, n, drop = TRUE]
-    }
+    # policy_tmp <- if (dist_special) {
+    #   list(A = policy[["A"]][, n, drop = TRUE],
+    #        B = policy[["B"]][, n, drop = TRUE])
+    # } else {
+    #   policy[, n, drop = TRUE]
+    # }
     out_opt[[n]] <- list(intercept = intercept,
-                         policy = policy_tmp,
-                         zeros = zeros)
+                         zeros = zeros[[n]])
   }
-  names(out_opt) <- paste0("N_", 1:NN)
+  names(out_opt) <- paste0("N_", formatC(seq_len(NN), width = 2,
+                                         format = "d", flag = "0"))
   return(out_opt)
 }
 #' Returns valid intercept specifications for `trueParams` and `dataSim`
