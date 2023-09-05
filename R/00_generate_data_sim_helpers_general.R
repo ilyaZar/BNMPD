@@ -228,17 +228,21 @@ get_ic_for_dist <- function(distribution, DD, at_z, at_u) {
   if (isTRUE(SPECIAL_DIST)) {
     at_z_use <- rep(at_z, DD - 1)
     at_u_use <- rep(at_u, DD - 1)
-    names(at_z_use) <- paste0("d_",  formatC(seq_len(DD - 1), width = 2, format = "d", flag = "0"))
-    names(at_u_use) <- paste0("d_",  formatC(seq_len(DD - 1), width = 2, format = "d", flag = "0"))
+    names(at_z_use) <- paste0("d_", formatC(seq_len(DD - 1), width = 2,
+                                            format = "d", flag = "0"))
+    names(at_u_use) <- paste0("d_", formatC(seq_len(DD - 1), width = 2,
+                                            format = "d", flag = "0"))
     ic_list <- list(at_z = list(A = at_z_use,
                                 B = at_z_use),
                     at_u = list(A = at_u_use,
                                 B = at_u_use))
   } else if (isFALSE(SPECIAL_DIST)) {
-    at_z_use <- rep(at_z, DD - 1)
-    at_u_use <- rep(at_u, DD - 1)
-    names(at_z_use) <- paste0("d_",  formatC(seq_len(DD - 1), width = 2, format = "d", flag = "0"))
-    names(at_u_use) <- paste0("d_",  formatC(seq_len(DD - 1), width = 2, format = "d", flag = "0"))
+    at_z_use <- rep(at_z, DD)
+    at_u_use <- rep(at_u, DD)
+    names(at_z_use) <- paste0("d_",  formatC(seq_len(DD), width = 2,
+                                             format = "d", flag = "0"))
+    names(at_u_use) <- paste0("d_",  formatC(seq_len(DD), width = 2,
+                                             format = "d", flag = "0"))
     ic_list <- list(at_z = at_z_use,
                     at_u = at_u_use)
   }
@@ -296,9 +300,9 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
     check_at_u <- intercepts[["at_u"]]
 
     stopifnot(`Element 'at_z' of 'intercepts' list must NOT be named` =
-                is.null(names(check_at_z)))
+                all(grepl("d_", names(check_at_z))))
     stopifnot(`Element 'at_u' of 'intercepts' list must NOT be named` =
-                is.null(names(check_at_u)))
+                all(grepl("d_", names(check_at_u))))
 
 
     stopifnot(`Length of component 'a_z' must be 'DD'` = length(check_at_z) == DD)
