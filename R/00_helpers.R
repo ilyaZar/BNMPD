@@ -13,12 +13,15 @@ msg_dim_ready <- function(dim, print_name) {
 #' @param x  object to check for underlying class name or argument value
 #' @param type character: either 'arg' then argument check is performed or
 #'    'class', then class-check is performed
+#' @param FORCE_SCALAR logical
 #'
 #' @return pure side effect-function checking for validity of first argument;
 #'   throws error if invalid
-check_distribution <- function(x, type = "arg") {
+check_distribution <- function(x, type = "arg", FORCE_SCALAR = FALSE) {
+  stopifnot(`Arg. 'FORCE_SCALAR' must be logical` = is.logical(FORCE_SCALAR))
   stopifnot(`Arg. 'type' must be either 'class' or 'arg'` =
               type %in% c("class", "arg"))
+  if (isTRUE(FORCE_SCALAR)) stopifnot(`Arg. 'x' not length 1` = length(x) == 1)
   if (type == "arg") {
     dist_names <- c("dirichlet", "gen_dirichlet", "multinomial",
                     "dirichlet_mult", "gen_dirichlet_mult",
