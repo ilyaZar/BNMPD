@@ -92,19 +92,18 @@ get_out_data_t <- function(x_states, z_regs, u_regs) {
 sim_type_run_default <- function(true_params, options_include, x_levels,
                                  modelling_reg_types, nn, TT, DD,
                                  x, z, u, DD_TYPE = NULL) {
-  # browser()
   if (!is.null(DD_TYPE)) {
     x_levels_tmp  <- x_levels[grepl(DD_TYPE, names(x_levels))]
     intercept_z  <- options_include$intercept$at_z[[DD_TYPE]]
     intercept_u  <- options_include$intercept$at_u[[DD_TYPE]]
     # policy_dummy <- options_include$policy[[DD_TYPE]]
-    zero_pattern <- options_include$include_zeros
+    zero_pattern <- options_include$zeros
   } else {
     x_levels_tmp <- x_levels
     intercept_z  <- options_include$intercept$at_z
     intercept_u  <- options_include$intercept$at_u
     # policy_dummy <- options_include$policy
-    zero_pattern <- options_include$include_zeros
+    zero_pattern <- options_include$zeros
   }
   for (d in 1:DD) {
     # reg_var_within = 0.00025, # reg_var_within = 2.0025,
