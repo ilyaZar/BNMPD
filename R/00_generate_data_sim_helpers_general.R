@@ -198,6 +198,50 @@ set_opt_include <- function(distribution, includes, NN, DD) {
                                          format = "d", flag = "0"))
   return(out_opt)
 }
+#' Generate zero patterns for data simulation tests
+#'
+#' Currently, only true missing/structural zeros are generated.
+#'
+#' @inheritParams new_trueParams
+#' @param DD integer; give the multivariate dimension
+#' @param NN integer; number of cross section units
+#' @param zero_list `NULL` forces the function to return a zero_pattern list;
+#'    custom behavior to be implemented later
+#' @param SEED_NO integer; gives number for seed generation
+#'
+#' @return a list that can be used to implement various zero patterns in
+#' simulated data
+#' @export
+get_zeros_for_dist <- function(distribution,
+                               DD, NN,
+                               zero_list = NULL,
+                               SEED_NO = 42) {
+  check_distribution(distribution)
+  stopifnot(`Argument 'DD' must be larger than 2 for meaningful zeros` =
+              DD > 2)
+  DD_use <- ifelse(check_special_dist_quick(distribution),
+                   get_DD2(distribution, DD),
+                   DD)
+  if (is.null(zero_list)) {
+    zero_list <- rep(list(NULL), times = NN)
+    set.seed(SEED_NO)
+    zero_list <- rep(list(NULL), times = NN)
+    possible_patterns <- lapply(as.list(c(0, seq_len(DD_use - 2))),
+                                function(x) {
+                                  sample(DD_use, size = x, replace = FALSE)
+                                }
+    )
+    for (i in seq_len(NN)) {
+      pattern_chosen <- sample(seq_len(DD_use - 1), size = 1)
+      zero_list_element <- rep(FALSE, times = DD_use)
+      zero_list_element[possible_patterns[[pattern_chosen]]] <- TRUE
+      zero_list[[i]] <- zero_list_element
+    }
+  } else {
+    stop("Custom behavior not yet implemented.")
+  }
+  return(zero_list)
+}
 #' Returns valid intercept specifications for `trueParams` and `dataSim`
 #'
 #' Currently, only logical flags can be set for z-type (common) or u-type
