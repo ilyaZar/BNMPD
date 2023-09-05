@@ -268,15 +268,15 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
   stopifnot(`Arg. 'intercepts' must be a named list: 'at_z', 'at_u'` =
               all(names(intercepts) %in% c("at_z", "at_u")))
 
-  check_distribution(distribution)
+  check_distribution(distribution, FORCE_SCALAR = TRUE)
   if (distribution %in%  c("gen_dirichlet", "gen_dirichlet_mult")) {
-    stopifnot(`Element 'at_z' of 'intercepts' list must be named` =
-                !is.null(names(intercepts[["at_z"]])))
-    stopifnot(`Element 'at_u' of 'intercepts' list must be named` =
-                !is.null(names(intercepts[["at_u"]])))
-
     check_at_z <- intercepts[["at_z"]]
     check_at_u <- intercepts[["at_u"]]
+
+    stopifnot(`Element 'at_z' of 'intercepts' list must be named` =
+                !is.null(names(check_at_z)))
+    stopifnot(`Element 'at_u' of 'intercepts' list must be named` =
+                !is.null(names(check_at_u)))
 
     stopifnot(`Names of 'at_z' component of argument 'intercept' must be
                c("A", "B")` = all(names(check_at_z) %in% c("A", "B")))
@@ -296,8 +296,50 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
     check_at_z <- intercepts[["at_z"]]
     check_at_u <- intercepts[["at_u"]]
 
+    stopifnot(`Element 'at_z' of 'intercepts' list must NOT be named` =
+                is.null(names(check_at_z)))
+    stopifnot(`Element 'at_u' of 'intercepts' list must NOT be named` =
+                is.null(names(check_at_u)))
+
+
     stopifnot(`Length of component 'a_z' must be 'DD'` = length(check_at_z) == DD)
     stopifnot(`Length of component 'u_z' must be 'DD'` = length(check_at_u) == DD)
   }
   return(intercepts)
+}
+#' Convenient generator for list of intercepts
+#'
+#' Output to be passed to [new_trueParams()], [new_dataSim()] and
+#' [check_ic_to_dist()] to generate `trueParams`-objects, new simulated data or
+#' to check the appropriate results, respectively.
+#'
+#' @inheritParams check_ic_to_dist
+#' @param at_z logical scalar; for `TRUE/FALSE` expands to appropriate length
+#'    `DD` and for special distributions gets the sub-component names 'A' and
+#'    'B" attached; used for the z-type regressors
+#' @param at_u logical scalar; for `TRUE/FALSE` expands to appropriate length
+#'    `DD` and for special distributions gets the sub-component names 'A' and
+#'    'B" attached; used for the u-type regressors
+#'
+#' @return an appropriately formatted list passing [check_ic_to_dist()]
+#' @export
+generate_ic_list <- function(distribution = NULL, at_z = NULL,
+                             at_u = NULL, DD = NULL) {
+  stopifnot(`Argument 'at_z' must be logical` = is.logical(at_z))
+  stopifnot(`Argument 'at_u' must be logical` = is.logical(at_u))
+
+  check_distribution(distribution, FORCE_SCALAR = TRUE)
+  stopifnot(`Argument 'distribution' must be charact` = is.logical(at_u))
+
+  if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+    ic_list <- list(at_z = list(A = rep(at_z, DD - 1), B = rep(at_z, DD - 1)),
+                    at_u = list(A = rep(at_u, DD - 1), B = rep(at_u, DD - 1)))
+  } else {
+    at_z_use <- rep(at_z, DD)
+    at_u_use <- rep(at_u, DD)
+    ic_list <- list(at_z = at_z_use, at_u = at_u_use)
+  }
+
+  check_ic_to_dist(distribution, ic_list, DD)
+  return(ic_list)
 }
