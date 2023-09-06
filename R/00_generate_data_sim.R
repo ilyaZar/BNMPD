@@ -79,7 +79,6 @@ new_dataSim <- function(true_params,
                                             states = FALSE,
                                             states_each_d = FALSE),
                         seed_no = NULL) {
-  # browser()
   check_class_true_params(true_params)
   check_true_params_distribution(true_params)
 
@@ -115,7 +114,8 @@ new_dataSim <- function(true_params,
     x[, , n] <- out_data_tmp$x_states
   }
   y <- generate_measurements(x, X_LOG_SCALE, distribution,
-                             get_dimension(true_params, dim = "all"))
+                             get_dimension(true_params, dim = "all"),
+                             options_include = opt1)
   if (any(sapply(options_plot, isTRUE))) {
     for (n in 1:NN) {
       plot_data_per_n(distribution, DD,

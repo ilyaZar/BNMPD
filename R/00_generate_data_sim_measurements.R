@@ -9,7 +9,7 @@
 #' @return an array of size \code{TT x DD x NN} with measurements from the
 #'    distribution passed via the \code{distribution} argument
 #' @export
-generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims) {
+generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims, options_include) {
   check_distribution(distribution)
   check_x_states(x_states, X_LOG_SCALE)
   ### EXTREMELY AKWARD BUT MUST BE DONE SINCE OTHERWISE RANDOM NUMBERS ARE NOT
@@ -22,24 +22,43 @@ generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims) {
   DD  <- dims["DD"]
 
   out_data <- generate_data_container(distribution, NN = NN, TT = TT, DD = DD)
-  if (X_LOG_SCALE) {x <- exp(x_states)} else {x <- x_states};
+  if (X_LOG_SCALE) {
+    for (n in 1:NN) {
+      zero_cols <- options_include[[n]][["zeros"]]
+      if (is.logical(zero_cols)) {
+        x_states[, zero_cols, n] <- -Inf
+      } else {
+        next
+      }
+    }
+    x <- exp(x_states)
+  } else {
+    x <- x_states
+  }
 
   out_data <- switch(
     distribution,
     "normal" = generate_normal_obs(x, out_data),
     "dirichlet" = generate_dirichlet_obs(x, NN, TT, out_data),
     "gen_dirichlet" = generate_gen_dirichlet_obs(x, NN, TT, DD, out_data),
-    "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data),
+    "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data, options_include),
     "gen_dirichlet_mult" = generate_gen_dirichlet_mult_obs(x, NN, TT, DD, out_data)
   )
   return(out_data)
 }
 generate_normal_obs <- function(x, out_data) {
+  if (any(x == 0)) {browser(); out_data[["part1"]]; return(out_data);}
   out_data[["part1"]] <- x
   return(out_data) # early return with y=x for a Gaussian linear model spec.
 }
 generate_multinomial_obs <- function(x, NN, TT, DD, out_data) {
   for (n in 1:NN) {
+    if (any(x[, , n] == 0)) {
+      browser()
+      out_data[["part1"]][, , n] <- 0
+      out_data[["part2"]][, n]   <- 0
+      return(out_data)
+    }
     num_counts <- sample(x = 80000:120000, size = TT)
     tmp_x <- x[, , n]
     tmp_x / rowSums(tmp_x)
@@ -52,8 +71,11 @@ generate_multinomial_obs <- function(x, NN, TT, DD, out_data) {
 }
 generate_dirichlet_obs <- function(x, NN, TT, out_data) {
   for (n in 1:NN) {
-    # yraw <- 0
-    # while (any(yraw <= 0.01)) {
+    if (any(x[, , n] == 0)) {
+      browser()
+      out_data[["part1"]][, , n] <- 0
+      return(out_data)
+    }
     yraw <- my_rdirichlet(alpha = x[, , n])
     if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
       msg <- paste0("Bad Dirichelet simulation: ",
@@ -69,6 +91,11 @@ generate_gen_dirichlet_obs <- function(x, NN, TT, DD, out_data) {
   for (n in 1:NN) {
     xa <- x[, grepl("A", colnames(x)), , drop = FALSE]
     xb <- x[, grepl("B", colnames(x)), , drop = FALSE]
+    if (any(xa[, , n] == 0) && all(xb[, , n] == 0)) {
+      browser()
+      out_data[["part1"]][, , n] <- 0
+      return(out_data)
+    }
     yraw <- my_r_generalized_dirichlet(alpha = xa[, , n, drop = FALSE],
                                        beta = xb[, , n, drop = FALSE],
                                        DD)
@@ -82,22 +109,32 @@ generate_gen_dirichlet_obs <- function(x, NN, TT, DD, out_data) {
   }
   return(out_data)
 }
-generate_dirichlet_mult_obs <- function(x, NN, TT, out_data) {
+generate_dirichlet_mult_obs <- function(x, NN, TT, out_data, options_include) {
   for (n in 1:NN) {
+    if (is.logical(options_include[[n]]$zeros)) {
+      no_zero_cols <- !options_include[[n]]$zeros
+    } else if (is.null(options_include[[n]]$zeros)) {
+      no_zero_cols <- seq_len(ncol(x))
+    }
     num_counts <- sample(x = 80000:120000, size = TT)
-    yraw <- my_rmult_diri(alpha =  x[, , n],
+    yraw <- my_rmult_diri(alpha =  x[, no_zero_cols, n],
                           num_counts = num_counts)
-    out_data[["part1"]][, , n] <- yraw
+    out_data[["part1"]][, no_zero_cols, n] <- yraw
     out_data[["part2"]][, n]   <- num_counts
   }
   return(out_data)
 }
 generate_gen_dirichlet_mult_obs <- function(x, NN, TT, DD, out_data) {
   for (n in 1:NN) {
-    num_counts <- sample(x = 80000:120000, size = TT)
-
     xa <- x[, grepl("A", colnames(x)), , drop = FALSE]
     xb <- x[, grepl("B", colnames(x)), , drop = FALSE]
+    if (any(xa[, , n] == 0) && all(xb[, , n] == 0)) {
+      browser()
+      out_data[["part1"]][, , n] <- 0
+      out_data[["part2"]][, n]   <- 0
+      return(out_data)
+    }
+    num_counts <- sample(x = 80000:120000, size = TT)
 
     yraw <- my_r_generalized_dirichlet_mult(alpha = xa[, , n, drop = FALSE],
                                             beta = xb[, , n, drop = FALSE],
