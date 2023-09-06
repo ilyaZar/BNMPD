@@ -39,7 +39,7 @@ generate_environment_parallel <- function(envir_current,
     envir_used <- new.env(parent = rlang::env_parents(environment())[[1]])
   }
   if (!is.null(seed)) {
-    envir_current$settings_seed <- seed
+    envir_used$settings_seed <- seed
     if(!is.null(seed$seed_all_init)) set.seed(seed$seed_all_init)
   }
   return(envir_used)
