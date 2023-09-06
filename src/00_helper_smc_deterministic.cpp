@@ -542,7 +542,7 @@ Rcpp::List generate_output_container(const Rcpp::IntegerVector& nn_iterate) {
   x_out_list.attr("names") = x_out_names;
   return(x_out_list);
 }
-void sample_init(const Rcpp::IntegerVector& dd_rng, const arma::mat& Xbeta,
+void sample_init(const arma::uvec& dd_rng, const arma::mat& Xbeta,
                  const arma::vec& phi, const arma::vec& sig_sq,
                  int N, const arma::uvec& id, arma::mat& X) {
   double mu = 0;
@@ -555,14 +555,14 @@ void sample_init(const Rcpp::IntegerVector& dd_rng, const arma::mat& Xbeta,
   return;
 }
 void set_conditional_value(arma::mat& X, const arma::mat Xr,
-                           const Rcpp::IntegerVector& dd_rng,
+                           const arma::uvec& dd_rng,
                            const arma::uvec& id, int t) {
   for(auto d : dd_rng) {
     X(id(d + 1) - 1, t) = Xr(t, d);
   }
 }
 arma::mat draw_trajectory(int N, int TT, int DD,
-                          const Rcpp::IntegerVector& dd_rng,
+                          const arma::uvec& dd_rng,
                           const arma::uvec& id,
                           arma::mat& X, const arma::umat& A,
                           const arma::vec& w_n) {
@@ -604,16 +604,16 @@ arma::uvec compute_id_x_avl(int DD_all, int DD_avl, const arma::uvec& id) {
   }
 }
 arma::uvec compute_id_w(int N, int DD_avl, const arma::uvec& id,
-                        const Rcpp::IntegerVector& dd_rng){
-    arma::uvec id_weights(DD_avl * N);
-    arma::uvec tmp_ls(N);
-    int tmp_iter = 0;
-    for (auto d : dd_rng) {
-      tmp_ls = arma::linspace<arma::uvec>(id(d), id(d + 1) - 1, N);
-      id_weights.subvec(tmp_iter * N, (tmp_iter + 1) * N  - 1) = tmp_ls;
-      tmp_iter++;
-    }
-    return(id_weights);
+                        const arma::uvec& dd_rng) {
+  arma::uvec id_weights(DD_avl * N);
+  arma::uvec tmp_ls(N);
+  int tmp_iter = 0;
+  for (auto d : dd_rng) {
+    tmp_ls = arma::linspace<arma::uvec>(id(d), id(d + 1) - 1, N);
+    id_weights.subvec(tmp_iter * N, (tmp_iter + 1) * N  - 1) = tmp_ls;
+    tmp_iter++;
+  }
+  return(id_weights);
 }
 Rcpp::IntegerVector compute_dd_range_x(const Rcpp::IntegerVector& dd_range_y) {
   int DD = dd_range_y.size();
@@ -626,7 +626,7 @@ Rcpp::IntegerVector compute_dd_range_x(const Rcpp::IntegerVector& dd_range_y) {
   return(out_dd_range_x);
 }
 arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
-                        const Rcpp::IntegerVector& dd_rng,
+                        const arma::uvec& dd_rng,
                         const arma::vec& phi, const arma::vec& sig_sq,
                         const arma::mat& Xbeta,
                         arma::mat& X, const arma::mat& Xr,
@@ -641,8 +641,8 @@ arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
     X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
                                                          sqrt(sig_sq(d)),
                                                          N);
-   }
-   return(mean_diff);
+  }
+  return(mean_diff);
 }
 int compute_DD2(int DD) {
   return(2 * DD - 2);

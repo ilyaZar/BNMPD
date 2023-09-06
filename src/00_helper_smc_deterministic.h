@@ -9,24 +9,24 @@
 // #include <sstream>
 
 // namespace mp = boost::multiprecision;
-void sample_init(const Rcpp::IntegerVector& dd_rng, const arma::mat& Xbeta,
+void sample_init(const arma::uvec& dd_rng, const arma::mat& Xbeta,
                  const arma::vec& phi, const arma::vec& sig_sq,
                  int N, const arma::uvec& id, arma::mat& X);
 arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
-                        const Rcpp::IntegerVector& dd_rng,
+                        const arma::uvec& dd_rng,
                         const arma::vec& phi, const arma::vec& sig_sq,
                         const arma::mat& Xbeta,
                         arma::mat& X, const arma::mat& Xr,
                         const arma::uvec& A);
 arma::mat draw_trajectory(int N, int TT, int DD,
-                          const Rcpp::IntegerVector& dd_rng,
+                          const arma::uvec& dd_rng,
                           const arma::uvec& id,
                           arma::mat& X, const arma::umat& A,
                           const arma::vec& w_n);
 arma::uvec compute_id_x_all(int DD_all, int N);
 arma::uvec compute_id_x_avl(int DD_all, int DD_avl, const arma::uvec& id);
 arma::uvec compute_id_w(int N, int DD_avl, const arma::uvec& id,
-                        const Rcpp::IntegerVector& dd_rng);
+                        const arma::uvec& dd_rng);
 Rcpp::IntegerVector compute_dd_range_x(const Rcpp::IntegerVector& dd_range_y);
 int compute_DD2(int DD);
 arma::vec f_cpp(const arma::vec& x_tt,
@@ -36,7 +36,7 @@ arma::vec f_cpp_vech(const arma::vec& x_tt,
                      const double& phi_x,
                      const arma::vec& regs_add);
 void set_conditional_value(arma::mat& X, const arma::mat Xr,
-                           const Rcpp::IntegerVector& dd_rng,
+                           const arma::uvec& dd_rng,
                            const arma::uvec& id, int t);
 double w_as_c(const arma::mat& mean_diff,
               const arma::rowvec& vcm_diag,
