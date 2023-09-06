@@ -39,7 +39,7 @@ generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims, opt
   out_data <- switch(
     distribution,
     "normal" = generate_normal_obs(x, out_data),
-    "dirichlet" = generate_dirichlet_obs(x, NN, TT, out_data),
+    "dirichlet" = generate_dirichlet_obs(x, NN, TT, out_data, options_include),
     "gen_dirichlet" = generate_gen_dirichlet_obs(x, NN, TT, DD, out_data),
     "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data, options_include),
     "gen_dirichlet_mult" = generate_gen_dirichlet_mult_obs(x, NN, TT, DD, out_data)
@@ -69,21 +69,21 @@ generate_multinomial_obs <- function(x, NN, TT, DD, out_data) {
   }
   return(out_data)
 }
-generate_dirichlet_obs <- function(x, NN, TT, out_data) {
+generate_dirichlet_obs <- function(x, NN, TT, out_data, options_include) {
   for (n in 1:NN) {
-    if (any(x[, , n] == 0)) {
-      browser()
-      out_data[["part1"]][, , n] <- 0
-      return(out_data)
+    if (is.logical(options_include[[n]]$zeros)) {
+      no_zero_cols <- !options_include[[n]]$zeros
+    } else if (is.null(options_include[[n]]$zeros)) {
+      no_zero_cols <- seq_len(ncol(x))
     }
-    yraw <- my_rdirichlet(alpha = x[, , n])
+    yraw <- my_rdirichlet(alpha = x[, no_zero_cols, n])
     if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
       msg <- paste0("Bad Dirichelet simulation: ",
                     "fractions don't sum to 1 and/or zero componenent!")
       stop(msg)
     }
     print(paste0("Simulatiing Dirichlet data at cross section: ", n))
-    out_data[["part1"]][, , n] <- yraw
+    out_data[["part1"]][, no_zero_cols, n] <- yraw
   }
   return(out_data)
 }
