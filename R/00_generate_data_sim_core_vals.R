@@ -100,7 +100,7 @@ generate_x_z_u <- function(TT,
                            x_sd_among = x_sd_among,
                            intercept = intercept_z,
                            # policy_dummy = policy_dummy,
-                           zero_pattern = NULL)
+                           zero_pattern = zero_pattern)
   } else {
     z <- NULL
   }
@@ -120,14 +120,13 @@ generate_x_z_u <- function(TT,
                            x_sd_among = x_sd_among,
                            intercept = intercept_u,
                            # policy_dummy = policy_dummy,
-                           zero_pattern = NULL)
+                           zero_pattern = zero_pattern)
   } else {
     u <- NULL
   }
   regs_all <- cbind(z, u)
   # END OF REGRESSOR SIMULATION: --------------------------------------------
   out <- list()
-  # browser()
   out$x <- simulate_x(x_level, regs = regs_all,
                       phi_x, sig_sq_x,
                       bet_reg = c(bet_z, bet_u),
@@ -145,6 +144,7 @@ get_sub_level_x <- function(other_regtype, level_split,
   x_level_tmp * (1-sum(phi))
 }
 simulate_x <- function(x_level, regs, phi_x, sig_sq_x, bet_reg, TT, order_p) {
+  if (all(regs == 0)) return(rep(0, TT))
   if (is.null(regs) && is.null(bet_reg)) {
     regs    <- matrix(0, nrow = TT + 1, ncol = 1)
     bet_reg <- matrix(0, nrow = 1, ncol = 1)
@@ -216,13 +216,8 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg,
                               x_level, x_sd_within, x_sd_among,
                               intercept, zero_pattern = NULL) {
   # order_p <- length(phi_x)
-  if (is.null(zero_pattern)) {
-    ZERO_PATTERN <- FALSE
-    dummy_to_use <- NULL
-  } else {
-    ZERO_PATTERN <- TRUE
-    get_pattern_policy_zeros(zero_pattern, TT)
-  }
+  zero_dummy_to_use <- get_pattern_policy_zeros(zero_pattern, TT)
+  ZERO_PATTERN      <- get_zero_pattern_flag(zero_dummy_to_use)
   # reg_means <- stats::rnorm(max(dim_reg - 3, 0), mean = 0, sd = x_sd_among)
   if (!intercept && isFALSE(ZERO_PATTERN)) {
     weights <- rep(1/dim_reg, times = dim_reg) #(abs(bet_reg)/sum(abs(bet_reg)))
@@ -243,13 +238,23 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg,
     #                reg_means)
     # if (dim_reg > 1) reg_means <- c(1, reg_means); message("Appr. simul. type1")
   } else if (!intercept && isTRUE(ZERO_PATTERN)) {
-    stop("Not yet implemented.")
+    if (all(zero_dummy_to_use == 0)) {
+      reg_means   <- rep(0, times = dim_reg)
+      x_sd_within <- 0
+    } else {
+      stop("Not yet implemented.")
+    }
     # num_add_sims <- max(min(2, dim_reg - 2), 0)
     # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
     #                reg_means)
     # if (dim_reg > 1) reg_means <- c(0, reg_means); message("Appr. simul. type2")
   } else if (intercept && isTRUE(ZERO_PATTERN)) {
-    stop("Not yet implemented.")
+    if (all(zero_dummy_to_use == 0)) {
+      reg_means   <- rep(0, times = dim_reg)
+      x_sd_within <- 0
+    } else {
+      stop("Not yet implemented.")
+    }
     # if (dim_reg < 2) stop("Can't simulate intercept&policy_dummy for dim < 2!")
     # num_add_sims <- max(min(2, dim_reg - 3), 0)
     # reg_means <- c(stats::rnorm(num_add_sims, mean = 0, sd = x_sd_among),
@@ -270,17 +275,19 @@ generate_reg_vals <- function(TT, bet_reg, dim_reg,
                           ncol = reg_len,
                           byrow = TRUE)
 
-  if (intercept && isFALSE(ZERO_PATTERN)) regs <- cbind(1, regs)
-  if (!intercept && isTRUE(ZERO_PATTERN)) stop("Not yet implemented.") # regs[, 1] <- policy_dummy
-  if (intercept && isTRUE(ZERO_PATTERN))  stop("Not yet implemented.") # regs[, 1:2] <- c(1, policy_dummy)
-
-  return(regs)
+  if (isTRUE(intercept) && isFALSE(ZERO_PATTERN))  return(cbind(1, regs))
+  if (isFALSE(intercept) && isFALSE(ZERO_PATTERN)) return(regs)
+  if (isFALSE(intercept) && isTRUE(ZERO_PATTERN))  return(regs) # regs[, 1] <- policy_dummy
+  if (isTRUE(intercept) && isTRUE(ZERO_PATTERN))   return(regs) # regs[, 1:2] <- c(1, policy_dummy)
 }
 get_pattern_policy_zeros <- function(zero_pattern, TT) {
-  # Case I: we have policiy dummmies and zeros of different types
-  if (!is.null(zero_pattern) && is.numeric(zero_pattern)) {
+  if (is.null(zero_pattern)) return(NULL)
+  stopifnot(`Arg. 'zero_pattern' must be logical or numeric` =
+              is.logical(zero_pattern) || is.numeric(zero_pattern))
+  # Case I: numeric zero_pattern - policy dummies and/or/no structural zeros
+  if (is.numeric(zero_pattern)) {
     if (zero_pattern == 1) {
-      dummy_to_use <- c(rep(0, times = TT))
+      dummy_to_use <- rep(0, times = TT)
     }
     if (zero_pattern == 2) {
       dummy_to_use <- c(rep(0, times = round(0.5*TT, digits = 0)),
@@ -302,9 +309,23 @@ get_pattern_policy_zeros <- function(zero_pattern, TT) {
       stop(paste0("Undefined zero patterns: please use 1L to 4L for different",
                   "patterns and check the doc/help for their meaning!"))
     }
-    return(dummy_to_use)
+  } else if (is.logical(zero_pattern)) {
+    # Case I: logical zero_pattern - only true structural zeros or no zeros
+    if (isTRUE(zero_pattern)) {
+      dummy_to_use <- rep(0, times = TT)
+    } else if (isFALSE(zero_pattern)) {
+      dummy_to_use <- rep(1, times = TT)
+    }
   } else {
-    return(NULL)
+    stop("Unknown behavior/case; cannot implement zero pattern.")
+  }
+  return(dummy_to_use)
+}
+get_zero_pattern_flag <- function(zero_dummy_to_use) {
+  if (is.null(zero_dummy_to_use) || all(zero_dummy_to_use == 1)) {
+    return(FALSE)
+  } else {
+    return(TRUE)
   }
 }
 #' State transition
