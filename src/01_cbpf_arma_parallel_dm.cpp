@@ -60,7 +60,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   arma::vec w_norm(N, arma::fill::zeros);
   arma::vec w_log(N, arma::fill::zeros);
   arma::vec x_r(TT, arma::fill::zeros);
-  arma::mat xa(DD*N, TT, arma::fill::zeros);
+  arma::mat xa(DD * N, TT, arma::fill::zeros);
   arma::umat a(N, TT, arma::fill::zeros);
   // container due to varying component numbers in 1:DD per cross section
   arma::uvec dd_range;
