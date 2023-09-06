@@ -40,10 +40,13 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                              const arma::vec& sig_sq_x,
                              const arma::vec& phi_x,
                              const arma::cube& x_r_all) {
-  // adjusting parallelization IDs from 1,...N to 0,...,N - 1
-  Rcpp::IntegerVector id_nn_iterate = id_parallelize - 1;
+  // define constants
+  //// 1. adjusting parallelization IDs from 1,...N to 0,...,N - 1
+  Rcpp::IntegerVector ID_NN_ITERATE = id_parallelize - 1;
+  //// 2. define a sequence from 0:(N - 1)
+  const arma::uvec ID_AS_LNSPC = arma::linspace<arma::uvec>(0, N - 1, N);
   // final output container
-  Rcpp::List x_out_list = generate_output_container(id_nn_iterate);
+  Rcpp::List x_out_list = generate_output_container(ID_NN_ITERATE);
   // container for data slices per cross sectional unit
   arma::mat y(TT, DD, arma::fill::zeros);
   arma::mat Regs_beta(regs_beta_all.n_rows,
@@ -60,13 +63,12 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   arma::uvec id_x_all = compute_id_x_all(DD, N);
   arma::uvec id_x_avl;
   arma::uvec id_w;
-  // some fixed containers
+  // some miscellaneous containers
   arma::mat mean_diff(N, DD, arma::fill::zeros);
-  arma::uvec id_as_lnspc = arma::linspace<arma::uvec>(0, N - 1, N);
   arma::uvec t_word(1, arma::fill::zeros);
   int jj = 0;
   // ITERATING OVER CROSS SECTIONS ASSIGNED TO THIS CBPF INSTANCE:
-  for (int j : id_nn_iterate) {
+  for (int j : ID_NN_ITERATE) {
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////////////// 0. DATA CONTAINERS ///////////////////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -96,7 +98,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     /////////////////// II. FIRST PERIOD APPROXIMATION (t = 1) /////////////////
     ////////////////////////////////////////////////////////////////////////////
     // resampling
-    a.col(0) = resample(w_norm, N, id_as_lnspc);
+    a.col(0) = resample(w_norm, N, ID_AS_LNSPC);
     // propagation
     mean_diff = bpf_propagate(N, DD, 0, 0, id_x_all, dd_range,
                               phi_x, sig_sq_x, Regs_beta,
@@ -105,7 +107,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     set_conditional_value(xa, x_r, dd_range, id_x_all, 0);
     // ancestor sampling; not necessary but may improve results
     // a(N - 1, 0) = w_as_c(mean_diff.cols(dd_range),
-    //                      vcm_diag, w_log, N, id_as_lnspc);
+    //                      vcm_diag, w_log, N, ID_AS_LNSPC);
     // weighting
     t_word(0) = 0;
     w_log = w_log_cbpf_d(N, DD_avail,
@@ -118,7 +120,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ////////////////////////////////////////////////////////////////////////////
     for (int t = 1; t < TT; ++t) {
       // resampling
-      a.col(t) = resample(w_norm, N, id_as_lnspc);
+      a.col(t) = resample(w_norm, N, ID_AS_LNSPC);
       // propagation
       mean_diff = bpf_propagate(N, DD, t, t - 1, id_x_all, dd_range,
                                 phi_x, sig_sq_x, Regs_beta,
@@ -128,7 +130,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
       // ancestor sampling
       a(N - 1, t) = w_as_c(mean_diff.cols(dd_range),
                            pow(sig_sq_x.elem(dd_range).t(), -1),
-                           w_log, N, id_as_lnspc);
+                           w_log, N, ID_AS_LNSPC);
       // weighting
       t_word(0) = t;
       w_log = w_log_cbpf_d(N, DD_avail,
