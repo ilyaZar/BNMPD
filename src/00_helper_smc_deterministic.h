@@ -27,6 +27,8 @@ arma::uvec compute_id_x_all(int DD_all, int N);
 arma::uvec compute_id_x_avl(int DD_all, int DD_avl, const arma::uvec& id);
 arma::uvec compute_id_w(int N, int DD_avl, const arma::uvec& id,
                         const arma::uvec& dd_rng);
+arma::uvec compute_id_x_avl2(int N, const arma::uvec& id_x_all,
+                             const arma::uvec& dd_rng);
 Rcpp::IntegerVector compute_dd_range_x(const Rcpp::IntegerVector& dd_range_y);
 int compute_DD2(int DD);
 arma::vec f_cpp(const arma::vec& x_tt,
@@ -44,10 +46,13 @@ double w_as_c(const arma::mat& mean_diff,
               const int& N,
               const arma::uvec& id_as_lnspc);
 arma::vec w_log_cbpf_d(const int& N,
-                       const int& DD,
                        const arma::rowvec& y,
                        const arma::vec& xa,
                        const arma::uvec& id_x);
+arma::vec w_log_cbpf_d2(const int& N,
+                        const arma::rowvec& y,
+                        const arma::vec& xa,
+                        const arma::uvec& id_x);
 arma::vec w_log_cbpf_gd(const int& N,
                         const int& DD2,
                         const arma::rowvec& y,

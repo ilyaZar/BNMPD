@@ -1,5 +1,4 @@
 #include "01_cbpf_arma.h"
-#include "00_helper_smc_deterministic.h"
 //' State transition
 //'
 //' Helper function computing the deterministic state transition, or, to put
@@ -93,37 +92,33 @@ double w_as_c(const arma::mat& mean_diff,
 //' Can currently be used for Dirichlet-model only.
 //'
 //' @param N number of particles (int)
-//' @param DD number of state components (dirichlet fractions or number of
-//'   components in the multivariate latent state component) (int)
 //' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
 //'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
 //' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
 //'   whole state vector has \code{DD} components and \code{N} is the number of
 //'   particles)
-//' @param id_x index vector giving the location of the N-dimensional components
-//'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
-//'   \code{xa}
 //' @return particle log-weights
 //'
 // [[Rcpp::export]]
 arma::vec w_log_cbpf_d(const int& N,
-                       const int& DD,
                        const arma::rowvec& y,
                        const arma::vec& xa,
-                       const arma::uvec& id_x) {
+                       const arma::uvec& id_x_all) {
+  const int DD_avail = y.size();
   const std::string weight_type = "particle";
-  arma::vec log_lhs;
-  arma::vec log_rhs;
-  arma::vec w_log;
-  arma::vec w_tilde;
+  arma::vec log_lhs(N);
+  arma::vec log_rhs(N);
+  arma::vec w_log(N);
+  // arma::vec w_tilde;
 
-  arma::mat y_mat(N, DD, arma::fill::zeros);
+  arma::mat y_mat(N, DD_avail, arma::fill::zeros);
   y_mat.each_row() += y;
-  arma::mat alphas(N, DD);
-  for (int d = 0; d < DD; ++d) {
-    alphas.col(d) = xa.subvec(id_x(d), id_x(d + 1) - 1);
+  arma::mat alphas(N, DD_avail);
+  for (int d = 0; d < DD_avail; ++d) {
+    alphas.col(d) = exp(xa.subvec(id_x_all(d), id_x_all(d + 1) - 1));
   }
-  alphas = exp(alphas);
+  // alphas = exp(alphas);
+  // alphas = exp(arma::conv_to< arma::mat >::from(xa));
 
   arma::vec sum_alphas(N);
   sum_alphas = sum(alphas, 1);
@@ -140,6 +135,42 @@ arma::vec w_log_cbpf_d(const int& N,
   check_weights(w_log, weight_type);
   return(w_log);
 }
+//' SMC log-weights for the Dirichlet
+//'
+//' Computes normalized bootrstrap particle weights.
+//'
+//' Can currently be used for Dirichlet-model only.
+//'
+//' @param N number of particles (int)
+//' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+//'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+//' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+//'   whole state vector has \code{DD} components and \code{N} is the number of
+//'   particles)
+//' @return particle log-weights
+//'
+// [[Rcpp::export]]
+ arma::vec w_log_cbpf_d2(const int& N,
+                         const arma::rowvec& y,
+                         const arma::vec& xa,
+                         const arma::uvec& id_x_all) {
+   const int DD_avail = y.size();
+   const std::string weight_type = "particle";
+   arma::vec w_log(N);
+
+   arma::colvec alphas(N, arma::fill::zeros);
+   arma::vec sum_alphas(N, arma::fill::zeros);
+   arma::vec sum_lgm_alphas(N, arma::fill::zeros);
+   for (int d = 0; d < DD_avail; ++d) {
+     alphas = exp(xa.subvec(id_x_all(d), id_x_all(d + 1) - 1));
+     sum_lgm_alphas += lgamma(alphas);
+     sum_alphas += alphas;
+     w_log += log(y(d)) * (alphas - 1);
+   }
+   w_log = w_log +  lgamma(sum_alphas) - sum_lgm_alphas;
+   check_weights(w_log, weight_type);
+   return(w_log);
+ }
 //' SMC log-weights for the generalized Dirichlet
 //'
 //' Computes normalized Bootstrap-particle weights for the generalized
@@ -588,6 +619,16 @@ arma::mat draw_trajectory(int N, int TT, int DD,
   }
   return(x_out);
 }
+//' Throws error, warning, message etc.
+//'
+//' Throws error, warning, message etc.
+//'
+//' @param DD_all; integer giving (full) multivariate dimension
+//' @param N integer giving the number of particles
+//'
+//' @return a sequence of integers (0, ..., DD_all * N - 1)
+//'
+// [[Rcpp::export]]
 arma::uvec compute_id_x_all(int DD_all, int N) {
   arma::uvec id(DD_all + 1);
   for (int d = 0; d < DD_all+1; ++d) {
@@ -610,6 +651,19 @@ arma::uvec compute_id_w(int N, int DD_avl, const arma::uvec& id,
   int tmp_iter = 0;
   for (auto d : dd_rng) {
     tmp_ls = arma::linspace<arma::uvec>(id(d), id(d + 1) - 1, N);
+    id_weights.subvec(tmp_iter * N, (tmp_iter + 1) * N  - 1) = tmp_ls;
+    tmp_iter++;
+  }
+  return(id_weights);
+}
+arma::uvec compute_id_x_avl2(int N, const arma::uvec& id_x_all,
+                             const arma::uvec& dd_rng) {
+  const int DD_avl = dd_rng.size();
+  arma::uvec id_weights(DD_avl * N);
+  arma::uvec tmp_ls(N);
+  int tmp_iter = 0;
+  for (auto d : dd_rng) {
+    tmp_ls = arma::linspace<arma::uvec>(id_x_all(d), id_x_all(d + 1) - 1, N);
     id_weights.subvec(tmp_iter * N, (tmp_iter + 1) * N  - 1) = tmp_ls;
     tmp_iter++;
   }
