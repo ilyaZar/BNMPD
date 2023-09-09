@@ -16,13 +16,14 @@
 //' @param N number of particles
 //' @param TT time series dimension
 //' @param DD multivariate dimension (number of dirichlet categories)
-//' @param y_all measurements: dirichlet fractions
+//' @param y_all measurements - Dirichlet fractions; dimension `TT x DD x NN`
 //' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
 //'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
 //' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 //' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
 //'   latent state process
-//' @param x_r_all reference/conditioning trajectory
+//' @param x_r_all reference/conditioning trajectory; smae dimension as `y_all`
+//'    i.e. `TT x DD x NN`
 //'
 //' @return arma::matrix of DD components: DD columns are
 //'   \code{NxTT}-dimensional matrices each containing the conditional BPF
@@ -60,9 +61,8 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   arma::umat a(N, TT, arma::fill::zeros);
   // container due to varying component numbers in 1:DD per cross section
   arma::uvec dd_range;
-  arma::uvec id_x_all = compute_id_x_all(DD, N);
+  const arma::uvec id_x_all = compute_id_x_all(DD, N);
   arma::uvec id_x_avl;
-  arma::uvec id_w;
   // some miscellaneous containers
   arma::mat mean_diff(N, DD, arma::fill::zeros);
   arma::uvec t_word(1, arma::fill::zeros);
@@ -74,9 +74,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ////////////////////////////////////////////////////////////////////////////
     // adjustments for possibly missing components in 1:DD given cross section j
     dd_range = Rcpp::as<arma::uvec>(Rcpp::wrap(nn_list_dd(j)));
-    int DD_avail = dd_range.size();
-    id_x_avl = compute_id_x_avl(DD, DD_avail, id_x_all);
-    id_w = compute_id_w(N, DD_avail, id_x_all, dd_range);
+    id_x_avl = compute_id_x_avl2(N, id_x_all, dd_range);
     // data slices for selected cross sectional unit j
     y = y_all.slice(j);
     Regs_beta = regs_beta_all.slice(j);
@@ -110,10 +108,8 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     //                      vcm_diag, w_log, N, ID_AS_LNSPC);
     // weighting
     t_word(0) = 0;
-    w_log = w_log_cbpf_d(N, DD_avail,
-                         y.submat(t_word, dd_range),
-                         xa.submat(id_w, t_word),
-                         id_x_avl);
+    w_log = w_log_cbpf_d2(N, y.submat(t_word, dd_range),
+                          xa.submat(id_x_avl, t_word), id_x_all);
     w_norm = w_normalize_cpp(w_log, "particle");
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS ///////////////////
@@ -133,10 +129,8 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                            w_log, N, ID_AS_LNSPC);
       // weighting
       t_word(0) = t;
-      w_log = w_log_cbpf_d(N, DD_avail,
-                           y.submat(t_word, dd_range),
-                           xa.submat(id_w, t_word),
-                           id_x_avl);
+      w_log = w_log_cbpf_d2(N, y.submat(t_word, dd_range),
+                            xa.submat(id_x_avl, t_word), id_x_all);
       w_norm = w_normalize_cpp(w_log, "particle");
     }
     x_out_list(jj) = draw_trajectory(N, TT, DD, dd_range, id_x_all,

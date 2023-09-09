@@ -78,9 +78,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ////////////////////////////////////////////////////////////////////////////
     // adjustments for possibly missing components in 1:DD given cross section j
     dd_range = Rcpp::as<arma::uvec>(Rcpp::wrap(nn_list_dd(j)));
-    int DD_avail = dd_range.size();
-    id_x_avl = compute_id_x_avl(DD, DD_avail, id_x_all);
-    id_w = compute_id_w(N, DD_avail, id_x_all, dd_range);
+    id_x_avl = compute_id_x_avl2(DD, id_x_all, dd_range);
     // data slices for selected cross sectional unit j
     y = y_all.slice(j);
     num_counts = num_counts_all.col(j);
@@ -115,10 +113,8 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     //                      vcm_diag, w_log, N, ID_AS_LNSPC);
     // weighting
     t_word(0) = 0;
-    w_log = w_log_cbpf_dm(N, DD_avail,
-                          num_counts(0), y.submat(t_word, dd_range),
-                          xa.submat(id_w, t_word),
-                          id_x_avl);
+    w_log = w_log_cbpf_dm2(N, num_counts(0), y.submat(t_word, dd_range),
+                           xa.submat(id_x_avl, t_word), id_x_all);
     w_norm = w_normalize_cpp(w_log, "particle");
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS ///////////////////
@@ -138,10 +134,8 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                            w_log, N, ID_AS_LNSPC);
       // weighting
       t_word(0) = t;
-      w_log = w_log_cbpf_dm(N, DD_avail,
-                            num_counts(t), y.submat(t_word, dd_range),
-                            xa.submat(id_w, t_word),
-                            id_x_avl);
+      w_log = w_log_cbpf_dm2(N, num_counts(t), y.submat(t_word, dd_range),
+                             xa.submat(id_x_avl, t_word), id_x_all);
       w_norm = w_normalize_cpp(w_log, "particle");
     }
     x_out_list(jj) = draw_trajectory(N, TT, DD, dd_range, id_x_all,
