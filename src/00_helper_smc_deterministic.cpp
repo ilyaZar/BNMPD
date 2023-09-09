@@ -378,7 +378,7 @@ arma::vec w_log_cbpf_dm(const int& N,
    const std::string weight_type = "particle";
 
    arma::vec log_lhs(N, arma::fill::zeros);
-   arma::vec log_rhs(N, arma::fill::zeros);
+   // arma::vec log_rhs(N, arma::fill::zeros);
    arma::vec w_log(N, arma::fill::zeros);
 
    arma::colvec alphas(N, arma::fill::zeros);
@@ -387,13 +387,15 @@ arma::vec w_log_cbpf_dm(const int& N,
    arma::vec sum_lgm_alphas(N, arma::fill::zeros);
    for (int d = 0; d < DD_avail; ++d) {
      alphas = exp(xa.subvec(id_x_all(d), id_x_all(d + 1) - 1));
-     sum_lgm_alphas += lgamma(alphas);
+     // sum_lgm_alphas += lgamma(alphas);
+     // sum_alphas_ys += lgamma(y(d) + alphas);
      sum_alphas += alphas;
-     sum_alphas_ys += lgamma(y(d) + alphas);
+     w_log += lgamma(y(d) + alphas) - lgamma(alphas);
    }
    log_lhs = lgamma(sum_alphas) - lgamma(sum_alphas + num_counts);
-   log_rhs = sum_alphas_ys - sum_lgm_alphas;
-   w_log   = log_lhs + log_rhs;
+   // log_rhs = sum_alphas_ys - sum_lgm_alphas;
+   // w_log   = log_lhs + log_rhs;
+   w_log += log_lhs;
 
    check_weights(w_log, weight_type);
 
