@@ -349,6 +349,56 @@ arma::vec w_log_cbpf_dm(const int& N,
 
   return(w_log);
 }
+//' SMC log-weights for the Dirichlet Multinomial
+//'
+//' Computes normalized bootrstrap particle weights.
+//'
+//' Can currently be used for Dirichlet-multinommial model only.
+//'
+//' @param N number of particles (int)
+//' @param num_counts number of overall counts per t=1,...,TT (part of the
+//'   measurement data) i.e. a scalar int-value for the current time period
+//' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+//'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+//' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+//'   whole state vector has \code{DD} components and \code{N} is the number of
+//'   particles)
+//' @param id_x_all index vector giving the location of the N-dimensional components
+//'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+//'   \code{xa}
+//' @return particle log-weights
+//'
+// [[Rcpp::export]]
+ arma::vec w_log_cbpf_dm2(const int& N,
+                          const int& num_counts,
+                          const arma::rowvec& y,
+                          const arma::vec& xa,
+                          const arma::uvec& id_x_all) {
+   const int DD_avail = y.size();
+   const std::string weight_type = "particle";
+
+   arma::vec log_lhs(N, arma::fill::zeros);
+   arma::vec log_rhs(N, arma::fill::zeros);
+   arma::vec w_log(N, arma::fill::zeros);
+
+   arma::colvec alphas(N, arma::fill::zeros);
+   arma::vec sum_alphas(N, arma::fill::zeros);
+   arma::vec sum_alphas_ys(N, arma::fill::zeros);
+   arma::vec sum_lgm_alphas(N, arma::fill::zeros);
+   for (int d = 0; d < DD_avail; ++d) {
+     alphas = exp(xa.subvec(id_x_all(d), id_x_all(d + 1) - 1));
+     sum_lgm_alphas += lgamma(alphas);
+     sum_alphas += alphas;
+     sum_alphas_ys += lgamma(y(d) + alphas);
+   }
+   log_lhs = lgamma(sum_alphas) - lgamma(sum_alphas + num_counts);
+   log_rhs = sum_alphas_ys - sum_lgm_alphas;
+   w_log   = log_lhs + log_rhs;
+
+   check_weights(w_log, weight_type);
+
+   return(w_log);
+ }
 // //' SMC log-weights for the Dirichlet Multinomial; the BH-version
 // //'
 // //' Computes normalized bootrstrap particle weights; same as
