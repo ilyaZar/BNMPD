@@ -100,7 +100,7 @@ double w_as_c(const arma::mat& mean_diff,
 //' @return particle log-weights
 //'
 // [[Rcpp::export]]
-arma::vec w_log_cbpf_d(const int& N,
+arma::vec w_log_cbpf_d_old(const int& N,
                        const arma::rowvec& y,
                        const arma::vec& xa,
                        const arma::uvec& id_x_all) {
@@ -150,7 +150,7 @@ arma::vec w_log_cbpf_d(const int& N,
 //' @return particle log-weights
 //'
 // [[Rcpp::export]]
- arma::vec w_log_cbpf_d2(const int& N,
+ arma::vec w_log_cbpf_d(const int& N,
                          const arma::rowvec& y,
                          const arma::vec& xa,
                          const arma::uvec& id_x_all) {
@@ -304,7 +304,7 @@ arma::vec w_log_cbpf_gd(const int& N,
 //' @return particle log-weights
 //'
 // [[Rcpp::export]]
-arma::vec w_log_cbpf_dm(const int& N,
+arma::vec w_log_cbpf_dm_old(const int& N,
                         const int& DD,
                         const int& num_counts,
                         const arma::rowvec& y,
@@ -369,7 +369,7 @@ arma::vec w_log_cbpf_dm(const int& N,
 //' @return particle log-weights
 //'
 // [[Rcpp::export]]
- arma::vec w_log_cbpf_dm2(const int& N,
+ arma::vec w_log_cbpf_dm(const int& N,
                           const int& num_counts,
                           const arma::rowvec& y,
                           const arma::vec& xa,
