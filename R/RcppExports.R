@@ -117,20 +117,33 @@ w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
 #' Can currently be used for Dirichlet-model only.
 #'
 #' @param N number of particles (int)
-#' @param DD number of state components (dirichlet fractions or number of
-#'   components in the multivariate latent state component) (int)
 #' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
 #'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
 #' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
 #'   whole state vector has \code{DD} components and \code{N} is the number of
 #'   particles)
-#' @param id_x index vector giving the location of the N-dimensional components
-#'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
-#'   \code{xa}
 #' @return particle log-weights
 #'
-w_log_cbpf_d <- function(N, DD, y, xa, id_x) {
-    .Call(`_BNMPD_w_log_cbpf_d`, N, DD, y, xa, id_x)
+w_log_cbpf_d_old <- function(N, y, xa, id_x_all) {
+    .Call(`_BNMPD_w_log_cbpf_d_old`, N, y, xa, id_x_all)
+}
+
+#' SMC log-weights for the Dirichlet
+#'
+#' Computes normalized bootrstrap particle weights.
+#'
+#' Can currently be used for Dirichlet-model only.
+#'
+#' @param N number of particles (int)
+#' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+#'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+#' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+#'   whole state vector has \code{DD} components and \code{N} is the number of
+#'   particles)
+#' @return particle log-weights
+#'
+w_log_cbpf_d <- function(N, y, xa, id_x_all) {
+    .Call(`_BNMPD_w_log_cbpf_d`, N, y, xa, id_x_all)
 }
 
 #' SMC log-weights for the generalized Dirichlet
@@ -176,8 +189,31 @@ w_log_cbpf_gd <- function(N, DD2, y, xa, id_x) {
 #'   \code{xa}
 #' @return particle log-weights
 #'
-w_log_cbpf_dm <- function(N, DD, num_counts, y, xa, id_x) {
-    .Call(`_BNMPD_w_log_cbpf_dm`, N, DD, num_counts, y, xa, id_x)
+w_log_cbpf_dm_old <- function(N, DD, num_counts, y, xa, id_x) {
+    .Call(`_BNMPD_w_log_cbpf_dm_old`, N, DD, num_counts, y, xa, id_x)
+}
+
+#' SMC log-weights for the Dirichlet Multinomial
+#'
+#' Computes normalized bootrstrap particle weights.
+#'
+#' Can currently be used for Dirichlet-multinommial model only.
+#'
+#' @param N number of particles (int)
+#' @param num_counts number of overall counts per t=1,...,TT (part of the
+#'   measurement data) i.e. a scalar int-value for the current time period
+#' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+#'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+#' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+#'   whole state vector has \code{DD} components and \code{N} is the number of
+#'   particles)
+#' @param id_x_all index vector giving the location of the N-dimensional components
+#'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
+#'   \code{xa}
+#' @return particle log-weights
+#'
+w_log_cbpf_dm <- function(N, num_counts, y, xa, id_x_all) {
+    .Call(`_BNMPD_w_log_cbpf_dm`, N, num_counts, y, xa, id_x_all)
 }
 
 #' SMC log-weights for the Multinomial
@@ -253,6 +289,19 @@ check_weights <- function(w_log, w_type) {
 #'
 throw_weight_msg <- function(w_type, m_info, m_type) {
     invisible(.Call(`_BNMPD_throw_weight_msg`, w_type, m_info, m_type))
+}
+
+#' Throws error, warning, message etc.
+#'
+#' Throws error, warning, message etc.
+#'
+#' @param DD_all; integer giving (full) multivariate dimension
+#' @param N integer giving the number of particles
+#'
+#' @return a sequence of integers (0, ..., DD_all * N - 1)
+#'
+compute_id_x_all <- function(DD_all, N) {
+    .Call(`_BNMPD_compute_id_x_all`, DD_all, N)
 }
 
 #' Resampling function
@@ -333,83 +382,14 @@ propagate_bpf <- function(mmu, sdd, N) {
 #' @param N number of particles
 #' @param TT time series dimension
 #' @param DD multivariate dimension (number of dirichlet categories)
-#' @param y_all measurements: dirichlet fractions
+#' @param y_all measurements - Dirichlet fractions; dimension `TT x DD x NN`
 #' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
 #'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
 #' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 #' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
 #'   latent state process
-#' @param x_r_all reference/conditioning trajectory
-#'
-#' @return arma::matrix of DD components: DD columns are
-#'   \code{NxTT}-dimensional matrices each containing the conditional BPF
-#'   output per d'th component
-#' @export
-#'
-cbpf_as_d_cpp_par2 <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_d_cpp_par2`, id_parallelize, nn_list_dd, N, TT, DD, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
-}
-
-#' Runs a parallel version of the conditional SMC/BPF for the Dir. Mult. model
-#'
-#' Runs a conditional bootstrap particle filter with ancestor sampling and arma
-#' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
-#' e.g. called via \code{pgas_arma()}.
-#'
-#' @param id_parallelize parallelization ID as an \code{IntegerVector}:
-#'   determines along which cross sectional components to run the cSMC
-#'   samplers: this is passed from the \code{x}-argument of
-#'   \code{paralllel::clusterApply()}, called within the PGAS code, to this
-#'   function so it knows along which cross sectional unit it has to slice the
-#'   data \code{y_all, num_counts_all, regs_beta_all, x_r_all}
-#' @param nn_list_dd a list of length \code{NN} with indices of multivariate
-#'    components (a subset of \code{d=1,...,DD}) used for state filtering
-#' @param N number of particles
-#' @param TT time series dimension
-#' @param DD multivariate dimension (number of dirichlet-mult. categories)
-#' @param y_all measurements: dirichlet-multinomial counts
-#' @param num_counts_all measurements: dirichlet-multinomial total counts per
-#'   time period (\code{T}-dimensional vector)
-#' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
-#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
-#' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
-#' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
-#'   latent state process
-#' @param x_r_all reference/conditioning trajectory
-#'
-#' @return arma::matrix of DD components: DD columns are
-#'   \code{NxTT}-dimensional matrices each containing the conditional BPF
-#'   output per d'th component
-#' @export
-#'
-cbpf_as_dm_cpp_par2 <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_dm_cpp_par2`, id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
-}
-
-#' Runs a parallel version of the conditional SMC (BPF) for the Dirichlet model
-#'
-#' Runs a conditional bootstrap particle filter with ancestor sampling and arma
-#' random numbers (see the use of arma::randn()). Used within a PGAS procedure
-#' e.g. called via \code{pgas_arma()}.
-#'
-#' @param id_parallelize parallelization ID as an \code{IntegerVector}:
-#'   determines along which cross sectional components to run the cSMC
-#'   samplers: this is passed from the \code{x}-argument of
-#'   \code{paralllel::clusterApply()}, called within the PGAS code, to this
-#'   function so it knows along which cross sectional units it has to slice the
-#'   data \code{y_all, regs_beta_all, x_r_all}
-#' @param nn_list_dd a list of length \code{NN} with indices of multivariate
-#'    components (a subset of \code{d=1,...,DD}) used for state filtering
-#' @param N number of particles
-#' @param TT time series dimension
-#' @param DD multivariate dimension (number of dirichlet categories)
-#' @param y_all measurements: dirichlet fractions
-#' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
-#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
-#' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
-#' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
-#'   latent state process
-#' @param x_r_all reference/conditioning trajectory
+#' @param x_r_all reference/conditioning trajectory; smae dimension as `y_all`
+#'    i.e. `TT x DD x NN`
 #'
 #' @return arma::matrix of DD components: DD columns are
 #'   \code{NxTT}-dimensional matrices each containing the conditional BPF
@@ -557,150 +537,6 @@ cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, nu
 #'
 cbpf_as_m_cpp_par <- function(id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
     .Call(`_BNMPD_cbpf_as_m_cpp_par`, id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
-}
-
-#' Runs a conditional SMC (bootstrap particle filter) for the Diririchlet model
-#'
-#' Runs a conditional bootstrap particle filter with ancestor sampling and arma
-#' random numbers (see the use of arma::randn()). Used within a PGAS procedure
-#' e.g. called via \code{pgas_arma()}.
-#'
-#' @param dd_range a \code{Rcpp::IntegerVector} of length \code{NN} with
-#'   indices of multivariate components (a subset of \code{d=1,...,DD})used for
-#'   state filtering
-#' @param N number of particles
-#' @param TT time series dimension
-#' @param DD number of dirichlet fractions/shares i.e. categories
-#' @param y measurements: dirichlet fractions/shares
-#' @param Regs_beta result of regressor matrix z_{t} (matrix) multiplied by
-#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
-#' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
-#' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
-#'   latent state process
-#' @param x_r reference/conditioning trajectory
-#'
-#' @return arma::matrix of DD components: DD columns are
-#'   \code{NxTT}-dimensional matrices each containing the conditional BPF
-#'   output per d'th component
-#' @export
-cbpf_as_d_cpp <- function(dd_range, N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r) {
-    .Call(`_BNMPD_cbpf_as_d_cpp`, dd_range, N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r)
-}
-
-#' Runs a conditional SMC (bootstrap particle filter) for the Dir. Mult. model
-#'
-#' Runs a conditional bootstrap particle filter with ancestor sampling and arma
-#' random numbers (see the use of arma::randn()). Used within a PGAS procedure
-#' e.g. called via \code{pgas_arma()}.
-#'
-#' @param N number of particles
-#' @param TT time series dimension
-#' @param DD number of dirichlet fractions/shares i.e. categories
-#' @param y measurements: dirichlet fractions/shares
-#' @param num_counts measurements: dirichlet-multinomial total counts per time
-#'   period (\code{T}-dimensional vector)
-#' @param Regs_beta  result of regressor values i.e. z_{t} (matrix) multiplied by
-#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
-#' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
-#' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
-#'   latent state process
-#' @param x_r reference/conditioning trajectory
-#'
-#' @return arma::matrix of DD components: DD columns are
-#'   \code{NxTT}-dimensional matrices each containing the conditional BPF
-#'   output per d'th component
-#' @export
-cbpf_as_dm_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r) {
-    .Call(`_BNMPD_cbpf_as_dm_cpp`, N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x, x_r)
-}
-
-#' Runs a conditional SMC (bootstrap particle filter) for the Multinomial model
-#'
-#' Runs a conditional bootstrap particle filter with ancestor sampling and arma
-#' random numbers (see the use of arma::randn()). Used within a PGAS procedure
-#' e.g. called via \code{pgas_arma()}.
-#'
-#' @param N number of particles
-#' @param TT time series dimension
-#' @param DD number of dirichlet fractions/shares i.e. categories
-#' @param y measurements: dirichlet fractions/shares
-#' @param Regs_beta  result of regressor values i.e. z_{t} (matrix) multiplied by
-#'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
-#' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
-#' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
-#'   latent state process
-#' @param x_r reference/conditioning trajectory
-#'
-#' @return arma::matrix of DD components: DD columns are
-#'   \code{NxTT}-dimensional matrices each containing the conditional BPF
-#'   output per d'th component
-#' @export
-cbpf_as_m_cpp <- function(N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r) {
-    .Call(`_BNMPD_cbpf_as_m_cpp`, N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r)
-}
-
-#' Particle Gibbs with ancestor sampling (PGAS)
-#'
-#' Runs PGAS with various possible SMC procedures and Gibbs blocks. In this
-#' case we use Armadillo random numbers for the MCMC part and the arma version
-#' of the conditional SMC (in principle, all combinations are possible e.g.
-#' using Rcpp/base-R random numbers for MCMC while the SMC procedure may rely
-#' on arma random numbers)
-#'
-#' @param N number of particles
-#' @param NN cross sectional dimension
-#' @param TT time series dimension
-#' @param DD multivariate dimension (number of dirichlet-multinomial categories)
-#' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
-#'   of iterations of the SMC-part)
-#' @param data a list of data objects i.e. measurements: e.g. can be total counts
-#'   as well as dirichlet multinomial number of counts per category (only the latter
-#'   if measurements are from a multinomial, and both if measurements come from a
-#'   multinomial-dirichlet)
-#' @param Z regressors contained in the latent state process part
-#' @param priors hyperpriors for inverted gamma priors of the state process
-#'   error variances
-#' @param par_init initial parameters i.e. starting values for the MCMC part of
-#'   the overall PGAS procedure
-#' @param traj_init initial latent state values i.e. starting values for the
-#'   SMC part of the overall PGAS procedure
-#' @return List of parameter MCMC samples and latent state trajectory outputs
-#'
-#' @export
-pgas_cpp_dm <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) {
-    .Call(`_BNMPD_pgas_cpp_dm`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
-}
-
-#' Particle Gibbs with ancestor sampling (PGAS)
-#'
-#' Runs PGAS with various possible SMC procedures and Gibbs blocks. In this
-#' case we use Armadillo random numbers for the MCMC part and the arma version
-#' of the conditional SMC (in principle, all combinations are possible e.g.
-#' using Rcpp/base-R random numbers for MCMC while the SMC procedure may rely
-#' on arma random numbers)
-#'
-#' @param N number of particles
-#' @param NN cross sectional dimension
-#' @param TT time series dimension
-#' @param DD multivariate dimension (number of multinomial categories)
-#' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
-#'   of iterations of the SMC-part)
-#' @param data a list of data objects i.e. measurements: e.g. can be total counts
-#'   as well as dirichlet multinomial number of counts per category (only the latter
-#'   if measurements are from a multinomial, and both if measurements come from a
-#'   multinomial-dirichlet)
-#' @param Z regressors contained in the latent state process part
-#' @param priors hyperpriors for inverted gamma priors of the state process
-#'   error variances
-#' @param par_init initial parameters i.e. starting values for the MCMC part of
-#'   the overall PGAS procedure
-#' @param traj_init initial latent state values i.e. starting values for the
-#'   SMC part of the overall PGAS procedure
-#' @return List of parameter MCMC samples and latent state trajectory outputs
-#'
-#' @export
-pgas_cpp_m <- function(N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init) {
-    .Call(`_BNMPD_pgas_cpp_m`, N, NN, TT, DD, MM, data, Z, priors, par_init, traj_init)
 }
 
 #' Computes bet_z MCMC parts
