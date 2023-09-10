@@ -736,5 +736,10 @@ arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
   return(mean_diff);
 }
 int compute_DD2(int DD) {
-  return(2 * DD - 2);
+  return(2 * DD);
+  // if (type == 1) {
+  //   return(2 * DD);
+  // } else if (type == 2) {
+  //   return(2 * DD);
+  // }
 }
