@@ -192,20 +192,38 @@ arma::vec w_log_cbpf_gd(const int& N,
                         const arma::rowvec& y,
                         const arma::vec& xa,
                         const arma::uvec& id_x_all) {
-  const int DD_avail = y.size();
+  const int DD_avail_y = y.size();
+  arma::uvec id_x_alpha(2);
+  arma::uvec id_x_beta(2);
+  int dd_x;
   const std::string weight_type = "particle";
-  arma::vec w_log(N);
+  arma::vec w_log(N, arma::fill::zeros);
+  const arma::vec y_cumsums = arma::cumsum(y);
 
   arma::colvec alphas(N, arma::fill::zeros);
+  arma::colvec betas(N, arma::fill::zeros);
+  arma::colvec gammas(N, arma::fill::zeros);
   arma::vec sum_alphas(N, arma::fill::zeros);
-  arma::vec sum_lgm_alphas(N, arma::fill::zeros);
-  for (int d = 0; d < DD_avail; ++d) {
-    alphas = exp(xa.subvec(id_x_all(d), id_x_all(d + 1) - 1));
-    sum_lgm_alphas += lgamma(alphas);
-    sum_alphas += alphas;
+  arma::vec sum_lgm_alphas_plus_betas(N, arma::fill::zeros);
+  arma::vec sum_lgm_alphas_plus_lgamma_betas(N, arma::fill::zeros);
+  for (int d = 0; d < DD_avail_y; ++d) {
+    dd_x = 2 * d;
+    id_x_alpha(0) = id_x_all(dd_x);
+    id_x_alpha(1) = id_x_all(dd_x + 1) - 1;
+    id_x_beta(0) = id_x_all(dd_x + 1);
+    id_x_beta(1) = id_x_all(dd_x + 2) - 1;
+    alphas = exp(xa.subvec(id_x_alpha(0), id_x_alpha(1)));
+    betas = exp(xa.subvec(id_x_beta(0), id_x_beta(1)));
+
+    sum_lgm_alphas_plus_betas += lgamma(alphas + betas);
+    sum_lgm_alphas_plus_lgamma_betas += lgamma(alphas) + lgamma(betas);
+
+    // sum_alphas += alphas;
     w_log += log(y(d)) * (alphas - 1);
+    w_log += gammas * log(1 - y_cumsums(d));
   }
-  w_log = w_log +  lgamma(sum_alphas) - sum_lgm_alphas;
+  w_log = w_log + sum_lgm_alphas_plus_betas;
+  w_log -= sum_lgm_alphas_plus_lgamma_betas;
   check_weights(w_log, weight_type);
   return(w_log);
 }
