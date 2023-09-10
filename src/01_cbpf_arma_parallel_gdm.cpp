@@ -115,7 +115,7 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     //                      vcm_diag, w_log, N, ID_AS_LNSPC);
     // weighting
     t_word(0) = 0;
-    w_log = w_log_cbpf_dm(N, DD2,
+    w_log = w_log_cbpf_dm_old(N, DD2,
                           num_counts(0), y.submat(t_word, dd_range),
                           xa.submat(id_w, t_word),
                           id_x_avl);
@@ -138,7 +138,7 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                            w_log, N, ID_AS_LNSPC);
       // weighting
       t_word(0) = t;
-      w_log = w_log_cbpf_dm(N, DD2,
+      w_log = w_log_cbpf_dm_old(N, DD2,
                             num_counts(t), y.submat(t_word, dd_range),
                             xa.submat(id_w, t_word),
                             id_x_avl);
