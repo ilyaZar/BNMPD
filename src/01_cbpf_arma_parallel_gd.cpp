@@ -81,7 +81,7 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     dd_range_x = Rcpp::as<arma::uvec>(Rcpp::wrap(compute_dd_range_x(nn_list_dd(j))));
     int DD_y_avl = dd_range_y.size();
     int DD_x_avl = dd_range_x.size();
-    id_x_avl = compute_id_x_avl(DD2, DD_x_avl, id_x_all);
+    id_x_avl = compute_id_x_avl_old(DD2, DD_x_avl, id_x_all);
     id_w = compute_id_w(N, DD_x_avl, id_x_all, dd_range_x);
     // data slices for selected cross sectional unit j
     y = y_all.slice(j);

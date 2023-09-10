@@ -688,7 +688,7 @@ arma::uvec compute_id_x_all(int DD_all, int N) {
   }
   return(id);
 }
-arma::uvec compute_id_x_avl(int DD_all, int DD_avl, const arma::uvec& id) {
+arma::uvec compute_id_x_avl_old(int DD_all, int DD_avl, const arma::uvec& id) {
   int drop_num = DD_all - DD_avl;
   if (drop_num > 0) {
     return(id.head(DD_avl + 1));
@@ -708,8 +708,8 @@ arma::uvec compute_id_w(int N, int DD_avl, const arma::uvec& id,
   }
   return(id_weights);
 }
-arma::uvec compute_id_x_avl2(int N, const arma::uvec& id_x_all,
-                             const arma::uvec& dd_rng) {
+arma::uvec compute_id_x_avl(int N, const arma::uvec& id_x_all,
+                            const arma::uvec& dd_rng) {
   const int DD_avl = dd_rng.size();
   arma::uvec id_weights(DD_avl * N);
   arma::uvec tmp_ls(N);
