@@ -706,13 +706,28 @@ arma::uvec compute_id_x_avl(int N, const arma::uvec& id_x_all,
   }
   return(id_weights);
 }
-Rcpp::IntegerVector compute_dd_range_x(const Rcpp::IntegerVector& dd_range_y) {
+//' Computes a specific dd_range_x object for special distributions
+//'
+//' This is for generalized Dirichlet (Multinomial) distributions that have more
+//' components/parameters than the multivariate dimension. So if for the
+//' multivariate dimension 1,2,3 would usually generate 1,2,3,4,5,6 components
+//' a missing '2' i.e. 1, MISSING, 3 should be converted to 1,2,MISSING,MISSING,
+//' 5,6.
+//'
+//' @param dd_range_y; the 'dd_range_y' component (from some cross sectional
+//'    unit i.e. some 'nn_list_dd(j)' from the 'nn_list_dd' parameter passed via
+//'    [cbpf_as_gd_cpp_par()]
+//'
+//' @return a sequence of integers (0, ..., DD_all * N - 1)
+//'
+// [[Rcpp::export]]
+arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y) {
   int DD = dd_range_y.size();
   int DD2 = compute_DD2(DD);
-  Rcpp::IntegerVector out_dd_range_x(DD2, 0);
-  for (int d = 0; d < DD - 2; ++d) {
-    out_dd_range_x[d] = dd_range_y[d];
-    out_dd_range_x[d + 1] = dd_range_y[d] + 1;
+  arma::uvec out_dd_range_x(DD2, arma::fill::zeros);
+  for (int d = 0; d < DD; ++d) {
+    out_dd_range_x[d * 2] = dd_range_y[d] * 2;
+    out_dd_range_x[d * 2 + 1] = dd_range_y[d] * 2 + 1;
   }
   return(out_dd_range_x);
 }
