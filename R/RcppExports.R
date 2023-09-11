@@ -152,8 +152,6 @@ w_log_cbpf_d <- function(N, y, xa, id_x_all) {
 #' Dirichlet model.
 #'
 #' @param N number of particles (int)
-#' @param DD2 number of state components (number of components in the
-#'     multivariate latent state component) (int)
 #' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
 #'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
 #' @param xa particle state vector; \code{NxDD2}-dimensional arma::vec (as the
@@ -164,8 +162,8 @@ w_log_cbpf_d <- function(N, y, xa, id_x_all) {
 #'   \code{xa}
 #' @return particle log-weights
 #'
-w_log_cbpf_gd <- function(N, DD2, y, xa, id_x) {
-    .Call(`_BNMPD_w_log_cbpf_gd`, N, DD2, y, xa, id_x)
+w_log_cbpf_gd <- function(N, y, xa, id_x_all) {
+    .Call(`_BNMPD_w_log_cbpf_gd`, N, y, xa, id_x_all)
 }
 
 #' SMC log-weights for the Dirichlet Multinomial
@@ -302,6 +300,24 @@ throw_weight_msg <- function(w_type, m_info, m_type) {
 #'
 compute_id_x_all <- function(DD_all, N) {
     .Call(`_BNMPD_compute_id_x_all`, DD_all, N)
+}
+
+#' Computes a specific dd_range_x object for special distributions
+#'
+#' This is for generalized Dirichlet (Multinomial) distributions that have more
+#' components/parameters than the multivariate dimension. So if for the
+#' multivariate dimension 1,2,3 would usually generate 1,2,3,4,5,6 components
+#' a missing '2' i.e. 1, MISSING, 3 should be converted to 1,2,MISSING,MISSING,
+#' 5,6.
+#'
+#' @param dd_range_y; the 'dd_range_y' component (from some cross sectional
+#'    unit i.e. some 'nn_list_dd(j)' from the 'nn_list_dd' parameter passed via
+#'    [cbpf_as_gd_cpp_par()]
+#'
+#' @return a sequence of integers (0, ..., DD_all * N - 1)
+#'
+compute_dd_range_x <- function(dd_range_y) {
+    .Call(`_BNMPD_compute_dd_range_x`, dd_range_y)
 }
 
 #' Resampling function
@@ -537,6 +553,13 @@ cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, nu
 #'
 cbpf_as_m_cpp_par <- function(id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all) {
     .Call(`_BNMPD_cbpf_as_m_cpp_par`, id_par_vec, N, TT, DD, y_all, Regs_beta_all, sig_sq_x, phi_x, x_r_all)
+}
+
+#' Simple sum
+#' @param x a numeric vector
+#' @export
+calc_sum <- function(x) {
+    .Call(`_BNMPD_calc_sum`, x)
 }
 
 #' Computes bet_z MCMC parts
