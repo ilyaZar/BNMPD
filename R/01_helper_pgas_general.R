@@ -81,13 +81,12 @@ get_smc_internal <- function(obs_type, smc_type) {
   grep_smc <- paste0("BNMPD:::", grep_smc)
   return(eval(parse(text = grep_smc)))
 }
-get_args_list_smc_internal <- function(pe, mm) {
+get_args_list_smc_internal <- function(pe, mm, PARALLEL = TRUE) {
   smc_internal <- get_smc_internal(obs_type = pe$model_type_obs,
                                    smc_type = pe$model_type_smc)
-  x_r_all_tmp <- array(pe$X[ , , mm, ], dim = dim(pe$X)[-3])
+  x_r_all_tmp <- array(pe$X[, , mm, ], dim = dim(pe$X)[-3])
   dimnames(x_r_all_tmp) <- dimnames(pe$X)[-3]
-  out <- list(cl = pe$cl, x = pe$task_indices,
-              fun = smc_internal,
+  out <- list(fun = smc_internal,
               nn_list_dd = pe$nn_list_dd,
               N = pe$N, TT = pe$TT, DD = pe$DD,
               y_all = pe$y,
@@ -95,6 +94,13 @@ get_args_list_smc_internal <- function(pe, mm) {
               sig_sq_x = pe$sig_sq_x[, mm],
               phi_x = pe$phi_x[, mm],
               x_r_all = x_r_all_tmp)
+  if (PARALLEL) {
+    out$cl <- pe$cl
+    out$x  <- pe$task_indices
+  } else {
+    browser()
+    out$id_parallelize <- seq_len(pe$NN)
+  }
   if (pe$model_type_obs %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT")) {
     out$DD2 <- pe$DD2
   }
@@ -109,7 +115,7 @@ update_args_list_smc_internal <- function(pe, args_list, mm) {
   args_list$regs_beta_all <- pe$Regs_beta
   args_list$sig_sq_x      <- pe$sig_sq_x[, mm]
   args_list$phi_x         <- pe$phi_x[, mm]
-  args_list$x_r_all       <- array(pe$X[ , , mm - 1, ], dim = dim(pe$X)[-3])
+  args_list$x_r_all       <- array(pe$X[, , mm - 1, ], dim = dim(pe$X)[-3])
   return(args_list)
 }
 load_model <- function(env_model, to_env) {
@@ -518,14 +524,16 @@ generate_cnt_regs_beta <- function(DIST_SPECIAL, Z_beta, U_beta,
   )
   return(Regs_beta)
 }
-prepare_cluster <- function(pe, mm = 1) {
-  pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
-  pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
-  if(!is.null(pe$settings_seed$seed_pgas_init)) {
-    parallel::clusterSetRNGStream(pe$cl,
+prepare_cluster <- function(pe, mm = 1, PARALLEL = TRUE) {
+  if (PARALLEL) {
+    pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
+    pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
+    if (!is.null(pe$settings_seed$seed_pgas_init)) {
+      parallel::clusterSetRNGStream(pe$cl,
                                   iseed = pe$settings_seed$seed_pgas_init)
+    }
   }
-  get_args_list_smc_internal(pe, mm)
+  get_args_list_smc_internal(pe, mm, PARALLEL = PARALLEL)
 }
 progress_print <- function(iter) {
   cat("cSMC iteration number:", iter, "\n")
@@ -538,7 +546,7 @@ update_states <- function(pe, cbpf_output, mm, CHECK_CL_ORDER = FALSE) {
     }
   }
   for (n in 1:pe$NN) {
-    pe$X[ , , mm, n] <- cbpf_output[[n]]
+    pe$X[, , mm, n] <- cbpf_output[[n]]
   }
 }
 get_objs_pgas <- function(phi_null, z_null, u_null, dims) {

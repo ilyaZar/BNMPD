@@ -24,6 +24,9 @@
 #'      \item{\code{seed_pgas_init: }}{set in the very first PGAS run, i.e.
 #'      when \code{pgas_init()} is run}
 #'    }
+#' @param parallel logical; if `TRUE` then PGAS is run in parallel; if
+#'    `FALSE` no cluster is made and pgas is run sequentially (whenever the
+#'    argument `sim_type` is set to `PMCMC` of course)
 #' @param sim_type either 'PMCMC' for particle Gibbs or 'MCMC' for a plain MCMC
 #'   sampler where true states are taken as conditioning trajectory
 #' @param mod_type either 'empirical' or 'simulation' depending on what model
@@ -40,6 +43,7 @@
 pgas <- function(pgas_model,
                  settings_type = "clean_run",
                  settings_seed = NULL,
+                 parallel = TRUE,
                  sim_type = "pmcmc",
                  mod_type = "empirical",
                  close_cluster = FALSE) {
@@ -50,41 +54,58 @@ pgas <- function(pgas_model,
                                              seed = settings_seed)
   # Initialize data containers and copy to environment used for parallel runs
   load_model(env_model = pgas_model, to_env = envir_par)
-  arg_list_cluster_smc <- prepare_cluster(pe = envir_par)
+  arg_list_cluster_smc <- prepare_cluster(pe = envir_par, PARALLEL = parallel)
   # Run (P)MCMC loop
   if (sim_type == "pmcmc") {
+    browser()
     # 0. run cBPF and use output as first conditioning trajectory
-    pgas_init(pe = envir_par, pc = arg_list_cluster_smc)
+    pgas_init(pe = envir_par,
+              pc = arg_list_cluster_smc,
+              RUN_PARALLEL = parallel)
     for (m in 2:envir_par$MM) {
       # I. Run GIBBS part
       sample_all_params(envir_par, mm = m)
       # II. Run cBPF-AS part
-      pgas_run(pe = envir_par, pc = arg_list_cluster_smc, mm = m)
+      pgas_run(
+        pe = envir_par,
+        pc = arg_list_cluster_smc,
+        mm = m,
+        RUN_PARALLEL = parallel
+      )
     }
   }
   if (sim_type == "mcmc") {
     # 0. Copy & paste true state values as first conditioning trajectory
-    envir_par$X[ , , 1, ] <- envir_par$true_states
+    envir_par$X[, , 1, ] <- envir_par$true_states
     for (m in 2:envir_par$MM) {
       # I. Run GIBBS part
       sample_all_params(envir_par, mm = m)
       # II. Copy & paste true state values
-      envir_par$X[ , , m, ] <- envir_par$true_states
+      envir_par$X[, , m, ] <- envir_par$true_states
     }
   }
   cleanup_cluster(pe = envir_par, close = close_cluster)
   out <- generate_pgas_output(pe = envir_par, mod_type, sim_type)
   return(out)
 }
-pgas_init <- function(pe, pc, mm = 1) {
-  out_cpf       <- do.call(parallel::clusterApply, pc)
+pgas_init <- function(pe, pc, mm = 1, RUN_PARALLEL = TRUE) {
+  browser()
+  if (RUN_PARALLEL) {
+    out_cpf <- do.call(parallel::clusterApply, pc)
+  } else {
+    out_cpf <- do.call(pc$fun, pc[-1])
+  }
   update_states <- update_states(pe, out_cpf, mm, CHECK_CL_ORDER = TRUE)
 
   progress_print(mm)
 }
-pgas_run <- function(pe, pc, mm) {
-  cl_arg_lsit   <- update_args_list_smc_internal(pe, pc, mm)
-  out_cpf       <- do.call(parallel::clusterApply, cl_arg_lsit)
+pgas_run <- function(pe, pc, mm, RUN_PARALLEL = TRUE) {
+  cl_arg_list   <- update_args_list_smc_internal(pe, pc, mm)
+    if (RUN_PARALLEL) {
+    out_cpf <- do.call(parallel::clusterApply, cl_arg_list)
+  } else {
+    out_cpf <- do.call(pc$fun, cl_arg_list[-1])
+  }
   update_states <- update_states(pe, out_cpf, mm, CHECK_CL_ORDER = FALSE)
 
   progress_print(mm)
