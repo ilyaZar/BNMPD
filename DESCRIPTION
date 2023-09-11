@@ -1,7 +1,7 @@
 Package: BNMPD
 Title: Bayesian Nonparametric Multivariate Panel Data
 Version: 0.0.0.9000
-Authors@R: 
+Authors@R:
     person(given = "Ilya",
            family = "Zarubin",
            role = c("aut", "cre"),
@@ -16,9 +16,9 @@ Description: Implements estimation of Bayesian nonparametric multivariate
 License: GPL (>= 2)
 URL: https://github.com/IlyaZar/BNMPD
 BugReports: https://github.com/IlyaZar/BNMPD
-Depends: 
+Depends:
     R (>= 3.5)
-Imports: 
+Imports:
     stats,
     MASS,
     MGLM,
@@ -32,7 +32,7 @@ Imports:
     jsonlite,
     snow,
     parallel
-Suggests: 
+Suggests:
     crayon,
     withr,
     HDInterval,
@@ -44,7 +44,7 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-LinkingTo: 
+LinkingTo:
     Rcpp,
     RcppArmadillo
 Config/testthat/edition: 3
