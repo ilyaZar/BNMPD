@@ -121,17 +121,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // w_log_cbpf_gd
-arma::vec w_log_cbpf_gd(const int& N, const int& DD2, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
-RcppExport SEXP _BNMPD_w_log_cbpf_gd(SEXP NSEXP, SEXP DD2SEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+arma::vec w_log_cbpf_gd(const int& N, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x_all);
+RcppExport SEXP _BNMPD_w_log_cbpf_gd(SEXP NSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_x_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const int& >::type DD2(DD2SEXP);
     Rcpp::traits::input_parameter< const arma::rowvec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type xa(xaSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type id_x(id_xSEXP);
-    rcpp_result_gen = Rcpp::wrap(w_log_cbpf_gd(N, DD2, y, xa, id_x));
+    Rcpp::traits::input_parameter< const arma::uvec& >::type id_x_all(id_x_allSEXP);
+    rcpp_result_gen = Rcpp::wrap(w_log_cbpf_gd(N, y, xa, id_x_all));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -225,6 +224,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type DD_all(DD_allSEXP);
     Rcpp::traits::input_parameter< int >::type N(NSEXP);
     rcpp_result_gen = Rcpp::wrap(compute_id_x_all(DD_all, N));
+    return rcpp_result_gen;
+END_RCPP
+}
+// compute_dd_range_x
+arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y);
+RcppExport SEXP _BNMPD_compute_dd_range_x(SEXP dd_range_ySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::uvec& >::type dd_range_y(dd_range_ySEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_dd_range_x(dd_range_y));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -381,6 +391,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// calc_sum
+double calc_sum(arma::vec x);
+RcppExport SEXP _BNMPD_calc_sum(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(calc_sum(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // bet_z_components
 Rcpp::List bet_z_components(const int& dd, const int& DD, const int& N, const int& T, const int& dim_bet_z_d, const arma::cube& vcm_x_errors_lhs, const arma::mat& vcm_x_errors_rhs, const arma::mat& prior_vcm_bet_z, const arma::mat& X, const arma::cube& regsz, const arma::uvec& id_regz);
 RcppExport SEXP _BNMPD_bet_z_components(SEXP ddSEXP, SEXP DDSEXP, SEXP NSEXP, SEXP TSEXP, SEXP dim_bet_z_dSEXP, SEXP vcm_x_errors_lhsSEXP, SEXP vcm_x_errors_rhsSEXP, SEXP prior_vcm_bet_zSEXP, SEXP XSEXP, SEXP regszSEXP, SEXP id_regzSEXP) {
@@ -412,7 +433,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_w_as_c", (DL_FUNC) &_BNMPD_w_as_c, 5},
     {"_BNMPD_w_log_cbpf_d_old", (DL_FUNC) &_BNMPD_w_log_cbpf_d_old, 4},
     {"_BNMPD_w_log_cbpf_d", (DL_FUNC) &_BNMPD_w_log_cbpf_d, 4},
-    {"_BNMPD_w_log_cbpf_gd", (DL_FUNC) &_BNMPD_w_log_cbpf_gd, 5},
+    {"_BNMPD_w_log_cbpf_gd", (DL_FUNC) &_BNMPD_w_log_cbpf_gd, 4},
     {"_BNMPD_w_log_cbpf_dm_old", (DL_FUNC) &_BNMPD_w_log_cbpf_dm_old, 6},
     {"_BNMPD_w_log_cbpf_dm", (DL_FUNC) &_BNMPD_w_log_cbpf_dm, 5},
     {"_BNMPD_w_log_cbpf_m", (DL_FUNC) &_BNMPD_w_log_cbpf_m, 5},
@@ -420,6 +441,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_check_weights", (DL_FUNC) &_BNMPD_check_weights, 2},
     {"_BNMPD_throw_weight_msg", (DL_FUNC) &_BNMPD_throw_weight_msg, 3},
     {"_BNMPD_compute_id_x_all", (DL_FUNC) &_BNMPD_compute_id_x_all, 2},
+    {"_BNMPD_compute_dd_range_x", (DL_FUNC) &_BNMPD_compute_dd_range_x, 1},
     {"_BNMPD_resample", (DL_FUNC) &_BNMPD_resample, 3},
     {"_BNMPD_sample_final_trajectory", (DL_FUNC) &_BNMPD_sample_final_trajectory, 2},
     {"_BNMPD_sample_init_prtcls", (DL_FUNC) &_BNMPD_sample_init_prtcls, 3},
@@ -429,6 +451,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_cbpf_as_gd_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_gd_cpp_par, 11},
     {"_BNMPD_cbpf_as_gdm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_gdm_cpp_par, 11},
     {"_BNMPD_cbpf_as_m_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_m_cpp_par, 9},
+    {"_BNMPD_calc_sum", (DL_FUNC) &_BNMPD_calc_sum, 1},
     {"_BNMPD_bet_z_components", (DL_FUNC) &_BNMPD_bet_z_components, 11},
     {NULL, NULL, 0}
 };
