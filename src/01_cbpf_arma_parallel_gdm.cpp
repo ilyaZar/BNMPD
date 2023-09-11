@@ -37,6 +37,7 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                                const int& N,
                                const int& TT,
                                const int& DD,
+                               const int& DD2,
                                const arma::cube& y_all,
                                const arma::mat& num_counts_all,
                                const arma::cube& regs_beta_all,
@@ -59,8 +60,8 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   // cBPF container
   arma::vec w_norm(N, arma::fill::zeros);
   arma::vec w_log(N, arma::fill::zeros);
-  arma::vec x_r(TT, arma::fill::zeros);
-  arma::mat xa(DD * N, TT, arma::fill::zeros);
+  arma::mat x_r(TT, DD2, arma::fill::zeros);
+  arma::mat xa(DD2 * N, TT, arma::fill::zeros);
   arma::umat a(N, TT, arma::fill::zeros);
   // container due to varying component numbers in 1:DD per cross section
   arma::uvec dd_range;

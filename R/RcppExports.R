@@ -518,8 +518,8 @@ cbpf_as_gd_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_gdm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_gdm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC (BPF) for the Mult. model
