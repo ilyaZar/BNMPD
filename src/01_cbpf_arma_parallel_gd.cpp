@@ -56,15 +56,14 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   // cBPF container
   arma::vec w_norm(N, arma::fill::zeros);
   arma::vec w_log(N, arma::fill::zeros);
-  arma::vec x_r(TT, arma::fill::zeros);
+  arma::mat x_r(TT, DD2, arma::fill::zeros);
   arma::mat xa(DD2 * N, TT, arma::fill::zeros);
   arma::umat a(N, TT, arma::fill::zeros);
   // container due to varying component numbers in 1:DD per cross section
   arma::uvec dd_range_y;
   arma::uvec dd_range_x;
-  arma::uvec id_x_all = compute_id_x_all(DD2, N);
+  const arma::uvec id_x_all = compute_id_x_all(DD2, N);
   arma::uvec id_x_avl;
-  arma::uvec id_w;
   // some miscellaneous containers
   arma::mat mean_diff(N, DD2, arma::fill::zeros);
   arma::uvec t_word(1, arma::fill::zeros);
@@ -75,14 +74,9 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ///////////////////////////// 0. DATA CONTAINERS ///////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     // adjustments for possibly missing components in 1:DD given cross section j
-    // dd_range_y = nn_list_dd(j);
-    // dd_range_x = compute_dd_range_x(nn_list_dd(j));
     dd_range_y = Rcpp::as<arma::uvec>(Rcpp::wrap(nn_list_dd(j)));
-    dd_range_x = Rcpp::as<arma::uvec>(Rcpp::wrap(compute_dd_range_x(nn_list_dd(j))));
-    int DD_y_avl = dd_range_y.size();
-    int DD_x_avl = dd_range_x.size();
-    id_x_avl = compute_id_x_avl_old(DD2, DD_x_avl, id_x_all);
-    id_w = compute_id_w(N, DD_x_avl, id_x_all, dd_range_x);
+    dd_range_x = compute_dd_range_x(dd_range_y);
+    id_x_avl = compute_id_x_avl(N, id_x_all, dd_range_x);
     // data slices for selected cross sectional unit j
     y = y_all.slice(j);
     Regs_beta = regs_beta_all.slice(j);
@@ -116,10 +110,8 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     //                      vcm_diag, w_log, N, ID_AS_LNSPC);
     // weighting
     t_word(0) = 0;
-    w_log = w_log_cbpf_gd(N, DD_x_avl,
-                          y.submat(t_word, dd_range_y),
-                          xa.submat(id_w, t_word),
-                          id_x_avl);
+    w_log = w_log_cbpf_gd(N, y.submat(t_word, dd_range_y),
+                          xa.submat(id_x_avl, t_word), id_x_all);
     w_norm = w_normalize_cpp(w_log, "particle");
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS ///////////////////
@@ -139,10 +131,8 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
         w_log, N, ID_AS_LNSPC);
       // weighting
       t_word(0) = t;
-      w_log = w_log_cbpf_gd(N, DD2,
-                            y.submat(t_word, dd_range_y),
-                            xa.submat(id_w, t_word),
-                            id_x_avl);
+      w_log = w_log_cbpf_gd(N, y.submat(t_word, dd_range_y),
+                            xa.submat(id_x_avl, t_word), id_x_all);
       w_norm = w_normalize_cpp(w_log, "particle");
     }
     x_out_list(jj) = draw_trajectory(N, TT, DD2,
