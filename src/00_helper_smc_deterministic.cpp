@@ -192,40 +192,76 @@ arma::vec w_log_cbpf_gd(const int& N,
                         const arma::rowvec& y,
                         const arma::vec& xa,
                         const arma::uvec& id_x_all) {
-  const int DD_avail_y = y.size();
-  arma::uvec id_x_alpha(2);
-  arma::uvec id_x_beta(2);
-  int dd_x;
   const std::string weight_type = "particle";
-  arma::vec w_log(N, arma::fill::zeros);
   const arma::vec y_cumsums = arma::cumsum(y);
+  const int DD_avail_y = y.size();
 
+  // container required for weight computations
   arma::colvec alphas(N, arma::fill::zeros);
   arma::colvec betas(N, arma::fill::zeros);
   arma::colvec gammas(N, arma::fill::zeros);
   arma::vec sum_alphas(N, arma::fill::zeros);
   arma::vec sum_lgm_alphas_plus_betas(N, arma::fill::zeros);
   arma::vec sum_lgm_alphas_plus_lgamma_betas(N, arma::fill::zeros);
-  for (int d = 0; d < DD_avail_y; ++d) {
-    dd_x = 2 * d;
-    id_x_alpha(0) = id_x_all(dd_x);
-    id_x_alpha(1) = id_x_all(dd_x + 1) - 1;
-    id_x_beta(0) = id_x_all(dd_x + 1);
-    id_x_beta(1) = id_x_all(dd_x + 2) - 1;
-    alphas = exp(xa.subvec(id_x_alpha(0), id_x_alpha(1)));
-    betas = exp(xa.subvec(id_x_beta(0), id_x_beta(1)));
+  arma::vec w_log(N, arma::fill::zeros);
+  for (int d = 0; d < DD_avail_y - 1; ++d) {
+    compute_alphas(alphas, xa, id_x_all, d);
+    compute_betas(betas, xa, id_x_all, d);
+    compute_gammas(gammas, betas, xa, id_x_all, d, DD_avail_y);
+    sum_lgm_alphas_plus_betas = lgamma(alphas + betas);
+    sum_lgm_alphas_plus_lgamma_betas = lgamma(alphas) + lgamma(betas);
 
-    sum_lgm_alphas_plus_betas += lgamma(alphas + betas);
-    sum_lgm_alphas_plus_lgamma_betas += lgamma(alphas) + lgamma(betas);
-
-    // sum_alphas += alphas;
+    // + (y_{itd}^(alpha_{itd} - 1)):
     w_log += log(y(d)) * (alphas - 1);
+    // + log(y_{itd} * (1 - y_{it1} - y_{it2} - ... - y_{itdd})):
     w_log += gammas * log(1 - y_cumsums(d));
+    // + logGAMMA(alpha_{itd} + beta_{itd}):
+    w_log += sum_lgm_alphas_plus_betas;
+    // - logGAMMA(alpha_{itd}) + logGAMMA(beta_{itd}):
+    w_log -= sum_lgm_alphas_plus_lgamma_betas;
   }
-  w_log = w_log + sum_lgm_alphas_plus_betas;
-  w_log -= sum_lgm_alphas_plus_lgamma_betas;
   check_weights(w_log, weight_type);
   return(w_log);
+}
+void compute_alphas(arma::vec& alpha,
+                    const arma::vec& x,
+                    const arma::uvec& id_x,
+                    const int d) {
+    const int d_x = 2 * d;
+    alpha = exp(x.subvec(id_x(d_x), id_x(d_x + 1) - 1));
+}
+void compute_betas(arma::vec& beta,
+                   const arma::vec& x,
+                   const arma::uvec& id_x,
+                   const int d) {
+    const int d_x = 2 * d;
+    beta = exp(x.subvec(id_x(d_x + 1), id_x(d_x + 2) - 1));
+}
+void compute_gammas(arma::vec& gamma,
+                    const arma::vec& beta,
+                    const arma::vec& x,
+                    const arma::uvec& id_x,
+                    const int d, const int DD) {
+    if (d < DD - 2) {
+    int d_x = 2 * (d + 1);
+    gamma = beta - exp(x.subvec(id_x(d_x), id_x(d_x + 1) - 1)) - exp(x.subvec(id_x(d_x + 1), id_x(d_x + 2) - 1));
+    } else {
+      gamma = beta - 1;
+    }
+
+}
+void compute_gammas2(arma::vec& gamma,
+                     const arma::vec& beta,
+                     const arma::vec& x,
+                     const arma::uvec& id_x,
+                     const int d) {
+    // if (d < DD - 2) {
+    int d_x = 2 * (d + 1);
+    gamma = beta - exp(x.subvec(id_x(d_x), id_x(d_x + 1) - 1)) - exp(x.subvec(id_x(d_x + 1), id_x(d_x + 2) - 1));
+    // } else {
+      // gamma = beta - 1;
+    // }
+
 }
 // //' SMC log-weights for the Dirichlet model; the BH-version
 // //'

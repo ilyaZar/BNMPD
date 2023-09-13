@@ -57,6 +57,24 @@ arma::vec w_log_cbpf_gd(const int& N,
                         const arma::rowvec& y,
                         const arma::vec& xa,
                         const arma::uvec& id_x_all);
+void compute_alphas(arma::vec& alpha,
+                    const arma::vec& x,
+                    const arma::uvec& id_x,
+                    const int d);
+void compute_betas(arma::vec& beta,
+                   const arma::vec& x,
+                   const arma::uvec& id_x,
+                   const int d);
+void compute_gammas2(arma::vec& gamma,
+                     const arma::vec& beta,
+                     const arma::vec& x,
+                     const arma::uvec& id_x,
+                     const int d);
+void compute_gammas(arma::vec& gamma,
+                    const arma::vec& beta,
+                    const arma::vec& x,
+                    const arma::uvec& id_x,
+                    const int d, const int DD);
 // arma::vec w_log_cbpf_d_bh(const int& N,
 //                           const int& DD,
 //                           const arma::rowvec& y,
