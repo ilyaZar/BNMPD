@@ -52,10 +52,10 @@ plot_data_per_n <- function(distribution, DD,
                       xlab = names_xlab)
   }
   if (plot_states || plot_states_each_d) {
-    DD2_taken     <- get_DD2(distribution, DD)
-    DD_taken     <- get_DD(distribution, DD)
-    names_title  <- "True latent state trajectories"
-    names_ylab   <- "states: xt's"
+    DD2_taken   <- get_DD2(distribution, DD)
+    DD_taken    <- get_DD(distribution, DD)
+    names_title <- "True latent state trajectories"
+    names_ylab  <- "states: xt's"
 
     if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
       dd_seq <- paste0(rep(c("A", "B"), each =  DD_taken), seq_len(DD_taken))

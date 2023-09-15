@@ -232,7 +232,6 @@ my_r_generalized_dirichlet <- function(alpha, beta, DD) {
                               shape2 = beta[t, k, 1]) * (1 - tmp_sum)
       tmp_sum <- tmp_sum + x[t, k]
     }
-
   }
   x[, DD] <- 1 - rowSums(x[, 1:(DD - 1), drop = FALSE])
   return(x)
