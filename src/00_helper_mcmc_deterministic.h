@@ -10,6 +10,9 @@ double compute_err_sig_sq(const arma::vec& Z_part1,
                           const arma::vec& bet_part,
                           const double& phi_part,
                           const int& TT);
+arma::vec f_cpp_vech(const arma::vec& x_tt,
+                     const double& phi_x,
+                     const arma::vec& regs_add);
 // arma::vec mvnorm_beta_single_mean(const arma::mat& vcm_part,
 //                                   const arma::mat& reg_part,
 //                                   const arma::mat& states_part,

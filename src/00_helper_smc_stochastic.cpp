@@ -86,3 +86,61 @@ arma::colvec propagate_bpf(const arma::colvec& mmu,
   // tmp_NumVec = Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(mmu)) + sdd *  dqrng::dqrnorm(N, 0, 1.0);
   // return(Rcpp::as<arma::vec>(tmp_NumVec));
 }
+void sample_init(const arma::uvec& dd_rng, const arma::mat& Xbeta,
+                 const arma::vec& phi, const arma::vec& sig_sq,
+                 int N, const arma::uvec& id, arma::mat& X) {
+  double mu = 0;
+  double sd = 0;
+  for(auto d : dd_rng) {
+    mu = arma::as_scalar(Xbeta.submat(0, d, 0, d)) / (1.0 - phi(d));
+    sd = sqrt(sig_sq(d) / (1.0 - pow(phi(d), 2)));
+    X.submat(id(d), 0, id(d + 1) - 1, 0) = sample_init_prtcls(mu, sd, N);
+  }
+  return;
+}
+arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
+                        const arma::uvec& dd_rng,
+                        const arma::vec& phi, const arma::vec& sig_sq,
+                        const arma::mat& Xbeta,
+                        arma::mat& X, const arma::mat& Xr,
+                        const arma::uvec& A) {
+  arma::vec eval_f(N, arma::fill::zeros);
+  arma::mat mean_diff(N, DD, arma::fill::zeros);
+  for(auto d : dd_rng) {
+    eval_f = f_cpp(X.submat(id(d), tmin1, id(d + 1) - 1, tmin1),
+                   phi(d), as_scalar(Xbeta.submat(t, d, t, d)));
+    mean_diff.col(d) = eval_f -  Xr(t, d);
+    eval_f = eval_f.elem(A);
+    X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
+             sqrt(sig_sq(d)),
+             N);
+  }
+  return(mean_diff);
+}
+arma::mat draw_trajectory(int N, int TT, int DD,
+                          const arma::uvec& dd_rng,
+                          const arma::uvec& id,
+                          arma::mat& X, const arma::umat& A,
+                          const arma::vec& w_n) {
+  int b = 0;
+  arma::uvec t_word(1, arma::fill::zeros);
+  arma::uvec ind(N, arma::fill::zeros);
+  arma::mat x_out(TT, DD, arma::fill::zeros);
+  ind = A.col(TT - 1);
+  for (arma::uword t = TT-2; t >= 1; --t) {
+    t_word(0) = t;
+    for (auto d : dd_rng) {
+      X.submat(id(d), t, id(d + 1) - 1, t) = X(ind + N*d, t_word);
+    }
+    ind = A(ind, t_word);
+  }
+  t_word(0) = 0;
+  for (auto d : dd_rng) {
+    X.submat(id(d), 0, id(d + 1) - 1, 0) = X(ind + N*d, t_word);
+  }
+  b = sample_final_trajectory(w_n, N);
+  for(auto d : dd_rng) {
+    x_out.col(d) = X.row(b + N*d).t();
+  }
+  return(x_out);
+}

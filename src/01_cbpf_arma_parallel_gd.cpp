@@ -127,18 +127,16 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
       set_conditional_value(xa, x_r, dd_range_x, id_x_all, t);
       // ancestor sampling
       a(N - 1, t) = w_as_c(mean_diff.cols(dd_range_x),
-        pow(sig_sq_x.elem(dd_range_x).t(), -1),
-        w_log, N, ID_AS_LNSPC);
+                           pow(sig_sq_x.elem(dd_range_x).t(), -1),
+                           w_log, N, ID_AS_LNSPC);
       // weighting
       t_word(0) = t;
       w_log = w_log_cbpf_gd(N, y.submat(t_word, dd_range_y),
                             xa.submat(id_x_avl, t_word), id_x_all);
       w_norm = w_normalize_cpp(w_log, "particle");
     }
-    x_out_list(jj) = draw_trajectory(N, TT, DD2,
-               dd_range_x,
-               id_x_all,
-               xa, a, w_norm);
+    x_out_list(jj) = draw_trajectory(N, TT, DD2, dd_range_x,
+                                     id_x_all, xa, a, w_norm);
     jj++;
   }
   return (x_out_list);
