@@ -2,7 +2,7 @@
 #define PGAS_H
 
 #include "99_config.h"
-#include "01_cbpf_arma.h"
+#include "101_cbpf_arma_LEGACY.h"
 #include "00_helper_mcmc_deterministic.h"
 #include "00_helper_mcmc_stochastic.h"
 

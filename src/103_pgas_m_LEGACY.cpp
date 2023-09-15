@@ -1,4 +1,4 @@
-#include "03_pgas.h"
+#include "103_pgas_LEGACY.h"
 //' Particle Gibbs with ancestor sampling (PGAS)
 //'
 //' Runs PGAS with various possible SMC procedures and Gibbs blocks. In this
@@ -13,17 +13,17 @@
 //' @param DD multivariate dimension (number of multinomial categories)
 //' @param MM PGAS iterations i.e. MCMC iterations (which is equal to the number
 //'   of iterations of the SMC-part)
-//' @param data a list of data objects i.e. measurements: e.g. can be total counts
-//'   as well as dirichlet multinomial number of counts per category (only the latter
-//'   if measurements are from a multinomial, and both if measurements come from a
-//'   multinomial-dirichlet)
+//' @param data a list of data objects i.e. measurements: e.g. can be total
+//'    counts as well as dirichlet multinomial number of counts per category
+//'    (only the latter if measurements are from a multinomial, and both if
+//'     measurements come from a multinomial-dirichlet)
 //' @param Z regressors contained in the latent state process part
 //' @param priors hyperpriors for inverted gamma priors of the state process
-//'   error variances
+//'    error variances
 //' @param par_init initial parameters i.e. starting values for the MCMC part of
-//'   the overall PGAS procedure
+//'    the overall PGAS procedure
 //' @param traj_init initial latent state values i.e. starting values for the
-//'   SMC part of the overall PGAS procedure
+//'    SMC part of the overall PGAS procedure
 //' @return List of parameter MCMC samples and latent state trajectory outputs
 //'
 //' @export

@@ -1,4 +1,4 @@
-#include "03_pgas.h"
+#include "103_pgas_LEGACY.h"
 //' Particle Gibbs with ancestor sampling (PGAS)
 //'
 //' Runs PGAS with various possible SMC procedures and Gibbs blocks. In this
@@ -27,17 +27,18 @@
 //' @return List of parameter MCMC samples and latent state trajectory outputs
 //'
 //' @export
+//'
 //[[Rcpp::export]]
 Rcpp::List pgas_cpp_dm(const int& N,
-                    const int& NN,
-                    const int& TT,
-                    const int& DD,
-                    const int& MM,
-                    const Rcpp::List& data,
-                    const arma::mat& Z,
-                    const arma::vec& priors,
-                    const Rcpp::List& par_init,
-                    const arma::vec& traj_init) {
+                       const int& NN,
+                       const int& TT,
+                       const int& DD,
+                       const int& MM,
+                       const Rcpp::List& data,
+                       const arma::mat& Z,
+                       const arma::vec& priors,
+                       const Rcpp::List& par_init,
+                       const arma::vec& traj_init) {
   // Initialize data containers:
   // const arma::mat y = data(0);
   // const arma::vec num_counts = data(1);
@@ -105,11 +106,11 @@ Rcpp::List pgas_cpp_dm(const int& N,
   }
   for (int n = 0; n < NN; ++n) {
     out_cpf.slice(n) = cbpf_as_dm_cpp(N, TT, DD,
-                  y.slice(n), num_counts.col(n),
-                  Z_beta,
-                  sig_sq_x.col(0),
-                  phi_x.col(0),
-                  (Xa.slice(n)).col(0));
+                                      y.slice(n), num_counts.col(n),
+                                      Z_beta,
+                                      sig_sq_x.col(0),
+                                      phi_x.col(0),
+                                      (Xa.slice(n)).col(0));
     for(int d = 0; d < DD; ++d) {
       (Xa.slice(n)).submat(TT*d, 0, TT*(d + 1) - 1, 0) = (out_cpf.slice(n)).col(d);
     }

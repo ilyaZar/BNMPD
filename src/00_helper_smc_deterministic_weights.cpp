@@ -1,7 +1,7 @@
 #include "00_helper_smc_deterministic_weights.h"
 //' SMC log-weights for the Dirichlet
 //'
-//' Computes normalized bootrstrap particle weights.
+//' Computes normalized Bootstrap particle weights.
 //'
 //' Can currently be used for Dirichlet-model only.
 //'
@@ -182,9 +182,8 @@ arma::vec w_log_cbpf_gdm(const int& N,
 }
 //' SMC log-weights for the Dirichlet Multinomial
 //'
-//' Computes normalized bootrstrap particle weights.
-//'
-//' Can currently be used for Dirichlet-multinommial model only.
+//' Computes normalized Bootstrap particle weights used for
+//' Dirichlet-multinomial measurement model.
 //'
 //' @param N number of particles (int)
 //' @param num_counts number of overall counts per t=1,...,TT (part of the
@@ -234,9 +233,8 @@ arma::vec w_log_cbpf_gdm(const int& N,
  }
 //' SMC log-weights for the Multinomial
 //'
-//' Computes normalized bootrstrap particle weights.
-//'
-//' Can currently be used for Dirichlet-multinommial model only.
+//' Computes normalized Bootstrap particle weights used for Multinomial
+//' measurements model.
 //'
 //' @param N number of particles (int)
 //' @param DD number of state components (dirichlet fractions or number of
