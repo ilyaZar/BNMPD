@@ -19,6 +19,7 @@
 *.code-workspace
 *.json
 *.csv
+*.env
 /data/*
 /doc/*
 /literature/*
