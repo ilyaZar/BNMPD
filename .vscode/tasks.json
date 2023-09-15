@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install and Restart",
+            "type": "shell",
+            "command": "R CMD INSTALL --no-multiarch --with-keep.source .",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Clean and Rebuild",
+            "type": "shell",
+            "command": "R CMD INSTALL --preclean --no-multiarch --with-keep.source .",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "debug",
+            "type": "shell",
+            "command": "Rscript ${workspaceFolder}/.vscode/debug.R",
+            "problemMatcher": []
+        }
+    ]
+}

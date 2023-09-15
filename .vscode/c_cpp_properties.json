@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/iz/Dropbox/libraries/R/4.0/RcppArmadillo/include",
+                "/home/iz/Dropbox/libraries/R/4.0/Rcpp/include",
+                // "/home/iz/Dropbox/libraries/R/4.3-CGS2/RcppArmadillo/include",
+                // "/home/iz/Dropbox/libraries/R/4.3-CGS2/Rcpp/include",
+                "/usr/share/R/include"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
