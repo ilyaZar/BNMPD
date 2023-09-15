@@ -209,10 +209,9 @@ cbpf_as_d_r <- function(dd_range,
                       xa  = xa[id_w, 1],
                       NN = N,
                       DD = DD2)
-  w_log2 <- w_log_cbpf_d(N = N, DD = DD2,
-                         y = y[1, dd_range, drop = FALSE],
-                         xa  = xa[id_w, 1],
-                         id_x = id_x2)
+  w_log2 <- w_log_cbpf_d_old(N = N, y = y[1, dd_range, drop = FALSE],
+                             xa  = xa[id_w, 1],
+                             id_x = id_x2)
   w[, 1] <- w_normalize(w_log)
   # II. FOR t = 2,..,T
   for (t in 2:TT) {
@@ -246,10 +245,10 @@ cbpf_as_d_r <- function(dd_range,
                           xa  = xa[id_w, t],
                           NN = N,
                           DD = DD2)
-    w_log2 <- w_log_cbpf_d(N = N, DD = DD2,
-                           y = y[t, dd_range, drop = FALSE],
-                           xa  = xa[id_w, t],
-                           id_x = id_x2)
+    w_log2 <- w_log_cbpf_d_old(N = N, ##DD = DD2,
+                               y = y[t, dd_range, drop = FALSE],
+                               xa  = xa[id_w, t],
+                               id_x = id_x2)
     if (isFALSE(all.equal(w_log, as.vector(w_log2)))) {
       browser()
     }
