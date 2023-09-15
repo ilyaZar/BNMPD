@@ -101,49 +101,6 @@ w_log_cbpf_gd <- function(N, y, xa, id_x_all) {
     .Call(`_BNMPD_w_log_cbpf_gd`, N, y, xa, id_x_all)
 }
 
-#' SMC log-weights for the generalized Dirichlet Multinomial
-#'
-#' Computes normalized Bootstrap-particle weights for the generalized
-#' Dirichlet Multinomial measurements.
-#'
-#' @param N number of particles (int)
-#' @param counts number of total counts
-#' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
-#'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
-#' @param xa particle state vector; \code{NxDD2}-dimensional arma::vec (as the
-#'   whole state vector has \code{DD2} components and \code{N} is the number of
-#'   particles)
-#' @param id_x index vector giving the location of the N-dimensional components
-#'   for each subcomponent d=1,...,DD2 within the \code{NxDD2} dimensional
-#'   \code{xa}
-#' @return particle log-weights
-#'
-w_log_cbpf_gdm <- function(N, counts, y, xa, id_x_all) {
-    .Call(`_BNMPD_w_log_cbpf_gdm`, N, counts, y, xa, id_x_all)
-}
-
-#' SMC log-weights for the Dirichlet Multinomial
-#'
-#' Computes normalized Bootstrap particle weights used for
-#' Dirichlet-multinomial measurement model.
-#'
-#' @param N number of particles (int)
-#' @param num_counts number of overall counts per t=1,...,TT (part of the
-#'   measurement data) i.e. a scalar int-value for the current time period
-#' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
-#'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
-#' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
-#'   whole state vector has \code{DD} components and \code{N} is the number of
-#'   particles)
-#' @param id_x_all index vector giving the location of the N-dimensional components
-#'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
-#'   \code{xa}
-#' @return particle log-weights
-#'
-w_log_cbpf_dm <- function(N, num_counts, y, xa, id_x_all) {
-    .Call(`_BNMPD_w_log_cbpf_dm`, N, num_counts, y, xa, id_x_all)
-}
-
 #' SMC log-weights for the Multinomial
 #'
 #' Computes normalized Bootstrap particle weights used for Multinomial
@@ -164,6 +121,49 @@ w_log_cbpf_dm <- function(N, num_counts, y, xa, id_x_all) {
 #'
 w_log_cbpf_m <- function(N, DD, y, xa, id_x) {
     .Call(`_BNMPD_w_log_cbpf_m`, N, DD, y, xa, id_x)
+}
+
+#' SMC log-weights for the Dirichlet Multinomial
+#'
+#' Computes normalized Bootstrap particle weights used for
+#' Dirichlet-Multinomial measurement model.
+#'
+#' @param N number of particles (int)
+#' @param num_counts number of overall counts per t=1,...,TT (part of the
+#'   measurement data) i.e. a scalar int-value for the current time period
+#' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+#'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+#' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
+#'   whole state vector has \code{DD} components and \code{N} is the number of
+#'   particles)
+#' @param id_x_all index vector giving the location of the N-dimensional
+#'    components for each sub-component d=1,...,DD within the \code{NxDD}
+#'    dimensional \code{xa}
+#' @return particle log-weights
+#'
+w_log_cbpf_dm <- function(N, num_counts, y, xa, id_x_all) {
+    .Call(`_BNMPD_w_log_cbpf_dm`, N, num_counts, y, xa, id_x_all)
+}
+
+#' SMC log-weights for the generalized Dirichlet Multinomial
+#'
+#' Computes normalized Bootstrap-particle weights for the generalized
+#' Dirichlet Multinomial measurements.
+#'
+#' @param N number of particles (int)
+#' @param num_counts number of total counts
+#' @param y Dirichlet fractions/shares of dimension \code{DD} (part of the
+#'   measurement data) observed a specific t=1,...,TT; (arma::rowvec)
+#' @param xa particle state vector; \code{NxDD2}-dimensional arma::vec (as the
+#'   whole state vector has \code{DD2} components and \code{N} is the number of
+#'   particles)
+#' @param id_x index vector giving the location of the N-dimensional components
+#'   for each subcomponent d=1,...,DD2 within the \code{NxDD2} dimensional
+#'   \code{xa}
+#' @return particle log-weights
+#'
+w_log_cbpf_gdm <- function(N, num_counts, y, xa, id_x_all) {
+    .Call(`_BNMPD_w_log_cbpf_gdm`, N, num_counts, y, xa, id_x_all)
 }
 
 #' Resampling function
@@ -707,10 +707,6 @@ cbpf_as_dm_cpp <- function(N, TT, DD, y, num_counts, Regs_beta, sig_sq_x, phi_x,
 cbpf_as_m_cpp <- function(N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r) {
     .Call(`_BNMPD_cbpf_as_m_cpp`, N, TT, DD, y, Regs_beta, sig_sq_x, phi_x, x_r)
 }
-
-#' SMC log-weights for the Dirichlet Multinomial
-#'
-NULL
 
 #' SMC log-weights for the Dirichlet
 #'

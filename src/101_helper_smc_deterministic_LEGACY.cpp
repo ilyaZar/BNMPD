@@ -249,8 +249,8 @@ arma::vec w_log_cbpf_m_old(const int& N,
 //   }
 //   return(w_log);
 // }
-//' SMC log-weights for the Dirichlet Multinomial
-//'
+// //' SMC log-weights for the Dirichlet Multinomial; the BH-version
+// //'
 // //' Computes normalized bootrstrap particle weights.
 // //'
 // //' Can currently be used for Dirichlet-multinommial model only.

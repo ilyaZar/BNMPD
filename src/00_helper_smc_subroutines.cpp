@@ -198,7 +198,7 @@ arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y) {
   return(out_dd_range_x);
 }
 int compute_DD2(int DD) {
-  return(2 * DD);
+  return(2 * DD - 2);
   // if (type == 1) {
   //   return(2 * DD);
   // } else if (type == 2) {
