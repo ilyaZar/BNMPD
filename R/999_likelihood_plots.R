@@ -4,12 +4,16 @@
 #'
 #' @param DD_chosen integer giving the dimension to alter
 #' @param type character; either "alpha" or "beta"
-#' @param Y the shares or counts in a generalized Dirichlet (or Dirichlet
-#'    Multinomial) model
-#' @param alphas a vector of true parameter values for the alphas (DD - 1)
-#' @param betas a vector of true parameter values for the betas (DD - 1)
-#' @param weight_function the `BNMPD:::w_log_XXX()` function i.e.
-#'     `BNMPD:::w_log_cbpf_gd()` or `BNMPD:::w_log_cbpf_gdm()`
+#' @param data the shares or counts in a generalized Dirichlet (or Dirichlet
+#'    Multinomial) model as a named list (with up to two components 'Y' and
+#'    'counts')
+#' @param true_state_vals a vector or a named list of two vectors
+#' \itemize{
+#'    \item{alphas}{vector of true parameter values for the alphas (`DD - 1`)}
+#'    \item{betas}{vector of true parameter values for the betas (`DD - 1`)}
+#' }
+#' @param weight_function the `w_log_XXX()` function i.e.
+#'     [w_log_cbpf_gd()], [w_log_cbpf_gdm()] etc.
 #' @param n_grid integer; number of grid points (i.e. particles)
 #' @param seq_steps double; steps the particles/grid points are spread apart
 #'
@@ -18,15 +22,23 @@
 #'    component sequence of grid-points, `true_val` being the true value and
 #'    max-val the value found over grid computations
 #' @export
-get_ll_values <- function(DD_chosen, type = "alpha",
-                          Y, alphas, betas,
+get_ll_values <- function(DD_chosen,
+                          distribution = NULL,
+                          component_name = NULL,
+                          data, true_state_vals,
                           weight_function = NULL,
                           n_grid, seq_steps = 0.01) {
   stopifnot(`Arg. 'weight-function' must be a function` =
               is.function(weight_function))
-  INTERNAL_MIN_START <- 0.01
-  betas  <- c(betas)
-  alphas <- c(alphas)
+  check_distribution(distribution)
+  INTERNAL_MIN_START   <- 0.01
+  SPECIAL_DISTRIBUTION <- check_special_dist_quick(distribution)
+
+  Y      <- data$Y
+  counts <- data$counts
+  alphas <- true_state_vals$alphas
+  betas  <- true_state_vals$betas
+
   DD     <- nrow(Y)
   n_sims <- ncol(Y)
 
@@ -34,37 +46,46 @@ get_ll_values <- function(DD_chosen, type = "alpha",
               DD_chosen < DD)
 
   xa_apart <- matrix(rep(0, times =  n_grid * (DD - 1)), ncol = DD - 1)
-  xa_bpart <- matrix(rep(0, times =  n_grid * (DD - 1)), ncol = DD - 1)
+  if (SPECIAL_DISTRIBUTION) {
+    xa_bpart <- matrix(rep(0, times =  n_grid * (DD - 1)), ncol = DD - 1)
+  }
 
   for (d in 1:(DD - 1)) {
     xa_apart[, d] <- rep(alphas[d], times = n_grid)
-    xa_bpart[, d] <- rep(betas[d], times = n_grid)
+    if (SPECIAL_DISTRIBUTION) {
+      xa_bpart[, d] <- rep(betas[d], times = n_grid)
+    }
   }
-  ID_X_ALL  <- BNMPD:::compute_id_x_all(2 * (DD - 1), n_grid)
+  ID_X_ALL <- compute_id_x_all(2 * (DD - 1), n_grid)
 
-  if (type == "alpha") {
+  if (component_name == "alpha") {
     seq_start <- max(mean(xa_apart[, DD_chosen]) - n_grid/2 * seq_steps,
                      INTERNAL_MIN_START)
     seq_end   <- mean(xa_apart[, DD_chosen]) + n_grid/2 * seq_steps
     seq_taken <- seq(from = seq_start, to = seq_end, by = seq_steps)[1:n_grid]
     xa_apart[, DD_chosen] <- seq_taken
-  } else if (type == "beta") {
+  } else if (component_name == "beta") {
     seq_start <- max(mean(xa_bpart[, DD_chosen]) - n_grid/2 * seq_steps,
                      INTERNAL_MIN_START)
     seq_end   <- mean(xa_bpart[, DD_chosen]) + n_grid/2 * seq_steps
     seq_taken <- seq(from = seq_start, to = seq_end, by = seq_steps)[1:n_grid]
     xa_bpart[, DD_chosen] <- seq_taken
   } else {
-    stop("Undefined value for argument 'type'; use 'alpha' or 'beta'")
+    stop("Undefined value for argument 'component_name'; use 'alpha' or 'beta'")
   }
 
-  xa <- log(as.vector(rbind(xa_apart, xa_bpart)))
+
+  if (SPECIAL_DISTRIBUTION) {
+    xa <- log(as.vector(rbind(xa_apart, xa_bpart)))
+  } else {
+    xa <- log(as.vector(xa_apart))
+  }
+
   log_like <- matrix(0, nrow = n_grid, ncol = n_sims)
   for (j in 1:n_sims) {
-    log_like[, j] <- do.call(weight_function, list(N = n_grid,
-                                                   y = Y[, j],
-                                                   xa = xa,
-                                                   id_x_all = ID_X_ALL))
+    log_like[, j] <- do.call(weight_function,
+                             list(N = n_grid, num_counts = counts[j],
+                                  y = Y[, j], xa = xa,id_x_all = ID_X_ALL))
   }
 
   stopifnot(isFALSE(any(is.na(log_like))))
@@ -77,11 +98,11 @@ get_ll_values <- function(DD_chosen, type = "alpha",
   out$grid_vals <- xa
 
   max_state <- which(max(log_like_sum) == log_like_sum)
-  if (type == "alpha") {
+  if (component_name == "alpha") {
     out$true_val  <- alphas[DD_chosen]
     out$max_val   <- xa_apart[max_state, DD_chosen]
     out$state_seq <- xa_apart[, DD_chosen]
-  } else if (type == "beta") {
+  } else if (component_name == "beta") {
     out$true_val  <- betas[DD_chosen]
     out$max_val   <- xa_bpart[max_state, DD_chosen]
     out$state_seq <- xa_bpart[, DD_chosen]
