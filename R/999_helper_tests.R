@@ -284,3 +284,56 @@ test_dirs_file_names <- function(pth_to_test) {
   cat(crayon::blue("ALL DIR/FILE NAMES CHECKS PASSED !!! \n"))
   return(TRUE)
 }
+#' Taken from MGLM with adjustments (no constant computation)
+#'
+#' The constant is not computed contrary to the package implementation
+#' [MGLM::dgdirmn()]
+#'
+#' @param Y vector/matrix of counts (e.g. length `DD`)
+#' @param alpha vector of alpha parameters (length `DD - 1`)
+#' @param beta vector of beta parameters (length `DD - 1`)
+#'
+#' @return a vector of evaluated likelihood points (without normalizing const.)
+#' @export
+mglm_dgdirmn_tester <- function(Y, alpha, beta) {
+
+  if (is.vector(alpha) && is.vector(beta)) {
+
+    if (length(alpha) != length(beta))
+      stop("the sizes of alpha and beta do not match")
+
+    if (is.vector(Y) && length(Y) > 1) {
+
+      if (length(Y) != (length(alpha) + 1)) {
+        stop("size of Y and alpha doesn't match.")
+      } else {
+        Y <- matrix(Y, 1, length(Y))
+      }
+
+    } else if (is.vector(Y) && length(Y) <= 1) {
+      stop("Y can not be a scalar")
+    }
+
+    alpha <- t(matrix(alpha, length(alpha), dim(Y)[1]))
+    beta <- t(matrix(beta, length(beta), dim(Y)[1]))
+  }
+
+  if (nrow(alpha) != nrow(Y) | ncol(alpha) != ncol(Y) - 1)
+    stop("dimensions of the parameters and Y do not match")
+
+  ## ----------------------------------------##
+  ## Calculate
+  ## ----------------------------------------##
+
+  m <- rowSums(Y)
+  d <- ncol(Y)
+
+  z <- t(apply(apply(apply(Y, 1, rev), 2, cumsum), 2, rev))
+
+  logl <- (rowSums(lgamma(Y[, -d] + alpha)) +
+             rowSums(lgamma(z[, -1] + beta)) + rowSums(lgamma(alpha + beta))) -
+    (rowSums(lgamma(alpha)) + rowSums(lgamma(beta)) +
+       rowSums(lgamma(alpha + beta + z[, -d])))
+
+  return(logl)
+}
