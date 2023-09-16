@@ -256,7 +256,7 @@ arma::vec w_log_cbpf_gdm(const int N,
                          const arma::vec& xa,
                          const arma::uvec& id_x_all) {
   const std::string weight_type = "particle";
-  const arma::vec count_cumsums = arma::cumsum(y);
+  const arma::vec count_cumsums = arma::reverse(arma::cumsum(arma::reverse(y)));
   const int DD_avail_y = y.size();
 
   // container required for weight computations
