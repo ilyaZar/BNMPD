@@ -39,24 +39,26 @@ get_ll_values <- function(DD_chosen,
   alphas <- true_state_vals$alphas
   betas  <- true_state_vals$betas
 
-  DD     <- nrow(Y)
-  n_sims <- ncol(Y)
+  DD       <- nrow(Y)
+  n_sims   <- ncol(Y)
+  DD_taken <- ifelse(SPECIAL_DISTRIBUTION, DD - 1, DD)
 
   stopifnot(`Chosen dimension 'DD_chosen' must be smaller than overall 'DD'` =
-              DD_chosen < DD)
+             DD_chosen <= DD_taken)
 
-  xa_apart <- matrix(rep(0, times =  n_grid * (DD - 1)), ncol = DD - 1)
+  xa_apart <- matrix(rep(0, times =  n_grid * DD_taken), ncol = DD_taken)
   if (SPECIAL_DISTRIBUTION) {
-    xa_bpart <- matrix(rep(0, times =  n_grid * (DD - 1)), ncol = DD - 1)
+    xa_bpart <- matrix(rep(0, times =  n_grid * DD_taken), ncol = DD_taken)
   }
 
-  for (d in 1:(DD - 1)) {
+  for (d in 1:DD_taken) {
     xa_apart[, d] <- rep(alphas[d], times = n_grid)
     if (SPECIAL_DISTRIBUTION) {
       xa_bpart[, d] <- rep(betas[d], times = n_grid)
     }
   }
-  ID_X_ALL <- compute_id_x_all(2 * (DD - 1), n_grid)
+  DD_taken2 <- ifelse(SPECIAL_DISTRIBUTION, 2 * (DD - 1), DD)
+  ID_X_ALL  <- compute_id_x_all(DD_taken2, n_grid)
 
   if (component_name == "alpha") {
     seq_start <- max(mean(xa_apart[, DD_chosen]) - n_grid/2 * seq_steps,
@@ -74,7 +76,6 @@ get_ll_values <- function(DD_chosen,
     stop("Undefined value for argument 'component_name'; use 'alpha' or 'beta'")
   }
 
-
   if (SPECIAL_DISTRIBUTION) {
     xa <- log(as.vector(rbind(xa_apart, xa_bpart)))
   } else {
@@ -83,9 +84,13 @@ get_ll_values <- function(DD_chosen,
 
   log_like <- matrix(0, nrow = n_grid, ncol = n_sims)
   for (j in 1:n_sims) {
-    log_like[, j] <- do.call(weight_function,
-                             list(N = n_grid, num_counts = counts[j],
-                                  y = Y[, j], xa = xa,id_x_all = ID_X_ALL))
+    if (grepl("mult", distribution)) {
+      arg_list <- list(N = n_grid, num_counts = counts[j],
+                       y = Y[, j], xa = xa,id_x_all = ID_X_ALL)
+    } else {
+      arg_list <- list(N = n_grid, y = Y[, j], xa = xa,id_x_all = ID_X_ALL)
+    }
+    log_like[, j] <- do.call(weight_function, arg_list)
   }
 
   stopifnot(isFALSE(any(is.na(log_like))))
