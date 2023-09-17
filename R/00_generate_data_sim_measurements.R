@@ -62,7 +62,7 @@ generate_multinomial_obs <- function(x, NN, TT, DD, out_data) {
     num_counts <- sample(x = 80000:120000, size = TT)
     tmp_x <- x[, , n]
     tmp_x / rowSums(tmp_x)
-    yraw <- my_rmultinomial(probs = tmp_x, num_counts = num_counts)
+    yraw <- my_r_mult(probs = tmp_x, num_counts = num_counts)
     print(paste0("Simulatiing Multinomial data at cross section: ", n))
     out_data[["part1"]][, , n] <- yraw
     out_data[["part2"]][, n]   <- num_counts
@@ -117,8 +117,8 @@ generate_dirichlet_mult_obs <- function(x, NN, TT, out_data, options_include) {
       no_zero_cols <- seq_len(ncol(x))
     }
     num_counts <- sample(x = 80000:120000, size = TT)
-    yraw <- my_rmult_diri(alpha =  x[, no_zero_cols, n],
-                          num_counts = num_counts)
+    yraw <- my_r_dirichlet_mult(alpha =  x[, no_zero_cols, n],
+                                num_counts = num_counts)
     out_data[["part1"]][, no_zero_cols, n] <- yraw
     out_data[["part2"]][, n]   <- num_counts
   }
@@ -251,7 +251,7 @@ my_r_generalized_dirichlet <- function(alpha, beta, DD) {
 #' @param num_counts counts for the different categories of the multinomial
 #'
 #' @return a nxD dimensional matrix of multinomial draws
-my_rmultinomial <- function(probs, num_counts) {
+my_r_mult <- function(probs, num_counts) {
   n <- nrow(probs)
   l <- ncol(probs)
   x <- matrix(0, ncol = l, nrow = n)
@@ -260,21 +260,21 @@ my_rmultinomial <- function(probs, num_counts) {
   }
   x
 }
-#' Generates random samples from a Dirichlet-multinomial distribution
+#' Generates random samples from a Dirichlet-Multinomial distribution
 #'
-#' Generates random samples from Dirichlet-multinomial distribution; the
-#' dimension of the Dirichlet-multinomial distribution (i.e. the number of
+#' Generates random samples from Dirichlet-Multinomial distribution; the
+#' dimension of the Dirichlet-Multinomial distribution (i.e. the number of
 #' shares of fractions) is taken as the number of columns in the \code{alpha}
 #' matrix; the number of samples are taken as the rows of the \code{alpha}
 #' matrix; hence, each row of \code{alpha} corresponds to \code{D} \code{alpha}
 #' parameters for which a \code{D}-dimensional random draw is generated, and all
 #' these \code{n} draws are returned in matrix form.
 #'
-#' @param alpha alpha parameters of dirichlet distribution given as a matrix
-#' @param num_counts number of counts for the dirichlet shares/fractions
+#' @param alpha alpha parameters of Dirichlet distribution given as a matrix
+#' @param num_counts number of counts for the Dirichlet shares/fractions
 #'
-#' @return a nxD dimensional matrix of Dirichlet-multinomial draws
-my_rmult_diri <- function(alpha, num_counts) {
+#' @return a nxD dimensional matrix of Dirichlet-Multinomial draws
+my_r_dirichlet_mult <- function(alpha, num_counts) {
   n <- nrow(alpha)
   l <- ncol(alpha)
   num_probs <- n*l
