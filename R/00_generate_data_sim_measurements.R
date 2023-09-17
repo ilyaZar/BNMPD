@@ -76,7 +76,7 @@ generate_dirichlet_obs <- function(x, NN, TT, out_data, options_include) {
     } else if (is.null(options_include[[n]]$zeros)) {
       no_zero_cols <- seq_len(ncol(x))
     }
-    yraw <- my_rdirichlet(alpha = x[, no_zero_cols, n])
+    yraw <- my_r_dirichlet(alpha = x[, no_zero_cols, n])
     if (sum(rowSums(yraw)) != TT || any(yraw == 0)) {
       msg <- paste0("Bad Dirichelet simulation: ",
                     "fractions don't sum to 1 and/or zero componenent!")
@@ -194,7 +194,7 @@ check_x_states <- function(x_states, X_LOG_SCALE) {
 #' @param alpha a matrix of alpha parameters of a Dirichlet distribution
 #'
 #' @return a \code{n x D} dimensional matrix of Dirichlet draws
-my_rdirichlet <- function(alpha) {
+my_r_dirichlet <- function(alpha) {
   n <- nrow(alpha)
   l <- ncol(alpha)
   n <- n*l
@@ -311,7 +311,7 @@ my_r_generalized_dirichlet_mult <- function(alpha, beta, DD, num_counts) {
 # rdirichlet(1, a1)
 # rdirichlet(1, a2)
 # set.seed(123)
-# my_rdirichlet(2, a_all)
+# my_r_dirichlet(2, a_all)
 # parameter_fct_log_norm <- function(exp_mu, exp_sd) {
 #   log_mu  <- log(exp_mu/sqrt( 1 + (exp_sd^2/exp_mu^2) ))
 #   log_var <- log(1 + exp_sd^2/exp_mu^2)
