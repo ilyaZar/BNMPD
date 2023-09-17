@@ -88,7 +88,7 @@ get_ll_values <- function(DD_chosen,
       arg_list <- list(N = n_grid, num_counts = counts[j],
                        y = Y[, j], xa = xa,id_x_all = ID_X_ALL)
     } else {
-      arg_list <- list(N = n_grid, y = Y[, j], xa = xa,id_x_all = ID_X_ALL)
+      arg_list <- list(N = n_grid, y = Y[, j], xa = xa, id_x_all = ID_X_ALL)
     }
     log_like[, j] <- do.call(weight_function, arg_list)
   }
