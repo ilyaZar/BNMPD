@@ -132,10 +132,14 @@ get_ll_values <- function(DD_chosen,
 #'    screen as side effect
 #' @export
 plotloglike <- function(loglike,
-                        y_lab =  NA_character_,
-                        x_lab = NA_character_,
+                        y_lab =  NULL,
+                        x_lab = NULL,
                         col_true_val = "green",
                         col_max_val = "red") {
+  if (is.null(y_lab)) y_lab <- "loglike-values"
+  if (is.null(x_lab)) x_lab <- paste0(
+    "true (", col_true_val, "): ", loglike$true_val,
+    " -- true (", col_max_val, "): ", loglike$max_val)
   base::plot(x = loglike$state_seq,
              y = loglike$log_like,
              type = "l",
