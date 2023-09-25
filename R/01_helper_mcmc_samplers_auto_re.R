@@ -5,7 +5,7 @@
 #' @export
 sample_all_params.auto_re <- function(pe, mm) {
   order_p <- pe$order_p
-  for (d in 1:pe$DD) {
+  for (d in 1:pe$DD2) {
     id_phi_tmp  <- (pe$id_phi[d] + 1):pe$id_phi[d + 1]
     id_betu_tmp <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]
     id_uet_tmp  <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]

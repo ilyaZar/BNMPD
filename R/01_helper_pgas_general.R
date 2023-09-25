@@ -121,6 +121,7 @@ update_args_list_smc_internal <- function(pe, args_list, mm) {
 load_model <- function(env_model, to_env) {
   # to_env <- parent.frame()
 
+  browser()
   env_model$nn_list_dd <- lapply(env_model$avail_indicator_nn, function(x) x - 1)
   env_model$dd_list_nn <- env_model$avail_indicator_dd
 

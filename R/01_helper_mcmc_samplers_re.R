@@ -4,7 +4,7 @@
 #'
 #' @export
 sample_all_params.re <- function(pe, mm) {
-  for (d in 1:pe$DD) {
+  for (d in 1:pe$DD2) {
     id_betu_tmp <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]
     id_uet_tmp  <- (pe$id_uet[d] + 1):pe$id_uet[d + 1]
 
