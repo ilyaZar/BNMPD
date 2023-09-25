@@ -121,9 +121,9 @@ update_args_list_smc_internal <- function(pe, args_list, mm) {
 load_model <- function(env_model, to_env) {
   # to_env <- parent.frame()
 
-  browser()
   env_model$nn_list_dd <- lapply(env_model$avail_indicator_nn, function(x) x - 1)
-  env_model$dd_list_nn <- env_model$avail_indicator_dd
+  env_model$dd_list_nn <- get_dd_list_nn(env_model$avail_indicator_dd,
+                                         dist = env_model$model_type_obs)
 
   env_model$y <- env_model$data[[1]]
   if (length(env_model$data) == 2) {
@@ -164,6 +164,22 @@ load_model <- function(env_model, to_env) {
                      model_type_obs = env_model$model_type_obs,
                      model_type_smc = env_model$model_type_smc)
   invisible(to_env)
+}
+get_dd_list_nn <- function(dd_list, dist) {
+  if (isFALSE(check_special_dist_quick(dist))) return(dd_list)
+  DD  <- length(dd_list)
+  out <- list()
+  for (d in seq_len(DD - 1)) {
+    id_dd_special <- length(out) + 1
+    names_special <- paste0(names(dd_list)[d], c("_A", "_B"))
+
+    out[[id_dd_special]]     <- dd_list[[d]]
+    out[[id_dd_special + 1]] <- dd_list[[d]]
+
+    names(out)[[id_dd_special]]     <- names_special[1]
+    names(out)[[id_dd_special + 1]] <- names_special[2]
+  }
+  return(out)
 }
 get_lag_order <- function(x) {
   auto_check <- x$model_type_lat
