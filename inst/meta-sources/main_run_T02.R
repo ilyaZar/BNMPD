@@ -15,8 +15,28 @@ model <- BNMPD::ModelBNMPD$new(path_to_project = pths_in$pth_project,
 # model$set_param_inits(pths_in$pth_params_defl)
 # model$set_param_inits(pths_in$pth_params_true)
 
+################################################################################
+################################## LOCAL CGS ###################################
+################################################################################
 pgas_model <- model$load_modeldata_runtime_pgas()
 out <- pgas(pgas_model, sim_type = "pmcmc", mod_type = "simulation",
             settings_seed = list(seed_all_init = 123))
 model$save_pgas_model_out(out)
-out_all <- model$get_model_output()
+# out_all <- model$get_model_output()
+
+################################################################################
+################################ CHEOPS CLUSTER ################################
+################################################################################
+# CLOSE_CL <- FALSE
+# MAX_ITER <- 100
+# for (i in seq_len(MAX_ITER)) {
+#   if (i == MAX_ITER) CLOSE_CL <- TRUE
+#   pgas_model <- model$load_modeldata_runtime_pgas()
+#   out <- pgas(
+#     pgas_model,
+#     sim_type = "pmcmc",
+#     mod_type = "simulation",
+#     settings_seed = list(seed_all_init = 42234),
+#     close_cluster = CLOSE_CL)
+#   model$save_pgas_model_out(out)
+# }

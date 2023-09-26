@@ -12,7 +12,6 @@
 *.Rproj
 *.sublime-project
 *.sublime-workspace
-*.sh
 *.o
 *.so
 *.tar.gz
