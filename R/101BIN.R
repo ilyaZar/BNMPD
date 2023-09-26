@@ -362,21 +362,21 @@
 #'   ## II. run cBPF and use output as first conditioning trajectory
 #'   if (smc_parallel) {
 #'     envir_par <- environment()
-#'     task_indices <- parallel::splitIndices(NN, ncl = num_cores)
+#'     task_indices <- snow::splitIndices(NN, ncl = num_cores)
 #'     # task_indices <- lapply(task_indices, function(x) {x - 1})
 #'
-#'     cl <- parallel::makeCluster(num_cores, type = cluster_type)
-#'     parallel::clusterExport(cl, varlist = c("N", "TT", "DD",
+#'     cl <- snow::makeCluster(num_cores, type = cluster_type)
+#'     snow::clusterExport(cl, varlist = c("N", "TT", "DD",
 #'                                             "y", "nn_list_dd"),
 #'                             envir = envir_par)
-#'     parallel::clusterExport(cl, varlist = c("Regs_beta",
+#'     snow::clusterExport(cl, varlist = c("Regs_beta",
 #'                                             "sig_sq_x",
 #'                                             "phi_x",
 #'                                             "X"),
 #'                             envir = envir_par)
-#'     # parallel::clusterEvalQ(cl, set.seed(123))
-#'     parallel::clusterSetRNGStream(cl, iseed = 123)
-#'     out_cpf <- parallel::clusterApply(cl, x = task_indices,
+#'     # snow::clusterEvalQ(cl, set.seed(123))
+#'     snow::clusterSetRNGStream(cl, iseed = 123)
+#'     out_cpf <- snow::clusterApply(cl, x = task_indices,
 #'                                       BNMPD::cbpf_as_d_cpp_par,
 #'                                       nn_list_dd,
 #'                                       N, TT, DD, y,
@@ -503,13 +503,13 @@
 #'     }
 #'     # II. Run cBPF-AS part
 #'     if (smc_parallel) {
-#'       parallel::clusterExport(cl, varlist = c("Regs_beta",
+#'       snow::clusterExport(cl, varlist = c("Regs_beta",
 #'                                               "sig_sq_x",
 #'                                               "phi_x",
 #'                                               "X"),
 #'                               envir = envir_par)
 #'       # browser()
-#'       out_cpf <- parallel::clusterApply(cl, x = task_indices,
+#'       out_cpf <- snow::clusterApply(cl, x = task_indices,
 #'                                         BNMPD::cbpf_as_d_cpp_par,
 #'                                         nn_list_dd,
 #'                                         N, TT, DD, y,
@@ -548,7 +548,7 @@
 #'     cat("Iteration number:", m, "\n")
 #'   }
 #'   if (smc_parallel) {
-#'     parallel::stopCluster(cl)
+#'     snow::stopCluster(cl)
 #'   }
 #'   options(warn = 0)
 #'   return(list(sig_sq_x = sig_sq_x,
@@ -865,21 +865,21 @@
 #   if (smc_parallel) {
 #     envir_par <- environment()
 #     # browser()
-#     task_indices <- parallel::splitIndices(NN, ncl = num_cores)
+#     task_indices <- snow::splitIndices(NN, ncl = num_cores)
 #     task_indices <- lapply(task_indices, function(x) {x - 1})
 #
-#     cl <- parallel::makeCluster(num_cores, type = cluster_type)
-#     parallel::clusterExport(cl, varlist = c("N", "TT", "DD",
+#     cl <- snow::makeCluster(num_cores, type = cluster_type)
+#     snow::clusterExport(cl, varlist = c("N", "TT", "DD",
 #                                             "y", "num_counts"),
 #                             envir = envir_par)
-#     parallel::clusterExport(cl, varlist = c("Regs_beta",
+#     snow::clusterExport(cl, varlist = c("Regs_beta",
 #                                             "sig_sq_x",
 #                                             "phi_x",
 #                                             "X"),
 #                             envir = envir_par)
-#     # parallel::clusterEvalQ(cl, set.seed(123))
+#     # snow::clusterEvalQ(cl, set.seed(123))
 #     # browser()
-#     out_cpf <- parallel::clusterApply(cl, x = task_indices,
+#     out_cpf <- snow::clusterApply(cl, x = task_indices,
 #                                       BNMPD::cbpf_as_dm_cpp_par,
 #                                       N, TT, DD, y,
 #                                       num_counts, Regs_beta,
@@ -1040,14 +1040,14 @@
 #     }
 #     # II. Run cBPF-AS part
 #     if (smc_parallel) {
-#       parallel::clusterExport(cl, varlist = c("Regs_beta",
+#       snow::clusterExport(cl, varlist = c("Regs_beta",
 #                                               "sig_sq_x",
 #                                               "phi_x",
 #                                               "X"),
 #                               envir = envir_par)
-#       # parallel::clusterEvalQ(cl, set.seed(123))
+#       # snow::clusterEvalQ(cl, set.seed(123))
 #       # browser()
-#       out_cpf <- parallel::clusterApply(cl, x = task_indices,
+#       out_cpf <- snow::clusterApply(cl, x = task_indices,
 #                                         BNMPD::cbpf_as_dm_cpp_par,
 #                                         N, TT, DD, y,
 #                                         num_counts, Regs_beta,
@@ -1084,7 +1084,7 @@
 #     cat("Iteration number:", m, "\n")
 #   }
 #   if (smc_parallel) {
-#     parallel::stopCluster(cl)
+#     snow::stopCluster(cl)
 #   }
 #   options(warn = 0)
 #   return(list(sig_sq_x = sig_sq_x,
@@ -1316,19 +1316,19 @@
 #   if (smc_parallel) {
 #     envir_par <- environment()
 #     # browser()
-#     task_indices <- parallel::splitIndices(NN, ncl = num_cores)
+#     task_indices <- snow::splitIndices(NN, ncl = num_cores)
 #     task_indices <- lapply(task_indices, function(x) {x - 1})
 #
-#     cl <- parallel::makeCluster(num_cores, type = cluster_type)
-#     parallel::clusterExport(cl, varlist = c("N", "TT", "DD", "y"),
+#     cl <- snow::makeCluster(num_cores, type = cluster_type)
+#     snow::clusterExport(cl, varlist = c("N", "TT", "DD", "y"),
 #                             envir = envir_par)
-#     parallel::clusterExport(cl, varlist = c("Regs_beta",
+#     snow::clusterExport(cl, varlist = c("Regs_beta",
 #                                             "sig_sq_x",
 #                                             "phi_x",
 #                                             "X"),
 #                             envir = envir_par)
-#     # parallel::clusterEvalQ(cl, set.seed(123))
-#     out_cpf <- parallel::clusterApply(cl, x = task_indices,
+#     # snow::clusterEvalQ(cl, set.seed(123))
+#     out_cpf <- snow::clusterApply(cl, x = task_indices,
 #                                       BNMPD::cbpf_as_m_cpp_par,
 #                                       N, TT, DD, y,
 #                                       Regs_beta,
@@ -1487,13 +1487,13 @@
 #     }
 #     # II. Run cBPF-AS part
 #     if (smc_parallel) {
-#       parallel::clusterExport(cl, varlist = c("Regs_beta",
+#       snow::clusterExport(cl, varlist = c("Regs_beta",
 #                                               "sig_sq_x",
 #                                               "phi_x",
 #                                               "X"),
 #                               envir = envir_par)
-#       # parallel::clusterEvalQ(cl, set.seed(123))
-#       out_cpf <- parallel::clusterApply(cl, x = task_indices,
+#       # snow::clusterEvalQ(cl, set.seed(123))
+#       out_cpf <- snow::clusterApply(cl, x = task_indices,
 #                                         BNMPD::cbpf_as_m_cpp_par,
 #                                         N, TT, DD, y,
 #                                         Regs_beta,
@@ -1530,7 +1530,7 @@
 #     cat("Iteration number:", m, "\n")
 #   }
 #   if (smc_parallel) {
-#     parallel::stopCluster(cl)
+#     snow::stopCluster(cl)
 #   }
 #   options(warn = 0)
 #   return(list(sig_sq_x = sig_sq_x,
