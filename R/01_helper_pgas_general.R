@@ -1,5 +1,4 @@
-check_settings_input <- function(st_type, sm_type, md_type) {
-  stopifnot(`Unknown settings_type...` = st_type %in% c("clean_run", "testing"))
+check_settings_input <- function(sm_type, md_type) {
   stopifnot(`Unknown sim_type... ` = sm_type %in% c("pmcmc", "mcmc"))
   stopifnot(`Unknown mod_type...` = md_type %in% c("empirical", "simulation"))
   return(invisible(NULL))
@@ -31,13 +30,8 @@ cleanup_cluster <- function(pe, close = TRUE) {
   return(invisible(pe))
 }
 generate_environment_parallel <- function(envir_current,
-                                          type = NULL,
                                           seed = NULL) {
-  if (type == "testing") {
-    envir_used <- envir_current
-  } else if(type == "clean_run") {
-    envir_used <- new.env(parent = rlang::env_parents(environment())[[1]])
-  }
+  envir_used <- new.env(parent = rlang::env_parents(environment())[[1]])
   if (!is.null(seed)) {
     envir_used$settings_seed <- seed
     if(!is.null(seed$seed_all_init)) set.seed(seed$seed_all_init)

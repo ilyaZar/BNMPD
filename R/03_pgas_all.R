@@ -4,19 +4,7 @@
 #' bootstrap particle filter) can be a C++ or R function (copy paste or comment
 #' in/out the contents of \code{pgas_init()} and \code{pgas_run()}).
 #'
-#' @param pgas_model output from an BNMPDModel-class, specifically
-#' @param settings_type type of PGAS run as a character; can be of either
-#'   'testing' or 'clean_run' and determines the way the parallel execution
-#'   environment is set. For 'testing', \code{envir_par <- environment()} while
-#'   for 'clean_run'
-#'   \code{envir_par <- new.env(parent =rlang::env_parents(environment())[[1]])}
-#'   which is somewhat cleaner (e.g. this environment does not contain itself).
-#'   However, the seed generation differs so compatibility with older
-#'   PGAS-functions requires the 'testing' version and the same seed to lead the
-#'   exact same results. The 'clean_run' version should be preferable for real
-#'   PGAS runs on the cluster where the seed will differ anyway. Both versions
-#'   should lead the same results as the seed will not matter asymptotically
-#'   for the MCMC/SMC kernels of the Particle Gibbs.
+#' @param pgas_model output from an [BNMPD::ModelBNMPD()]-class, specifically
 #' @param settings_seed either NULL (then no seed settings are applied) or a
 #'    named list of up to 2 seeds (each being either \code{NULL} or an integer):
 #'    \itemize{
@@ -41,16 +29,14 @@
 #'   trajectories (SMC output)
 #' @export
 pgas <- function(pgas_model,
-                 settings_type = "clean_run",
                  settings_seed = NULL,
                  parallel = TRUE,
                  sim_type = "pmcmc",
                  mod_type = "empirical",
                  close_cluster = FALSE) {
-  check_settings_input(settings_type, sim_type, mod_type)
+  check_settings_input(sim_type, mod_type)
   # Initialize environment for parallel execution
   envir_par <- generate_environment_parallel(environment(),
-                                             type = settings_type,
                                              seed = settings_seed)
   # Initialize data containers and copy to environment used for parallel runs
   load_model(env_model = pgas_model, to_env = envir_par)
