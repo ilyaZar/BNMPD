@@ -31,7 +31,7 @@ Imports:
     yaml,
     jsonlite,
     snow,
-    parallel
+    rlecuyer
 Suggests:
     crayon,
     withr,
