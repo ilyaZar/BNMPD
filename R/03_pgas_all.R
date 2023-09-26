@@ -57,7 +57,6 @@ pgas <- function(pgas_model,
   arg_list_cluster_smc <- prepare_cluster(pe = envir_par, PARALLEL = parallel)
   # Run (P)MCMC loop
   if (sim_type == "pmcmc") {
-    browser()
     # 0. run cBPF and use output as first conditioning trajectory
     pgas_init(pe = envir_par,
               pc = arg_list_cluster_smc,
@@ -89,13 +88,14 @@ pgas <- function(pgas_model,
   return(out)
 }
 pgas_init <- function(pe, pc, mm = 1, RUN_PARALLEL = TRUE) {
-  browser()
   if (RUN_PARALLEL) {
     out_cpf <- do.call(parallel::clusterApply, pc)
   } else {
     out_cpf <- do.call(pc$fun, pc[-1])
   }
-  update_states <- update_states(pe, out_cpf, mm, CHECK_CL_ORDER = TRUE)
+  update_states <- update_states(pe, out_cpf, mm,
+                                 CLUSTER = RUN_PARALLEL,
+                                 CHECK_CL_ORDER = TRUE)
 
   progress_print(mm)
 }
@@ -106,7 +106,9 @@ pgas_run <- function(pe, pc, mm, RUN_PARALLEL = TRUE) {
   } else {
     out_cpf <- do.call(pc$fun, cl_arg_list[-1])
   }
-  update_states <- update_states(pe, out_cpf, mm, CHECK_CL_ORDER = FALSE)
+  update_states <- update_states(pe, out_cpf, mm,
+                                 CLUSTER = RUN_PARALLEL,
+                                 CHECK_CL_ORDER = FALSE)
 
   progress_print(mm)
 }

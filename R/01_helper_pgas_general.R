@@ -98,7 +98,6 @@ get_args_list_smc_internal <- function(pe, mm, PARALLEL = TRUE) {
     out$cl <- pe$cl
     out$x  <- pe$task_indices
   } else {
-    browser()
     out$id_parallelize <- seq_len(pe$NN)
   }
   if (pe$model_type_obs %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT")) {
@@ -555,8 +554,12 @@ prepare_cluster <- function(pe, mm = 1, PARALLEL = TRUE) {
 progress_print <- function(iter) {
   cat("cSMC iteration number:", iter, "\n")
 }
-update_states <- function(pe, cbpf_output, mm, CHECK_CL_ORDER = FALSE) {
-  cbpf_output <- unlist(cbpf_output, recursive = FALSE)
+update_states <- function(pe, cbpf_output, mm,
+                          CLUSTER = FALSE,
+                          CHECK_CL_ORDER = FALSE) {
+  if (CLUSTER) {
+    cbpf_output <- unlist(cbpf_output, recursive = FALSE)
+  }
   if (CHECK_CL_ORDER) {
     if (!identical(as.integer(names(cbpf_output)), 0:(pe$NN - 1))) {
       stop("Cluster does not return trajectories in correct order!")
