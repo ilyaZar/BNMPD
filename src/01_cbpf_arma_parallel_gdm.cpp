@@ -66,7 +66,7 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   // container due to varying component numbers in 1:DD per cross section
   arma::uvec dd_range_y;
   arma::uvec dd_range_x;
-  arma::uvec id_x_all = compute_id_x_all(DD2, N);
+  const arma::uvec id_x_all = compute_id_x_all(DD2, N);
   arma::uvec id_x_avl;
   // some miscellaneous containers
   arma::mat mean_diff(N, DD2, arma::fill::zeros);
