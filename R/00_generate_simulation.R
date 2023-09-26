@@ -347,4 +347,21 @@ copy_meta_files <- function(pth_to_project, project_name, TESTING = FALSE) {
   file.copy(from = file.path(tmp_root,
                              "inst/meta-sources/settings_project.yaml"),
             to = file.path(pth_to_project, "model", "settings"))
+  copy_bash_script_slurm(tmp_root, pth_to_project, project_name)
+}
+copy_bash_script_slurm <- function(pth_root, pth_project, nm_project) {
+  devel_sh <- readLines(
+  file.path(pth_root, "inst/meta-sources/runma_DEVEL.sh"))
+  devel_sh <- replace_sh(devel_sh, nm_project)
+  cheops_sh <- readLines(
+    file.path(pth_root, "inst/meta-sources/runma_CHEOPS.sh"))
+  cheops_sh <- replace_sh(cheops_sh, nm_project)
+  writeLines(devel_sh, file.path(pth_project, "runma_DEVEL.sh"))
+  writeLines(cheops_sh, file.path(pth_project, "runma_CHEOPS.sh"))
+}
+replace_sh <- function(file, nm_project) {
+  out_file <- gsub("<PATH_TO_MODEL>", nm_project, file)
+  gsub("<PATH_TO_SCRIPT.R>",
+       paste0("main_run_", nm_project, ".R"),
+       out_file)
 }
