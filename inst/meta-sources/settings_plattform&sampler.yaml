@@ -1,6 +1,6 @@
 LOCAL-CGS:
   num_cores: 6
-  cluster_type: PSOCK
+  cluster_type: SOCK
   num_particles: 12
   pmcmc_iterations: 500
   csmc_type: bpf

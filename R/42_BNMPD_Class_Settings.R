@@ -263,7 +263,7 @@ Settings <- R6::R6Class("Settings",
                           #'   \itemize{
                           #'   \item{\code{parallel:} run in parallel, yes/no}
                           #'   \item{\code{num_cores:} integer for no. of cores}
-                          #'   \item{\code{cluster_type:} PSOCK for internal,
+                          #'   \item{\code{cluster_type:} SOCK for internal,
                           #'   and MPI for cluster}
                           #'   \item{\code{num_particles:} integer for particle
                           #'   number}

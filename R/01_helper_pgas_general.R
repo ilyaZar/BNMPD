@@ -7,7 +7,7 @@ check_settings_input <- function(st_type, sm_type, md_type) {
 #' Performs a cluster cleanup
 #'
 #' This includes setting warning/error printing options back to original and
-#' closing cluster of type `PSOCK` or `MPI` if `close = TRUE`. The function
+#' closing cluster of type `SOCK` or `MPI` if `close = TRUE`. The function
 #' prints informative messages to the user too.
 #'
 #' @param pe the environment that contains the cluster object
@@ -21,7 +21,7 @@ cleanup_cluster <- function(pe, close = TRUE) {
   if (close) {
     if ("cl" %in% names(pe)) {
       cat("Closing cluster ... \n")
-      if(pe$cluster_type %in% c("PSOCK", "MPI")) snow::stopCluster(pe$cl)
+      if(pe$cluster_type %in% c("SOCK", "MPI")) snow::stopCluster(pe$cl)
       # if(pe$cluster_type == "MPI") Rmpi::mpi.exit()
       cat(paste0(pe$cluster_type, " cluster closed!\n"))
     }
@@ -543,10 +543,10 @@ generate_cnt_regs_beta <- function(DIST_SPECIAL, Z_beta, U_beta,
 prepare_cluster <- function(pe, mm = 1, PARALLEL = TRUE) {
   if (PARALLEL) {
     pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
-    pe$cl <- parallel::makeCluster(pe$num_cores, type = pe$cluster_type)
+    pe$cl <- snow::makeCluster(pe$num_cores, type = pe$cluster_type)
     if (!is.null(pe$settings_seed$seed_pgas_init)) {
       parallel::clusterSetRNGStream(pe$cl,
-                                  iseed = pe$settings_seed$seed_pgas_init)
+                                    iseed = pe$settings_seed$seed_pgas_init)
     }
   }
   get_args_list_smc_internal(pe, mm, PARALLEL = PARALLEL)
