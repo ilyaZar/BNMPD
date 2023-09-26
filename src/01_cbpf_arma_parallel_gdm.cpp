@@ -105,7 +105,7 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     // resampling
     a.col(0) = resample(w_norm, N, ID_AS_LNSPC);
     // propagation
-    mean_diff = bpf_propagate(N, DD, 0, 0, id_x_all, dd_range_x,
+    mean_diff = bpf_propagate(N, DD2, 0, 0, id_x_all, dd_range_x,
                               phi_x, sig_sq_x, Regs_beta,
                               xa, x_r, a.col(0));
     // conditioning
@@ -125,7 +125,7 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
       // resampling
       a.col(t) = resample(w_norm, N, ID_AS_LNSPC);
       // propagation
-      mean_diff = bpf_propagate(N, DD, t, t - 1, id_x_all, dd_range_x,
+      mean_diff = bpf_propagate(N, DD2, t, t - 1, id_x_all, dd_range_x,
                                 phi_x, sig_sq_x, Regs_beta,
                                 xa, x_r, a.col(t));
       // conditioning
