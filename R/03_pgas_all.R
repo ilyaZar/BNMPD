@@ -89,7 +89,7 @@ pgas <- function(pgas_model,
 }
 pgas_init <- function(pe, pc, mm = 1, RUN_PARALLEL = TRUE) {
   if (RUN_PARALLEL) {
-    out_cpf <- do.call(parallel::clusterApply, pc)
+    out_cpf <- do.call(snow::clusterApply, pc)
   } else {
     out_cpf <- do.call(pc$fun, pc[-1])
   }
@@ -102,7 +102,7 @@ pgas_init <- function(pe, pc, mm = 1, RUN_PARALLEL = TRUE) {
 pgas_run <- function(pe, pc, mm, RUN_PARALLEL = TRUE) {
   cl_arg_list   <- update_args_list_smc_internal(pe, pc, mm)
     if (RUN_PARALLEL) {
-    out_cpf <- do.call(parallel::clusterApply, cl_arg_list)
+    out_cpf <- do.call(snow::clusterApply, cl_arg_list)
   } else {
     out_cpf <- do.call(pc$fun, cl_arg_list[-1])
   }

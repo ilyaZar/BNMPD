@@ -542,14 +542,25 @@ generate_cnt_regs_beta <- function(DIST_SPECIAL, Z_beta, U_beta,
 }
 prepare_cluster <- function(pe, mm = 1, PARALLEL = TRUE) {
   if (PARALLEL) {
-    pe$task_indices <- parallel::splitIndices(pe$NN, ncl = pe$num_cores)
-    pe$cl <- snow::makeCluster(pe$num_cores, type = pe$cluster_type)
-    if (!is.null(pe$settings_seed$seed_pgas_init)) {
-      parallel::clusterSetRNGStream(pe$cl,
-                                    iseed = pe$settings_seed$seed_pgas_init)
-    }
+    pe$task_indices <- snow::splitIndices(pe$NN, ncl = pe$num_cores)
+    generate_cluster(pe)
   }
   get_args_list_smc_internal(pe, mm, PARALLEL = PARALLEL)
+}
+generate_cluster <- function(envir) {
+  ctype <- envir$cluster_type
+  cseed <- envir$settings_seed$seed_pgas_init
+  cores <- envir$num_cores
+
+  CL_EXISTS <- FALSE
+  if (ctype == "MPI") CL_EXISTS <- isFALSE(is.null(snow::getMPIcluster()))
+  if (CL_EXISTS) {
+    envir$cl <- snow::makeCluster()
+  } else {
+    envir$cl <- snow::makeCluster(cores, type = envir$cluster_type)
+  }
+  if (!is.null(cseed)) snow::clusterSetupRNGstream(envir$cl, seed = cseed)
+  return(invisible(TRUE))
 }
 progress_print <- function(iter) {
   cat("cSMC iteration number:", iter, "\n")
