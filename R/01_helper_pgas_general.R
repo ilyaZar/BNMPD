@@ -546,13 +546,17 @@ generate_cluster <- function(envir) {
   cseed <- envir$settings_seed$seed_pgas_init
   cores <- envir$num_cores
 
-  CL_EXISTS <- FALSE
-  if (ctype == "MPI") CL_EXISTS <- isFALSE(is.null(snow::getMPIcluster()))
-  if (CL_EXISTS) {
-    envir$cl <- snow::makeCluster()
-  } else {
-    envir$cl <- snow::makeCluster(cores, type = envir$cluster_type)
+  if (ctype == "MPI") {
+    CL_EXISTS <- isFALSE(is.null(snow::getMPIcluster()))
+    if (CL_EXISTS) {
+      envir$cl <- snow::makeCluster()
+    } else {
+      envir$cl <- snow::makeCluster(cores, type = envir$cluster_type)
+    }
+  } else if (ctype %in% c("SOCK", "PSOCK")) {
+    envir$cl <- parallel::makeCluster(cores, "PSOCK")
   }
+
   if (!is.null(cseed)) snow::clusterSetupRNGstream(envir$cl, seed = cseed)
   return(invisible(TRUE))
 }
