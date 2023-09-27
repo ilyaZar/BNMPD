@@ -463,7 +463,7 @@ generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
       prior_vcm_bet_u1[d]   <- dim_bet_u[d]
       dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u1[d]
 
-      vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_u_lin"]][[d]]
+      vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_bet_u"]][[d]]
 
       for (n in seq_len(NN)) {
         bet_u[id_betu_tmp, 1, n] <- par_init[["init_beta_u_lin"]][[d]][, n]
