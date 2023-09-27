@@ -303,11 +303,19 @@ ModelOut <- R6::R6Class("ModelOut",
                           },
                           get_init_sig_sq = function(sig_sq, num_mcmc, DD) {
                             if (is.null(sig_sq)) return(NA_real_)
-                            matrix(sig_sq[, num_mcmc], nrow = DD, ncol = 1)
+                            tmp_vals <- sig_sq[, num_mcmc, drop = FALSE]
+                            out <- matrix(tmp_vals, nrow = DD, ncol = 1)
+                            rownames(out) <- rownames(tmp_vals)
+                            colnames(out) <- colnames(tmp_vals)
+                            return(out)
                           },
                           get_init_phi = function(phi, num_mcmc, DD) {
                             if (is.null(phi)) return(NA_real_)
-                            matrix(phi[, num_mcmc], nrow = DD, ncol = 1)
+                            tmp_vals <- phi[, num_mcmc, drop = FALSE]
+                            out <- matrix(tmp_vals, nrow = DD, ncol = 1)
+                            rownames(out) <- rownames(tmp_vals)
+                            colnames(out) <- colnames(tmp_vals)
+                            return(out)
                           },
                           get_init_bet_z_lin = function(bet_z, num_mcmc, DD,
                                                         num_bet_z) {
@@ -322,7 +330,11 @@ ModelOut <- R6::R6Class("ModelOut",
                                                by = 1)
                               init_bet_z[[d]] <- bet_z[tmp_range, num_mcmc]
                             }
-                            init_bet_z
+                            names(init_bet_z) <- get_outer_init_nm(
+                              init_bet_z,
+                              type = "type_01"
+                            )
+                            return(init_bet_z)
                           },
                           get_init_bet_u_lin = function(bet_u, num_mcmc,
                                                         DD, NN, num_bet_u) {
@@ -334,6 +346,7 @@ ModelOut <- R6::R6Class("ModelOut",
                             for (d in 1:DD) {
                               init_bet_u[[d]] <- matrix(0, nrow = dim_uet[d],
                                                         ncol = NN)
+                              colnames(init_bet_u[[d]]) <- dimnames(bet_u)[[3]]
                               for (n in 1:NN) {
                                 tmp_range <- seq(from = dim_uet_id[d] + 1,
                                                  to = dim_uet_id[d + 1],
@@ -341,17 +354,49 @@ ModelOut <- R6::R6Class("ModelOut",
                                 init_bet_u[[d]][, n] <- bet_u[tmp_range,
                                                               num_mcmc, n]
                               }
+                              init_rnm <- names(bet_u[tmp_range, num_mcmc, 1])
+                              rownames(init_bet_u[[d]]) <- regmatches(
+                                init_rnm,
+                                regexpr("re.*$", init_rnm)
+                              )
                             }
+                            names(init_bet_u) <- get_outer_init_nm(
+                              bet_u[, 1, 1],
+                              type = "type_02"
+                            )
                             init_bet_u
                           },
                           get_init_vcm_bet_u = function(vcm, num_mcmc, DD) {
                             if (is.null(vcm)) return(NA_real_)
                             init_vcm_bet_u <- vector("list", DD)
                             for (d in 1:DD) {
-                              tmp_vcm <- vcm[[d]]
-                              init_vcm_bet_u[[d]] <- tmp_vcm[, , num_mcmc]
+                              init_vcm_bet_u[[d]] <- vcm[[d]][, , num_mcmc]
                             }
+                            names(init_vcm_bet_u) <- names(vcm)
                             init_vcm_bet_u
+                          },
+                          get_outer_init_nm = function(inits, type = NULL) {
+                            if(missing(type)) stop("Missing arg. 'type'.")
+                            if (type == "type_01") {
+                              lapply(
+                                inits,
+                                function(x) {
+                                  out_names <- names(x)[1]
+                                  regmatches(
+                                    out_names,
+                                    regexpr("[^_]*_[^_]*", out_names)
+                                  )
+                                }
+                              )
+                            } else if (type == "type_02") {
+                              unique(regmatches(
+                                names(inits),
+                                regexpr("[^_]*_[^_]*", names(inits))
+                              )
+                              )
+                            } else {
+                              stop("Unknown argument value for 'type'.")
+                            }
                           }
                         ),
                         public = list(
