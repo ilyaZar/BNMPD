@@ -291,7 +291,7 @@ ModelOut <- R6::R6Class("ModelOut",
                               num_mcmc,
                               DD, NN,
                               num_bet_u)
-                            par_inits$init_vcm_bet_u <- get_init_vcm_bet_u(
+                            par_inits$init_vcm_u_lin <- get_init_vcm_u_lin(
                               out$vcm_bet_u,
                               num_mcmc,
                               DD)
@@ -366,14 +366,14 @@ ModelOut <- R6::R6Class("ModelOut",
                             )
                             init_bet_u
                           },
-                          get_init_vcm_bet_u = function(vcm, num_mcmc, DD) {
+                          get_init_vcm_u_lin = function(vcm, num_mcmc, DD) {
                             if (is.null(vcm)) return(NA_real_)
-                            init_vcm_bet_u <- vector("list", DD)
+                            init_vcm_u_lin <- vector("list", DD)
                             for (d in 1:DD) {
-                              init_vcm_bet_u[[d]] <- vcm[[d]][, , num_mcmc]
+                              init_vcm_u_lin[[d]] <- vcm[[d]][, , num_mcmc]
                             }
-                            names(init_vcm_bet_u) <- names(vcm)
-                            init_vcm_bet_u
+                            names(init_vcm_u_lin) <- names(vcm)
+                            init_vcm_u_lin
                           },
                           get_outer_init_nm = function(inits, type = NULL) {
                             if(missing(type)) stop("Missing arg. 'type'.")
