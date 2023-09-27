@@ -1,4 +1,4 @@
-library(parallel)
+library(snow)
 library(Rmpi)
 library(BNMPD)
 
