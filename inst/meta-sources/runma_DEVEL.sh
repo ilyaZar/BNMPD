@@ -14,7 +14,7 @@
 module load gnu/9.4.0
 module use /opt/rrzk/modules/special
 module load openmpi/4.1.1_mpirun
-module load R/4.1.3_system
+module load R/4.3.1_system
 
 export PATH=$PATH:$HOME/R_libs/snow
 
