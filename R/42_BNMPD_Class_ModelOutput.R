@@ -286,7 +286,7 @@ ModelOut <- R6::R6Class("ModelOut",
                               num_mcmc,
                               DD,
                               num_bet_z)
-                            par_inits$init_bet_u <- get_init_bet_u_lin(
+                            par_inits$init_beta_u_lin <- get_init_bet_u_lin(
                               out$bet_u,
                               num_mcmc,
                               DD, NN,
