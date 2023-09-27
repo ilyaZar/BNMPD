@@ -427,8 +427,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               private$.ModelDat$get_model_data_internal()
                             },
                             #' @description Returns label names and parameters
-                            #'   as required by
-                            #'   [pmcmcDiagnostics::analyse_mcmc_convergence2()]
+                            #'   as required by e.g.
+                            #'   `pmcmcDiagnostics::analyse_mcmc_convergence2()]`
                             #'
                             #' @details pass return value to above function as
                             #'   argument \code{model_meta}
