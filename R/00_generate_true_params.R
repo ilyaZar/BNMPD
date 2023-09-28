@@ -366,6 +366,7 @@ get_params <- function(true_params, n = NULL, DD = NULL,
 #' @export
 set_params <- function(true_params, name_par, values, DD_TYPE = NULL) {
   check_class_true_params(true_params)
+  dist_tmp <- get_distribution(true_params)
   true_params2 <- true_params
   if (name_par == "sig_sq") {
     stopifnot(`Arg. "values" must be scalar for sig_sq` = length(values) == 1)
@@ -373,22 +374,72 @@ set_params <- function(true_params, name_par, values, DD_TYPE = NULL) {
   }
   if (name_par == "phi") {
     stopifnot(`Arg. "values" must be scalar for phi` = length(values) == 1)
-    true_params2[["phi"]][] <- lapply(true_params2[["phi"]],
-                                      function(x) {y <- x; y[] <- values; y})
+    if (dist_tmp %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+      for (type in c("A", "B")) {
+        true_params2[["phi"]][[type]][] <- lapply(true_params[["phi"]][[type]],
+                                                  function(x) {
+                                                    y <- x
+                                                    y[] <- values
+                                                    y
+                                                  }
+                                            )
+      }
+    } else {
+      true_params2[["phi"]][] <- lapply(true_params2[["phi"]],
+                                        function(x) {
+                                          y <- x
+                                          y[] <- values
+                                          y
+                                        }
+                                  )
+    }
   }
   if (name_par == "beta_z_lin") {
     stopifnot(`Arg. "values" must be scalar for bet_z_lin` = length(values) == 1)
-    true_params2[["beta_z_lin"]][] <- lapply(true_params2[["beta_z_lin"]],
-                                             function(x) {y <- x; y[] <- values; y})
+    if (dist_tmp %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+      for (type in c("A", "B")) {
+      true_params2[["beta_z_lin"]][[type]][] <- lapply(true_params2[["beta_z_lin"]][[type]],
+                                               function(x) {
+                                                 y <- x
+                                                 y[] <- values
+                                                 y
+                                                }
+                                        )
+      }
+    } else {
+      true_params2[["beta_z_lin"]][] <- lapply(true_params2[["beta_z_lin"]],
+                                               function(x) {
+                                                 y <- x
+                                                 y[] <- values
+                                                 y
+                                                }
+                                        )
+    }
   }
   if (name_par == "beta_u_lin") {
     stopifnot(`Arg. "values" must be scalar for bet_u_lin` = length(values) == 1)
-    true_params2[["beta_u_lin"]][] <- lapply(true_params2[["beta_u_lin"]],
-                                             function(x) {y <- x; y[] <- values; y})
+    if (dist_tmp %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+      for (type in c("A", "B")) {
+        true_params2[["beta_u_lin"]][[type]][] <- lapply(true_params2[["beta_u_lin"]][[type]],
+                                                 function(x) {
+                                                   y <- x
+                                                   y[] <- values
+                                                   y
+                                                  }
+                                           )
+      }
+    } else {
+      true_params2[["beta_u_lin"]][] <- lapply(true_params2[["beta_u_lin"]],
+                                               function(x) {
+                                                 y <- x
+                                                 y[] <- values
+                                                 y
+                                                }
+                                        )
+    }
   }
   if (name_par == "vcm_u_lin") {
     stopifnot(`Arg. "values" must be length = 2 for vcm_u_lin` = length(values) == 2)
-    dist_tmp <- get_distribution(true_params)
     if (dist_tmp %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
       for (type in c("A", "B")) {
         true_params2[["vcm_u_lin"]][[type]][] <- lapply(true_params2[["vcm_u_lin"]][[type]],
@@ -408,7 +459,6 @@ set_params <- function(true_params, name_par, values, DD_TYPE = NULL) {
                                                 y}
       )
     }
-
   }
   return(true_params2)
 }
