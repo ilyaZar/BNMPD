@@ -287,18 +287,41 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                      private$.pth_to_initsset,
                                                      private$.pth_to_projsets)
 
-                              private$.states_init <- read_rds(
-                                pth_states_init
+                              # browser()
+                              private$.states_init <- read_simul_inits(
+                                pth_to_inits = pth_states_init,
+                                fail_type = "HARD"
                               )
-                              private$.states_true <- read_rds(
-                                pth_states_true
+                              private$.states_true <- read_simul_inits(
+                                pth_to_inits = pth_states_true,
+                                fail_type = "SOFT"
                               )
-                              private$.params_true <- read_rds(
-                                pth_params_true
+                              private$.params_init <- read_simul_inits(
+                                pth_to_inits = pth_params_init,
+                                fail_type = "HARD"
                               )
-                              private$.params_init <- read_rds(
-                                pth_params_init
+                              private$.params_true <- read_simul_inits(
+                                pth_to_inits = pth_params_true,
+                                fail_type = "SOFT"
                               )
+                            },
+                            read_simul_inits = function(pth_to_inits, fail_type) {
+                              msg1 <- NULL
+                              msg2 <- NULL
+                              out <- read_rds(pth_to_inits)
+                              if (is.null(pth_to_inits)) {
+                                msg1 <- "Path to inits (states/params) is NULL."
+                              }
+                              if (is.null(out)) {
+                                msg2 <- "Init-vals (states/params) are NULL."
+                              }
+                              if (fail_type == "HARD") {
+                                if (isFALSE(is.null(msg1))) stop(msg1)
+                                if (isFALSE(is.null(msg2))) stop(msg2)
+                              } else if (fail_type == "SOFT") {
+                                if (isFALSE(is.null(msg1))) warning(msg1)
+                                if (isFALSE(is.null(msg2))) warning(msg2)
+                              }
                             }
                           ),
                           public = list(
@@ -366,8 +389,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                  path_to_params_init,
                                                  path_to_params_true)
                               generate_setup_init_json(
-                                    private$.params_init,
-                                    private$.pth_to_proj)
+                                private$.params_init,
+                                private$.pth_to_proj)
 
                               private$.DataSet  <- DataSet$new(
                                 private$.pth_to_data)
