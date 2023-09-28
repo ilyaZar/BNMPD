@@ -322,6 +322,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 if (isFALSE(is.null(msg1))) warning(msg1)
                                 if (isFALSE(is.null(msg2))) warning(msg2)
                               }
+                              return(out)
                             }
                           ),
                           public = list(
