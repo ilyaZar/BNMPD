@@ -158,7 +158,7 @@ dir_proj_top_level_update <- function(pth_top_lvl, overwrite) {
   } else if (isTRUE(overwrite)) {
     if (dir.exists(pth_top_lvl)) {
       unlink(pth_top_lvl, recursive = TRUE)
-      cat(crayon::magenta(paste0("Overwriting project structure in: ",
+      cat(crayon::magenta(paste0("\n", "Overwriting project structure in: ",
                                  pth_top_lvl, "\n")))
     }
   }
