@@ -290,7 +290,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               # browser()
                               private$.states_init <- read_simul_inits(
                                 pth_to_inits = pth_states_init,
-                                fail_type = "HARD"
+                                fail_type = "SOFT"
                               )
                               private$.states_true <- read_simul_inits(
                                 pth_to_inits = pth_states_true,
@@ -298,7 +298,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               )
                               private$.params_init <- read_simul_inits(
                                 pth_to_inits = pth_params_init,
-                                fail_type = "HARD"
+                                fail_type = "SOFT"
                               )
                               private$.params_true <- read_simul_inits(
                                 pth_to_inits = pth_params_true,
