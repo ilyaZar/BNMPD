@@ -54,7 +54,7 @@ generate_normal_obs <- function(x, out_data) {
 generate_multinomial_obs <- function(x, NN, TT, DD, out_data) {
   for (n in 1:NN) {
     if (any(x[, , n] == 0)) {
-      browser()
+      # browser()
       out_data[["part1"]][, , n] <- 0
       out_data[["part2"]][, n]   <- 0
       return(out_data)
@@ -92,7 +92,7 @@ generate_gen_dirichlet_obs <- function(x, NN, TT, DD, out_data) {
     xa <- x[, grepl("A", colnames(x)), , drop = FALSE]
     xb <- x[, grepl("B", colnames(x)), , drop = FALSE]
     if (any(xa[, , n] == 0) && all(xb[, , n] == 0)) {
-      browser()
+      # browser()
       out_data[["part1"]][, , n] <- 0
       return(out_data)
     }
@@ -129,7 +129,7 @@ generate_gen_dirichlet_mult_obs <- function(x, NN, TT, DD, out_data) {
     xa <- x[, grepl("A", colnames(x)), , drop = FALSE]
     xb <- x[, grepl("B", colnames(x)), , drop = FALSE]
     if (any(xa[, , n] == 0) && all(xb[, , n] == 0)) {
-      browser()
+      # browser()
       out_data[["part1"]][, , n] <- 0
       out_data[["part2"]][, n]   <- 0
       return(out_data)
