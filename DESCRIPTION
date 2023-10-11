@@ -20,6 +20,7 @@ Depends:
     R (>= 3.5)
 Imports:
     stats,
+    abind,
     MASS,
     MGLM,
     utils,
