@@ -1,38 +1,38 @@
 #include "01_cbpf_arma.h"
 //' Runs a parallel version of the conditional SMC/BPF for the Dir. Mult. model
- //'
- //' Runs a conditional bootstrap particle filter with ancestor sampling and arma
- //' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
- //' e.g. called via \code{pgas_arma()}.
- //'
- //' @param id_parallelize parallelization ID as an \code{IntegerVector}:
- //'   determines along which cross sectional components to run the cSMC
- //'   samplers: this is passed from the \code{x}-argument of
- //'   \code{paralllel::clusterApply()}, called within the PGAS code, to this
- //'   function so it knows along which cross sectional unit it has to slice the
- //'   data \code{y_all, num_counts_all, regs_beta_all, x_r_all}
- //' @param nn_list_dd a list of length \code{NN} with indices of multivariate
- //'    components (a subset of \code{d=1,...,DD}) used for state filtering
- //' @param N number of particles
- //' @param TT time series dimension
- //' @param DD multivariate dimension (number of dirichlet-mult. categories)
- //' @param y_all measurements: dirichlet-multinomial counts
- //' @param num_counts_all measurements: dirichlet-multinomial total counts per
- //'   time period (\code{T}-dimensional vector)
- //' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
- //'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
- //' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
- //' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
- //'   latent state process
- //' @param x_r_all reference/conditioning trajectory
- //'
- //' @return arma::matrix of DD components: DD columns are
- //'   \code{NxTT}-dimensional matrices each containing the conditional BPF
- //'   output per d'th component
- //' @export
- //'
- //[[Rcpp::export]]
- Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_parallelize,
+//'
+//' Runs a conditional bootstrap particle filter with ancestor sampling and arma
+//' randon numbers (see the use of arma::randn()). Used within a PGAS procedure
+//' e.g. called via \code{pgas_arma()}.
+//'
+//' @param id_parallelize parallelization ID as an \code{IntegerVector}:
+//'   determines along which cross sectional components to run the cSMC
+//'   samplers: this is passed from the \code{x}-argument of
+//'   \code{paralllel::clusterApply()}, called within the PGAS code, to this
+//'   function so it knows along which cross sectional unit it has to slice the
+//'   data \code{y_all, num_counts_all, regs_beta_all, x_r_all}
+//' @param nn_list_dd a list of length \code{NN} with indices of multivariate
+//'    components (a subset of \code{d=1,...,DD}) used for state filtering
+//' @param N number of particles
+//' @param TT time series dimension
+//' @param DD multivariate dimension (number of dirichlet-mult. categories)
+//' @param y_all measurements: dirichlet-multinomial counts
+//' @param num_counts_all measurements: dirichlet-multinomial total counts per
+//'   time period (\code{T}-dimensional vector)
+//' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
+//'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
+//' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
+//' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
+//'   latent state process
+//' @param x_r_all reference/conditioning trajectory
+//'
+//' @return arma::matrix of DD components: DD columns are
+//'   \code{NxTT}-dimensional matrices each containing the conditional BPF
+//'   output per d'th component
+//' @export
+//'
+//[[Rcpp::export]]
+Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                               const Rcpp::List& nn_list_dd,
                               const int& N,
                               const int& TT,
