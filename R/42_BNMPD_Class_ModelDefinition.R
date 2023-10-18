@@ -605,7 +605,6 @@ ModelDef <- R6::R6Class("ModelDef",
                           #' @description Get dimension of data/model.
                           get_dimension = function() {
                             private$.dimension
-
                           }
                         )
 )
