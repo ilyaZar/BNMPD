@@ -323,6 +323,20 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 if (isFALSE(is.null(msg2))) warning(msg2)
                               }
                               return(out)
+                            },
+                            get_labnam_tmp_pars = function() {
+                              if (is.null(private$.params_init)) {
+                                tmp_pars <- private$.ModelDat$get_model_inits_start()[["par_init"]]
+                              } else {
+                                tmp_pars <- private$.params_init
+                              }
+                              names(which(sapply(tmp_pars,
+                                                 function(x) {
+                                                   !is.null(x)
+                                                  }
+                                                 )
+                                          )
+                                    )
                             }
                           ),
                           public = list(
@@ -450,96 +464,134 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             get_data_internal = function() {
                               private$.ModelDat$get_model_data_internal()
                             },
-                            #' @description Returns label names and parameters
-                            #'   as required by e.g.
+                            #' @description Returns labels and names of
+                            #'   parameters as required by e.g.
                             #'   `pmcmcDiagnostics::analyse_mcmc_convergence2()]`
                             #'
                             #' @details pass return value to above function as
                             #'   argument \code{model_meta}
                             get_par_label_names = function() {
-                              if (is.null(private$.params_init)) {
-                                tmp_pars <- private$.ModelDat$get_model_inits_start()[["par_init"]]
-                              } else {
-                                tmp_pars <- private$.params_init
-                              }
-                              tmp_pars <- which(sapply(tmp_pars,
-                                                       function(x) {
-                                                         !is.null(x)
-                                                       }
-                              )
-                              )
-                              tmp_pars <- names(tmp_pars)
-
+                              tmp_pars <- private$get_labnam_tmp_pars()
                               dims <- private$.ModelDef$get_dimension()
                               NN_tmp <- dims[1]
-                              DD_tmp <- dims[3]
+                              CHECK_SPECIAL_DIST <- check_special_dist_quick(
+                                private$.model_type_obs
+                              )
+                              if(isTRUE(CHECK_SPECIAL_DIST)) {
+                                DD_tmp <- get_DD2(
+                                  tolower(private$.model_type_obs),
+                                  dims[3]
+                                )
+                              } else {
+                                DD_tmp <- dims[3]
+                              }
+                              dd_seq_names <- dd_names_formatter2(
+                                CHECK_SPECIAL_DIST,
+                                DD_tmp
+                              )
                               if (any(grepl("sig_sq", tmp_pars))) {
-                                sig_sq <- paste0("sig_sq_x_", 1:DD_tmp)
+                                sig_sq <- paste0("sig_sq_x_", dd_seq_names)
                               } else {
                                 sig_sq <- NULL
                               }
                               if (any(grepl("phi", tmp_pars))) {
                                 order_p <- private$get_order_p()
-                                phi <- paste0(paste0("phi_x_", 1:order_p),
-                                              rep(1:DD_tmp, each = order_p))
+                                phi <- paste0(paste0("phi_x_", 1:order_p, "_"),
+                                              rep(dd_seq_names, each = order_p))
                               } else {
                                 phi <- NULL
                               }
-                              if (any(grepl("z", tmp_pars))) {
-                                var_bet_z <-private$.ModelDef$get_var_z()
-                                lab_bet_z <-private$.ModelDef$get_lab_z()
+                              if (any(grepl("beta_z_lin", tmp_pars))) {
+                                lab_bet_z <- character(0)
+                                var_bet_z <- character(0)
+                                bet_z_var <-private$.ModelDef$get_var_z()
+                                bet_z_lab <-private$.ModelDef$get_lab_z()
+                                for (d in seq_len(DD_tmp)) {
+                                  tmp_var <- paste0(
+                                    names(bet_z_var[d]),
+                                    "_",
+                                    bet_z_var[[d]]
+                                  )
+                                  tmp_lab <- paste0(
+                                    names(bet_z_lab[d]),
+                                    "_",
+                                    bet_z_lab[[d]]
+                                  )
+                                  var_bet_z <- c(var_bet_z, tmp_var)
+                                  lab_bet_z <- c(lab_bet_z, tmp_lab)
+                                }
                               } else {
                                 var_bet_z <- NULL
                                 lab_bet_z <- NULL
                               }
-                              if (any(grepl("u", tmp_pars))) {
+                              if (any(grepl("beta_u_lin", tmp_pars))) {
                                 bet_u_var <-private$.ModelDef$get_var_u()
                                 bet_u_lab <-private$.ModelDef$get_lab_u()
-                                num_re_tmp <- length(bet_u_var[[1]])
                                 lab_bet_u <- character(0)
                                 var_bet_u <- character(0)
-                                for(d in 1:DD_tmp) {
-                                  lab_bet_u <- c(lab_bet_u,
-                                                 unlist(lapply(bet_u_lab[[d]],
-                                                               function(x){
-                                                                 paste0(x, "_", 1:NN_tmp)
-                                                               }
-                                                 )
-                                                 )
+                                var_vcm_u <- character(0)
+                                lab_vcm_u <- character(0)
+                                for(d in seq_len(DD_tmp)) {
+                                  tmp_var <- unlist(
+                                    lapply(
+                                      paste0(
+                                        names(bet_u_lab[d]),
+                                        "_",
+                                        bet_u_lab[[d]]
+                                      ),
+                                      function(x) {
+                                        paste0(x, "_", 1:NN_tmp)
+                                      }
+                                    )
                                   )
-                                  var_bet_u <- c(var_bet_u,
-                                                 unlist(lapply(bet_u_var[[d]],
-                                                               function(x){
-                                                                 paste0(x, "_", 1:NN_tmp)
-                                                               }
-                                                 )
-                                                 )
+                                  tmp_lab <- unlist(
+                                    lapply(
+                                      paste0(
+                                        names(bet_u_lab[d]),
+                                        "_",
+                                        bet_u_lab[[d]]
+                                      ),
+                                      function(x) {
+                                        paste0(x, "_", 1:NN_tmp)
+                                      }
+                                    )
                                   )
+                                  var_bet_u <- c(var_bet_u, tmp_var)
+                                  lab_bet_u <- c(lab_bet_u, tmp_lab)
+
+                                  num_re_tmp   <- length(bet_u_var[[d]])
+                                  vcm_elements <- paste0("vcm_bet_u_",
+                                                         rep(1:(num_re_tmp^2),
+                                                             times = DD_tmp))
+                                  vcm_elements <- paste0(
+                                    names(bet_u_lab[d]),
+                                    "_vcm_bet_u_",
+                                    bet_u_lab[[d]], "_",
+                                    formatC(
+                                      seq_len(num_re_tmp^2),
+                                      width = 2,
+                                      format = "d",
+                                      flag = "0")
+                                  )
+                                  var_vcm_u <- c(var_vcm_u, vcm_elements)
+                                  lab_vcm_u <- c(lab_vcm_u, vcm_elements)
                                 }
                               } else {
                                 lab_bet_u <- NULL
                                 var_bet_u <- NULL
-                              }
-                              if (any(grepl("vcm", tmp_pars))) {
-                                vcm_elements <- paste0("vcm_bet_u_",
-                                                       rep(1:(num_re_tmp^2),
-                                                           times = DD_tmp))
-                                vcm_bet_u <- paste0(vcm_elements,
-                                                    rep(1:DD_tmp,
-                                                        each = (num_re_tmp^2)))
-                              } else {
-                                vcm_bet_u <- NULL
+                                var_vcm_u <- NULL
+                                lab_vcm_u <- NULL
                               }
                               lab_names <- list(sig_sq_x = sig_sq,
                                                 phi_x = phi,
                                                 bet_z = lab_bet_z,
                                                 bet_u = lab_bet_u,
-                                                vcm_bet_u = vcm_bet_u)
+                                                vcm_bet_u = lab_vcm_u)
                               par_names <- list(sig_sq_x = sig_sq,
                                                 phi_x = phi,
                                                 bet_z = var_bet_z,
                                                 bet_u = var_bet_u,
-                                                vcm_bet_u = vcm_bet_u)
+                                                vcm_bet_u = var_vcm_u)
                               idtaken   <- which(sapply(lab_names,
                                                         function(x){
                                                           !is.null(x)
