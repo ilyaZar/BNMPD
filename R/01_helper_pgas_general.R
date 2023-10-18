@@ -629,16 +629,15 @@ dd_names_formatter <- function(DIST_SPECIAL, DD) {
 }
 dd_names_formatter2 <- function(DIST_SPECIAL, DD) {
   if (isFALSE(DIST_SPECIAL)) {
-    dd_seq <- paste0("DD_", seq_len(DD))
+     paste0("DD_", seq_len(DD))
   } else if(isTRUE(DIST_SPECIAL)) {
     dd_seq <- formatC(
       rep(seq_len(DD / 2), each = 2),
       width = 2,
       format = "d",
       flag = "0")
-    dd_seq <- paste0(c("DA_", "DB_"), dd_seq)
+    paste0(c("DA_", "DB_"), dd_seq)
   }
-  return(dd_seq)
 }
 dd_kk_names_formatter <- function(DIST_SPECIAL, DD, num_regs, prefix_reg) {
   paste0(
