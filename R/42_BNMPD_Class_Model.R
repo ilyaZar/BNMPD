@@ -677,15 +677,26 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   parts or by iteration from saved outputs under
                             #'   \code{./model/output/...}
                             #'
+                            #' @param OUT_STATES `logical`, if `TRUE` states are
+                            #'   connected along sub-outputs and returned
+                            #' @param OUT_PARAMS `logical`, if `TRUE` MCMC
+                            #'   parameters are connected along sub-outputs and
+                            #'   returned
                             #' @param range_iter integer sequence as defined in
                             #'   \code{ModelOut$get_model_output()}[ModelOut]
                             #' @param range_parts integer sequence as defined in
                             #'   \code{ModelOut$get_model_output()}[ModelOut]
                             #'
-                            get_model_output = function(range_iter = NULL,
+                            get_model_output = function(OUT_STATES = TRUE,
+                                                        OUT_PARAMS = TRUE,
+                                                        range_iter = NULL,
                                                         range_parts = NULL) {
-                              private$.ModelOut$get_model_output(range_iter,
-                                                                 range_parts)
+                              private$.ModelOut$get_model_output(
+                                OUT_STATES,
+                                OUT_PARAMS,
+                                range_iter,
+                                range_parts
+                              )
                             },
                             #' @description Sets initialization parameters.
                             #'
