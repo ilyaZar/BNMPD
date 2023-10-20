@@ -21,7 +21,9 @@ ModelOut <- R6::R6Class("ModelOut",
                           .new_out_elem = NULL,
                           .inits_start  = NULL,
                           .md_out_inits = NULL,
-                          join_outputs = function(outs) {
+                          join_outputs = function(outs,
+                                                  OUT_STATES = TRUE,
+                                                  OUT_PARAMS = TRUE) {
                             # for all outputs (results of PGAS runs):
                             # check if number of elements are all equal
                             # check if names are all equal
@@ -34,35 +36,47 @@ ModelOut <- R6::R6Class("ModelOut",
                             if (nums == 0) return(NULL)
                             if (nums == 1) return(jnd_out)
                             for (i in 2:(nums)) {
-                              jnd_out$sig_sq_x <- jn_sig_sq(jnd_out$sig_sq_x,
-                                                            outs[[i]]$sig_sq_x)
-                              jnd_out$phi_x <- jn_phi_x(jnd_out$phi_x,
-                                                        outs[[i]]$phi_x)
-                              jnd_out$bet_z <- jn_bet_z(jnd_out$bet_z,
-                                                        outs[[i]]$bet_z)
-                              jnd_out$bet_u <- jn_bet_u(jnd_out$bet_u,
-                                                        outs[[i]]$bet_u)
-                              jnd_out$vcm_bet_u <- jn_vcm(jnd_out$vcm_bet_u,
-                                                          outs[[i]]$vcm_bet_u)
-                              jnd_out$x <- jn_states(jnd_out$x,
-                                                     outs[[i]]$x)
                               cat(paste(crayon::yellow("Joining parts:"),
                                         crayon::blue(i - 1),
                                         "and",
                                         crayon::blue(i),
                                         crayon::yellow("...\n")))
+                              if (isTRUE(OUT_PARAMS)) {
+                                jnd_out$sig_sq_x <- jn_sig_sq(
+                                  jnd_out$sig_sq_x,
+                                  outs[[i]]$sig_sq_x)
+                                jnd_out$phi_x <- jn_phi_x(
+                                  jnd_out$phi_x,
+                                  outs[[i]]$phi_x)
+                                jnd_out$bet_z <- jn_bet_z(
+                                  jnd_out$bet_z,
+                                  outs[[i]]$bet_z)
+                                jnd_out$bet_u <- jn_bet_u(
+                                  jnd_out$bet_u,
+                                  outs[[i]]$bet_u)
+                                jnd_out$vcm_bet_u <- jn_vcm(
+                                  jnd_out$vcm_bet_u,
+                                  outs[[i]]$vcm_bet_u)
+                              }
+                              if (isTRUE(OUT_STATES)) {
+                                jnd_out$x <- jn_states(jnd_out$x, outs[[i]]$x)
+                              }
                             }
                             for (tmp_names in names(jnd_out)) {
                               if (all(is.na(jnd_out[tmp_names]))) {
                                 jnd_out[tmp_names] <- list(NULL)
                               }
                             }
-                            jnd_out$meta_info$MM <- sum(sapply(outs,
-                                                               function(x) {
-                                                                 x$meta_info$MM
-                                                               }
-                            )
-                            )
+                            if (isTRUE(OUT_STATES)) {
+                              jnd_out$meta_info$MM <- sum(
+                                sapply(outs, function(x) {
+                                  x$meta_info$MM
+                                  }
+                                )
+                              )
+                            } else {
+                              jnd_out$meta_info$MM <- ncol(jnd_out$sig_sq_x)
+                            }
                             cat(crayon::magenta("ALL JOINS SUCCESSFUL.\n"))
                             return(jnd_out)
                           },
@@ -456,11 +470,18 @@ ModelOut <- R6::R6Class("ModelOut",
                           #'   both arguments are `NULL` a full join is
                           #'   performed which can be time-consuming
                           #'
+                          #' @param OUT_STATES `logical`, if `TRUE` states are
+                          #'   connected along sub-outputs and returned
+                          #' @param OUT_PARAMS `logical`, if `TRUE` MCMC
+                          #'   parameters are connected along sub-outputs and
+                          #'   returned
                           #' @param range_iter integer vector giving the
                           #'   iteration ranges
                           #' @param range_parts integer vector giving the
                           #'   iteration parts
-                          get_model_output = function(range_iter = NULL,
+                          get_model_output = function(OUT_STATES = TRUE,
+                                                      OUT_PARAMS = TRUE,
+                                                      range_iter = NULL,
                                                       range_parts = NULL) {
                             if (!is.null(range_iter) && !is.null(range_parts)) {
                               msg <- paste0("BNMPD: ",
@@ -484,13 +505,24 @@ ModelOut <- R6::R6Class("ModelOut",
                                         crayon::blue(i), "-",
                                         crayon::green(basename(tmpfn)),
                                         "! \n"))
+                              if (isFALSE(OUT_STATES)) {
+                                tmp1[[i]]$x <- NULL
+                              }
+                              if (isFALSE(OUT_PARAMS)) {
+                                id_states <- which(names(tmp1[[i]]) == "x")
+                                tmp1[[i]] <- tmp1[[i]][id_states]
+                              }
                             }
                             if (is.null(range_iter) && is.null(range_parts)) {
-                              out_all <- private$join_outputs(tmp1)
+                              out_all <- private$join_outputs(tmp1,
+                                                              OUT_STATES,
+                                                              OUT_PARAMS)
                               return(out_all)
                             } else if (!is.null(range_iter) &&
                                        is.null(range_parts)) {
-                              out_all <- private$join_outputs(tmp1)
+                              out_all <- private$join_outputs(tmp1,
+                                                              OUT_STATES,
+                                                              OUT_PARAMS)
                               out <- private$get_iter_out(out_all, range_iter)
                             } else if (is.null(range_iter) &&
                                        !is.null(range_parts)) {
