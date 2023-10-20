@@ -70,7 +70,7 @@ ModelOut <- R6::R6Class("ModelOut",
                             if (isTRUE(OUT_STATES)) {
                               jnd_out$meta_info$MM <- sum(
                                 sapply(outs, function(x) {
-                                  x$meta_info$MM
+                                  dim(x$x)[3]
                                   }
                                 )
                               )
@@ -174,7 +174,8 @@ ModelOut <- R6::R6Class("ModelOut",
                           #                      check.attributes = FALSE)
                           #   stopifnot(`Joins for 'vcm' not identical` = check)
                           # },
-                          get_range_out = function(out_all, range_parts) {
+                          get_range_out = function(out_all, range_parts,
+                                                   OUT_STATES, OUT_PARAMS) {
                             range_all <- seq_len(private$.num_out)
                             if (!all(range_parts %in% range_all)) {
                               msg <- paste0("`range_parts` out of bounds; ",
@@ -183,8 +184,9 @@ ModelOut <- R6::R6Class("ModelOut",
                                             "join.")
                               stop(msg)
                             }
-                            tmp <- out_all[range_parts]
-                            out_parts <- private$join_outputs(tmp)
+                            out_parts <- private$join_outputs(out_all,
+                                                              OUT_STATES,
+                                                              OUT_PARAMS)
                             return(out_parts)
                           },
                           get_iter_out = function(out_all, range_iter) {
@@ -497,12 +499,26 @@ ModelOut <- R6::R6Class("ModelOut",
                                 " does not have any output files.")
                               stop(msg)
                             }
-                            tmp1 <- vector("list", private$.num_out)
-                            for (i in 1:private$.num_out) {
-                              tmpfn <- private$.pth_to_md_outs[[i]]
+
+                            if (is.null(range_parts)) {
+                              sout <- seq_len(private$.num_out)
+                            } else {
+                              checkr <- max(range_parts) <= private$.num_out
+                              checkr <- c(checkr, min(range_parts) >= 1)
+                              checkr <- all(checkr)
+                              if (isFALSE(checkr)) {
+                                stop("Argument `check_range` misspecified.")
+                              } else {
+                                sout <- range_parts
+                              }
+                            }
+
+                            tmp1 <- vector("list", length(sout))
+                            for (i in seq_along(sout)) {
+                              tmpfn <- private$.pth_to_md_outs[[sout[i]]]
                               tmp1[[i]] <- readRDS(tmpfn)
                               cat(paste(crayon::yellow("Loading output part:"),
-                                        crayon::blue(i), "-",
+                                        crayon::blue(sout[i]), "-",
                                         crayon::green(basename(tmpfn)),
                                         "! \n"))
                               if (isFALSE(OUT_STATES)) {
@@ -526,7 +542,10 @@ ModelOut <- R6::R6Class("ModelOut",
                               out <- private$get_iter_out(out_all, range_iter)
                             } else if (is.null(range_iter) &&
                                        !is.null(range_parts)) {
-                              out <- private$get_range_out(tmp1, range_parts)
+                              out <- private$get_range_out(tmp1,
+                                                           range_parts,
+                                                           OUT_STATES,
+                                                           OUT_PARAMS)
                             }
                             return(out)
                           }
