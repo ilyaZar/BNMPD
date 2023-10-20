@@ -74,8 +74,10 @@ ModelOut <- R6::R6Class("ModelOut",
                                   }
                                 )
                               )
+                              class(jnd_out) <- "pmcmc"
                             } else {
                               jnd_out$meta_info$MM <- ncol(jnd_out$sig_sq_x)
+                              class(jnd_out) <- "mcmc"
                             }
                             cat(crayon::magenta("ALL JOINS SUCCESSFUL.\n"))
                             return(jnd_out)
