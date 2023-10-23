@@ -11,3 +11,4 @@
 ^inst/generate-artificial-datasets$
 ^inst/simulation-studies$
 ^docs$
+bnmp_download_and_merge.sh

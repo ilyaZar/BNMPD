@@ -29,3 +29,4 @@
 /inst/generate-artificial-datasets/*
 ./04-results/*
 /docs/*
+bnmp_download_and_merge.sh
