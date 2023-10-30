@@ -4,10 +4,10 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/iz/Dropbox/libraries/R/4.0/RcppArmadillo/include",
-                "/home/iz/Dropbox/libraries/R/4.0/Rcpp/include",
-                "/home/iz/Dropbox/libraries/R/4.3-CGS2/RcppArmadillo/include",
-                "/home/iz/Dropbox/libraries/R/4.3-CGS2/Rcpp/include",
+                // "/home/iz/Dropbox/libraries/R/4.3-CGS-local/RcppArmadillo/include",
+                // "/home/iz/Dropbox/libraries/R/4.3-CGS-local/Rcpp/include",
+                "/home/iz/Dropbox/libraries/R/4.3-CGS/RcppArmadillo/include",
+                "/home/iz/Dropbox/libraries/R/4.3-CGS/Rcpp/include",
                 "/usr/share/R/include"
             ],
             "defines": [],
