@@ -33,7 +33,8 @@ Imports:
     jsonlite,
     snow,
     rlecuyer,
-    dplyr
+    dplyr,
+    Rmpi
 Suggests:
     crayon,
     withr,
