@@ -18,17 +18,21 @@
 #'
 #' @examples
 #' replace_sh_file(
-#'   key = "old/project/path",
-#'   value = "new/project/path",
-#'   pth_top_dir = "~/my_projects/top_directory",
-#'   pth_sub_dir = c("sub_dir1", "sub_dir2")
+#'   key = "#SBATCH --time=55:00:00",
+#'   value = "#SBATCH --time=60:00:00",
+#'   pth_top_dir = "~/Dropbox/cheops/final_usenergy/dirichlet",
+#'   pth_sub_dir =  c("0-type-models", "2-type-models", "3-type-models",
+#'                    "4-type-models", "5-type-models", "5A-type-models")
 #' )
 replace_sh_file <- function(
-    key = "projects/dirichlet/final_usenergy",
-    value = "projects/final_usenergy/dirichlet",
-    pth_top_dir = "~/Dropbox/cheops/final_usenergy/dirichlet",
-    pth_sub_dir = c("0-type-models", "2-type-models", "3-type-models",
-                    "4-type-models", "5-type-models", "5A-type-models")) {
+    key = NULL,
+    value = NULL,
+    pth_top_dir = NULL,
+    pth_sub_dir = NULL) {
+  if (any(is.null(key) || is.null(value) ||
+          is.null(pth_top_dir) || is.null(pth_sub_dir))) {
+    stop("All arguments must be specified as characters.")
+  }
   # Concatenate top directory path with subdirectories
   dirs_to_screen <- file.path(pth_top_dir, pth_sub_dir)
 
