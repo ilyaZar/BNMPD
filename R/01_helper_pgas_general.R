@@ -3,6 +3,44 @@ check_settings_input <- function(sm_type, md_type) {
   stopifnot(`Unknown mod_type...` = md_type %in% c("empirical", "simulation"))
   return(invisible(NULL))
 }
+#' Get subset of full pgas output
+#'
+#' Subsets are defined per multivariate component.
+#'
+#' @param out the PGAS output (either with or without states) which is of class
+#'   `BNMPDpmcmc` or `BNMPDmcmc`;
+#'
+#' @param num_mult_component an integer from `d=1,...,DD` giving the component
+#'   number to subset for
+#'
+#' @return PGAS output subsetted by component number for all parameters (and
+#'   latent states if neccessary)
+#' @export
+subset_output_pgas <- function(out, num_mult_component) {
+  stopifnot(`Must be class 'BNMPDmcmc' or 'BNMPDpmcmc' ` =
+              class(out) %in% c("BNMPDpmcmc", "BNMPDmcmc"))
+
+
+  out_subset <- out
+
+  tmp_regex <- paste0("^d_", num_mult_component)
+  tmp_id_grep <- grep(tmp_regex, rownames(out$sig_sq_x))
+  out_subset$sig_sq_x <- out$sig_sq_x[tmp_id_grep, , drop = FALSE]
+  tmp_id_grep <- grep(tmp_regex, rownames(out$phi_x))
+  out_subset$phi_x <- out$phi_x[tmp_id_grep, , drop = FALSE]
+
+  tmp_id_grep <- grep(tmp_regex, rownames(out$bet_z))
+  out_subset$bet_z <- out$bet_z[tmp_id_grep, , drop = FALSE]
+  tmp_id_grep <- grep(tmp_regex, rownames(out$bet_u))
+  out_subset$bet_u <- out$bet_u[tmp_id_grep, , ,drop = FALSE]
+
+  out_subset$vcm_bet_u <- out$vcm_bet_u[num_mult_component]
+
+  if (class(out) == "BNMPDpmcmc") {
+    out_subset$x <- out$x[, num_mult_component, , ]
+  }
+  return(out_subset)
+}
 #' Performs a cluster cleanup
 #'
 #' This includes setting warning/error printing options back to original and
