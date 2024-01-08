@@ -20,10 +20,11 @@ subset_output_pgas <- function(out, num_mult_component) {
   stopifnot(`Must be class 'BNMPDmcmc' or 'BNMPDpmcmc' ` =
               class(out) %in% c("BNMPDpmcmc", "BNMPDmcmc"))
 
-
   out_subset <- out
 
-  tmp_regex <- paste0("^d_", num_mult_component)
+  type_rgx  <- get_type_rgx(out$sig_sq_x)
+  tmp_regex <- get_tmp_regex(type_rgx, num_mult_component)
+
   tmp_id_grep <- grep(tmp_regex, rownames(out$sig_sq_x))
   out_subset$sig_sq_x <- out$sig_sq_x[tmp_id_grep, , drop = FALSE]
   tmp_id_grep <- grep(tmp_regex, rownames(out$phi_x))
@@ -34,12 +35,41 @@ subset_output_pgas <- function(out, num_mult_component) {
   tmp_id_grep <- grep(tmp_regex, rownames(out$bet_u))
   out_subset$bet_u <- out$bet_u[tmp_id_grep, , ,drop = FALSE]
 
-  out_subset$vcm_bet_u <- out$vcm_bet_u[num_mult_component]
+  if (type_rgx == "generalized") {
+    browser()
+    num_comp_adj <- c(1, 2) + 2*(num_mult_component - 1)
+  } else if(type_rgx == "standard") {
+    num_comp_adj <- num_mult_component
+  }
+  out_subset$vcm_bet_u <- out$vcm_bet_u[num_comp_adj]
 
   if (class(out) == "BNMPDpmcmc") {
-    out_subset$x <- out$x[, num_mult_component, , ]
+    out_subset$x <- out$x[, num_comp_adj, , ]
   }
   return(out_subset)
+}
+get_type_rgx <- function(tmp_param) {
+  tmp_check <- rownames(tmp_param)
+  tmp_check <- any(grepl("^DA", tmp_check)) && any(grepl("^DB", tmp_check))
+  if(tmp_check) return("generalized")
+  return("standard")
+}
+get_tmp_regex <- function(type, num_mult_comps) {
+  if(type == "standard") {
+    return(paste0("^d_", num_mult_comps))
+  } else if(type == "generalized") {
+    # Construct regex pattern
+    if (num_mult_comps < 10) {
+      return(paste0("^D(A|B)_0", num_mult_comps))
+    } else if (num_mult_comps >= 10) {
+      return(paste0("^D(A|B)_", num_mult_comps))
+    } else {
+      stop("Invalid num_mult_component value")
+    }
+  } else {
+    stop("Unknown type arg.")
+  }
+  return(invisible(type))
 }
 #' Performs a cluster cleanup
 #'
