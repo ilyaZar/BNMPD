@@ -21,6 +21,7 @@
 *.env
 /data/*
 /doc/*
+/simulations/*
 /literature/*
 /results/*
 /tests/*

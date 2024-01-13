@@ -8,6 +8,7 @@
 ^.Rhistory
 ^.vscode$
 ^tests$
+^simulations$
 ^inst/generate-artificial-datasets$
 ^inst/simulation-studies$
 ^docs$
