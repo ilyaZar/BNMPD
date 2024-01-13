@@ -70,7 +70,7 @@ pgas <- function(pgas_model,
     }
   }
   cleanup_cluster(pe = envir_par, close = close_cluster)
-  out <- new_OutBNMPD(pe = envir_par, mod_type, sim_type)
+  out <- new_outBNMPD(pe = envir_par, mod_type, sim_type)
   return(out)
 }
 pgas_init <- function(pe, pc, mm = 1, RUN_PARALLEL = TRUE) {
