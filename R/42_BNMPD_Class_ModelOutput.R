@@ -74,10 +74,10 @@ ModelOut <- R6::R6Class("ModelOut",
                                   }
                                 )
                               )
-                              class(jnd_out) <- "pmcmc"
+                              class(jnd_out) <- "outBNMPD"
                             } else {
                               jnd_out$meta_info$MM <- ncol(jnd_out$sig_sq_x)
-                              class(jnd_out) <- "mcmc"
+                              class(jnd_out) <- "outBNMPD"
                             }
                             cat(crayon::magenta("ALL JOINS SUCCESSFUL.\n"))
                             return(jnd_out)
@@ -277,7 +277,8 @@ ModelOut <- R6::R6Class("ModelOut",
                             inits_start <- private$.inits_start
                             out <- readRDS(private$.pth_to_md_out_last)
                             DD_old   <- dim(out$x)[2]
-                            num_mcmc <- dim(out$x)[3]
+                            # num_mcmc <- dim(out$x)[3]
+                            num_mcmc <- out$meta_info$MM
                             NN_old   <- dim(out$x)[4]
                             # # 2. Initialization for the states ---------------
                             traj_init <- out$x[, , num_mcmc, ]
