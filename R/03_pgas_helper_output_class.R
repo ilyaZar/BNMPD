@@ -34,7 +34,9 @@ new_outBNMPD <- function(pe, md_type, sm_type) {
                 model_meta = list(
                   mod_type_obs = pe$model_type_obs,
                   mod_type_lat = pe$model_type_lat,
-                  mod_type_run = md_type,
+                  mod_type_run = md_type),
+                simul_meta = list(
+                  csmc_type_run = pe$csmc_type,
                   sim_type_run = sm_type)
                 )
   )
