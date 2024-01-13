@@ -42,6 +42,14 @@ new_outBNMPD <- function(pe, md_type, sm_type) {
   )
   return(structure(out, class = "outBNMPD"))
 }
+#' Class validator for `outBNMPD`
+#'
+#' @param out an object of class `outBNMPD` that should be validated
+#'
+#' @return
+#' @export
+#'
+#' @examples
 validate_outBNMPD <- function(out) {
   check_class_outBNMPD(out)
   nm_top_level <- c("sig_sq_x",
@@ -69,7 +77,11 @@ validate_outBNMPD <- function(out) {
               list_names_checker(out$meta_info$model_meta, nm_sub_lvl_03))
   stopifnot(`Sub-level list names of 'outBNMPD' are incorrect` =
               list_names_checker(out$meta_info$simul_meta, nm_sub_lvl_04))
+  cat(crayon::green("Argument is an object is of class `outBNMPD`."))
   return(invisible(out))
+}
+list_names_checker <- function(lst, nms) {
+  all(names(lst) %in% nms)
 }
 #' Fixes a whole directory with wrong output instances
 #'
@@ -174,9 +186,6 @@ fix_outBNMPD <- function(out = NULL,
     saveRDS(out, file = pth_to_out)
     return(invisible(out))
   }
-}
-list_names_checker <- function(lst, nms) {
-  all(names(lst) %in% nms)
 }
 get_model_meta_outBNMPD <- function(out) {
   check_class_outBNMPD(out)
