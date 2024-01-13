@@ -156,3 +156,65 @@ get_type_rgx <- function(tmp_param) {
   if (tmp_check) return("generalized")
   return("standard")
 }
+#' Fix two wrong output of class `outBNMPD`
+#'
+#' The first (P)MCMC iteration of the second output must match the last
+#' iteration of the previously generated `outBNMPD`. If this is not the case
+#' the `ModelOut` class from `BNMPD` throws an error. This error can be fixed
+#' by running the function on the two consecutive outputs that produced the
+#' error, the second output will be fixed and written to an external file in
+#' `.rds` format as given under `pth_out_fixed_join_filename`
+#'
+#' @param pth_out_1st_join character; path to first output join
+#' @param pth_out_2nd_join character; path to second output join
+#' @param pth_out_fixed_join_filename character; path to write the "fixed"
+#'   output to i.e. the output read under `pth_out_2nd_join`, where the first
+#'   iteration is set to the last iteration of `pth_out_1st_join`
+#'
+#' @return pure side effect function returning the first argument invisibly
+#' @export
+#'
+#' @examples\dontrun{
+#' top_lvl_pth <- file.path(".../empirical-panel/dirichlet/cumcap-levels",
+#'                         "2-type-models",
+#'                         "27_NN48_TT50_DD5_Zconst,prices,gdp_Uconst,cumcap",
+#'                         "model/output")
+#'  pth_01 <- file.path(
+#'    top_lvl_pth,
+#'    "out_27_NN48_TT50_DD5_Zprices,_Ucumcap_part_001_N100000_CHEOPS-MPI.rds")
+#'  pth_02 <- file.path(
+#'    top_lvl_pth,
+#'    "out_27_NN48_TT50_DD5_Zprices,_Ucumcap_part_003_N100000_CHEOPS-MPI.rds")
+#'  pth_jn <- file.path(
+#'    top_lvl_pth,
+#'    "out_27_NN48_TT50_DD5_Zprices,_Ucumcap_part_002_N100000_CHEOPS-MPI.rds")
+#'  fix_output_joins(pth_01, pth_02, pth_jn)
+#' }
+fix_output_joins <- function(pth_out_1st_join,
+                             pth_out_2nd_join,
+                             pth_out_fixed_join_filename) {
+  out_1st_join <- readRDS(pth_out_1st_join)
+  out_2nd_join <- readRDS(pth_out_2nd_join)
+
+  check_class_outBNMPD(out_1st_join)
+  check_class_outBNMPD(out_2nd_join)
+
+  DD <- nrow(out_2nd_join$sig_sq_x)
+  MM <- ncol(out_2nd_join$sig_sq_x)
+
+  out_2nd_join$sig_sq_x[, 1] <- out_1st_join$sig_sq_x[, MM]
+  out_2nd_join$phi_x[, 1] <- out_1st_join$phi_x[, MM]
+  out_2nd_join$bet_z[, 1] <- out_1st_join$bet_z[, MM]
+  out_2nd_join$bet_u[, 1, ] <- out_1st_join$bet_u[, MM, ]
+
+  for (d in 1:DD) {
+    out_2nd_join$vcm_bet_u[[1]][,, 1] <- out_1st_join$vcm_bet_u[[1]][,, MM]
+    out_2nd_join$vcm_bet_u[[2]][,, 1] <- out_1st_join$vcm_bet_u[[2]][,, MM]
+    out_2nd_join$vcm_bet_u[[3]][,, 1] <- out_1st_join$vcm_bet_u[[3]][,, MM]
+    out_2nd_join$vcm_bet_u[[4]][,, 1] <- out_1st_join$vcm_bet_u[[4]][,, MM]
+    out_2nd_join$vcm_bet_u[[5]][,, 1] <- out_1st_join$vcm_bet_u[[5]][,, MM]
+  }
+  out_2nd_join$x[,, 1, ] <- out_1st_join$x[,, MM, ]
+  saveRDS(out_2nd_join, file = pth_out_fixed_join_filename)
+  return(invisible(pth_out_1st_join))
+}
