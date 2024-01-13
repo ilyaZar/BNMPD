@@ -192,7 +192,7 @@ get_model_run_type_outBNMPD <- function(out) {
 }
 get_simulation_run_type_outBNMPD <- function(out) {
   check_class_outBNMPD(out)
-  return(out$meta_info$model_meta$sim_type_run)
+  return(out$meta_info$simul_meta$sim_type_run)
 }
 check_class_outBNMPD <- function(output) {
   stopifnot(`Must be an instance of class 'OutBNMPD'.`
@@ -211,8 +211,8 @@ check_class_outBNMPD <- function(output) {
 #' @return PGAS output subsetted by component number for all parameters (and
 #'   latent states if neccessary)
 #' @export
-subset_output_pgas <- function(out, num_mult_component) {
-  check_class_outBNMPD(out)
+subset_outBNMPD <- function(out, num_mult_component) {
+  # check_class_outBNMPD(out)
   out_subset <- out
 
   type_rgx  <- get_type_rgx(out$sig_sq_x)
@@ -236,7 +236,7 @@ subset_output_pgas <- function(out, num_mult_component) {
   }
   out_subset$vcm_bet_u <- out$vcm_bet_u[num_comp_adj]
 
-  if (get_model_run_type_outBNMPD(out) == "BNMPDpmcmc") {
+  if (get_simulation_run_type_outBNMPD(out) == "pmcmc") {
     out_subset$x <- out$x[, num_comp_adj, , ]
   }
   return(out_subset)
