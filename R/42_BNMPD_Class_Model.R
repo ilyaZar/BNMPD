@@ -287,7 +287,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                      private$.pth_to_initsset,
                                                      private$.pth_to_projsets)
 
-                              # browser()
                               private$.states_init <- read_simul_inits(
                                 pth_to_inits = pth_states_init,
                                 fail_type = "SOFT"
@@ -467,10 +466,15 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @description Returns labels and names of
                             #'   parameters as required by e.g.
                             #'   `pmcmcDiagnostics::analyse_mcmc_convergence2()]`
+                            #' @param num_mult_component an integer from
+                            #'   `d=1,...,DD` giving the component number to
+                            #'   subset for
                             #'
                             #' @details pass return value to above function as
                             #'   argument \code{model_meta}
-                            get_par_label_names = function() {
+                            get_par_label_names = function(num_mult_component = NULL) {
+                              stopifnot(`Arg. must be 'NULL' or integer` =
+                                          is.null(num_mult_component) || is.numeric(num_mult_component))
                               tmp_pars <- private$get_labnam_tmp_pars()
                               dims <- private$.ModelDef$get_dimension()
                               NN_tmp <- dims[1]
@@ -600,6 +604,44 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               )
                               lab_names <- lab_names[idtaken]
                               par_names <- par_names[idtaken]
+
+                              if (is.null(num_mult_component)) {
+                                return(list(par_lab_names = lab_names,
+                                            par_val_names = par_names))
+                              } else {
+                                check_mod_type <- grepl("GEN",
+                                                        private$.model_type_obs)
+                                if (check_mod_type) {
+                                  browser()
+                                  num_comp_adj <- c(1, 2) + 2*(num_mult_component - 1)
+                                } else {
+                                  num_comp_adj <- num_mult_component
+                                }
+                                lab_names[[1]] <- lab_names[[1]][num_comp_adj]
+                                par_names[[1]] <- par_names[[1]][num_comp_adj]
+
+                                lab_names[[2]] <- lab_names[[2]][num_comp_adj]
+                                par_names[[2]] <- par_names[[2]][num_comp_adj]
+
+                                if (num_mult_component <= 9) {
+                                  tmp_regex <- paste0("^D(A|B)?_0",
+                                                      num_mult_component)
+                                } else {
+                                  tmp_regex <- paste0("^D(A|B)?_",
+                                                      num_mult_component)
+                                }
+                                tmp_id_grep <- grep(tmp_regex, lab_names[[3]])
+                                lab_names[[3]] <- lab_names[[3]][tmp_id_grep]
+                                par_names[[3]] <- par_names[[3]][tmp_id_grep]
+
+                                tmp_id_grep <- grep(tmp_regex, lab_names[[4]])
+                                lab_names[[4]] <- lab_names[[4]][tmp_id_grep]
+                                par_names[[4]] <- par_names[[4]][tmp_id_grep]
+
+                                tmp_id_grep <- grep(tmp_regex, lab_names[[5]])
+                                lab_names[[5]] <- lab_names[[5]][tmp_id_grep]
+                                par_names[[5]] <- par_names[[5]][tmp_id_grep]
+                              }
                               return(list(par_lab_names = lab_names,
                                           par_val_names = par_names))
                             },
@@ -650,6 +692,17 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 out <- private$.ModelDat$get_model_inits_start()
                               }
                               return(out)
+                            },
+                            #' @description Return model data dimensions
+                            #'
+                            #' @details as taken from the corresponding class
+                            #'   object `ModelDat`
+                            get_modeldata_dimensions = function() {
+                              dim_list <- private$.ModelDat$get_model_data_dimensions()
+                              dim_nms <- names(dim_list)
+                              dim_list <- unlist(as.list(dim_list))
+                              names(dim_list) <- dim_nms
+                              return(dim_list)
                             },
                             #' @description Returns true state values
                             #'
@@ -920,7 +973,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   member that retrieves the model dimensions
                             #'   \code{T,N,D}.
                             load_modeldata_dimensions = function() {
-                              out <-private$.ModelDat$get_model_data_dimensions()
+                              out <- private$.ModelDat$get_model_data_dimensions()
                               # out2 <-private$.ModelDef$get_dimension()
                               out <- list2env(as.list(out))
                               copy_env(parent.frame(), out)
