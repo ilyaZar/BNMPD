@@ -53,10 +53,10 @@ validate_outBNMPD <- function(out) {
                     "true_states",
                     "true_vals",
                     "meta_info")
-  nm_sub_lvl_01 <- c("dimensions", "model_meta")
+  nm_sub_lvl_01 <- c("dimensions", "model_meta", "simul_meta")
   nm_sub_lvl_02 <- c("NN", "TT", "DD", "DD2", "MM")
-  nm_sub_lvl_03 <- c("mod_type_obs", "mod_type_lat",
-                     "mod_type_run", "sim_type_run")
+  nm_sub_lvl_03 <- c("mod_type_obs", "mod_type_lat", "mod_type_run")
+  nm_sub_lvl_04 <- c("csmc_type_run", "sim_type_run")
 
   stopifnot(`'outBNMPD' is not a list-type` = is.list(out))
   stopifnot(`Top level list names of 'outBNMPD' are incorrect` =
@@ -67,7 +67,113 @@ validate_outBNMPD <- function(out) {
               list_names_checker(out$meta_info$dimensions, nm_sub_lvl_02))
   stopifnot(`Sub-level list names of 'outBNMPD' are incorrect` =
               list_names_checker(out$meta_info$model_meta, nm_sub_lvl_03))
+  stopifnot(`Sub-level list names of 'outBNMPD' are incorrect` =
+              list_names_checker(out$meta_info$simul_meta, nm_sub_lvl_04))
   return(invisible(out))
+}
+#' Fixes a whole directory with wrong output instances
+#'
+#' For details see [BNMPD::fix_outBNMPD()]. This function is a wrapper around it
+#' to be run on all `.rds` files found in `pth_model_outs`
+#'
+#' @param pth_model_outs character giving the path to output `.rds`-files for
+#'   each of which to fix the class (with the fix implemented via
+#'   [BNMPD::fix_outBNMPD()])
+#' @inheritParams fix_outBNMPD
+#'
+#' @return pure side-effect function returning invisibly the first argument
+#' @export
+#'
+#' @examples\dontrun{
+#'  fix_all_outBNMPD(
+#'    file.path(
+#'      "/home/iz/Dropbox/projects",
+#'      "EnergyMixUS/usa-energy-OWN/04-results",
+#'      "empirical-panel/dirichlet/cumcap-levels",
+#'      "2-type-models",
+#'      "27_NN48_TT50_DD5_Zconst,prices,gdp_Uconst,cumcap/model/output"),
+#'      list(
+#'        dimensions = list(
+#'        NN = 48,
+#'        TT = 50,
+#'        DD = 5,
+#'        DD2 = NULL,
+#'        MM = NULL),
+#'      model_meta = list(
+#'        mod_type_obs = "DIRICHLET",
+#'        mod_type_lat = "auto_lin_re",
+#'        mod_type_run = "empirical"),
+#'      simul_meta = list(
+#'        csmc_type_run = "bpf",
+#'        sim_type_run = "pmcmc")
+#'      )
+#'  )
+#' }
+fix_all_outBNMPD <- function(pth_model_outs, meta_info) {
+  out_fns <- list.files(pth_model_outs, full.names = TRUE)
+  id_files_out_rds <- grepl("\\.rds$", out_fns)
+  pth_out_to_fix <- out_fns[id_files_out_rds]
+  for (fn_pth in pth_out_to_fix) {
+    fix_outBNMPD(pth_to_out = fn_pth,
+                 meta_info = meta_info)
+    cat(paste0(crayon::yellow("Fixing output: "),
+               crayon::green(basename(fn_pth)), "\n"))
+  }
+  return(invisible(pth_model_outs))
+}
+#' Helper to fix to correct output-class with meta attributes set correctly
+#'
+#' The first and second argument cannot be both `NULL`. Either an output is
+#' given, of which the corrected version is returned or written and if
+#' `pth_to_out` is not `NULL` written to disk. Or, the output object is read
+#' from `pth_to_out`, fixed, and then written back (and returned invisibly).
+#'
+#' @param out an object of class `outBNMPD`
+#' @param pth_to_out character; giving
+#' @param meta_info must be a list of the `outBNMPD` structure, see examples
+#'   values filled; if `MM = pe$MM`, it will be taken from the malformatted
+#'   out-class object that has been read
+#'
+#' @return either the output-class fixed or as side effect function writing to
+#'   the path from which read the fixed output class to an `.rds`-file (and
+#'   returning the fixed output invisibly)
+#' @export
+#'
+#' @examples\dontrun{
+#'  fix_outBNMPD(pth_to_out = "long/path/to/out/out_XXX.rds",
+#'               meta_info =
+#'               list(dimensions = list(NN = 48,
+#'                                      TT = 50,
+#'                                      DD = 5,
+#'                                      DD2 = NULL,
+#'                                      MM = NULL),
+#'                   model_meta = list(mod_type_obs = "DIRICHLET",
+#'                                     mod_type_lat = "auto_lin_re",
+#'                                     mod_type_run = "empirical"),
+#'                   simul_meta = list(csmc_type_run = "bpf",
+#'                                     sim_type_run = "pmcmc")
+#'               )
+#'  )
+#' }
+fix_outBNMPD <- function(out = NULL,
+                         pth_to_out = NULL,
+                         meta_info = NULL) {
+  stopifnot(`"out" and "pth_to_out" are both NULL` =
+              !is.null(out) || !is.null(pth_to_out))
+  if (is.null(out)) {
+    out <- readRDS(pth_to_out)
+  }
+  if (is.null(meta_info$dimensions$MM)) {
+    meta_info$dimensions$MM <- out$meta_info$MM
+  }
+  out$meta_info <- meta_info
+  class(out) <- "outBNMPD"
+  if (is.null(pth_to_out)) {
+    return(out)
+  } else {
+    saveRDS(out, file = pth_to_out)
+    return(invisible(out))
+  }
 }
 list_names_checker <- function(lst, nms) {
   all(names(lst) %in% nms)
