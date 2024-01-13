@@ -1,132 +1,3 @@
-check_settings_input <- function(sm_type, md_type) {
-  stopifnot(`Unknown sim_type... ` = sm_type %in% c("pmcmc", "mcmc"))
-  stopifnot(`Unknown mod_type...` = md_type %in% c("empirical", "simulation"))
-  return(invisible(NULL))
-}
-#' Get subset of full pgas output
-#'
-#' Subsets are defined per multivariate component.
-#'
-#' @param out the PGAS output (either with or without states) which is of class
-#'   `BNMPDpmcmc` or `BNMPDmcmc`;
-#'
-#' @param num_mult_component an integer from `d=1,...,DD` giving the component
-#'   number to subset for
-#'
-#' @return PGAS output subsetted by component number for all parameters (and
-#'   latent states if neccessary)
-#' @export
-subset_output_pgas <- function(out, num_mult_component) {
-  stopifnot(`Must be class 'BNMPDmcmc' or 'BNMPDpmcmc' ` =
-              class(out) %in% c("BNMPDpmcmc", "BNMPDmcmc"))
-
-  out_subset <- out
-
-  type_rgx  <- get_type_rgx(out$sig_sq_x)
-  tmp_regex <- get_tmp_regex(type_rgx, num_mult_component)
-
-  tmp_id_grep <- grep(tmp_regex, rownames(out$sig_sq_x))
-  out_subset$sig_sq_x <- out$sig_sq_x[tmp_id_grep, , drop = FALSE]
-  tmp_id_grep <- grep(tmp_regex, rownames(out$phi_x))
-  out_subset$phi_x <- out$phi_x[tmp_id_grep, , drop = FALSE]
-
-  tmp_id_grep <- grep(tmp_regex, rownames(out$bet_z))
-  out_subset$bet_z <- out$bet_z[tmp_id_grep, , drop = FALSE]
-  tmp_id_grep <- grep(tmp_regex, rownames(out$bet_u))
-  out_subset$bet_u <- out$bet_u[tmp_id_grep, , ,drop = FALSE]
-
-  if (type_rgx == "generalized") {
-    browser()
-    num_comp_adj <- c(1, 2) + 2*(num_mult_component - 1)
-  } else if(type_rgx == "standard") {
-    num_comp_adj <- num_mult_component
-  }
-  out_subset$vcm_bet_u <- out$vcm_bet_u[num_comp_adj]
-
-  if (class(out) == "BNMPDpmcmc") {
-    out_subset$x <- out$x[, num_comp_adj, , ]
-  }
-  return(out_subset)
-}
-get_type_rgx <- function(tmp_param) {
-  tmp_check <- rownames(tmp_param)
-  tmp_check <- any(grepl("^DA", tmp_check)) && any(grepl("^DB", tmp_check))
-  if(tmp_check) return("generalized")
-  return("standard")
-}
-get_tmp_regex <- function(type, num_mult_comps) {
-  if(type == "standard") {
-    return(paste0("^d_", num_mult_comps))
-  } else if(type == "generalized") {
-    # Construct regex pattern
-    if (num_mult_comps < 10) {
-      return(paste0("^D(A|B)_0", num_mult_comps))
-    } else if (num_mult_comps >= 10) {
-      return(paste0("^D(A|B)_", num_mult_comps))
-    } else {
-      stop("Invalid num_mult_component value")
-    }
-  } else {
-    stop("Unknown type arg.")
-  }
-  return(invisible(type))
-}
-#' Performs a cluster cleanup
-#'
-#' This includes setting warning/error printing options back to original and
-#' closing cluster of type `SOCK` or `MPI` if `close = TRUE`. The function
-#' prints informative messages to the user too.
-#'
-#' @param pe the environment that contains the cluster object
-#' @param close logical; if `TRUE` then cluster cleanup is performed; otherwise
-#'   only the options are re-set
-#'
-#' @return pure side effect function for cluster cleanup; returns invisibly
-cleanup_cluster <- function(pe, close = TRUE) {
-  stopifnot(`Arg. close must be logical.` = is.logical(close))
-  cat("PGAS finished!\n")
-  if (close) {
-    if ("cl" %in% names(pe)) {
-      cat("Closing cluster ... \n")
-      if(pe$cluster_type %in% c("SOCK", "MPI")) snow::stopCluster(pe$cl)
-      # if(pe$cluster_type == "MPI") Rmpi::mpi.exit()
-      cat(paste0(pe$cluster_type, " cluster closed!\n"))
-    }
-  }
-  options(warn = 0)
-  cat("Resetting options!\n")
-  return(invisible(pe))
-}
-generate_environment_parallel <- function(envir_current,
-                                          seed = NULL) {
-  envir_used <- new.env(parent = rlang::env_parents(environment())[[1]])
-  if (!is.null(seed)) {
-    envir_used$settings_seed <- seed
-    if(!is.null(seed$seed_all_init)) set.seed(seed$seed_all_init)
-  }
-  return(envir_used)
-}
-generate_pgas_output <- function(pe, md_type, sm_type) {
-  if (md_type == "empirical") {
-    true_states <- NA_real_
-    true_params <- NA_real_
-  } else if (md_type == "simulation") {
-    true_states <- pe$true_states
-    true_params <- pe$true_params
-  }
-  out <- list(sig_sq_x = pe$sig_sq_x,
-              phi_x = pe$phi_x,
-              bet_z = pe$bet_z,
-              bet_u = pe$bet_u,
-              vcm_bet_u = pe$vcm_bet_u,
-              x = pe$X,
-              true_states = true_states,
-              true_vals = true_params,
-              meta_info = list(MM = pe$MM,
-                               mod_type = md_type))
-  class(out) <- sm_type
-  return(out)
-}
 get_smc_internal <- function(obs_type, smc_type) {
   grep_smc <- NULL
   if (smc_type == "bpf") {
@@ -180,17 +51,13 @@ update_args_list_smc_internal <- function(pe, args_list, mm) {
   return(args_list)
 }
 load_model <- function(env_model, to_env) {
-  # to_env <- parent.frame()
-
   env_model$nn_list_dd <- lapply(env_model$avail_indicator_nn, function(x) x - 1)
   env_model$dd_list_nn <- get_dd_list_nn(env_model$avail_indicator_dd,
                                          dist = env_model$model_type_obs)
-
   env_model$y <- env_model$data[[1]]
   if (length(env_model$data) == 2) {
     env_model$num_counts <- env_model$data[[2]]
   }
-
   order_p_tmp <- get_lag_order(env_model)
 
   initialize_data_containers(env_model$par_init,
@@ -213,7 +80,7 @@ load_model <- function(env_model, to_env) {
                                "par_init",
                                "traj_init",
                                "priors"))
-  for(n in use_model_names) {
+  for (n in use_model_names) {
     assign(n, get(n, env_model), to_env)
   }
   rm("pgas_model", envir = parent.frame())
@@ -602,35 +469,6 @@ generate_cnt_regs_beta <- function(DIST_SPECIAL, Z_beta, U_beta,
   )
   return(Regs_beta)
 }
-prepare_cluster <- function(pe, mm = 1, PARALLEL = TRUE) {
-  if (PARALLEL) {
-    pe$task_indices <- snow::splitIndices(pe$NN, ncl = pe$num_cores)
-    generate_cluster(pe)
-  }
-  get_args_list_smc_internal(pe, mm, PARALLEL = PARALLEL)
-}
-generate_cluster <- function(envir) {
-  ctype <- envir$cluster_type
-  cseed <- envir$settings_seed$seed_pgas_init
-  cores <- envir$num_cores
-
-  if (ctype == "MPI") {
-    CL_EXISTS <- isFALSE(is.null(snow::getMPIcluster()))
-    if (CL_EXISTS) {
-      envir$cl <- snow::makeCluster()
-    } else {
-      envir$cl <- snow::makeCluster(cores, type = envir$cluster_type)
-    }
-  } else if (ctype %in% c("SOCK", "PSOCK")) {
-    envir$cl <- parallel::makeCluster(cores, "PSOCK")
-  }
-
-  if (!is.null(cseed)) snow::clusterSetupRNGstream(envir$cl, seed = cseed)
-  return(invisible(TRUE))
-}
-progress_print <- function(iter) {
-  cat("cSMC iteration number:", iter, "\n")
-}
 update_states <- function(pe, cbpf_output, mm,
                           CLUSTER = FALSE,
                           CHECK_CL_ORDER = FALSE) {
@@ -675,7 +513,7 @@ get_objs_pgas <- function(phi_null, z_null, u_null, dims) {
 get_env_pgas <- function(env_to, env_from, phi_null, z_null, u_null, dims) {
   pgas_obj    <- get_objs_pgas(phi_null, z_null, u_null, dims)
   from_env_02 <- list2env(pgas_obj[["dims_out"]])
-  for(n in pgas_obj[["vec_objs"]]) {
+  for (n in pgas_obj[["vec_objs"]]) {
     assign(n, get(n, env_from), env_to)
   }
   for(n in names(pgas_obj[["dims_out"]])) {
