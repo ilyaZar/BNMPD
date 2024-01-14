@@ -508,8 +508,8 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               if (any(grepl("beta_z_lin", tmp_pars))) {
                                 lab_bet_z <- character(0)
                                 var_bet_z <- character(0)
-                                bet_z_var <-private$.ModelDef$get_var_z()
-                                bet_z_lab <-private$.ModelDef$get_lab_z()
+                                bet_z_var <- private$.ModelDef$get_var_z()
+                                bet_z_lab <- private$.ModelDef$get_lab_z()
                                 for (d in seq_len(DD_tmp)) {
                                   tmp_var <- paste0(
                                     names(bet_z_var[d]),
@@ -529,13 +529,13 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 lab_bet_z <- NULL
                               }
                               if (any(grepl("beta_u_lin", tmp_pars))) {
-                                bet_u_var <-private$.ModelDef$get_var_u()
-                                bet_u_lab <-private$.ModelDef$get_lab_u()
+                                bet_u_var <- private$.ModelDef$get_var_u()
+                                bet_u_lab <- private$.ModelDef$get_lab_u()
                                 lab_bet_u <- character(0)
                                 var_bet_u <- character(0)
                                 var_vcm_u <- character(0)
                                 lab_vcm_u <- character(0)
-                                for(d in seq_len(DD_tmp)) {
+                                for (d in seq_len(DD_tmp)) {
                                   tmp_var <- unlist(
                                     lapply(
                                       paste0(
@@ -612,7 +612,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 check_mod_type <- grepl("GEN",
                                                         private$.model_type_obs)
                                 if (check_mod_type) {
-                                  browser()
                                   num_comp_adj <- c(1, 2) + 2*(num_mult_component - 1)
                                 } else {
                                   num_comp_adj <- num_mult_component
@@ -624,12 +623,14 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 par_names[[2]] <- par_names[[2]][num_comp_adj]
 
                                 if (num_mult_component <= 9) {
-                                  tmp_regex <- paste0("^D(A|B)?_0",
-                                                      num_mult_component)
+                                  rgx_mult_comp <- paste0("0", num_mult_component)
                                 } else {
-                                  tmp_regex <- paste0("^D(A|B)?_",
-                                                      num_mult_component)
+                                  rgx_mult_comp <- paste0(num_mult_component)
                                 }
+                                tmp_regex <- paste0(
+                                    "^D(", "A_", rgx_mult_comp,
+                                    "|B_", rgx_mult_comp, "|",
+                                    rgx_mult_comp, ")_")
                                 tmp_id_grep <- grep(tmp_regex, lab_names[[3]])
                                 lab_names[[3]] <- lab_names[[3]][tmp_id_grep]
                                 par_names[[3]] <- par_names[[3]][tmp_id_grep]
