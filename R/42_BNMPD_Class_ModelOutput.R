@@ -277,8 +277,7 @@ ModelOut <- R6::R6Class("ModelOut",
                             inits_start <- private$.inits_start
                             out <- readRDS(private$.pth_to_md_out_last)
                             DD_old   <- dim(out$x)[2]
-                            # num_mcmc <- dim(out$x)[3]
-                            num_mcmc <- out$meta_info$MM
+                            num_mcmc <- private$get_num_mcmc(out)
                             NN_old   <- dim(out$x)[4]
                             # # 2. Initialization for the states ---------------
                             traj_init <- out$x[, , num_mcmc, ]
@@ -290,6 +289,13 @@ ModelOut <- R6::R6Class("ModelOut",
                                                        num_bet_u = num_bet_u)
                             private$.md_out_inits <- list(par_init = par_inits,
                                                           traj_init = traj_init)
+                          },
+                          get_num_mcmc = function(out) {
+                            if (!class(out) == "outBNMPD") {
+                              return(out$meta_info$MM)
+                            } else {
+                              return(get_model_dimensions_outBNMPD(out)[["MM"]])
+                            }
                           },
                           update_params = function(out, num_mcmc, DD, NN,
                                                    num_bet_z, num_bet_u) {
@@ -395,7 +401,7 @@ ModelOut <- R6::R6Class("ModelOut",
                             init_vcm_u_lin
                           },
                           get_outer_init_nm = function(inits, type = NULL) {
-                            if(missing(type)) stop("Missing arg. 'type'.")
+                            if (missing(type)) stop("Missing arg. 'type'.")
                             if (type == "type_01") {
                               lapply(
                                 inits,
