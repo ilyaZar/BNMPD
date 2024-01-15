@@ -291,7 +291,7 @@ ModelOut <- R6::R6Class("ModelOut",
                                                           traj_init = traj_init)
                           },
                           get_num_mcmc = function(out) {
-                            if (!class(out) == "outBNMPD") {
+                            if (is.null(out$meta_info$dimension)) {
                               return(out$meta_info$MM)
                             } else {
                               return(get_model_dimensions_outBNMPD(out)[["MM"]])
