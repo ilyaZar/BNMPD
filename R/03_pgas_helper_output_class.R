@@ -46,10 +46,9 @@ new_outBNMPD <- function(pe, md_type, sm_type) {
 #'
 #' @param out an object of class `outBNMPD` that should be validated
 #'
-#' @return
+#' @return pure side effect function returning invisibly `out`; checks for valid
+#'   class instance only
 #' @export
-#'
-#' @examples
 validate_outBNMPD <- function(out) {
   check_class_outBNMPD(out)
   nm_top_level <- c("sig_sq_x",
@@ -86,9 +85,9 @@ list_names_checker <- function(lst, nms) {
 #' Fixes a whole directory with wrong output instances
 #'
 #' For details see [BNMPD::fix_outBNMPD()]. This function is a wrapper around it
-#' to be run on all `.rds` files found in `pth_model_outs`
+#' to be run on all `.rds` files found in `pth_model_out`
 #'
-#' @param pth_model_outs character giving the path to output `.rds`-files for
+#' @param pth_model_out character giving the path to output `.rds`-files for
 #'   each of which to fix the class (with the fix implemented via
 #'   [BNMPD::fix_outBNMPD()])
 #' @inheritParams fix_outBNMPD
@@ -121,8 +120,8 @@ list_names_checker <- function(lst, nms) {
 #'      )
 #'  )
 #' }
-fix_all_outBNMPD <- function(pth_model_outs, meta_info) {
-  out_fns <- list.files(pth_model_outs, full.names = TRUE)
+fix_all_outBNMPD <- function(pth_model_out, meta_info) {
+  out_fns <- list.files(pth_model_out, full.names = TRUE)
   id_files_out_rds <- grepl("\\.rds$", out_fns)
   pth_out_to_fix <- out_fns[id_files_out_rds]
   for (fn_pth in pth_out_to_fix) {
@@ -131,7 +130,7 @@ fix_all_outBNMPD <- function(pth_model_outs, meta_info) {
     cat(paste0(crayon::yellow("Fixing output: "),
                crayon::green(basename(fn_pth)), "\n"))
   }
-  return(invisible(pth_model_outs))
+  return(invisible(pth_model_out))
 }
 #' Helper to fix to correct output-class with meta attributes set correctly
 #'
@@ -141,7 +140,8 @@ fix_all_outBNMPD <- function(pth_model_outs, meta_info) {
 #' from `pth_to_out`, fixed, and then written back (and returned invisibly).
 #'
 #' @param out an object of class `outBNMPD`
-#' @param pth_to_out character; giving
+#' @param pth_to_out character giving the path to output `.rds`-file to be
+#'   fixed
 #' @param meta_info must be a list of the `outBNMPD` structure, see examples
 #'   values filled; if `MM = pe$MM`, it will be taken from the malformatted
 #'   out-class object that has been read
