@@ -204,7 +204,7 @@ get_simulation_run_type_outBNMPD <- function(out) {
   return(out$meta_info$simul_meta$sim_type_run)
 }
 check_class_outBNMPD <- function(output) {
-  stopifnot(`Must be an instance of class 'OutBNMPD'.`
+  stopifnot(`Must be an instance of class 'outBNMPD'.`
             = inherits(output, "outBNMPD"))
 }
 #' Get subset of full pgas output
