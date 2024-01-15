@@ -325,11 +325,7 @@ fix_output_joins <- function(pth_out_1st_join,
   out_2nd_join$bet_u[, 1, ] <- out_1st_join$bet_u[, MM, ]
 
   for (d in 1:DD) {
-    out_2nd_join$vcm_bet_u[[1]][,, 1] <- out_1st_join$vcm_bet_u[[1]][,, MM]
-    out_2nd_join$vcm_bet_u[[2]][,, 1] <- out_1st_join$vcm_bet_u[[2]][,, MM]
-    out_2nd_join$vcm_bet_u[[3]][,, 1] <- out_1st_join$vcm_bet_u[[3]][,, MM]
-    out_2nd_join$vcm_bet_u[[4]][,, 1] <- out_1st_join$vcm_bet_u[[4]][,, MM]
-    out_2nd_join$vcm_bet_u[[5]][,, 1] <- out_1st_join$vcm_bet_u[[5]][,, MM]
+    out_2nd_join$vcm_bet_u[[d]][,, 1] <- out_1st_join$vcm_bet_u[[d]][,, MM]
   }
   out_2nd_join$x[,, 1, ] <- out_1st_join$x[,, MM, ]
   saveRDS(out_2nd_join, file = pth_out_fixed_join_filename)
