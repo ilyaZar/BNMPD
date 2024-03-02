@@ -103,10 +103,10 @@ read_rds <- function(pth_from) {
 #'
 #' @param pth character string; gives the path to the model
 #' @param prefix character; a prefix to pre-pend the output name e.g. "out"
-#' @param part_num defaults to `NULL` which is appropriate if the correct part
-#'   number should be automatically inferred (see `Details`)
 #' @param suffix character; a suffix to post-pend the output name e.g.
 #'   "N100000_CHEOPS-MPI"
+#' @param part_num defaults to `NULL` which is appropriate if the correct part
+#'   number should be automatically inferred (see `Details`)
 #'
 #' @return character giving the new file name to save the next output part;
 #'   it is a plain file name, not a path because the
@@ -122,7 +122,7 @@ read_rds <- function(pth_from) {
 #'   suffix = "N100000_CHEOPS-MPI"
 #'  )
 #'}
-get_out_part_namer <- function(pth, prefix, part_num = NULL, suffix) {
+get_out_part_namer <- function(pth, prefix, suffix, part_num = NULL) {
   tmp_fn_names <- list.files(
     file.path(
       normalizePath(pth),
@@ -137,7 +137,7 @@ get_out_part_namer <- function(pth, prefix, part_num = NULL, suffix) {
     if (!identical(tmp_fn_names, character())) {
       stop("There are already some output parts present in the model dir ...")
     }
-    if (!is.numeric(num_part)) stop("Arg. 'num_part' must be numeric.")
+    if (!is.numeric(part_num)) stop("Arg. 'part_num' must be numeric.")
     num_part <- formatC(num_part, width = 3, format = "d", flag = "0")
   }
   paste0(prefix, "_", basename(pth), "_part_", num_part, "_", suffix)
