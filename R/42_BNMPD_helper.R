@@ -84,44 +84,35 @@ read_rds <- function(pth_from) {
     return(readRDS(normalizePath(pth_from)))
   }
 }
-#' A helper function to name output parts
+#' Generate Sequential Output Part Filenames
 #'
-#' Helps in naming output parts if [pgas()] runs are obtained sequentially for a
-#' specific model. Takes the path to the model dir as first argument (`pth`),
-#' computes the number of `.rds`-files in the directory `pth/model` which is the
-#' usual place to store the intermediate outputs. The next output name is
-#' determined as the next part number i.e. if there are six files (representing
-#' output parts 001-006) present, then the next output name will contain a
-#' "XXX_part_007_YYY" where "XXX" and "YYY" are the `prefix` and `suffix`
-#' argument to this function.
+#' Dynamically generates filenames for sequential output parts of a model,
+#' taking into account existing output parts. Automatically determines the next
+#' output part number by either incrementing the highest part number found in
+#' existing `.rds` files or using a provided `part_num`.
 #'
-#' For `part_num = NULL` the default behavior in `Description` is generated as
-#' return value, otherwise must be set e.g. an integer `part_num = 1`. The
-#' argument `prefix`, `part_num`, and `suffix` are automatically concatenated by
-#' "_". Thus there is no need for something like `prefix = "out_"`, just use
-#' `prefix = "out"`, see usage
+#' @param pth Character string specifying the path to the model directory.
+#' @param prefix Character string to prepend to the output name (e.g., "out").
+#' @param suffix Character string to append to the output name (e.g.,
+#'   "N100000_CHEOPS-MPI").
+#' @param part_num Optional; an integer specifying the part number to use.
+#'   If `NULL` (default), the function automatically determines the next part
+#'   number by analyzing existing files. If provided, it overrides automatic
+#'   determination, but no existing output parts should be present.
 #'
-#' @param pth character string; gives the path to the model
-#' @param prefix character; a prefix to pre-pend the output name e.g. "out"
-#' @param suffix character; a suffix to post-pend the output name e.g.
-#'   "N100000_CHEOPS-MPI"
-#' @param part_num defaults to `NULL` which is appropriate if the correct part
-#'   number should be automatically inferred (see `Details`)
-#'
-#' @return character giving the new file name to save the next output part;
-#'   it is a plain file name, not a path because the
-#'   `save_pgas_model_out(.)`-member function of the class [`ModelBNMPD`]
-#'   automatically infers the full path from the file name
+#' @return A character string representing the filename for the next output
+#'   part. The filename format is "<prefix>_<model_basename>_part_<number>_<suffix>",
+#'   where `<number>` is a zero-padded numeric part number.
 #' @export
 #'
-#'@examples
-#'\dontrun{
+#' @examples
+#' \dontrun{
 #' get_out_part_namer(
-#'   pth = pth_model,
+#'   pth = "path/to/model_dir",
 #'   prefix = "out",
 #'   suffix = "N100000_CHEOPS-MPI"
-#'  )
-#'}
+#' )
+#' }
 get_out_part_namer <- function(pth, prefix, suffix, part_num = NULL) {
   tmp_fn_names <- list.files(
     file.path(
@@ -131,15 +122,30 @@ get_out_part_namer <- function(pth, prefix, suffix, part_num = NULL) {
     pattern = "*.rds"
   )
   if (is.null(part_num)) {
-    num_fn <- length(tmp_fn_names)
-    num_part <- formatC(num_fn + 1, width = 3, format = "d", flag = "0")
+    if (length(tmp_fn_names) > 0) {
+      # Extract part numbers from existing file names
+      part_nums <- sapply(tmp_fn_names, function(x) {
+        matches <- regmatches(x, regexec("part_(\\d+)", x))
+        as.numeric(matches[[1]][2])
+      })
+      # Determine the next part number by finding the max and adding 1
+      if (length(part_nums) > 0) {
+        num_part <- max(part_nums, na.rm = TRUE) + 1
+      } else {
+        num_part <- 1
+      }
+    } else {
+      num_part <- 1
+    }
+    num_part <- formatC(num_part, width = 3, format = "d", flag = "0")
   } else {
     if (!identical(tmp_fn_names, character())) {
       stop("There are already some output parts present in the model dir ...")
     }
     if (!is.numeric(part_num)) stop("Arg. 'part_num' must be numeric.")
-    num_part <- formatC(num_part, width = 3, format = "d", flag = "0")
+    num_part <- formatC(part_num, width = 3, format = "d", flag = "0")
   }
+
   paste0(prefix, "_", basename(pth), "_part_", num_part, "_", suffix)
 }
 #' Automatically determine model path from opened file or project run
