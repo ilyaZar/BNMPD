@@ -250,6 +250,47 @@ subset_outBNMPD <- function(out, num_mult_component) {
   }
   return(out_subset)
 }
+#' Get subset of full PGAS output
+#'
+#' Subsets are defined for all multivariate components as subsets of MCMC draws.
+#' Either pass the PGAS-output object directly (via `out`) or a path to the
+#' `*.rds`-file (via `pth_out`).
+#'
+#' @inheritParams subset_outBNMPD
+#' @param pth_out character giving the path to the PGAS output object
+#'
+#' @param mcmc_range an integer sequence ranging
+#'
+#' @return PGAS output subsetted by `mcmc_range`` for all parameters (and latent
+#'   states `x` if present in the output object)
+#' @export
+subset2_outBNMPD <- function(out = NULL, pth_out = NULL, mcmc_range) {
+  if (is.null(pth_out)) {
+    if (is.null(out)) stop("Args. 'pth_out' and 'out' can't be both NULL.")
+    out_full <- out
+  } else {
+    out_full <- readRDS(pth_out)
+  }
+  out_subset <- out_full
+  check_class_outBNMPD(out_full)
+
+  DD <- nrow(out_full$sig_sq_x)
+  MM <- ncol(out_full$sig_sq_x)
+  stopifnot(`Max. of 'mcmc_range' must be smaller than total MCMC draws` =
+              max(mcmc_range) <= MM)
+  stopifnot(`Arg. 'mcmc_range' must be a sequence >1 ` = length(mcmc_range) > 1)
+
+  out_subset$sig_sq_x <- out_full$sig_sq_x[, mcmc_range]
+  out_subset$phi_x    <- out_full$phi_x[, mcmc_range]
+  out_subset$bet_z    <- out_full$bet_z[, mcmc_range]
+  out_subset$bet_u    <- out_full$bet_u[, mcmc_range, ]
+
+  for (d in 1:DD) {
+    out_subset$vcm_bet_u[[d]] <- out_full$vcm_bet_u[[d]][,, mcmc_range]
+  }
+  out_subset$x <- out_full$x[,, mcmc_range, ]
+  return(invisible(out_subset))
+}
 get_tmp_regex <- function(type, num_mult_comps) {
   if (type == "standard") {
     return(paste0("^d_", num_mult_comps))
