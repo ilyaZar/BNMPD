@@ -16,12 +16,19 @@ new_outBNMPD <- function(pe, md_type, sm_type) {
     true_states <- pe$true_states
     true_params <- pe$true_params
   }
+  if (is.null(pe$X)) {
+    warning(paste0("Using pe$x instead of pe$X; it seems that\n",
+                   "function call is outside of `BNPMD::pgas()` function"))
+    x_tkn <- pe$x
+  } else {
+    x_tkn <- pe$X
+  }
   out <- list(sig_sq_x = pe$sig_sq_x,
               phi_x = pe$phi_x,
               bet_z = pe$bet_z,
               bet_u = pe$bet_u,
               vcm_bet_u = pe$vcm_bet_u,
-              x = pe$X,
+              x = x_tkn,
               true_states = true_states,
               true_vals = true_params,
               meta_info = list(
