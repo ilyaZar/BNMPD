@@ -159,6 +159,32 @@ fix_all_outBNMPD <- function(pth_model_out, meta_info) {
 #' @export
 #'
 #' @examples\dontrun{
+#'  # The class should not be 'pmcmc' but 'outBNMPD'
+#'  library(Rmpi)
+#'  library(BNMPD)
+#'  library(pmcmcDiagnostics)
+#'
+#'  pth_mod <- get_path_to_model()
+#'  pths_in <- get_paths_modelBNMPD_input(pth_mod)
+#'  pths_ou <- get_paths_modelBNMPD_results(pth_mod)
+#'
+#'  model <- ModelBNMPD$new(path_to_project = pths_in$pth_project,
+#'                          path_to_states_init = NULL,
+#'                          path_to_states_true = NULL,
+#'                          path_to_params_init = NULL,
+#'                          path_to_params_true = NULL,
+#'                          AUTO_INIT = FALSE)
+#'
+#'  out_all <- model$get_model_output()
+#'  # Now, the undesired old variant would lead
+#'  # > out_all$meta_info
+#'  # $MM
+#'  # [1] 10000
+#'
+#'  # $mod_type
+#'  # [1] "empirical"
+#'  # Then, the following fix should be invoked to where the output is stored
+#'  # i.e. the model dir from above and the model/output/out_XXX.rds:
 #'  fix_outBNMPD(pth_to_out = "long/path/to/out/out_XXX.rds",
 #'               meta_info =
 #'               list(dimensions = list(NN = 48,
