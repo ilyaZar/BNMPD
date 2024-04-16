@@ -15,7 +15,6 @@
 #'
 #' @section Specifications for regressors:
 #'     To be written.
-#'
 ## BNMPD namespace: start
 #' @useDynLib BNMPD, .registration = TRUE
 #' @importFrom stats rnorm
@@ -25,6 +24,5 @@
 #' @importFrom yaml read_yaml
 #' @importFrom magrittr `%>%`
 ## BNMPD namespace: end
-#' @docType package
 #' @name BNMPD
 NULL
