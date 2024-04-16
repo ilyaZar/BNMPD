@@ -698,11 +698,17 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'
                             #' @details as taken from the corresponding class
                             #'   object `ModelDat`
-                            get_modeldata_dimensions = function() {
+                            #' @param dim_name character giving the name of the
+                            #'   dimension to return; defaults to `NULL` in
+                            #'   which case all dims are returned as a vector
+                            get_modeldata_dimensions = function(dim_name = NULL) {
                               dim_list <- private$.ModelDat$get_model_data_dimensions()
                               dim_nms <- names(dim_list)
                               dim_list <- unlist(as.list(dim_list))
                               names(dim_list) <- dim_nms
+                              if (!is.null(dim_name)) {
+                                return(dim_list[dim_name])
+                              }
                               return(dim_list)
                             },
                             #' @description Returns true state values
