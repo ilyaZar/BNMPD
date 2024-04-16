@@ -443,3 +443,82 @@ fix_output_joins <- function(pth_out_1st_join,
   saveRDS(out_2nd_join, file = pth_out_fixed_join_filename)
   return(invisible(pth_out_1st_join))
 }
+#' Rescale Parameters in PMCMC Samples
+#'
+#' Adjusts selected parameter values within PMCMC samples of an `outBNMPD`
+#' object using a scale factor. This function is applicable to parameters
+#' "bet_z", "bet_u", and "vcm_bet_u", allowing for direct scaling of linear
+#' parameters and appropriate adjustment of variance-covariance matrices.
+#'
+#' @param out_pgas An `outBNMPD` object with PMCMC samples.
+#' @param name_par The name of the parameter to rescale, one of "bet_z",
+#'   "bet_u", or "vcm_bet_u".
+#' @param name_entry The identifier within the parameter matrix or array to
+#'   locate specific values for rescaling. Utilized for regex matching to select
+#'   rows.
+#' @param scale The scale factor to apply. For linear parameters ("bet_z" and
+#'   "bet_u"), this is a simple multiplication. For covariance matrices
+#'   ("vcm_bet_u"), diagonal elements are scaled by the square of the scale
+#'   factor, while off-diagonal elements (covariances) are scaled linearly.
+#'
+#' @return The modified `outBNMPD` object with rescaled parameter values.
+#'
+#' @export
+#' @examples
+#' \dontrun{
+#' # Assuming `out_pgas` is an `outBNMPD` object
+#' out_pgas <- rescale_pmcmc_samples(out_pgas, "bet_z", "re_2", scale = 0.001)
+#' }
+#'
+#' @note Ensuring `name_par` accurately references a valid parameter within
+#'   `out_pgas` is essential. The function performs basic validation checks.
+rescale_pmcmc_samples <- function(out_pgas,
+                                  name_par,
+                                  name_entry,
+                                  scale = 1000) {
+  # validate_outBNMPD(out_pgas)
+  stopifnot(name_par %in% c("bet_z", "bet_u", "vcm_bet_u"))
+  if (name_par %in% c("bet_z", "bet_u")) {
+    # define id to adjust as 'id_ta'
+    id_ta <- get_rescale_id(out_pgas, name_par, name_entry)
+  }
+  if (name_par == "bet_z") {
+    # access dimensions; here bet_z container only has two so it's a matrix
+    val_repl <- out_pgas[[name_par]][id_ta, ] * scale
+    out_pgas[[name_par]][id_ta, ] <- val_repl
+  } else if (name_par == "bet_u") {
+    # access dimensions; here bet_u container has three so it's an array
+    val_repl <- out_pgas[[name_par]][id_ta, , ] * scale
+    out_pgas[[name_par]][id_ta, , ] <- val_repl
+  } else if (name_par == "vcm_bet_u") {
+    DD_total <- length(out_pgas[[name_par]])
+    for (dd in seq_len(DD_total)) {
+      val_repl_var <- out_pgas[[name_par]][[dd]][name_entry, name_entry, ]
+      val_repl_var <- val_repl_var * scale ^ 2
+
+      val_repl_cov_row <- out_pgas[[name_par]][[dd]][name_entry, , ]
+      val_repl_cov_col <- out_pgas[[name_par]][[dd]][, name_entry, ]
+      val_repl_cov_row <- val_repl_cov_row * scale
+      val_repl_cov_col <- val_repl_cov_col * scale
+
+      out_pgas[[name_par]][[dd]][name_entry, , ] <- val_repl_cov_row
+      out_pgas[[name_par]][[dd]][, name_entry, ] <- val_repl_cov_col
+      out_pgas[[name_par]][[dd]][name_entry, name_entry, ] <- val_repl_var
+    }
+  }
+  return(out_pgas)
+}
+#' Get ID for Rescaling
+#'
+#' Retrieves the row IDs for a given parameter name and entry identifier within
+#' PMCMC samples.
+#'
+#' @param out_pgas `outBNMPD` object with PMCMC samples.
+#' @param name_par Parameter name: "bet_z", "bet_u".
+#' @param name_entry Entry identifier to locate specific parameter values.
+#' @return Vector of matching row IDs.
+get_rescale_id <- function(out_pgas, name_par, name_entry) {
+  id_out <- which(grepl(name_entry, rownames(out_pgas[[name_par]])))
+  if (!length(id_out)) stop("Could not match 'name_entry' in 'name_par'.")
+  return(id_out)
+}
