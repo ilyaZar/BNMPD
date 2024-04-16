@@ -23,30 +23,37 @@ sample_all_params.default <- function(pe, mm) {
   msg <- paste0("Could not find suitable sampler for sampler type: ", class(pe))
   stop(msg)
 }
+#' @export
 sample_all_params.spl <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
+#' @export
 sample_all_params.lin_splZ <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
+#' @export
 sample_all_params.re_splZ <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
+#' @export
 sample_all_params.lin_splU <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
+#' @export
 sample_all_params.re_splU <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
+#' @export
 sample_all_params.lin_re_splZ <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
 }
+#' @export
 sample_all_params.lin_re_splU <- function(pe, mm) {
   msg <- paste0("Sampler type: '", class(pe), "' not yet implemented!")
   stop(msg)
