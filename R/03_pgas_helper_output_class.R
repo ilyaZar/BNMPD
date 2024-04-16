@@ -199,6 +199,44 @@ fix_all_outBNMPD <- function(pth_model_out, meta_info) {
 #'                                     sim_type_run = "pmcmc")
 #'               )
 #'  )
+#'  # This should give us:
+#'  # > class(out_all)
+#'  # [1] "outBNMPD"
+#'  # > out_all$meta_info
+#'  # $dimensions
+#'  # $dimensions$NN
+#'  # [1] 48
+#'
+#'  # $dimensions$TT
+#'  # [1] 50
+#'
+#'  # $dimensions$DD
+#'  # [1] 5
+
+#'  # $dimensions$DD2
+#'  # NULL
+
+#'  # $dimensions$MM
+#'  # [1] 10000
+#'
+#'
+#'  # $model_meta
+#'  3 $model_meta$mod_type_obs
+#'  # [1] "DIRICHLET"
+#'
+#'  # $model_meta$mod_type_lat
+#'  # [1] "auto_lin_re"
+#'
+#'  # $model_meta$mod_type_run
+#'  # [1] "empirical"
+#'
+#'
+#'  # $simul_meta
+#'  # $simul_meta$csmc_type_run
+#'  # [1] "bpf"
+#'
+#'  # $simul_meta$sim_type_run
+#'  # [1] "pmcmc"
 #' }
 fix_outBNMPD <- function(out = NULL,
                          pth_to_out = NULL,
