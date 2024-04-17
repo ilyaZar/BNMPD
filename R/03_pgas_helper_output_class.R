@@ -287,16 +287,25 @@ check_class_outBNMPD <- function(output) {
 #'
 #' @param num_mult_component an integer from `d=1,...,DD` giving the component
 #'   number to subset for
+#' @param par_qualifier a character giving an additional qualifier to subset
+#'   for; for generalized distributions, this can be e.g. 'A' or 'B'
 #'
 #' @return PGAS output subsetted by component number for all parameters (and
 #'   latent states if neccessary)
 #' @export
-subset_outBNMPD <- function(out, num_mult_component) {
+subset_outBNMPD <- function(out, num_mult_component, par_qualifier = NULL) {
   # check_class_outBNMPD(out)
   out_subset <- out
 
   type_rgx  <- get_type_rgx(out$sig_sq_x)
-  tmp_regex <- get_tmp_regex(type_rgx, num_mult_component)
+  if (type_rgx == "generalized") {
+    DD_MAX    <- out$meta_info$dimensions$DD2
+  } else if (type_rgx == "standard") {
+    DD_MAX    <- out$meta_info$dimensions$DD
+  }
+  if (is.null(DD_MAX)) stop("Can't access DD_MAX from meta_info.")
+  tmp_regex <- get_tmp_regex(type_rgx, num_mult_component,
+                             DD_MAX, par_qualifier)
 
   tmp_id_grep <- grep(tmp_regex, rownames(out$sig_sq_x))
   out_subset$sig_sq_x <- out$sig_sq_x[tmp_id_grep, , drop = FALSE]
@@ -307,13 +316,17 @@ subset_outBNMPD <- function(out, num_mult_component) {
   out_subset$bet_z <- out$bet_z[tmp_id_grep, , drop = FALSE]
   tmp_id_grep <- grep(tmp_regex, rownames(out$bet_u))
   out_subset$bet_u <- out$bet_u[tmp_id_grep, , ,drop = FALSE]
-
-  if (type_rgx == "generalized") {
-    browser()
-    num_comp_adj <- c(1, 2) + 2*(num_mult_component - 1)
-  } else if (type_rgx == "standard") {
-    num_comp_adj <- num_mult_component
-  }
+  # if (type_rgx == "generalized") {
+  #   DD_tmp <- DD_MAX / 2
+  #   if (num_mult_component <= DD_tmp) {
+  #     num_comp_adj <- num_mult_component
+  #   } else {
+  #     num_comp_adj <- num_mult_component - DD_tmp
+  #   }
+  # } else if (type_rgx == "standard") {
+  #   num_comp_adj <- num_mult_component
+  # }
+  num_comp_adj <- num_mult_component
   out_subset$vcm_bet_u <- out$vcm_bet_u[num_comp_adj]
 
   if (get_simulation_run_type_outBNMPD(out) == "pmcmc") {
