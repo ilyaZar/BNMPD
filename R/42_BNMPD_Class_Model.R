@@ -591,15 +591,20 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #' @param num_mult_component an integer from
                             #'   `d=1,...,DD` giving the component number to
                             #'   subset for
+                            #' @param par_qualifier a character giving an
+                            #'   additional qualifier to subset for; for
+                            #'   generalized distributions, this can be e.g. 'A'
+                            #'   or 'B'
                             #'
                             #' @details pass return value to above function as
                             #'   argument \code{model_meta}
-                            get_par_label_names = function(num_mult_component = NULL) {
+                            get_par_label_names = function(
+                              num_mult_component = NULL,
+                              par_qualifier = NULL) {
                               stopifnot(`Arg. must be 'NULL' or integer` =
                                           is.null(num_mult_component) || is.numeric(num_mult_component))
                               tmp_pars <- private$get_labnam_tmp_pars()
                               dims <- private$.ModelDef$get_dimension()
-                              NN_tmp <- dims[1]
                               dd_seq_names <- private$get_DD_seq_names(
                                 private$.model_type_obs,
                                 dims[3]
@@ -654,10 +659,31 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               check_mod_type <- grepl(
                                 "GEN", private$.model_type_obs
                               )
+                              num_comp_adj <- num_mult_component
                               if (check_mod_type) {
-                                num_comp_adj <- c(1, 2) + 2*(num_mult_component - 1)
-                              } else {
-                                num_comp_adj <- num_mult_component
+                                if (!is.null(par_qualifier)) {
+                                  id_par_name <- lapply(par_names, function(x) {
+                                    grep(paste0("D", par_qualifier, "_"), x)
+                                  })
+                                  for (ll in seq_along(par_names)) {
+                                    par_names[[ll]] <- par_names[[ll]][id_par_name[[ll]]]
+                                  }
+                                  id_lab_names <- lapply(lab_names, function(x) {
+                                    grep(paste0("D", par_qualifier, "_"), x)
+                                  })
+                                  for (ll in seq_along(lab_names)) {
+                                    lab_names[[ll]] <- lab_names[[ll]][id_lab_names[[ll]]]
+                                  }
+                                  if (num_mult_component <= 9) {
+                                    rgx_mult_comp <- paste0("0", num_mult_component)
+                                  } else {
+                                    rgx_mult_comp <- paste0(num_mult_component)
+                                  }
+                                  tmp_regex <- paste0(
+                                    "^D", par_qualifier, "_", rgx_mult_comp)
+                                } else {
+                                  stop("This case is not implemented.")
+                                }
                               }
                               lab_names[[1]] <- lab_names[[1]][num_comp_adj]
                               par_names[[1]] <- par_names[[1]][num_comp_adj]
@@ -665,15 +691,6 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               lab_names[[2]] <- lab_names[[2]][num_comp_adj]
                               par_names[[2]] <- par_names[[2]][num_comp_adj]
 
-                              if (num_mult_component <= 9) {
-                                rgx_mult_comp <- paste0("0", num_mult_component)
-                              } else {
-                                rgx_mult_comp <- paste0(num_mult_component)
-                              }
-                              tmp_regex <- paste0(
-                                "^D(", "A_", rgx_mult_comp,
-                                "|B_", rgx_mult_comp, "|",
-                                rgx_mult_comp, ")_")
                               tmp_id_grep <- grep(tmp_regex, lab_names[[3]])
                               lab_names[[3]] <- lab_names[[3]][tmp_id_grep]
                               par_names[[3]] <- par_names[[3]][tmp_id_grep]
