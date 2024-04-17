@@ -507,33 +507,19 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               tmp_pars <- private$get_labnam_tmp_pars()
                               dims <- private$.ModelDef$get_dimension()
                               NN_tmp <- dims[1]
-                              CHECK_SPECIAL_DIST <- check_special_dist_quick(
-                                private$.model_type_obs
+                              dd_seq_names <- private$get_DD_seq_names(
+                                private$.model_type_obs,
+                                dims[3]
                               )
-                              if (isTRUE(CHECK_SPECIAL_DIST)) {
-                                DD_tmp <- get_DD2(
-                                  tolower(private$.model_type_obs),
-                                  dims[3]
-                                )
-                              } else {
-                                DD_tmp <- dims[3]
-                              }
-                              dd_seq_names <- dd_names_formatter2(
-                                CHECK_SPECIAL_DIST,
-                                DD_tmp
+                              DD_tmp <- length(dd_seq_names)
+                              sig_sq <- private$get_labnam_sig_sq(
+                                tmp_pars,
+                                dd_seq_names
                               )
-                              if (any(grepl("sig_sq", tmp_pars))) {
-                                sig_sq <- paste0("sig_sq_x_", dd_seq_names)
-                              } else {
-                                sig_sq <- NULL
-                              }
-                              if (any(grepl("phi", tmp_pars))) {
-                                order_p <- private$get_order_p()
-                                phi <- paste0(paste0("phi_x_", 1:order_p, "_"),
-                                              rep(dd_seq_names, each = order_p))
-                              } else {
-                                phi <- NULL
-                              }
+                              phi <- private$get_labnam_phi(
+                                tmp_pars,
+                                dd_seq_names
+                              )
                               if (any(grepl("beta_z_lin", tmp_pars))) {
                                 lab_bet_z <- character(0)
                                 var_bet_z <- character(0)
