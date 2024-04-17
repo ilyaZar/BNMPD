@@ -362,15 +362,18 @@ subset2_outBNMPD <- function(out = NULL, pth_out = NULL, mcmc_range) {
   out_subset$x <- out_full$x[,, mcmc_range, ]
   return(invisible(out_subset))
 }
-get_tmp_regex <- function(type, num_mult_comps) {
+get_tmp_regex <- function(type, num_mult_comp, DD_MAX, par_qualifier) {
   if (type == "standard") {
-    return(paste0("^d_", num_mult_comps))
+    if (num_mult_comp < DD_MAX) return(paste0("^d_", num_mult_comp))
+    stop("Invalid num_mult_component value; cannot be larger than DD_MAX.")
   } else if (type == "generalized") {
-    # Construct regex pattern
-    if (num_mult_comps < 10) {
-      return(paste0("^D(A|B)_0", num_mult_comps))
-    } else if (num_mult_comps >= 10) {
-      return(paste0("^D(A|B)_", num_mult_comps))
+    if (num_mult_comp > DD_MAX / 2) stop("Invalid num_mult_component value.")
+    if (num_mult_comp < 10) {
+        regexpr_tkn <- paste0("^D", par_qualifier, "_0", num_mult_comp)
+      return(regexpr_tkn)
+    } else if (num_mult_comp >= 10) {
+      regexpr_tkn <- paste0("^D", par_qualifier, num_mult_comp)
+      return(regexpr_tkn)
     } else {
       stop("Invalid num_mult_component value")
     }
