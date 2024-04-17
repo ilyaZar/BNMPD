@@ -380,6 +380,72 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               return(list(var_bet_z = var_bet_z,
                                           lab_bet_z = lab_bet_z))
                             },
+                            get_labnam_bet_vcm_u = function(tmp_pars,
+                                                            DD_tmp,
+                                                            NN_tmp) {
+                              if (any(grepl("beta_u_lin", tmp_pars))) {
+                                bet_u_var <- private$.ModelDef$get_var_u()
+                                bet_u_lab <- private$.ModelDef$get_lab_u()
+                                lab_bet_u <- character(0)
+                                var_bet_u <- character(0)
+                                var_vcm_u <- character(0)
+                                lab_vcm_u <- character(0)
+                                for (d in seq_len(DD_tmp)) {
+                                  tmp_var <- unlist(
+                                    lapply(
+                                      paste0(
+                                        names(bet_u_lab[d]),
+                                        "_",
+                                        bet_u_lab[[d]]
+                                      ),
+                                      function(x) {
+                                        paste0(x, "_", 1:NN_tmp)
+                                      }
+                                    )
+                                  )
+                                  tmp_lab <- unlist(
+                                    lapply(
+                                      paste0(
+                                        names(bet_u_lab[d]),
+                                        "_",
+                                        bet_u_lab[[d]]
+                                      ),
+                                      function(x) {
+                                        paste0(x, "_", 1:NN_tmp)
+                                      }
+                                    )
+                                  )
+                                  var_bet_u <- c(var_bet_u, tmp_var)
+                                  lab_bet_u <- c(lab_bet_u, tmp_lab)
+
+                                  num_re_tmp   <- length(bet_u_var[[d]])
+                                  vcm_elements <- paste0("vcm_bet_u_",
+                                                         rep(1:(num_re_tmp^2),
+                                                             times = DD_tmp))
+                                  vcm_elements <- paste0(
+                                    names(bet_u_lab[d]),
+                                    "_vcm_bet_u_",
+                                    bet_u_lab[[d]], "_",
+                                    formatC(
+                                      seq_len(num_re_tmp^2),
+                                      width = 2,
+                                      format = "d",
+                                      flag = "0")
+                                  )
+                                  var_vcm_u <- c(var_vcm_u, vcm_elements)
+                                  lab_vcm_u <- c(lab_vcm_u, vcm_elements)
+                                }
+                              } else {
+                                lab_bet_u <- NULL
+                                var_bet_u <- NULL
+                                var_vcm_u <- NULL
+                                lab_vcm_u <- NULL
+                              }
+                              return(list(var_bet_u = var_bet_u,
+                                          lab_bet_u = lab_bet_u,
+                                          var_vcm_u = var_vcm_u,
+                                          lab_vcm_u = lab_vcm_u))
+                            },
                             get_DD_seq_names = function(mod_type_obs, DD_tmp) {
                               CHECK_SPECIAL_DIST <- check_special_dist_quick(
                                 mod_type_obs
@@ -553,64 +619,15 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               )
                               var_bet_z <- tmp_bet_z$var_bet_z
                               lab_bet_z <- tmp_bet_z$lab_bet_z
-                              if (any(grepl("beta_u_lin", tmp_pars))) {
-                                bet_u_var <- private$.ModelDef$get_var_u()
-                                bet_u_lab <- private$.ModelDef$get_lab_u()
-                                lab_bet_u <- character(0)
-                                var_bet_u <- character(0)
-                                var_vcm_u <- character(0)
-                                lab_vcm_u <- character(0)
-                                for (d in seq_len(DD_tmp)) {
-                                  tmp_var <- unlist(
-                                    lapply(
-                                      paste0(
-                                        names(bet_u_lab[d]),
-                                        "_",
-                                        bet_u_lab[[d]]
-                                      ),
-                                      function(x) {
-                                        paste0(x, "_", 1:NN_tmp)
-                                      }
-                                    )
-                                  )
-                                  tmp_lab <- unlist(
-                                    lapply(
-                                      paste0(
-                                        names(bet_u_lab[d]),
-                                        "_",
-                                        bet_u_lab[[d]]
-                                      ),
-                                      function(x) {
-                                        paste0(x, "_", 1:NN_tmp)
-                                      }
-                                    )
-                                  )
-                                  var_bet_u <- c(var_bet_u, tmp_var)
-                                  lab_bet_u <- c(lab_bet_u, tmp_lab)
 
-                                  num_re_tmp   <- length(bet_u_var[[d]])
-                                  vcm_elements <- paste0("vcm_bet_u_",
-                                                         rep(1:(num_re_tmp^2),
-                                                             times = DD_tmp))
-                                  vcm_elements <- paste0(
-                                    names(bet_u_lab[d]),
-                                    "_vcm_bet_u_",
-                                    bet_u_lab[[d]], "_",
-                                    formatC(
-                                      seq_len(num_re_tmp^2),
-                                      width = 2,
-                                      format = "d",
-                                      flag = "0")
-                                  )
-                                  var_vcm_u <- c(var_vcm_u, vcm_elements)
-                                  lab_vcm_u <- c(lab_vcm_u, vcm_elements)
-                                }
-                              } else {
-                                lab_bet_u <- NULL
-                                var_bet_u <- NULL
-                                var_vcm_u <- NULL
-                                lab_vcm_u <- NULL
-                              }
+                              tmp_u <- private$get_labnam_bet_vcm_u(
+                                tmp_pars,
+                                DD_tmp,
+                                dims[1])
+                              var_bet_u <- tmp_u$var_bet_u
+                              lab_bet_u <- tmp_u$lab_bet_u
+                              var_vcm_u <- tmp_u$var_vcm_u
+                              lab_vcm_u <- tmp_u$lab_vcm_u
                               lab_names <- list(sig_sq_x = sig_sq,
                                                 phi_x = phi,
                                                 bet_z = lab_bet_z,
