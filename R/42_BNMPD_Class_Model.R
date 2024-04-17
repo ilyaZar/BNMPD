@@ -481,7 +481,7 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               CHECK_SPECIAL_DIST <- check_special_dist_quick(
                                 private$.model_type_obs
                               )
-                              if(isTRUE(CHECK_SPECIAL_DIST)) {
+                              if (isTRUE(CHECK_SPECIAL_DIST)) {
                                 DD_tmp <- get_DD2(
                                   tolower(private$.model_type_obs),
                                   dims[3]
@@ -608,41 +608,41 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               if (is.null(num_mult_component)) {
                                 return(list(par_lab_names = lab_names,
                                             par_val_names = par_names))
-                              } else {
-                                check_mod_type <- grepl("GEN",
-                                                        private$.model_type_obs)
-                                if (check_mod_type) {
-                                  num_comp_adj <- c(1, 2) + 2*(num_mult_component - 1)
-                                } else {
-                                  num_comp_adj <- num_mult_component
-                                }
-                                lab_names[[1]] <- lab_names[[1]][num_comp_adj]
-                                par_names[[1]] <- par_names[[1]][num_comp_adj]
-
-                                lab_names[[2]] <- lab_names[[2]][num_comp_adj]
-                                par_names[[2]] <- par_names[[2]][num_comp_adj]
-
-                                if (num_mult_component <= 9) {
-                                  rgx_mult_comp <- paste0("0", num_mult_component)
-                                } else {
-                                  rgx_mult_comp <- paste0(num_mult_component)
-                                }
-                                tmp_regex <- paste0(
-                                    "^D(", "A_", rgx_mult_comp,
-                                    "|B_", rgx_mult_comp, "|",
-                                    rgx_mult_comp, ")_")
-                                tmp_id_grep <- grep(tmp_regex, lab_names[[3]])
-                                lab_names[[3]] <- lab_names[[3]][tmp_id_grep]
-                                par_names[[3]] <- par_names[[3]][tmp_id_grep]
-
-                                tmp_id_grep <- grep(tmp_regex, lab_names[[4]])
-                                lab_names[[4]] <- lab_names[[4]][tmp_id_grep]
-                                par_names[[4]] <- par_names[[4]][tmp_id_grep]
-
-                                tmp_id_grep <- grep(tmp_regex, lab_names[[5]])
-                                lab_names[[5]] <- lab_names[[5]][tmp_id_grep]
-                                par_names[[5]] <- par_names[[5]][tmp_id_grep]
                               }
+                              check_mod_type <- grepl(
+                                "GEN", private$.model_type_obs
+                              )
+                              if (check_mod_type) {
+                                num_comp_adj <- c(1, 2) + 2*(num_mult_component - 1)
+                              } else {
+                                num_comp_adj <- num_mult_component
+                              }
+                              lab_names[[1]] <- lab_names[[1]][num_comp_adj]
+                              par_names[[1]] <- par_names[[1]][num_comp_adj]
+
+                              lab_names[[2]] <- lab_names[[2]][num_comp_adj]
+                              par_names[[2]] <- par_names[[2]][num_comp_adj]
+
+                              if (num_mult_component <= 9) {
+                                rgx_mult_comp <- paste0("0", num_mult_component)
+                              } else {
+                                rgx_mult_comp <- paste0(num_mult_component)
+                              }
+                              tmp_regex <- paste0(
+                                "^D(", "A_", rgx_mult_comp,
+                                "|B_", rgx_mult_comp, "|",
+                                rgx_mult_comp, ")_")
+                              tmp_id_grep <- grep(tmp_regex, lab_names[[3]])
+                              lab_names[[3]] <- lab_names[[3]][tmp_id_grep]
+                              par_names[[3]] <- par_names[[3]][tmp_id_grep]
+
+                              tmp_id_grep <- grep(tmp_regex, lab_names[[4]])
+                              lab_names[[4]] <- lab_names[[4]][tmp_id_grep]
+                              par_names[[4]] <- par_names[[4]][tmp_id_grep]
+
+                              tmp_id_grep <- grep(tmp_regex, lab_names[[5]])
+                              lab_names[[5]] <- lab_names[[5]][tmp_id_grep]
+                              par_names[[5]] <- par_names[[5]][tmp_id_grep]
                               return(list(par_lab_names = lab_names,
                                           par_val_names = par_names))
                             },
