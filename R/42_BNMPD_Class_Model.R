@@ -353,6 +353,33 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                               }
                               return(phi)
                             },
+                            get_labnam_bet_z = function(tmp_pars, DD_tmp) {
+                              if (any(grepl("beta_z_lin", tmp_pars))) {
+                                lab_bet_z <- character(0)
+                                var_bet_z <- character(0)
+                                bet_z_var <- private$.ModelDef$get_var_z()
+                                bet_z_lab <- private$.ModelDef$get_lab_z()
+                                for (d in seq_len(DD_tmp)) {
+                                  tmp_var <- paste0(
+                                    names(bet_z_var[d]),
+                                    "_",
+                                    bet_z_var[[d]]
+                                  )
+                                  tmp_lab <- paste0(
+                                    names(bet_z_lab[d]),
+                                    "_",
+                                    bet_z_lab[[d]]
+                                  )
+                                  var_bet_z <- c(var_bet_z, tmp_var)
+                                  lab_bet_z <- c(lab_bet_z, tmp_lab)
+                                }
+                              } else {
+                                var_bet_z <- NULL
+                                lab_bet_z <- NULL
+                              }
+                              return(list(var_bet_z = var_bet_z,
+                                          lab_bet_z = lab_bet_z))
+                            },
                             get_DD_seq_names = function(mod_type_obs, DD_tmp) {
                               CHECK_SPECIAL_DIST <- check_special_dist_quick(
                                 mod_type_obs
@@ -520,29 +547,12 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 tmp_pars,
                                 dd_seq_names
                               )
-                              if (any(grepl("beta_z_lin", tmp_pars))) {
-                                lab_bet_z <- character(0)
-                                var_bet_z <- character(0)
-                                bet_z_var <- private$.ModelDef$get_var_z()
-                                bet_z_lab <- private$.ModelDef$get_lab_z()
-                                for (d in seq_len(DD_tmp)) {
-                                  tmp_var <- paste0(
-                                    names(bet_z_var[d]),
-                                    "_",
-                                    bet_z_var[[d]]
-                                  )
-                                  tmp_lab <- paste0(
-                                    names(bet_z_lab[d]),
-                                    "_",
-                                    bet_z_lab[[d]]
-                                  )
-                                  var_bet_z <- c(var_bet_z, tmp_var)
-                                  lab_bet_z <- c(lab_bet_z, tmp_lab)
-                                }
-                              } else {
-                                var_bet_z <- NULL
-                                lab_bet_z <- NULL
-                              }
+                              tmp_bet_z <- private$get_labnam_bet_z(
+                                tmp_pars,
+                                DD_tmp
+                              )
+                              var_bet_z <- tmp_bet_z$var_bet_z
+                              lab_bet_z <- tmp_bet_z$lab_bet_z
                               if (any(grepl("beta_u_lin", tmp_pars))) {
                                 bet_u_var <- private$.ModelDef$get_var_u()
                                 bet_u_lab <- private$.ModelDef$get_lab_u()
