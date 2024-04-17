@@ -336,6 +336,35 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                                  )
                                           )
                                     )
+                            },
+                            get_labnam_sig_sq = function(tmp_pars, dd_names) {
+                              if (any(grepl("sig_sq", tmp_pars))) {
+                                return(paste0("sig_sq_x_", dd_names))
+                              }
+                              return(NULL)
+                            },
+                            get_labnam_phi = function(tmp_pars, dd_names) {
+                              if (any(grepl("phi", tmp_pars))) {
+                                order_p <- private$get_order_p()
+                                phi <- paste0(paste0("phi_x_", 1:order_p, "_"),
+                                              rep(dd_names, each = order_p))
+                              } else {
+                                phi <- NULL
+                              }
+                              return(phi)
+                            },
+                            get_DD_seq_names = function(mod_type_obs, DD_tmp) {
+                              CHECK_SPECIAL_DIST <- check_special_dist_quick(
+                                mod_type_obs
+                              )
+                              if (isTRUE(CHECK_SPECIAL_DIST)) {
+                                DD_tmp <- get_DD2(tolower(mod_type_obs), DD_tmp)
+                              }
+                              dd_seq_names <- dd_names_formatter2(
+                                CHECK_SPECIAL_DIST,
+                                DD_tmp
+                              )
+                              return(dd_seq_names)
                             }
                           ),
                           public = list(
