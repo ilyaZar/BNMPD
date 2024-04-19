@@ -56,7 +56,6 @@ compute_outBNMPD_fit <- function(
 
   out_all <- array(0, dim = c(TT, DD, NN, NM))
   for (nn in seq_len(NN)) {
-    if (nn == 7) browser()
     tmp_list <- get_1st_moment_GD_matrix(
       out_x[, , , nn], TT, DD, MM, settings_list = settings_list)
     out_all[, , nn, 1] <- tmp_list$out_means
