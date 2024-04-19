@@ -73,16 +73,6 @@ compute_outBNMPD_fit <- function(
                        c("mean", dimnames(tmp_list$out_KI)[[3]]))
   dimnames(out_all) <- out_dimnames
   return(out_all)
-  # out_means <- 1 - rowSums(out_means_rest)
-  # } else {
-      # out_means[t] <- compute_1st_moment_GD(a = a_par[t, ], b = b_par[t, ], num_c = num_c_taken)
-  # }
-  # plot(out_means, type = "l")
-  # plot(x_exp[, 1]/rowSums(x_exp), type = "l")
-  # plot(x_exp[, 2]/rowSums(x_exp), type = "l")
-  # plot(x_exp[, 3]/rowSums(x_exp), type = "l")
-  # plot(x_exp[, 4]/rowSums(x_exp), type = "l")
-  # plot(x_exp[, 5]/rowSums(x_exp), type = "l")
 }
 get_1st_moment_GD_matrix <- function(
     x, TT, DD, MM, settings_list = list(KI_probs = c(0.025, 0.975))
