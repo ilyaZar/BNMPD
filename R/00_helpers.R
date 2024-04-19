@@ -93,3 +93,20 @@ set_seed_no <- function(true_params, seed_no) {
   if (is.null(seed_no)) seed_no <- get_seed(true_params)
   return(seed_no)
 }
+progress_any <- function(iter,
+                         iter_max,
+                         settings = list(digits = 0,
+                                         repeat_every = 10)) {
+  percentage_progress <- iter / iter_max * 100
+
+  chunck_to_print  <- floor(iter_max / settings$repeat_every)
+  repeat_every_seq <- seq(from = chunck_to_print,
+                          to = iter_max,
+                          by = chunck_to_print)
+  check_print_progress <- iter %in% repeat_every_seq
+  if (check_print_progress) {
+    cat(crayon::green("Progress:"),
+        crayon::yellow(
+          paste0(round(percentage_progress, digits = settings$digits), "%.\n")))
+  }
+}
