@@ -1,7 +1,45 @@
+#' Compute fitted values from the output of the BNMPD model
+#'
+#' @param out an object of class [outBNMPD][BNMPD::new_outBNMPD()] (as
+#'   returned e.g. via [BNMPD::pgas()])
+#' @param settings_list a list of settings with fields `burn`, `thin`and
+#'   `KI_probs` to specify the burn-in period, thinning and the quantiles for
+#'   the confidence intervals of the fitted values
+#'
+#' @return an array of dimension `TT x DD x NN x 3` where the first dimension is
+#'   the time series length, the second dimension is the number of multivariate
+#'   components (including the zero component), the third dimension is the
+#'   number of cross-sectional units, and the fourth dimension is the number of
+#'   measures (mean, lower and upper bounds of the confidence interval)
+#'
+#' @export
+#'
+#' @examples \dontrun{
+#' # This is the first part of a `main_diagnostics.R` script so posterior fit
+#' # computation can be invoked from a given `out_all` object
+#' pth_mod <- get_path_to_model()
+#' pths_in <- get_paths_modelBNMPD_input(pth_mod)
+#' pths_ou <- get_paths_modelBNMPD_results(pth_mod)
+#'
+#' model <- ModelBNMPD$new(path_to_project = pths_in$pth_project,
+#'                         path_to_states_init = NULL,
+#'                         path_to_states_true = NULL,
+#'                         path_to_params_init = NULL,
+#'                         path_to_params_true = NULL,
+#'                         AUTO_INIT = FALSE)
+#' out_all <- model$get_model_output()
+#' data_posterior_fit <- BNMPD:::compute_outBNMPD_fit(
+#'   out_all, settings_list = list(
+#'     burn = 2500,
+#'     thin = 10,
+#'     KI_probs = c(0.025, 0.975)
+#'   )
+#' )
+#' }
 compute_outBNMPD_fit <- function(
     out, settings_list = list(
       burn = NULL,
-      trim = NULL,
+      thin = NULL,
       KI_probs = c(0.025, 0.975))
     ) {
   check_class_outBNMPD(out)
