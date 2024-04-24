@@ -120,8 +120,8 @@ get_1st_moment_GD_matrix <- function(
   DD  <- dim(a_par)[2] + 1
   MM  <- dim(a_par)[3]
 
-  id_zeros_a <- get_zero_component_id(a_par, DD)
-  id_zeros_b <- get_zero_component_id(b_par, DD)
+  id_zeros_a <- get_zero_component_id(a_par, DD, type = "GENERALIZED")
+  id_zeros_b <- get_zero_component_id(b_par, DD, type = "GENERALIZED")
   stopifnot(`Unequal zero matches.` = all.equal(id_zeros_a, id_zeros_b))
 
   id_zeros <- id_zeros_a
