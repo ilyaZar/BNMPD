@@ -200,13 +200,35 @@ compute_1st_moment_GD <- function(a, b, num_c, LOGARITHM = FALSE) {
   if (LOGARITHM) return(lhs + rhs)
   return(exp(lhs + rhs))
 }
-get_zero_component_id <- function(par, DD) {
+get_zero_component_id <- function(par, DD, type) {
+  stopifnot(`Arg. type cannot be 'NULL'.` =  !is.null(type))
   list_id_zeros <- 0
-  for (dd in 1:(DD - 1)) {
-    if (all(par[, dd, ] == 1)) list_id_zeros <- c(list_id_zeros, dd)
+  if (type == "GENERALIZED") {
+    for (dd in 1:(DD - 1)) {
+      if (all(par[, dd, ] == 1)) list_id_zeros <- c(list_id_zeros, dd)
+    }
+  } else if (type == "STANDARD") {
+    for (dd in 1:DD) {
+      if (all(par[, dd, ] == 1)) list_id_zeros <- c(list_id_zeros, dd)
+    }
+  } else {
+    stop("Unknown value for argument 'type'.")
   }
   return(list_id_zeros)
 }
+#' Burn and thin MCMC draws
+#'
+#' @param draws an array of MCMC draws
+#' @param dim_mcmc \code{numeric}; the dimension of the array where the MCMC
+#'   draws are stored
+#' @param burnin \code{numeric}; the number of burn-in draws to discard
+#' @param thin \code{numeric}; the thinning interval
+#'
+#' @returns an array of MCMC draws after burn-in and thinning (if applied) has
+#'   otherwise the same dimensions as the input \code{draws} (with the only
+#'   difference being with fewer MCMC draws along the specified dimension
+#'   \code{dim_mcmc})
+#' @export
 burn_and_thin <- function(draws, dim_mcmc = NULL, burnin = NULL, thin = NULL) {
   if (is.null(burnin) && is.null(thin)) return(draws)
   if ((!is.null(burnin) || !is.null(thin)) && is.null(dim_mcmc)) {
