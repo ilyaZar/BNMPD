@@ -274,6 +274,16 @@ get_simulation_run_type_outBNMPD <- function(out) {
   check_class_outBNMPD(out)
   return(out$meta_info$simul_meta$sim_type_run)
 }
+get_mod_type_obs <- function(out) {
+  check_class_outBNMPD(out)
+  meta_tmp <- get_model_meta(out)
+  return(meta_tmp[["mod_type_obs"]])
+}
+get_model_meta <- function(out) {
+  tmp <- out$meta_info$model_meta
+  if (is.null(tmp)) stop("FAILED: Can't access model meta info.")
+  return(tmp)
+}
 check_class_outBNMPD <- function(output) {
   stopifnot(`Must be an instance of class 'outBNMPD'.`
             = inherits(output, "outBNMPD"))
