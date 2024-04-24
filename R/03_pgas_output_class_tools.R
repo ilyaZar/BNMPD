@@ -73,6 +73,42 @@ compute_outBNMPD_fit <- function(
   dimnames(out_all) <- out_dimnames
   return(out_all)
 }
+get_1st_moment_D_matrix <- function(
+    x, TT, DD, MM, settings_list = list(KI_probs = c(0.025, 0.975))) {
+  x_exp <- exp(x)
+
+  TT  <- dim(x_exp)[1]
+  DD  <- dim(x_exp)[2]
+  MM  <- dim(x_exp)[3]
+
+  id_zeros <- get_zero_component_id(x_exp, DD, type = "STANDARD")
+  out_cnt_all <- array(0, dim = c(TT, DD, MM))
+  for (tt in seq_len(TT)) {
+    for (dd in seq_len(DD)) {
+      if (dd %in% id_zeros) {
+        out_cnt_all[, dd, ] <- 0
+      } else {
+        for (mm in seq_len(MM)) {
+          out_cnt_all[tt, dd, mm] <- compute_1st_moment_D(
+            alpha = x_exp[tt, , mm],
+            num_c = dd
+          )
+        }
+      }
+    }
+  }
+
+  out_means <- apply(out_cnt_all, c(1, 2), mean)
+  out_KI <- apply(out_cnt_all, c(1, 2), function(x) {
+    quantile(x, probs = settings_list$KI_probs)
+  })
+  out_KI <- aperm(out_KI, c(2, 3, 1))
+  dimnames(out_KI) <- list(dimnames(x_exp)[[1]],
+                           paste0("D_0", seq_len(DD)),
+                           paste0(c("KI_low_", "KI_upp_"),
+                                  settings_list$KI_probs * 100))
+  return(list(out_means = out_means, out_KI = out_KI))
+}
 get_1st_moment_GD_matrix <- function(
     x, TT, DD, MM, settings_list = list(KI_probs = c(0.025, 0.975))
   ) {
@@ -132,6 +168,19 @@ compute_all_moments_GD <- function(r, a, b, use.log = TRUE) {
              (lgamma(a) + lgamma(b) + lgamma(a + b + r + d)))
   if (isFALSE(use.log)) z <- exp(z) # The `r` moment of a GDirichlet(a, b) variate
   z
+}
+compute_1st_moment_D <- function(alpha, num_c, LOGARITHM = FALSE) {
+  stopifnot(`component id cannot be larger than total number of components` = num_c <= length(alpha))
+  log_alpha <- log(alpha)
+  out <- log_alpha[num_c]
+  # early return for the first component as the sum (in log terms) or product
+  # (in level terms) ranges from m = 1 to j - 1 in the definition of the
+  # expectation of the Dirichlet distribution; see the Wikipedia
+  # https://en.wikipedia.org/wiki/Dirichlet_distribution#General_moment_function
+  max_log_alpha <- max(log_alpha)
+  out <- out - (max_log_alpha + log(sum(exp(log_alpha - max_log_alpha))))
+  if (LOGARITHM) return(out)
+  return(exp(out))
 }
 compute_1st_moment_GD <- function(a, b, num_c, LOGARITHM = FALSE) {
   stopifnot(`component id cannot be larger than total number of components` = num_c <= ncol(a))
