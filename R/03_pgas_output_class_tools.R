@@ -43,12 +43,18 @@ compute_outBNMPD_fit <- function(
       KI_probs = c(0.025, 0.975))
     ) {
   check_class_outBNMPD(out)
+  mod_type_obs <- get_mod_type_obs(out)
+  SPECIAL_DIST <- check_special_dist_quick(mod_type_obs)
 
   out_x <- out$x
   out_x <- burn_and_thin(
     out_x, dim_mcmc = 3, burnin = settings_list$burn, thin = settings_list$thin)
   TT <- dim(out_x)[1]
-  DD <- dim(out_x)[2] / 2 + 1
+  if (SPECIAL_DIST) {
+    DD <- dim(out_x)[2] / 2 + 1
+  } else {
+    DD <- dim(out_x)[2]
+  }
   MM <- dim(out_x)[3]
   NN <- dim(out_x)[4]
   # 3 measures mean, CI lower, and CI upper bounds
@@ -56,8 +62,13 @@ compute_outBNMPD_fit <- function(
 
   out_all <- array(0, dim = c(TT, DD, NN, NM))
   for (nn in seq_len(NN)) {
-    tmp_list <- get_1st_moment_GD_matrix(
-      out_x[, , , nn], TT, DD, MM, settings_list = settings_list)
+    tmp_list <- switch(
+      mod_type_obs,
+      "GEN_DIRICHLET" =  get_1st_moment_GD_matrix(
+        out_x[, , , nn], TT, DD, MM, settings_list = settings_list),
+      "DIRICHLET" = get_1st_moment_D_matrix(
+        out_x[, , , nn], TT, DD, MM, settings_list = settings_list)
+    )
     out_all[, , nn, 1] <- tmp_list$out_means
     out_all[, , nn, c(2, 3)] <- tmp_list$out_KI
     progress_any(nn, NN)
