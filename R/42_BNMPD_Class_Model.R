@@ -684,6 +684,14 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                 } else {
                                   stop("This case is not implemented.")
                                 }
+                              } else {
+                                 if (num_mult_component <= 9) {
+                                    rgx_mult_comp <- paste0("0", num_mult_component)
+                                  } else {
+                                    rgx_mult_comp <- paste0(num_mult_component)
+                                  }
+                                  tmp_regex <- paste0(
+                                    "^D", rgx_mult_comp)
                               }
                               lab_names[[1]] <- lab_names[[1]][num_comp_adj]
                               par_names[[1]] <- par_names[[1]][num_comp_adj]
