@@ -211,16 +211,16 @@ compute_1st_moment_GD <- function(a, b, num_c, LOGARITHM = FALSE) {
   if (LOGARITHM) return(lhs + rhs)
   return(exp(lhs + rhs))
 }
-get_zero_component_id <- function(par, DD, type) {
+get_zero_component_id <- function(par, DD, type, z_val_def = 1) {
   stopifnot(`Arg. type cannot be 'NULL'.` =  !is.null(type))
   list_id_zeros <- 0
   if (type == "GENERALIZED") {
     for (dd in 1:(DD - 1)) {
-      if (all(par[, dd, ] == 1)) list_id_zeros <- c(list_id_zeros, dd)
+      if (all(par[, dd, ] == z_val_def)) list_id_zeros <- c(list_id_zeros, dd)
     }
   } else if (type == "STANDARD") {
     for (dd in 1:DD) {
-      if (all(par[, dd, ] == 1)) list_id_zeros <- c(list_id_zeros, dd)
+      if (all(par[, dd, ] == z_val_def)) list_id_zeros <- c(list_id_zeros, dd)
     }
   } else {
     stop("Unknown value for argument 'type'.")
