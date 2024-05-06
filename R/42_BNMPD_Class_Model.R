@@ -753,12 +753,19 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   depending on whether we already have a model
                             #'   output from a PGAS run i.e. whenever
                             #'   \code{get_num_mdout() > 0}.
-                            get_modeldata_inits_setup = function() {
+                            #' @param type a character, either "par_init"
+                            #'   giving the parameter initialization or
+                            #'   "traj_init" giving the initial trajectory
+                            get_modeldata_inits_setup = function(type = NULL) {
+                              CHECK <- type %in% c("par_init", "traj_init")
+                              CHECK <- CHECK || is.null(type)
+                              stopifnot(`Argument 'type' is not "par_init" or "traj_init".` = CHECK)
                               if (private$get_num_mdout() > 0) {
                                 out <- private$.ModelOut$get_model_inits_mdout()
                               } else {
                                 out <- private$.ModelDat$get_model_inits_start()
                               }
+                              if (!is.null(type)) out <- out[[type]]
                               return(out)
                             },
                             #' @description Return model data dimensions
