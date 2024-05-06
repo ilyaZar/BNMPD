@@ -582,8 +582,24 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   examination and comparison with "raw" and the
                             #'   data subset used, see \code{get_data_set_raw}
                             #'   and \code{get_data_subset}.
-                            get_data_internal = function() {
-                              private$.ModelDat$get_model_data_internal()
+                            #' @param type a character of either 'Z', 'U',
+                            #'   'regs' or 'data' which refers to Z/u-type
+                            #'   regressors, the internal model data; if `NULL`,
+                            #'   then everything is returned
+                            get_data_internal = function(type = NULL) {
+                              CHECK <- type %in% c("Z", "U", "regs", "data")
+                              CHECK <- CHECK || is.null(type)
+                              stopifnot(`Arg. 'type' is not 'Z', 'U', 'regs', or
+                                         'data'` = CHECK)
+                              out <- private$.ModelDat$get_model_data_internal()
+                              if (!is.null(type)) {
+                                if (type == "regs") {
+                                  out <- list(Z = out$Z, U = out$U)
+                                } else {
+                                  out <- out[[type]]
+                                }
+                              }
+                              return(out)
                             },
                             #' @description Returns labels and names of
                             #'   parameters as required by e.g.
