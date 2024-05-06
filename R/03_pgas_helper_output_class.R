@@ -387,7 +387,7 @@ subset2_outBNMPD <- function(out = NULL, pth_out = NULL, mcmc_range) {
 }
 get_tmp_regex <- function(type, num_mult_comp, DD_MAX, par_qualifier) {
   if (type == "standard") {
-    if (num_mult_comp < DD_MAX) return(paste0("^d_", num_mult_comp))
+    if (num_mult_comp <= DD_MAX) return(paste0("^d_", num_mult_comp))
     stop("Invalid num_mult_component value; cannot be larger than DD_MAX.")
   } else if (type == "generalized") {
     if (num_mult_comp > DD_MAX / 2) stop("Invalid num_mult_component value.")
