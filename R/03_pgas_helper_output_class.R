@@ -411,14 +411,24 @@ get_type_rgx <- function(tmp_param) {
   if (tmp_check) return("generalized")
   return("standard")
 }
-#' Fix two wrong output of class `outBNMPD`
+#' Fix two consecutive outputs of class [BNMPD::ModelBNMPD]
 #'
-#' The first (P)MCMC iteration of the second output must match the last
-#' iteration of the previously generated `outBNMPD`. If this is not the case
-#' the `ModelOut` class from `BNMPD` throws an error. This error can be fixed
-#' by running the function on the two consecutive outputs that produced the
-#' error, the second output will be fixed and written to an external file in
-#' `.rds` format as given under `pth_out_fixed_join_filename`
+#' Instances of [BNMPD::ModelBNMPD] have the following property whenever they
+#' are generated in turn: the first (P)MCMC iteration of the second output must
+#' match the last iteration of the previously generated output.
+#'
+#' If this is not the case the [BNMPD::ModelBNMPD] instance throws an error:
+#'
+#' \code{Loading output part: 1 - out_57_NN48_TT50_DD5_Zconst,prices,gdp_Uconst,cumcap,envir,partlylib_part_036_N100000_CHEOPS-MPI.rds !
+#' Loading output part: 2 - out_57_NN48_TT50_DD5_Zconst,prices,gdp_Uconst,cumcap,envir,partlylib_part_037_N100000_CHEOPS-MPI.rds !
+#'   Joining parts: 1 and 2 ...
+#' Error in check_jn_sig_sq(sig_sq_x1, sig_sq_x2) :
+#'   Joins for sig_sq not identical}
+#'
+#' This error can be fixed by running this function on the two consecutive
+#' outputs that produced the error, the second output will be fixed and written
+#' to an external file in `.rds` format as given under
+#' `pth_out_fixed_join_filename`.
 #'
 #' @param pth_out_1st_join character; path to first output join
 #' @param pth_out_2nd_join character; path to second output join
