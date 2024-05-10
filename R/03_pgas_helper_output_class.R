@@ -454,8 +454,8 @@ fix_output_joins <- function(pth_out_1st_join,
   check_class_outBNMPD(out_1st_join)
   check_class_outBNMPD(out_2nd_join)
 
-  DD <- nrow(out_2nd_join$sig_sq_x)
-  MM <- ncol(out_2nd_join$sig_sq_x)
+  DD <- nrow(out_1st_join$sig_sq_x)
+  MM <- ncol(out_1st_join$sig_sq_x)
 
   out_2nd_join$sig_sq_x[, 1] <- out_1st_join$sig_sq_x[, MM]
   out_2nd_join$phi_x[, 1] <- out_1st_join$phi_x[, MM]
