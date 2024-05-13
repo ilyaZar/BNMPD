@@ -293,7 +293,7 @@ check_class_outBNMPD <- function(output) {
 #' Subsets are defined per multivariate component.
 #'
 #' @param out the PGAS output (either with or without states) which is of class
-#'   `BNMPDpmcmc` or `BNMPDmcmc`;
+#'   `outBNMPD` as e.g. returned via [BNMPD::out_pgas()]
 #'
 #' @param num_mult_component an integer from `d=1,...,DD` giving the component
 #'   number to subset for
@@ -344,18 +344,21 @@ subset_outBNMPD <- function(out, num_mult_component, par_qualifier = NULL) {
   }
   return(out_subset)
 }
-#' Get subset of full PGAS output
+#' Get MCMC subset of full PGAS output instance
 #'
 #' Subsets are defined for all multivariate components as subsets of MCMC draws.
 #' Either pass the PGAS-output object directly (via `out`) or a path to the
 #' `*.rds`-file (via `pth_out`).
+#'
+#' The return value needs to be saved and manually written to disk via
+#' [base::saveRDS()]
 #'
 #' @inheritParams subset_outBNMPD
 #' @param pth_out character giving the path to the PGAS output object
 #'
 #' @param mcmc_range an integer sequence ranging
 #'
-#' @return PGAS output subsetted by `mcmc_range`` for all parameters (and latent
+#' @return PGAS output subsetted by `mcmc_range` for all parameters (and latent
 #'   states `x` if present in the output object)
 #' @export
 subset2_outBNMPD <- function(out = NULL, pth_out = NULL, mcmc_range) {
