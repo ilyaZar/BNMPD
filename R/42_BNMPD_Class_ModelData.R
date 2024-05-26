@@ -358,7 +358,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             if (isFALSE(check_dim)) {
                               msg <- paste0("Z-type regressor dims unequal.",
                                             " Reconsider!")
-                              stop(msg)
+                              warning(msg)
                             }
                             unname(c(0, cumsum(tmp_dim)))
                           },
