@@ -97,8 +97,10 @@ compute_outBNMPD_mes <- function(
   TT <- dim(out_x)[1]
   if (SPECIAL_DIST) {
     DD <- dim(out_x)[2] / 2 + 1
+    DD2 <- DD * 2 - 2
   } else {
-    DD <- dim(out_x)[2]
+    DD  <- dim(out_x)[2]
+    DD2 <- NULL
   }
   MM <- dim(out_x)[3]
   NN <- dim(out_x)[4]
@@ -106,12 +108,17 @@ compute_outBNMPD_mes <- function(
   NM <- 3
   # Grid length is passed via settings object
   GG <- settings_list$setup_marginal_effects$grid_length
-  out_x_fit <- generate_out_x_fit(out_buind,
-                                  data_set_internal_regs,
-                                  TT, DD, MM, NN,
+  out_x_fit <- generate_out_x_fit(out = out_buind,
+                                  regs = data_set_internal_regs,
+                                  TT = TT,
+                                  DD = DD,
+                                  DD2 = DD2,
+                                  MM = MM,
+                                  NN = NN,
                                   LOGARITHM = TRUE)
   out_all <- array(0, dim = c(TT, DD, NN, NM))
   for (nn in seq_len(NN)) {
+    if (nn == 37) browser()
     tmp_list <- switch(
       mod_type_obs,
       "GEN_DIRICHLET" =  get_1st_moment_GD_matrix(
@@ -134,23 +141,30 @@ compute_outBNMPD_mes <- function(
   dimnames(out_all) <- out_dimnames
   return(out_all)
 }
-generate_out_x_fit <- function(out, regs, TT, DD, MM, NN, LOGARITHM) {
+generate_out_x_fit <- function(out, regs, TT, DD, DD2 = NULL, MM, NN, LOGARITHM) {
   out_x <- out$out_x
   bet_z <- out$bet_z
   bet_u <- out$bet_u
   phi_x <- out$phi_x
 
+  if (is.null(DD2)) {
+    DD2 <- DD
+    TYPE_TKN <- "STANDARD"
+  } else {
+    TYPE_TKN <- "GENERALIZED"
+  }
   Z <- regs$Z
   U <- regs$U
-  out_x_fit <- array(0, dim = c(TT, DD, MM, NN))
+  out_x_fit <- array(0, dim = c(TT, DD2, MM, NN))
   dimnames(out_x_fit) <- dimnames(out$out_x)
-  id_regs_z <- get_dim_regs(regs = Z, DD = DD)
-  id_regs_u <- get_dim_regs(regs = U, DD = DD)
+  id_regs_z <- get_dim_regs(regs = Z, DD = DD, DD2 = DD2)
+  id_regs_u <- get_dim_regs(regs = U, DD = DD, DD2 = DD2)
+  if (is.null(DD2)) DD2 <- DD
   # remove first observation
   TT_SEQ <- seq_len(TT)[-c(1)]
   for (mm in seq_len(MM)) {
     for (nn in seq_len(NN)) {
-      for (dd in seq_len(DD)) {
+      for (dd in seq_len(DD2)) {
         out_x_fit[1, dd, mm, nn] <- out_x[1, dd, mm, nn]
       }
     }
@@ -159,12 +173,12 @@ generate_out_x_fit <- function(out, regs, TT, DD, MM, NN, LOGARITHM) {
     id_zero <- get_zero_component_id(
       out_x[, , , nn],
       DD,
-      type = "STANDARD",
+      type = TYPE_TKN,
       z_val_def = 0
     )
     for (tt in TT_SEQ) {
       for (mm in seq_len(MM)) {
-        for (dd in seq_len(DD)) {
+        for (dd in seq_len(DD2)) {
           if (dd %in% id_zero) {
             out_x_fit[tt, dd, mm, nn] <- 0
           } else {
@@ -413,24 +427,27 @@ get_1st_moment_GD_matrix <- function(
   DD  <- dim(a_par)[2] + 1
   MM  <- dim(a_par)[3]
 
-  id_zeros_a <- get_zero_component_id(a_par, DD, type = "GENERALIZED")
-  id_zeros_b <- get_zero_component_id(b_par, DD, type = "GENERALIZED")
+  id_zeros_a <- get_zero_component_id(a_par, DD - 1, type = "STANDARD")
+  id_zeros_b <- get_zero_component_id(b_par, DD - 1, type = "STANDARD")
   stopifnot(`Unequal zero matches.` = all.equal(id_zeros_a, id_zeros_b))
 
-  id_zeros <- id_zeros_a
+  id_zeros <- setdiff(id_zeros_a, 0)
+  id_no_zeros <- setdiff(seq_len(DD - 1), id_zeros)
   out_cnt_all <- array(0, dim = c(TT, DD, MM))
   for (tt in seq_len(TT)) {
+    num_c_dd <- 1
     for (dd in seq_len(DD - 1)) {
       if (dd %in% id_zeros) {
         out_cnt_all[, dd, ] <- 0
       } else {
         for (mm in seq_len(MM)) {
           out_cnt_all[tt, dd, mm] <- compute_1st_moment_GD(
-            a = a_par[tt, , mm],
-            b = b_par[tt, , mm],
-            num_c = dd
+            a = a_par[tt, id_no_zeros, mm],
+            b = b_par[tt, id_no_zeros, mm],
+            num_c = num_c_dd
           )
         }
+        num_c_dd <- num_c_dd + 1
       }
     }
   }
