@@ -497,11 +497,13 @@ get_zero_component_id <- function(par, DD, type, z_val_def = 1) {
   stopifnot(`Arg. type cannot be 'NULL'.` =  !is.null(type))
   list_id_zeros <- 0
   if (type == "GENERALIZED") {
-    for (dd in 1:(DD - 1)) {
+    DD2 <- DD * 2 - 2
+    for (dd in seq_len(DD2)) {
       if (all(par[, dd, ] == z_val_def)) list_id_zeros <- c(list_id_zeros, dd)
     }
   } else if (type == "STANDARD") {
-    for (dd in 1:DD) {
+    DD2 <- DD
+    for (dd in seq_len(DD2)) {
       if (all(par[, dd, ] == z_val_def)) list_id_zeros <- c(list_id_zeros, dd)
     }
   } else {
