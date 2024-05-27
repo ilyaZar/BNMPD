@@ -386,6 +386,9 @@ subset2_outBNMPD <- function(out = NULL, pth_out = NULL, mcmc_range) {
     out_subset$vcm_bet_u[[d]] <- out_full$vcm_bet_u[[d]][,, mcmc_range]
   }
   out_subset$x <- out_full$x[,, mcmc_range, ]
+  if (inherits(out_full, "outBNMPD")) {
+    out_subset$meta_info$dimensions$MM <- length(mcmc_range)
+  }
   return(invisible(out_subset))
 }
 get_tmp_regex <- function(type, num_mult_comp, DD_MAX, par_qualifier) {
