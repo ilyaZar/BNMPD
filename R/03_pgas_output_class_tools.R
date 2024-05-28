@@ -118,7 +118,6 @@ compute_outBNMPD_mes <- function(
                                   LOGARITHM = TRUE)
   out_all <- array(0, dim = c(TT, DD, NN, NM))
   for (nn in seq_len(NN)) {
-    if (nn == 37) browser()
     tmp_list <- switch(
       mod_type_obs,
       "GEN_DIRICHLET" =  get_1st_moment_GD_matrix(
