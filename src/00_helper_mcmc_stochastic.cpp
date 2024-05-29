@@ -69,13 +69,13 @@ arma::vec sample_beta_single(const arma::vec& mu,
                              const arma::mat& vcm) {
   arma::vec out_mvrnorm_draw = mvrnorm_c(mu, vcm);
   // arma::vec out_mvrnorm_draw = arma::mvnrnd(mu, vcm);
-  double counter_stuck = 0;
+  unsigned int counter_stuck = 0;
   while(test_phi_oob(out_mvrnorm_draw(0), 0.01)) {
     out_mvrnorm_draw = mvrnorm_c(mu, vcm);
     // out_mvrnorm_draw = arma::mvnrnd(mu, vcm);
 
     counter_stuck += 1;
-    Rprintf("Stucked %u times while sampling beta par: phi is oob.", counter_stuck);
+    Rprintf("Stucked %u times while sampling as phi is oob.", counter_stuck);
   }
   return(out_mvrnorm_draw);
 }
