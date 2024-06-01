@@ -160,7 +160,10 @@ initialize_data_containers <- function(par_init,
   cnt_z     <- generate_cnt_z(DIST_SPECIAL, z_null, phi_null, par_init,
                               Z, dims, order_p, TT, DD2, NN, MM)
   cnt_u     <- generate_cnt_u(DIST_SPECIAL, u_null, phi_null, par_init, U,
-                              dims, order_p, TT, DD2, NN, MM)
+                              dims, order_p, TT, DD2, NN, MM,
+                              priors$prior_vcm_bet_u_diag,
+                              priors$prior_vcm_bet_u_covr,
+                              priors$prior_vcm_bet_u_dofs)
   bet_z  <- cnt_z[["bet_z"]]
   Z_beta <- cnt_z[["Z_beta"]]
   regs_z <- cnt_z[["regs_z"]]
