@@ -374,7 +374,10 @@ gernerate_cnt_regs_z <- function(DIST_SPECIAL, TT, DD, NN, order_p, dim_arg) {
   return(out_regs_z)
 }
 generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
-                           U, dim_all, order_p, TT, DD, NN, MM) {
+                           U, dim_all, order_p, TT, DD, NN, MM,
+                           prior_vcm_bet_u_diag = 1e-10,
+                           prior_vcm_bet_u_covr = 0,
+                           prior_vcm_bet_u_dofs = NULL) {
   if (isTRUE(u_null)) {
     bet_u            <- NULL
     vcm_bet_u        <- NULL
@@ -383,9 +386,21 @@ generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
   } else if (isFALSE(u_null)) {
     dim_bet_u <- dim_all[["dim_bet_u"]]
     id_uet    <- dim_all[["id_uet"]]
-
+    if (is.null(prior_vcm_bet_u_diag)) prior_vcm_bet_u_diag <- 1e-10
+    if (is.null(prior_vcm_bet_u_covr)) prior_vcm_bet_u_covr <- 0
+    if (is.null(prior_vcm_bet_u_dofs)) {
+      prior_vcm_bet_u_dofs <- dim_bet_u
+    } else {
+      CHECK_LEN_PRIOR_SPECS <- length(prior_vcm_bet_u_dofs)
+      if (CHECK_LEN_PRIOR_SPECS != DD && CHECK_LEN_PRIOR_SPECS != 1) {
+        stop("Length of prior degrees of freedom does not match DD!")
+      }
+      if (CHECK_LEN_PRIOR_SPECS == 1) {
+        prior_vcm_bet_u_dofs <- rep(prior_vcm_bet_u_dofs, DD)
+      }
+      names(prior_vcm_bet_u_dofs) <- names(dim_bet_u)
+    }
     bet_u            <- set_cnt_bet_u(DIST_SPECIAL, dim_bet_u, DD, MM, NN)
-    prior_vcm_bet_u1 <- numeric(DD)
     prior_vcm_bet_u2 <- vector("list", DD)
     dof_vcm_bet_u    <- numeric(DD)
     vcm_bet_u        <- set_cnt_vcm_bet_u(DIST_SPECIAL, DD, dim_bet_u, MM)
