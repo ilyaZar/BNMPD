@@ -525,7 +525,7 @@ get_env_pgas <- function(env_to, env_from, phi_null, z_null, u_null, dims) {
   for (n in pgas_obj[["vec_objs"]]) {
     assign(n, get(n, env_from), env_to)
   }
-  for(n in names(pgas_obj[["dims_out"]])) {
+  for (n in names(pgas_obj[["dims_out"]])) {
     assign(n, get(n, from_env_02), env_to)
   }
   invisible(env_to)
@@ -533,7 +533,7 @@ get_env_pgas <- function(env_to, env_from, phi_null, z_null, u_null, dims) {
 dd_names_formatter <- function(DIST_SPECIAL, DD) {
   if (isFALSE(DIST_SPECIAL)) {
     paste0("d_", seq_len(DD))
-  } else if(isTRUE(DIST_SPECIAL)) {
+  } else if (isTRUE(DIST_SPECIAL)) {
     dd_seq <- formatC(
       rep(seq_len(DD / 2), each = 2),
       width = 2,
@@ -545,7 +545,7 @@ dd_names_formatter <- function(DIST_SPECIAL, DD) {
 dd_names_formatter2 <- function(DIST_SPECIAL, DD) {
   if (isFALSE(DIST_SPECIAL)) {
      paste0("DD_", seq_len(DD))
-  } else if(isTRUE(DIST_SPECIAL)) {
+  } else if (isTRUE(DIST_SPECIAL)) {
     dd_seq <- formatC(
       rep(seq_len(DD / 2), each = 2),
       width = 2,
