@@ -165,6 +165,10 @@ generate_out_x_fit <- function(out, regs, TT, DD, DD2 = NULL, MM, NN, LOGARITHM)
     for (nn in seq_len(NN)) {
       for (dd in seq_len(DD2)) {
         out_x_fit[1, dd, mm, nn] <- out_x[1, dd, mm, nn]
+        # Z_x_beta_z <- sum(Z[1, id_regs_z[[dd]], nn] * bet_z[id_regs_z[[dd]], mm])
+        # U_x_beta_u <- sum(U[1, id_regs_u[[dd]], nn] * bet_u[id_regs_u[[dd]], mm, nn])
+        # constant <- Z_x_beta_z + U_x_beta_u
+        # out_x_fit[1, dd, mm, nn] <- constant / (1 - phi_x[dd, mm])
       }
     }
   }
