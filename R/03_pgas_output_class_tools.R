@@ -198,7 +198,7 @@ generate_out_x_fit <- function(out, regs, TT, DD, DD2 = NULL, MM, NN, LOGARITHM)
   return(out_x_fit)
 }
 get_dim_regs <- function(regs, DD, DD2 = NULL) {
-  if (is.null(DD2)) {
+  if (DD == DD2) {
     DD_regex <- formatC(seq_len(DD), width = 2, format = "d", flag = "0")
     out_id_list <- vector("list", DD)
     names_to_search <- dimnames(regs)[[2]]
