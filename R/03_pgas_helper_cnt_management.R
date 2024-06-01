@@ -418,9 +418,12 @@ generate_cnt_u <- function(DIST_SPECIAL, u_null, phi_null, par_init,
       } else {
         id_regs_u_tmp <- (id_uet[d] + 1 + 1 * d):(id_uet[d + 1] + 1 * d)
       }
-      prior_vcm_bet_u2[[d]] <- diag(1 / 1000, dim_bet_u[d])
-      prior_vcm_bet_u1[d]   <- dim_bet_u[d]
-      dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u1[d]
+
+      prior_vcm_bet_u2[[d]] <- matrix(prior_vcm_bet_u_covr,
+                                      nrow = dim_bet_u[d],
+                                      ncol = dim_bet_u[d])
+      diag(prior_vcm_bet_u2[[d]]) <- prior_vcm_bet_u_diag
+      dof_vcm_bet_u[d]      <- NN + prior_vcm_bet_u_dofs[d]
 
       vcm_bet_u[[d]][, , 1] <- par_init[["init_vcm_u_lin"]][[d]]
 
