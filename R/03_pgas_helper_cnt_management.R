@@ -189,6 +189,15 @@ initialize_data_containers <- function(par_init,
   get_env_pgas(to_env, from_env, phi_null, z_null, u_null, dims)
   invisible(to_env)
 }
+initialize_prior_vcm_bet_u <- function(cnt_tkn, priors_tkn) {
+  CHECK_DIM_CNT <- dim(cnt_tkn)
+  CHECK_DIM_PRR <- dim(priors_tkn)
+  if (CHECK_DIM_CNT[1] != CHECK_DIM_PRR[1]) {
+    stop("Dimension mismatch between prior and count matrix!")
+  }
+  cnt_tkn <- priors_tkn
+  return(cnt_tkn)
+}
 initialize_dims <- function(par_init, u_null, z_null, phi_null, DD, order_p) {
   out_dims <- list()
   out_dims <- c(out_dims, get_zet_dims(par_init, z_null, phi_null, order_p))
