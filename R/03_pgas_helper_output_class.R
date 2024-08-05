@@ -354,19 +354,22 @@ subset_outBNMPD <- function(out, num_mult_component, par_qualifier = NULL) {
 #' [base::saveRDS()]
 #'
 #' @inheritParams subset_outBNMPD
-#' @param pth_out character giving the path to the PGAS output object
+#' @param pth_to_save giving the path to save the output to; if NULL the output
+#'   is returned
 #'
 #' @param mcmc_range an integer sequence ranging
 #'
 #' @return PGAS output subsetted by `mcmc_range` for all parameters (and latent
 #'   states `x` if present in the output object)
 #' @export
-subset2_outBNMPD <- function(out = NULL, pth_out = NULL, mcmc_range) {
-  if (is.null(pth_out)) {
-    if (is.null(out)) stop("Args. 'pth_out' and 'out' can't be both NULL.")
+subset2_outBNMPD <- function(out = NULL, pth_to_save = NULL, mcmc_range) {
+  if (is.null(out)) {
+    stop("Args. 'out' can't be NULL; either outBNMPD object class or path.")
+  } else if (inherits(out, "outBNMPD")) {
     out_full <- out
-  } else {
-    out_full <- readRDS(pth_out)
+  } else if (is.character(out)) {
+    if (!file.exists(out)) stop("File does not exist.")
+    out_full <- readRDS(out)
   }
   out_subset <- out_full
   check_class_outBNMPD(out_full)
@@ -388,6 +391,15 @@ subset2_outBNMPD <- function(out = NULL, pth_out = NULL, mcmc_range) {
   out_subset$x <- out_full$x[,, mcmc_range, ]
   if (inherits(out_full, "outBNMPD")) {
     out_subset$meta_info$dimensions$MM <- length(mcmc_range)
+  }
+  if (!is.null(pth_to_save)) {
+    if (!file.exists(pth_to_save)) {
+      saveRDS(out_subset, file = pth_to_save)
+      cat(crayon::green("Output saved to: "), crayon::yellow(pth_to_save), "\n")
+      cat(" Output is returned silently as well.\n")
+    } else {
+      cat("File already exists. Output is returned silently.\n")
+    }
   }
   return(invisible(out_subset))
 }
