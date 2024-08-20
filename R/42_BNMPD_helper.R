@@ -151,21 +151,33 @@ get_out_part_namer <- function(pth, prefix, suffix, part_num = NULL) {
 #' Automatically determine model path from opened file or project run
 #'
 #' If run inside R-Studio GUI this function returns the source path of the
-#' currently opened file which is a reliable way to tell the model path.
+#' currently opened file which is a reliable way to read the model path.
 #'
 #' The source files where this function is used normally live in the top model
 #' dir, hence this works. Otherwise, it is assumed that you have `cd` to the
 #' directory and the output of `[base::getwd()]` is used!
 #'
+#' If the parameter `FORCE_PATH` is set to a string, this string is returned to
+#' enforce a path. This feature is usually relevant for testing only where the
+#' path is forced to a known location and cannot be inferred via usual means as
+#' the [testthat]-package tests use different environments.
+#'
+#' @param FORCE_PATH an optional string giving a path to force evaluation to;
+#'    defaults to `NULL` as is usually never used except for [testthat] tests.
+#'
 #' @return a character string giving the inferred model path (see `Details`)
 #' @export
-get_path_to_model <- function() {
-  if (.Platform$GUI == "RStudio") {
-    return(dirname(rstudioapi::getSourceEditorContext()$path))
+get_path_to_model <- function(FORCE_PATH = NULL) {
+  if (is.null(FORCE_PATH)) {
+    if (.Platform$GUI == "RStudio") {
+      return(dirname(rstudioapi::getSourceEditorContext()$path))
+    } else {
+      cat(crayon::yellow("Not in R-Studio GUI which still might work.\n"))
+      cat(crayon::blue("Set path to model directory via 'getwd()' which is:\n"))
+      cat(crayon::green(getwd()), "\n")
+      return(getwd())
+    }
   } else {
-    cat(crayon::yellow("Not in R-Studio GUI which still might work.\n"))
-    cat(crayon::blue("Set path to model directory via 'getwd()' which is:\n"))
-    cat(crayon::green(getwd()), "\n")
-    return(getwd())
+    return(FORCE_PATH)
   }
 }
