@@ -566,3 +566,7 @@ burn_and_thin <- function(draws, dim_mcmc = NULL, burnin = NULL, thin = NULL) {
   }
   return(mcmc_sims_after)
 }
+burn_and_thin_outBNMPD <- function(out) {
+  check_class_outBNMPD(out)
+  return(out)
+}
