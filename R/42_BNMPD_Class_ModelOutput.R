@@ -490,10 +490,15 @@ ModelOut <- R6::R6Class("ModelOut",
                           #'   iteration ranges
                           #' @param range_parts integer vector giving the
                           #'   iteration parts
+                          #' @param mcmc_settings a named list of two: first is
+                          #'   'burnin', second is 'thin'; after joining all
+                          #'   output parts burnin and thinning is applied to
+                          #'   the whole PMCMC output object `outBNMPD`
                           get_model_output = function(OUT_STATES = TRUE,
                                                       OUT_PARAMS = TRUE,
                                                       range_iter = NULL,
-                                                      range_parts = NULL) {
+                                                      range_parts = NULL,
+                                                      mcmc_settings = NULL) {
                             if (!is.null(range_iter) && !is.null(range_parts)) {
                               msg <- paste0("BNMPD: ",
                                             "Can not have both arguments, ",
@@ -555,6 +560,11 @@ ModelOut <- R6::R6Class("ModelOut",
                                                            range_parts,
                                                            OUT_STATES,
                                                            OUT_PARAMS)
+                            }
+                            if (!is.null(mcmc_settings)) {
+                              out <- burn_and_thin_outBNMPD(
+                                out,
+                                mcmc_settings)
                             }
                             return(out)
                           }
