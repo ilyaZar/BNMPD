@@ -566,7 +566,37 @@ burn_and_thin <- function(draws, dim_mcmc = NULL, burnin = NULL, thin = NULL) {
   }
   return(mcmc_sims_after)
 }
-burn_and_thin_outBNMPD <- function(out) {
+burn_and_thin_outBNMPD <- function(out, mcmc_settings) {
   check_class_outBNMPD(out)
+  out$sig_sq_x <- burn_and_thin(
+    out$sig_sq_x, dim_mcmc = 2,
+    burnin = mcmc_settings$burn,
+    thin = mcmc_settings$thin)
+  out$phi_x <- burn_and_thin(
+    out$phi_x, dim_mcmc = 2,
+    burnin = mcmc_settings$burn,
+    thin = mcmc_settings$thin)
+  out$bet_z <- burn_and_thin(
+    out$bet_z, dim_mcmc = 2,
+    burnin = mcmc_settings$burn,
+    thin = mcmc_settings$thin)
+  out$bet_u <- burn_and_thin(
+    out$bet_u, dim_mcmc = 2,
+    burnin = mcmc_settings$burn,
+    thin = mcmc_settings$thin)
+  num_DD <- length(out$vcm_bet_u)
+  for (i in seq_len(num_DD)) {
+    out$vcm_bet_u[[i]] <- burn_and_thin(
+      out$vcm_bet_u[[i]], dim_mcmc = 3,
+      burnin = mcmc_settings$burn,
+      thin = mcmc_settings$thin)
+  }
+  if (!is.null(out$x)) {
+    out$x <- burn_and_thin(
+      out$x, dim_mcmc = 3,
+      burnin = mcmc_settings$burn,
+      thin = mcmc_settings$thin)
+  }
+  out$meta_info$dimensions$MM <- dim(out$sig_sq_x)[2]
   return(out)
 }
