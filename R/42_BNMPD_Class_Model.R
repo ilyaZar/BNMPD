@@ -836,16 +836,21 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                             #'   \code{ModelOut$get_model_output()}[ModelOut]
                             #' @param range_parts integer sequence as defined in
                             #'   \code{ModelOut$get_model_output()}[ModelOut]
-                            #'
+                            #' @param mcmc_settings a named list of two: first is
+                            #'   'burnin', second is 'thin'; after joining all
+                            #'   output parts burnin and thinning is applied to
+                            #'   the whole PMCMC output object `outBNMPD`
                             get_model_output = function(OUT_STATES = TRUE,
                                                         OUT_PARAMS = TRUE,
                                                         range_iter = NULL,
-                                                        range_parts = NULL) {
+                                                        range_parts = NULL,
+                                                        mcmc_settings = NULL) {
                               private$.ModelOut$get_model_output(
                                 OUT_STATES,
                                 OUT_PARAMS,
                                 range_iter,
-                                range_parts
+                                range_parts,
+                                mcmc_settings
                               )
                             },
                             #' @description Sets initialization parameters.
