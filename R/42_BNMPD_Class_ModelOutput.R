@@ -528,6 +528,7 @@ ModelOut <- R6::R6Class("ModelOut",
                             }
 
                             tmp1 <- vector("list", length(sout))
+                            MM_new <- 0
                             for (i in seq_along(sout)) {
                               tmpfn <- private$.pth_to_md_outs[[sout[i]]]
                               tmp1[[i]] <- readRDS(tmpfn)
@@ -542,12 +543,18 @@ ModelOut <- R6::R6Class("ModelOut",
                                 id_states <- which(names(tmp1[[i]]) == "x")
                                 tmp1[[i]] <- tmp1[[i]][id_states]
                               }
+                              if (!is.null(mcmc_settings)) {
+                              tmp1[[i]] <- burn_and_thin_outBNMPD(
+                                tmp1[[i]],
+                                mcmc_settings)
+                              }
+                              MM_new <- MM_new + get_model_dimensions_outBNMPD(
+                                tmp1[[i]])[["MM"]]
                             }
                             if (is.null(range_iter) && is.null(range_parts)) {
-                              out_all <- private$join_outputs(tmp1,
-                                                              OUT_STATES,
-                                                              OUT_PARAMS)
-                              return(out_all)
+                              out <- private$join_outputs(tmp1,
+                                                          OUT_STATES,
+                                                          OUT_PARAMS)
                             } else if (!is.null(range_iter) &&
                                        is.null(range_parts)) {
                               out_all <- private$join_outputs(tmp1,
@@ -560,11 +567,6 @@ ModelOut <- R6::R6Class("ModelOut",
                                                            range_parts,
                                                            OUT_STATES,
                                                            OUT_PARAMS)
-                            }
-                            if (!is.null(mcmc_settings)) {
-                              out <- burn_and_thin_outBNMPD(
-                                out,
-                                mcmc_settings)
                             }
                             return(out)
                           }
