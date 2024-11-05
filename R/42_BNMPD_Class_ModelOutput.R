@@ -543,11 +543,6 @@ ModelOut <- R6::R6Class("ModelOut",
                                 id_states <- which(names(tmp1[[i]]) == "x")
                                 tmp1[[i]] <- tmp1[[i]][id_states]
                               }
-                              if (!is.null(mcmc_settings)) {
-                              tmp1[[i]] <- burn_and_thin_outBNMPD(
-                                tmp1[[i]],
-                                mcmc_settings)
-                              }
                               MM_new <- MM_new + get_model_dimensions_outBNMPD(
                                 tmp1[[i]])[["MM"]]
                             }
@@ -567,6 +562,11 @@ ModelOut <- R6::R6Class("ModelOut",
                                                            range_parts,
                                                            OUT_STATES,
                                                            OUT_PARAMS)
+                            }
+                            if (!is.null(mcmc_settings)) {
+                              out <- burn_and_thin_outBNMPD(
+                                out,
+                                mcmc_settings)
                             }
                             return(out)
                           }
