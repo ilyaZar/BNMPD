@@ -600,3 +600,29 @@ burn_and_thin_outBNMPD <- function(out, mcmc_settings) {
   out$meta_info$dimensions$MM <- dim(out$sig_sq_x)[2]
   return(out)
 }
+compute_mse_outBNMPD <- function(data_posterior_fit_means,
+                                 data_dependent_variable,
+                                 offset_dep = 2) {
+  NN_TT  <- nrow(data_dependent_variable)
+  DD_dep <- ncol(data_dependent_variable) - offset_dep
+  DD_pst <- dim(data_posterior_fit_means)[2]
+  if (DD_dep != DD_pst) {
+    msg <- "Dep. var. data and post. fit mean have different column numbers."
+    stop(msg)
+  }
+  data_post_fit_internal <- apply(data_posterior_fit_means[, , , 1], 2, c)
+  data_dep_var_internal  <- data_dependent_variable[-c(1:offset_dep)]
+
+  stopifnot(`Internal dim error` = all(dim(data_post_fit_internal) == dim(data_dep_var_internal)))
+  quadr_diffs <- (data_dep_var_internal - data_post_fit_internal) ^ 2
+  div_by <- NN_TT -  apply(data_dep_var_internal, 2, \(x) sum(x == 0))
+
+  mses <- colSums(quadr_diffs) / div_by
+
+  out <- matrix(c(div_by, mses), byrow = TRUE, nrow = 2)
+  out <- data.frame(out)
+  colnames(out) <- formatC(paste0("DD", seq_len(DD_dep)), digits = 1, flag = 0)
+  rownames(out) <- c("tot.obs", "MSE")
+  out <- format(out, scientific = FALSE, digits = 4)
+  return(out)
+}
