@@ -540,8 +540,13 @@ ModelOut <- R6::R6Class("ModelOut",
                                 tmp1[[i]]$x <- NULL
                               }
                               if (isFALSE(OUT_PARAMS)) {
-                                id_states <- which(names(tmp1[[i]]) == "x")
-                                tmp1[[i]] <- tmp1[[i]][id_states]
+                                # id_states <- which(names(tmp1[[i]]) == "x")
+                                # tmp1[[i]] <- tmp1[[i]][id_states]
+                                tmp1[[i]]$sig_sq_x <- NULL
+                                tmp1[[i]]$phi_x <- NULL
+                                tmp1[[i]]$bet_z <- NULL
+                                tmp1[[i]]$bet_u <- NULL
+                                tmp1[[i]]$vcm_bet_u <- NULL
                               }
                               MM_new <- MM_new + get_model_dimensions_outBNMPD(
                                 tmp1[[i]])[["MM"]]
