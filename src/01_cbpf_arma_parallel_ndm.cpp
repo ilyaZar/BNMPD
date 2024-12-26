@@ -78,7 +78,7 @@ Rcpp::List cbpf_as_ndm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ////////////////////////////////////////////////////////////////////////////
     // adjustments for possibly missing components in 1:DD given cross section j
     dd_range = Rcpp::as<arma::uvec>(Rcpp::wrap(nn_list_dd(j)));
-    id_x_avl = compute_id_x_avl(DD, id_x_all, dd_range);
+    id_x_avl = compute_id_x_avl(N, id_x_all, dd_range);
     // data slices for selected cross sectional unit j
     y = y_all.slice(j);
     num_counts = num_counts_all.col(j);
