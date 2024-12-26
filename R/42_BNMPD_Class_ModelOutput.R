@@ -68,15 +68,17 @@ ModelOut <- R6::R6Class("ModelOut",
                               }
                             }
                             if (isTRUE(OUT_STATES)) {
-                              jnd_out$meta_info$MM <- sum(
+                              jnd_out$meta_info$dimensions$MM <- sum(
                                 sapply(outs, function(x) {
                                   dim(x$x)[3]
                                   }
                                 )
                               )
+                              jnd_out$meta_info$MM <- NULL
                               class(jnd_out) <- "outBNMPD"
                             } else {
-                              jnd_out$meta_info$MM <- ncol(jnd_out$sig_sq_x)
+                              jnd_out$meta_info$dimensions$MM <- ncol(jnd_out$sig_sq_x)
+                              jnd_out$meta_info$MM <- NULL
                               class(jnd_out) <- "outBNMPD"
                             }
                             cat(crayon::magenta("ALL JOINS SUCCESSFUL.\n"))
@@ -213,7 +215,7 @@ ModelOut <- R6::R6Class("ModelOut",
                                 out[tmp_names] <- list(NULL)
                               }
                             }
-                            out$meta_info$MM <- length(range_iter)
+                            out$meta_info$dimensions$MM <- length(range_iter)
                             return(out)
                           },
                           sl_sig_sq = function(sig_sq_x, iter_range) {
@@ -528,7 +530,6 @@ ModelOut <- R6::R6Class("ModelOut",
                             }
 
                             tmp1 <- vector("list", length(sout))
-                            MM_new <- 0
                             for (i in seq_along(sout)) {
                               tmpfn <- private$.pth_to_md_outs[[sout[i]]]
                               tmp1[[i]] <- readRDS(tmpfn)
@@ -548,8 +549,6 @@ ModelOut <- R6::R6Class("ModelOut",
                                 tmp1[[i]]$bet_u <- NULL
                                 tmp1[[i]]$vcm_bet_u <- NULL
                               }
-                              MM_new <- MM_new + get_model_dimensions_outBNMPD(
-                                tmp1[[i]])[["MM"]]
                             }
                             if (is.null(range_iter) && is.null(range_parts)) {
                               out <- private$join_outputs(tmp1,
