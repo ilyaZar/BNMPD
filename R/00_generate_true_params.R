@@ -701,6 +701,15 @@ get_dim_pars.trueParamsGenDirichlet <- function(true_params, name_par) {
 get_dim_pars.trueParamsGenDirichletMult <- function(true_params, name_par) {
   get_dim_pars_special(true_params, name_par)
 }
+#' Title
+#'
+#' @param true_params
+#' @param name_par
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_dim_pars_special <- function(true_params, name_par) {
   nn <- get_dimension(true_params, dim = "NN")
   if(name_par == "beta_z_lin") {
@@ -722,6 +731,18 @@ get_dim_pars_special <- function(true_params, name_par) {
       dim_par <- sapply(tmp_pars, length)
     } else {
       dim_par <- sapply(tmp_pars, nrow)
+      if (any(sapply(dim_par, function(x) {is.null(x)}))) {
+        #check if only one random effect
+        check_single_re <- sapply(dim_par, function(x) {is.null(x)})
+        id_single_re <- which(check_single_re == TRUE)
+        for (idrep in id_single_re) {
+          # browser()
+          #replace null with 1
+          dim_par[idrep] <- 1
+        }
+        message("Only one random effect ? Check simulation here")
+        dim_par <- unlist(dim_par)
+      }
     }
   }
   return(dim_par)
