@@ -23,6 +23,7 @@ get_args_list_smc_internal <- function(pe, mm, PARALLEL = TRUE) {
               nn_list_dd = pe$nn_list_dd,
               N = pe$N, TT = pe$TT, DD = pe$DD,
               y_all = pe$y,
+              num_counts = NULL,
               regs_beta_all = pe$Regs_beta,
               sig_sq_x = pe$sig_sq_x[, mm],
               phi_x = pe$phi_x[, mm],
@@ -35,6 +36,7 @@ get_args_list_smc_internal <- function(pe, mm, PARALLEL = TRUE) {
   }
   if (pe$model_type_obs %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT")) {
     out$DD2 <- pe$DD2
+    out$num_counts <- NULL
   }
   if (pe$model_type_obs %in% c("DIRICHLET_MULT",
                                "GEN_DIRICHLET_MULT",
