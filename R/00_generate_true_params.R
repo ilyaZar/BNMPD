@@ -701,15 +701,13 @@ get_dim_pars.trueParamsGenDirichlet <- function(true_params, name_par) {
 get_dim_pars.trueParamsGenDirichletMult <- function(true_params, name_par) {
   get_dim_pars_special(true_params, name_par)
 }
-#' Title
+#' Helper to retrieve dimension of parameters
 #'
-#' @param true_params
-#' @param name_par
+#' @param true_params true parameters
+#' @param name_par string of parameter names
 #'
-#' @return
+#' @return dimension of parameters
 #' @export
-#'
-#' @examples
 get_dim_pars_special <- function(true_params, name_par) {
   nn <- get_dimension(true_params, dim = "NN")
   if(name_par == "beta_z_lin") {
