@@ -56,7 +56,7 @@ new_outBNMPD <- function(pe, md_type, sm_type) {
 #' @return pure side effect function returning invisibly `out`; checks for valid
 #'   class instance only
 #' @export
-validate_outBNMPD <- function(out) {
+validate_outBNMPD <- function(out, silent = FALSE) {
   check_class_outBNMPD(out)
   nm_top_level <- c("sig_sq_x",
                     "phi_x",
@@ -83,11 +83,78 @@ validate_outBNMPD <- function(out) {
               list_names_checker(out$meta_info$model_meta, nm_sub_lvl_03))
   stopifnot(`Sub-level list names of 'outBNMPD' are incorrect` =
               list_names_checker(out$meta_info$simul_meta, nm_sub_lvl_04))
-  cat(crayon::green("Argument is an object is of class `outBNMPD`."))
+  if (isFALSE(silent)) {
+    cat(crayon::green("Argument is an object is of class `outBNMPD`."))
+  }
   return(invisible(out))
 }
 list_names_checker <- function(lst, nms) {
   all(names(lst) %in% nms)
+}
+#' Dimensions of an outBNMPD Object
+#'
+#' This S3 method retrieves and displays the dimensions of key components of an
+#' `outBNMPD` object. It is designed to provide a structured overview of the
+#' object's internal structure.
+#'
+#' @param x An `outBNMPD` object, typically containing outputs from a Bayesian
+#'   Nonparametric Multinomial Process Dirichlet (BNMPD) model. The object must
+#'   pass validation via `validate_outBNMPD()`.
+#'
+#' @return Invisibly returns `NULL`. The function is primarily a side-effect
+#'   function that prints the dimensions of the following components:
+#'   - `x`: Latent state array (e.g., dimensions `TTxDDxMMxNN`).
+#'   - `sig_sq_x`: Variance parameter array.
+#'   - `phi_x`: Phi parameter array.
+#'   - `bet_z`: Beta coefficients for covariates in Z.
+#'   - `bet_u`: Beta coefficients for covariates in U.
+#'   - `vcm_bet_u`: List of variance-covariance matrices for beta coefficients
+#'     in U.
+#'
+#' @details
+#' - Each dimension is displayed with a description for clarity.
+#' - If the `outBNMPD` object fails validation via `validate_outBNMPD()`, an
+#'   error is raised.
+#' - For list-based components like `vcm_bet_u`, the dimensions of each element
+#'   in the list are displayed sequentially.
+#'
+#' @seealso
+#' - [validate_outBNMPD()] for validating an `outBNMPD` object.
+#'
+#' @examples
+#' \dontrun{
+#'   # Example usage
+#'   model_output <- outBNMPD(...) # Assume this creates a valid outBNMPD object.
+#'   dim(model_output)
+#' }
+#'
+#' @export
+dim.outBNMPD <- function(x) {
+  validate_outBNMPD(x, silent = TRUE)
+  pref_str <- crayon::green("Dimension of ")
+
+  cat(pref_str, crayon::red("X:"), "\n")
+  print(dim(x$x))
+
+  cat(pref_str, crayon::red("sig_sq_x:"), "\n")
+  print(dim(x$sig_sq_x))
+
+  cat(pref_str, crayon::red("phi_x:"), "\n")
+  print(dim(x$phi_x))
+
+  cat(pref_str, crayon::red("bet_z:"), "\n")
+  print(dim(x$bet_z))
+
+  cat(pref_str, crayon::red("bet_u:"), "\n")
+  print(dim(x$bet_u))
+
+  cat(pref_str, crayon::red("vcm_bet_u:"), "\n")
+  for (d in 1:length(x$vcm_bet_u)) {
+    cat(pref_str, crayon::red("vcm_bet_u - "),
+        crayon::yellow(" DD = ", d), "\n")
+    print(dim(x$vcm_bet_u[[d]]))
+  }
+  return(invisible(NULL))
 }
 #' Fixes a whole directory with wrong output instances
 #'

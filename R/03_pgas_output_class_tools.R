@@ -8,7 +8,7 @@
 #' @param data_set_internal_regs a data set of internal regressors; if
 #'   \code{model} is an object of type [BNMPD::ModelBNMPD],
 #'   \code{model$get_data_internal()} can be used
-#' @param settings_list a list of settings with fields `burn`, `thin`and
+#' @param settings_list a list of settings with fields `burn`, `thin` and
 #'   `KI_probs` to specify the burn-in period, thinning and the quantiles for
 #'   the confidence intervals of the fitted values
 #'
@@ -116,7 +116,7 @@ compute_outBNMPD_mes <- function(
                                   MM = MM,
                                   NN = NN,
                                   LOGARITHM = TRUE)
-  out_all <- array(0, dim = c(TT, DD, NN, NM))
+  out_y_fit <- array(0, dim = c(TT, DD, NN, NM))
   for (nn in seq_len(NN)) {
     tmp_list <- switch(
       mod_type_obs,
@@ -125,8 +125,8 @@ compute_outBNMPD_mes <- function(
       "DIRICHLET" = get_1st_moment_D_matrix(
         out_x_fit[, , , nn], TT, DD, MM, settings_list = settings_list$setup_mcmc)
     )
-    out_all[, , nn, 1] <- tmp_list$out_means
-    out_all[, , nn, c(2, 3)] <- tmp_list$out_KI
+    out_y_fit[, , nn, 1] <- tmp_list$out_means
+    out_y_fit[, , nn, c(2, 3)] <- tmp_list$out_KI
     progress_any(nn, NN)
   }
   out_dimnames <- list(dimnames(tmp_list$out_KI)[[1]],
@@ -137,8 +137,8 @@ compute_outBNMPD_mes <- function(
                                       format = "d",
                                       flag = "0")),
                        c("mean", dimnames(tmp_list$out_KI)[[3]]))
-  dimnames(out_all) <- out_dimnames
-  return(out_all)
+  dimnames(out_y_fit) <- out_dimnames
+  return(list(measurement_fit = out_y_fit, states_fit = out_x_fit))
 }
 generate_out_x_fit <- function(out, regs, TT, DD, DD2 = NULL, MM, NN, LOGARITHM) {
   out_x <- out$out_x
@@ -185,6 +185,7 @@ generate_out_x_fit <- function(out, regs, TT, DD, DD2 = NULL, MM, NN, LOGARITHM)
           if (dd %in% id_zero) {
             out_x_fit[tt, dd, mm, nn] <- 0
           } else {
+          # out_x_fit[tt, dd, mm, nn] <- out_x[tt, dd, mm, nn]
           Z_x_beta_z <- sum(Z[tt, id_regs_z[[dd]], nn] * bet_z[id_regs_z[[dd]], mm])
           U_x_beta_u <- sum(U[tt, id_regs_u[[dd]], nn] * bet_u[id_regs_u[[dd]], mm, nn])
           phi_x_out_x <- sum(phi_x[dd, mm] * out_x[tt - 1, dd, mm, nn])
@@ -597,7 +598,8 @@ burn_and_thin_outBNMPD <- function(out, mcmc_settings) {
       burnin = mcmc_settings$burn,
       thin = mcmc_settings$thin)
   }
-  out$meta_info$dimensions$MM <- dim(out$sig_sq_x)[2]
+  # out$meta_info$dimensions$MM <- dim(out$sig_sq_x)[2]
+  out <- fix_pmcmc_dims_outBNMPD(out)
   return(out)
 }
 compute_mse_outBNMPD <- function(data_posterior_fit_means,
@@ -624,5 +626,19 @@ compute_mse_outBNMPD <- function(data_posterior_fit_means,
   colnames(out) <- formatC(paste0("DD", seq_len(DD_dep)), digits = 1, flag = 0)
   rownames(out) <- c("tot.obs", "MSE")
   out <- format(out, scientific = FALSE, digits = 4)
+  return(out)
+}
+fix_pmcmc_dims_outBNMPD <- function(out) {
+  browser()
+  check_pmcmc_num_01 <- dim(out$x)[3]
+  check_pmcmc_num_02 <- dim(out$sig_sq_x)[2]
+  if (!is.null(check_pmcmc_num_01)) {
+    stopifnot(`Dimension correction failed` =
+                check_pmcmc_num_01 == check_pmcmc_num_02)
+  }
+  MM_num <- unique(c(check_pmcmc_num_01, check_pmcmc_num_02))
+  stopifnot(`Dimension correction failed` = length(MM_num) == 1)
+  out$meta_info$dimensions$MM <- MM_num
+  out$meta_info$MM <- NULL
   return(out)
 }
