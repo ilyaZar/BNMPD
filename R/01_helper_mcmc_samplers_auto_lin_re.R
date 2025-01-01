@@ -22,7 +22,8 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
     pe$sig_sq_x[d, mm] <- sample_sig_sq_x_alr(phi_x = pe$phi_x[id_phi_tmp,
                                                                mm - 1],
                                               bet_z = pe$bet_z[id_betz_tmp,
-                                                               mm - 1],
+                                                               mm - 1,
+                                                               drop = FALSE],
                                               bet_u = pe$bet_u[id_betu_tmp,
                                                                mm - 1,,
                                                                drop = FALSE],
@@ -45,7 +46,8 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
              dd_range_nn] <- sample_bet_u_alr(pe$sig_sq_x[d, mm],
                                               pe$phi_x[id_phi_tmp, mm - 1],
                                               pe$bet_z[id_betz_tmp,
-                                                       mm - 1],
+                                                       mm - 1,
+                                                       drop = FALSE],
                                               pe$vcm_bet_u[[d]][, , mm],
                                               pe$dim_bet_u[d],
                                               Xtmp, Ztmp, Utmp,
@@ -73,7 +75,7 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
                                          id_uet = c(pe$id_uet[d],
                                                     pe$id_uet[d + 1]),
                                          TT = pe$TT,
-                                         pe$bet_z[id_betz_tmp, mm],
+                                         pe$bet_z[id_betz_tmp, mm, drop = FALSE],
                                          bet_u = pe$bet_u[, mm, ,
                                                           drop = FALSE],
                                          iter_range_NN = 1:pe$NN)
@@ -237,7 +239,7 @@ sample_bet_u_alr <- function(sig_sq_x,
     Omega_bet_u <- matrix(0, nrow = dim_bet_u, ncol = dim_bet_u)
     mu_bet_u    <- matrix(0, nrow = dim_bet_u, ncol = 1)
 
-    x_n   <- x_lhs[, n] - (x_rhs_tmp %*% phi_x + regs_z[, , n] %*% bet_z)
+    x_n   <- x_lhs[, n] - (x_rhs_tmp %*% phi_x + regs_z[, , n, drop = FALSE] %*% bet_z)
     Umat <- matrix(U[, , n, drop = FALSE], nrow = TT - order_p)
 
     Omega_bet_u <- solveme(crossprod(Umat, Umat)/sig_sq_x + vcm_bet_u_inv)

@@ -16,7 +16,8 @@ sample_all_params.lin_re <- function(pe, mm) {
     Utmp <- pe$U[1:pe$TT, id_uet_tmp, , drop = FALSE]
 
     pe$sig_sq_x[d, mm] <- sample_sig_sq_x_lr(bet_z = pe$bet_z[id_betz_tmp,
-                                                              mm - 1],
+                                                              mm - 1,
+                                                              drop = FALSE],
                                              bet_u = pe$bet_u[id_betu_tmp,
                                                               mm - 1,,
                                                               drop = FALSE],
@@ -37,7 +38,8 @@ sample_all_params.lin_re <- function(pe, mm) {
     pe$bet_u[id_betu_tmp, mm,
              dd_range_nn] <- sample_bet_u_lr(pe$sig_sq_x[d, mm],
                                              pe$bet_z[id_betz_tmp,
-                                                      mm - 1],
+                                                      mm - 1,
+                                                      drop = FALSE],
                                              pe$vcm_bet_u[[d]][, , mm],
                                              pe$dim_bet_u[d],
                                              Xtmp, Ztmp, Utmp,
@@ -62,7 +64,7 @@ sample_all_params.lin_re <- function(pe, mm) {
                                          id_uet = c(pe$id_uet[d],
                                                     pe$id_uet[d + 1]),
                                          TT = pe$TT,
-                                         pe$bet_z[id_betz_tmp, mm],
+                                         pe$bet_z[id_betz_tmp, mm, drop = FALSE],
                                          bet_u = pe$bet_u[, mm, ,
                                                           drop = FALSE],
                                          iter_range_NN = 1:pe$NN)
@@ -92,7 +94,7 @@ sample_sig_sq_x_lr <- function(bet_z,
   for(n in iter_range_NN) {
     bet_u_n <- bet_u[ , , n]
     tmp_regs <- cbind(regs_z[, , n], regs_u[, , n])
-    err_sig_sq_x <- X[, n, drop = FALSE] - regs_z[, , n] %*% bet_z -
+    err_sig_sq_x <- X[, n, drop = FALSE] - regs_z[, , n, drop = FALSE] %*% bet_z -
       regs_u[, , n] %*% bet_u_n
     err_sig_sq_x_all <- err_sig_sq_x_all + sum(err_sig_sq_x^2)
   }

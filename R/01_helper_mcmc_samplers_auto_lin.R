@@ -43,7 +43,7 @@ sample_all_params.auto_lin <- function(pe, mm) {
 
     pe$Regs_beta[, d, ] <- get_regs_beta_l(Z  = pe$Z[, id_zet_tmp, ],
                                            TT = pe$TT,
-                                           pe$bet_z[id_betz_tmp, mm],
+                                           pe$bet_z[id_betz_tmp, mm, drop = FALSE],
                                            iter_range_NN = 1:pe$NN)
   }
   cat("MCMC iteration number:", mm, "\n")
@@ -75,7 +75,7 @@ sample_sig_sq_x_al <- function(phi_x,
   for(n in iter_range_NN) {
     x_rhs_tmp    <- matrix(x_rhs[, , n, drop = FALSE],
                            nrow = TT - order_p, ncol = order_p)
-    err_sig_sq_x <- x_lhs[, n] - (x_rhs_tmp %*% phi_x + regs_z[, , n] %*% bet_z)
+    err_sig_sq_x <- x_lhs[, n] - (x_rhs_tmp %*% phi_x + regs_z[, , n, drop = FALSE] %*% bet_z)
 
     err_sig_sq_x_all <- err_sig_sq_x_all + sum(err_sig_sq_x ^ 2)
   }
