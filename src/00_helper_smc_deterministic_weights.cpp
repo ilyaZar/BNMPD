@@ -132,39 +132,42 @@ void compute_gammas2(arma::vec& gamma,
 //' measurements model.
 //'
 //' @param N number of particles (int)
-//' @param DD number of state components (dirichlet fractions or number of
+//' @param num_counts number of overall counts per t=1,...,TT (part of the
+//'   measurement data) i.e. a scalar int-value for the current time period
 //'   components in the multivariate latent state component) (int)
 //' @param y counts of dimension \code{DD} (part of the measurement data)
 //'   observed a specific t=1,...,TT; (arma::rowvec)
 //' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
 //'   whole state vector has \code{DD} components and \code{N} is the number of
 //'   particles)
-//' @param id_x index vector giving the location of the N-dimensional components
-//'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
-//'   \code{xa}
+//' @param id_x_all index vector giving the location of the
+//'   N-dimensional components for each subcomponent d=1,...,DD within the
+//'   \code{NxDD} dimensional \code{xa}
+//'
 //' @return particle log-weights
 //'
 // [[Rcpp::export]]
 arma::vec w_log_cbpf_m(const int N,
-                       const int DD,
+                       const int num_counts,
                        const arma::rowvec& y,
                        const arma::vec& xa,
-                       const arma::uvec& id_x) {
+                       const arma::uvec& id_x_all) {
+  const int DD_avail_y = y.size();
+  const int DD_avail_x = DD_avail_y - 1;
   const std::string weight_type = "particle";
 
   arma::vec w_log(N, arma::fill::zeros);
   arma::vec w_log_tmp(N, arma::fill::zeros);
-  arma::mat w_tmp(N, (DD - 1), arma::fill::zeros);
+  arma::mat w_tmp(N, (DD_avail_x), arma::fill::zeros);
   // double w_max;
   // double w_log_min = 0;
+  // arma::mat y_mat(N, (DD_avail_y), arma::fill::zeros);
+  // y_mat.each_row() += y.subvec(0, (DD_avail_y));
 
-  arma::mat y_mat(N, (DD - 1), arma::fill::zeros);
-  y_mat.each_row() += y.subvec(0, (DD - 1));
-
-  arma::mat xs(N, (DD - 1), arma::fill::zeros);
-  arma::mat ps(N, (DD - 1), arma::fill::zeros);
-  for (int d = 0; d < (DD - 1); ++d) {
-    xs.col(d) = xa.subvec(id_x(d), id_x(d + 1) - 1);
+  arma::mat xs(N, (DD_avail_x), arma::fill::zeros);
+  arma::mat ps(N, (DD_avail_x), arma::fill::zeros);
+  for (int d = 0; d < (DD_avail_x); ++d) {
+    xs.col(d) = xa.subvec(id_x_all(d), id_x_all(d + 1) - 1);
     ps.col(d) = xs.col(d);
   }
   ps = exp(ps);
@@ -172,11 +175,11 @@ arma::vec w_log_cbpf_m(const int N,
   w_log_tmp = arma::sum(ps, 1) + 1;
   w_log_tmp = log(w_log_tmp);
 
-  for(int d  = 0; d < (DD - 1); ++d) {
-    w_tmp.col(d) = (xs.col(d) - w_log_tmp)*y(d); //
+  for(int d  = 0; d < (DD_avail_x); ++d) {
+    w_tmp.col(d) = y(d) * (xs.col(d) - w_log_tmp); //
   }
   w_log = arma::sum(w_tmp, 1);
-
+  w_log -= (y(DD_avail_y - 1) * w_log_tmp);
   check_weights(w_log, weight_type);
 
   return(w_log);

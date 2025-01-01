@@ -36,17 +36,17 @@ void compute_gammas(arma::vec& gamma,
                     const arma::uvec& id_x,
                     const int d, const int DD);
 arma::vec w_log_cbpf_m(const int N,
-                       const int DD,
+                       const int num_counts,
                        const arma::rowvec& y,
                        const arma::vec& xa,
-                       const arma::uvec& id_x);
+                       const arma::uvec& id_x_all);
 arma::vec w_log_cbpf_dm(const int N,
                         const int num_counts,
                         const arma::rowvec& y,
                         const arma::vec& xa,
                         const arma::uvec& id_x_all);
 arma::vec w_log_cbpf_gdm(const int N,
-                         const int counts,
+                         const int num_counts,
                          const arma::rowvec& y,
                          const arma::vec& xa,
                          const arma::uvec& id_x_all);

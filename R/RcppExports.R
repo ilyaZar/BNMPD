@@ -107,20 +107,22 @@ w_log_cbpf_gd <- function(N, y, xa, id_x_all) {
 #' measurements model.
 #'
 #' @param N number of particles (int)
-#' @param DD number of state components (dirichlet fractions or number of
+#' @param num_counts number of overall counts per t=1,...,TT (part of the
+#'   measurement data) i.e. a scalar int-value for the current time period
 #'   components in the multivariate latent state component) (int)
 #' @param y counts of dimension \code{DD} (part of the measurement data)
 #'   observed a specific t=1,...,TT; (arma::rowvec)
 #' @param xa particle state vector; \code{NxDD}-dimensional arma::vec (as the
 #'   whole state vector has \code{DD} components and \code{N} is the number of
 #'   particles)
-#' @param id_x index vector giving the location of the N-dimensional components
-#'   for each subcomponent d=1,...,DD within the \code{NxDD} dimensional
-#'   \code{xa}
+#' @param id_x_all index vector giving the location of the
+#'   N-dimensional components for each subcomponent d=1,...,DD within the
+#'   \code{NxDD} dimensional \code{xa}
+#'
 #' @return particle log-weights
 #'
-w_log_cbpf_m <- function(N, DD, y, xa, id_x) {
-    .Call(`_BNMPD_w_log_cbpf_m`, N, DD, y, xa, id_x)
+w_log_cbpf_m <- function(N, num_counts, y, xa, id_x_all) {
+    .Call(`_BNMPD_w_log_cbpf_m`, N, num_counts, y, xa, id_x_all)
 }
 
 #' SMC log-weights for the Dirichlet Multinomial

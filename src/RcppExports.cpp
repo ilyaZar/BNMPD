@@ -93,17 +93,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // w_log_cbpf_m
-arma::vec w_log_cbpf_m(const int N, const int DD, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x);
-RcppExport SEXP _BNMPD_w_log_cbpf_m(SEXP NSEXP, SEXP DDSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_xSEXP) {
+arma::vec w_log_cbpf_m(const int N, const int num_counts, const arma::rowvec& y, const arma::vec& xa, const arma::uvec& id_x_all);
+RcppExport SEXP _BNMPD_w_log_cbpf_m(SEXP NSEXP, SEXP num_countsSEXP, SEXP ySEXP, SEXP xaSEXP, SEXP id_x_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const int >::type N(NSEXP);
-    Rcpp::traits::input_parameter< const int >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const int >::type num_counts(num_countsSEXP);
     Rcpp::traits::input_parameter< const arma::rowvec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type xa(xaSEXP);
-    Rcpp::traits::input_parameter< const arma::uvec& >::type id_x(id_xSEXP);
-    rcpp_result_gen = Rcpp::wrap(w_log_cbpf_m(N, DD, y, xa, id_x));
+    Rcpp::traits::input_parameter< const arma::uvec& >::type id_x_all(id_x_allSEXP);
+    rcpp_result_gen = Rcpp::wrap(w_log_cbpf_m(N, num_counts, y, xa, id_x_all));
     return rcpp_result_gen;
 END_RCPP
 }
