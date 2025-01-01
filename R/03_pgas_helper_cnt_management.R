@@ -36,6 +36,8 @@ get_args_list_smc_internal <- function(pe, mm, PARALLEL = TRUE) {
   }
   if (pe$model_type_obs %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT")) {
     out$DD2 <- pe$DD2
+  }
+  if (pe$model_type_obs %in% c("DIRICHLET", "GEN_DIRICHLET")) {
     out$num_counts <- NULL
   }
   if (pe$model_type_obs %in% c("DIRICHLET_MULT",
@@ -333,8 +335,8 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
       colnames(prior_vcm_bet_z[[d]]) <- names_phi_x_bet_z
       for (n in seq_len(NN)) {
         regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
-        Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
-        betz2 <- bet_z[id_betz_tmp, 1]
+        Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n, drop = FALSE]
+        betz2 <- bet_z[id_betz_tmp, 1, drop = FALSE]
         Z_beta[, d, n] <- Zmat2 %*% betz2
       }
     }
