@@ -4,6 +4,7 @@
 #'
 #' @export
 sample_all_params.auto_lin_re <- function(pe, mm) {
+  # browser()
   order_p <- pe$order_p
   for (d in 1:pe$DD2) {
     id_phi_tmp  <- (pe$id_phi[d] + 1):pe$id_phi[d + 1]
@@ -42,6 +43,7 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
                                                   pe$dof_vcm_bet_u[d],
                                                   pe$prior_vcm_bet_u2[[d]],
                                                   dd_range_nn)
+    # browser()
     pe$bet_u[id_betu_tmp, mm,
              dd_range_nn] <- sample_bet_u_alr(pe$sig_sq_x[d, mm],
                                               pe$phi_x[id_phi_tmp, mm - 1],
@@ -234,12 +236,19 @@ sample_bet_u_alr <- function(sig_sq_x,
   nn <- 1
   x_lhs <- X[(order_p + 1):TT, , drop = FALSE]
   x_rhs <- get_x_rhs(X, order_p, TT)
+  CHECK_IS_MAT_Z <- is.matrix(regs_z[, , 1])
   for (n in iter_range_NN) {
     x_rhs_tmp <- matrix(x_rhs[, , n], nrow = TT - order_p, ncol = order_p)
     Omega_bet_u <- matrix(0, nrow = dim_bet_u, ncol = dim_bet_u)
     mu_bet_u    <- matrix(0, nrow = dim_bet_u, ncol = 1)
 
-    x_n   <- x_lhs[, n] - (x_rhs_tmp %*% phi_x + regs_z[, , n, drop = FALSE] %*% bet_z)
+    # browser()
+    if (isFALSE(CHECK_IS_MAT_Z)) {
+      z_rhs_tmp <- as.matrix(regs_z[, , n]) %*% bet_z
+    } else {
+      z_rhs_tmp <- regs_z[, , n] %*% bet_z
+    }
+    x_n   <- x_lhs[, n] - (x_rhs_tmp %*% phi_x + z_rhs_tmp)
     Umat <- matrix(U[, , n, drop = FALSE], nrow = TT - order_p)
 
     Omega_bet_u <- solveme(crossprod(Umat, Umat)/sig_sq_x + vcm_bet_u_inv)
