@@ -334,9 +334,16 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
       rownames(prior_vcm_bet_z[[d]]) <- names_phi_x_bet_z
       colnames(prior_vcm_bet_z[[d]]) <- names_phi_x_bet_z
       for (n in seq_len(NN)) {
+        # browser()
         regs_z[, id_regs_z_tmp, n] <- Z[(1 + order_p):TT, id_zet_tmp, n]
-        Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n, drop = FALSE]
-        betz2 <- bet_z[id_betz_tmp, 1, drop = FALSE]
+        # Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n, drop = FALSE]
+        Zmat2 <- Z[, (id_zet[d] + 1):id_zet[d + 1], n]
+        CHECK_MAT_Z <- isFALSE(is.matrix(Zmat2))
+        if (CHECK_MAT_Z) Zmat2 <- as.matrix(Zmat2)
+        betz2 <- bet_z[id_betz_tmp, 1]
+        # betz2 <- bet_z[id_betz_tmp, 1, drop = FALSE]
+        # CHECK_MAT_BETZ <- is.null(dim(betz2)) && (length(betz2) == 1)
+        # if (CHECK_MAT_BETZ) betz2 <- bet_z[id_betz_tmp, 1, drop = FALSE]
         Z_beta[, d, n] <- Zmat2 %*% betz2
       }
     }
