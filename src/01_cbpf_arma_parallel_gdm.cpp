@@ -16,6 +16,7 @@
 //' @param N number of particles
 //' @param TT time series dimension
 //' @param DD multivariate dimension (number of dirichlet-mult. categories)
+//' @param DD2 multivariate dimension of states
 //' @param y_all measurements: dirichlet-multinomial counts
 //' @param num_counts_all measurements: dirichlet-multinomial total counts per
 //'   time period (\code{T}-dimensional vector)

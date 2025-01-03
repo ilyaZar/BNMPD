@@ -447,6 +447,7 @@ cbpf_as_dm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, num
 #' @param N number of particles
 #' @param TT time series dimension
 #' @param DD multivariate dimension (number of dirichlet categories)
+#' @param DD2 multivariate dimension of states
 #' @param y_all measurements: dirichlet fractions
 #' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
 #'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
@@ -481,6 +482,7 @@ cbpf_as_gd_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all
 #' @param N number of particles
 #' @param TT time series dimension
 #' @param DD multivariate dimension (number of dirichlet-mult. categories)
+#' @param DD2 multivariate dimension of states
 #' @param y_all measurements: dirichlet-multinomial counts
 #' @param num_counts_all measurements: dirichlet-multinomial total counts per
 #'   time period (\code{T}-dimensional vector)
@@ -517,6 +519,7 @@ cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_al
 #' @param N number of particles
 #' @param TT time series dimension
 #' @param DD multivariate dimension (number of dirichlet-mult. categories)
+#' @param DD2 multivariate dimension of states
 #' @param y_all measurements: dirichlet-multinomial counts
 #' @param num_counts_all measurements: dirichlet-multinomial total counts per
 #'   time period (\code{T}-dimensional vector)
@@ -532,8 +535,8 @@ cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_al
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_m_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_m_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_m_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_m_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC/BPF for the Dir. Mult. model

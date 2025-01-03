@@ -16,6 +16,7 @@
 //' @param N number of particles
 //' @param TT time series dimension
 //' @param DD multivariate dimension (number of dirichlet categories)
+//' @param DD2 multivariate dimension of states
 //' @param y_all measurements: dirichlet fractions
 //' @param regs_beta_all result of regressor matrix i.e. z_{t} multiplied by
 //'   parameters/coefficients (vector) over ALL \code{d=1...DD} components
