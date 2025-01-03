@@ -425,7 +425,7 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           get_init_tmp_y = function(y_t, i) {
                             init_tmp <- abs(y_t[, , i])
-                            if (private$.DIST_SPECIAL) {
+                            if (private$.DIST_SPECIAL && get_dist_special_type(private$.DIST_SPECIAL) == "GEN") {
                               init_tmp <- init_tmp[, rep(1:ncol(init_tmp),
                                                          each = 2)]
                               rm_last  <- (ncol(init_tmp) - 1):ncol(init_tmp)
@@ -512,7 +512,7 @@ ModelDat <- R6::R6Class("ModelDat",
                           },
                           read_init_from_json = function(pth) {
                             init <- jsonlite::fromJSON(pth)
-                            if (private$.DIST_SPECIAL) {
+                            if (private$.DIST_SPECIAL && get_dist_special_type(private$.DIST_SPECIAL) == "GEN") {
                               init <- unlist(
                                 init,
                                 recursive = FALSE,
@@ -524,6 +524,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                                      par_name,
                                                      type = NULL,
                                                      dim_mat = NULL) {
+                            # browser()
                             out_init <- vector("list", private$.DD2)
 
                             if (type == "listof-vec") {
@@ -620,6 +621,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             state_inits <- private$get_states_init(
                               states_init
                             )
+                            # browser()
                             param_inits <- private$get_params_init(
                               params_init,
                               private$.pth_to_inits
@@ -723,6 +725,7 @@ ModelDat <- R6::R6Class("ModelDat",
                                                 info_ts,
                                                 info_dim,
                                                 states_init = NULL) {
+                            # browser()
                             # The following side effect functions simply load
                             # the information from ModelDef and DataSet into
                             # this class.
@@ -745,6 +748,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             # 3. initialize priors
                             private$initialize_data_priors()
                             # 4. initialize states and parameters
+                            # browser()
                             private$initialize_data_inits_start(states_init,
                                                                 NULL)
                             # 5. Type of meta data so far: avail/zero indicators
