@@ -34,7 +34,7 @@ get_args_list_smc_internal <- function(pe, mm, PARALLEL = TRUE) {
   } else {
     out$id_parallelize <- seq_len(pe$NN)
   }
-  if (pe$model_type_obs %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT")) {
+  if (pe$model_type_obs %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT", "MULTINOMIAL")) {
     out$DD2 <- pe$DD2
   }
   if (pe$model_type_obs %in% c("DIRICHLET", "GEN_DIRICHLET")) {
@@ -563,27 +563,31 @@ get_env_pgas <- function(env_to, env_from, phi_null, z_null, u_null, dims) {
   invisible(env_to)
 }
 dd_names_formatter <- function(DIST_SPECIAL, DD) {
-  if (isFALSE(DIST_SPECIAL)) {
+  if (isFALSE(DIST_SPECIAL) || get_dist_special_type(DIST_SPECIAL) == "MULT") {
     paste0("d_", seq_len(DD))
-  } else if (isTRUE(DIST_SPECIAL)) {
+  } else if (isTRUE(DIST_SPECIAL) && get_dist_special_type(DIST_SPECIAL) == "GEN") {
     dd_seq <- formatC(
       rep(seq_len(DD / 2), each = 2),
       width = 2,
       format = "d",
       flag = "0")
     paste0(c("DA_", "DB_"), dd_seq)
+  } else {
+    stop("Error when formatting dd-type names.")
   }
 }
 dd_names_formatter2 <- function(DIST_SPECIAL, DD) {
-  if (isFALSE(DIST_SPECIAL)) {
+  if (isFALSE(DIST_SPECIAL) || get_dist_special_type(DIST_SPECIAL) == "MULT") {
      paste0("DD_", seq_len(DD))
-  } else if (isTRUE(DIST_SPECIAL)) {
+  } else if (isTRUE(DIST_SPECIAL) && get_dist_special_type(DIST_SPECIAL) == "GEN") {
     dd_seq <- formatC(
       rep(seq_len(DD / 2), each = 2),
       width = 2,
       format = "d",
       flag = "0")
     paste0(c("DA_", "DB_"), dd_seq)
+  } else {
+    stop("Error when formatting dd-type names.")
   }
 }
 dd_kk_names_formatter <- function(DIST_SPECIAL, DD, num_regs, prefix_reg) {
