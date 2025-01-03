@@ -249,13 +249,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // compute_dd_range_x
-arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y);
-RcppExport SEXP _BNMPD_compute_dd_range_x(SEXP dd_range_ySEXP) {
+arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y, std::string type);
+RcppExport SEXP _BNMPD_compute_dd_range_x(SEXP dd_range_ySEXP, SEXP typeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::uvec& >::type dd_range_y(dd_range_ySEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_dd_range_x(dd_range_y));
+    Rcpp::traits::input_parameter< std::string >::type type(typeSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_dd_range_x(dd_range_y, type));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -635,7 +636,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_check_weights", (DL_FUNC) &_BNMPD_check_weights, 2},
     {"_BNMPD_throw_weight_msg", (DL_FUNC) &_BNMPD_throw_weight_msg, 3},
     {"_BNMPD_compute_id_x_all", (DL_FUNC) &_BNMPD_compute_id_x_all, 2},
-    {"_BNMPD_compute_dd_range_x", (DL_FUNC) &_BNMPD_compute_dd_range_x, 1},
+    {"_BNMPD_compute_dd_range_x", (DL_FUNC) &_BNMPD_compute_dd_range_x, 2},
     {"_BNMPD_w_as_c", (DL_FUNC) &_BNMPD_w_as_c, 5},
     {"_BNMPD_cbpf_as_d_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_d_cpp_par, 10},
     {"_BNMPD_cbpf_as_dm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_dm_cpp_par, 11},

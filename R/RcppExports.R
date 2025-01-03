@@ -319,22 +319,9 @@ compute_id_x_all <- function(DD_all, N) {
     .Call(`_BNMPD_compute_id_x_all`, DD_all, N)
 }
 
-#' Computes a specific dd_range_x object for special distributions
 #'
-#' This is for generalized Dirichlet (Multinomial) distributions that have more
-#' components/parameters than the multivariate dimension. So if for the
-#' multivariate dimension 1,2,3 would usually generate 1,2,3,4,5,6 components
-#' a missing '2' i.e. 1, MISSING, 3 should be converted to 1,2,MISSING,MISSING,
-#' 5,6.
-#'
-#' @param dd_range_y; the 'dd_range_y' component (from some cross sectional
-#'    unit i.e. some 'nn_list_dd(j)' from the 'nn_list_dd' parameter passed via
-#'    [cbpf_as_gd_cpp_par()]
-#'
-#' @return a sequence of integers (0, ..., DD_all * N - 1)
-#'
-compute_dd_range_x <- function(dd_range_y) {
-    .Call(`_BNMPD_compute_dd_range_x`, dd_range_y)
+compute_dd_range_x <- function(dd_range_y, type) {
+    .Call(`_BNMPD_compute_dd_range_x`, dd_range_y, type)
 }
 
 #' Computes the ancestor sampling weights.

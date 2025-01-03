@@ -172,24 +172,30 @@ arma::uvec compute_id_x_avl(int N, const arma::uvec& id_x_all,
   }
   return(id_weights);
 }
-//' Computes a specific dd_range_x object for special distributions
-//'
-//' This is for generalized Dirichlet (Multinomial) distributions that have more
-//' components/parameters than the multivariate dimension. So if for the
-//' multivariate dimension 1,2,3 would usually generate 1,2,3,4,5,6 components
-//' a missing '2' i.e. 1, MISSING, 3 should be converted to 1,2,MISSING,MISSING,
-//' 5,6.
-//'
-//' @param dd_range_y; the 'dd_range_y' component (from some cross sectional
-//'    unit i.e. some 'nn_list_dd(j)' from the 'nn_list_dd' parameter passed via
-//'    [cbpf_as_gd_cpp_par()]
-//'
-//' @return a sequence of integers (0, ..., DD_all * N - 1)
+// Computes a specific dd_range_x object for special distributions
+//
+// This is for generalized Dirichlet (Multinomial) distributions that have more
+// components/parameters than the multivariate dimension. Depending on the
+// 'type', the computation changes.
+//
+// @param dd_range_y The 'dd_range_y' component (from some cross-sectional
+//    unit, e.g., some 'nn_list_dd(j)' from the 'nn_list_dd' parameter passed
+//    via [cbpf_as_gd_cpp_par()]
+// @param type A string indicating the computation type. Accepts "generalized"
+//    (default) or "multinomial". Case-insensitive.
+//
+// @return A sequence of integers (0, ..., DD_all * N - 1)
 //'
 // [[Rcpp::export]]
-arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y) {
+arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y,
+                              std::string type) {
+  // Validate 'type'
+  if (type != "generalized" && type != "multinomial") {
+    Rcpp::stop("Invalid 'type' parameter. Acceptable values are 'generalized' or 'multinomial'.");
+  }
+
   int DD = dd_range_y.size();
-  int DD2 = compute_DD2(DD);
+  int DD2 = compute_DD2(DD, type);
   arma::uvec out_dd_range_x(DD2, arma::fill::zeros);
   for (int d = 0; d < DD; ++d) {
     out_dd_range_x[d * 2] = dd_range_y[d] * 2;
@@ -197,13 +203,15 @@ arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y) {
   }
   return(out_dd_range_x);
 }
-int compute_DD2(int DD) {
-  return(2 * DD - 2);
-  // if (type == 1) {
-  //   return(2 * DD);
-  // } else if (type == 2) {
-  //   return(2 * DD);
-  // }
+int compute_DD2(int DD, const std::string& type) {
+  if (type == "generalized") {
+    return(2 * DD - 2);
+  } else if (type == "multinomial") {
+    return(DD - 1);
+  }
+  // This case is redundant due to earlier validation but included for safety
+  Rcpp::stop("Invalid 'type' passed to compute_DD2.");
+  return -1; // Placeholder to satisfy the compiler
 }
 //' Computes the ancestor sampling weights.
 //'

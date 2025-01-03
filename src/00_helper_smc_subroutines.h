@@ -11,8 +11,9 @@
 arma::uvec compute_id_x_all(int DD_all, int N);
 arma::uvec compute_id_x_avl(int N, const arma::uvec& id_x_all,
                             const arma::uvec& dd_rng);
-arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y);
-int compute_DD2(int DD);
+arma::uvec compute_dd_range_x(const arma::uvec& dd_range_y,
+                              std::string type = "generalized");
+int compute_DD2(int DD, const std::string& type);
 arma::vec f_cpp(const arma::vec& x_tt,
                 const double& phi_x,
                 const double& regs_add);
