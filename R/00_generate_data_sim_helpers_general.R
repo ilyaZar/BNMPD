@@ -124,7 +124,7 @@ get_DD1 <- function(distribution, DD) {
 get_DD2 <- function(distribution, DD) {
   DD <- unname(DD)
   switch(distribution,
-         "multinomial" = DD,
+         "multinomial" = DD - 1,
          "normal" = DD,
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
@@ -132,10 +132,29 @@ get_DD2 <- function(distribution, DD) {
          "gen_dirichlet_mult" = DD * 2 - 2,
          stop("Unknown distribution name"))
 }
-check_special_dist_quick <- function(dist) {
-  if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) return(TRUE)
-  if (dist %in% c("GEN_DIRICHLET", "GEN_DIRICHLET_MULT")) return(TRUE)
-  return(FALSE)
+check_special_dist_quick <- function(dist, CHECK_MULTINOMIAL = FALSE) {
+  out <- FALSE
+  gen_strng <- c("gen_dirichlet", "gen_dirichlet_mult",
+                 "GEN_DIRICHLET", "GEN_DIRICHLET_MULT")
+  mlt_strng <- c("MULTINOMIAL", "multinomial")
+  if (dist %in% gen_strng) {
+    out <- TRUE
+    attributes(out) <- list(SPECIAL_TYPE = "GEN")
+  }
+  if (dist %in% mlt_strng) {
+    out <- TRUE
+    attributes(out) <- list(SPECIAL_TYPE = "MULT")
+  }
+  return(out)
+}
+get_dist_special_type <- function(CHECK) {
+  if (isTRUE(CHECK)) {
+    return(attr(CHECK, "SPECIAL_TYPE"))
+  } else {
+    return("NONE")
+    #if (!isTRUE(CHECK)) stop("Cannot apply check to non-special distribution.")
+  }
+
 }
 #' Options list of included effects.
 #'
