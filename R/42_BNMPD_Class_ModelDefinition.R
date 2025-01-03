@@ -103,17 +103,29 @@ ModelDef <- R6::R6Class("ModelDef",
                             model_raw_tmp <- model_raw[rng_names]
 
                             if (isTRUE(DIST_SPECIAL)) {
-                              checks <- check_reg_avail_spc(
+                              DIST_SPECIAL_TYPE <- get_dist_special_type(DIST_SPECIAL)
+                              if (DIST_SPECIAL_TYPE == "GEN") {
+                                checks <- check_reg_avail_spc(
+                                  model_raw_tmp,
+                                  num_mc,
+                                  reg_name
+                                )
+                              } else if (DIST_SPECIAL_TYPE == "MULT") {
+                                checks <- check_reg_avail_multn(
                                 model_raw_tmp,
                                 num_mc,
                                 reg_name
                               )
+                              }
                             } else if (isFALSE(DIST_SPECIAL)) {
                               checks <- check_reg_avail_def(
                                 model_raw_tmp,
                                 num_mc,
                                 reg_name
                               )
+                            } else {
+                              stop(paste0("Unknown Distribution type: ",
+                                          model_raw$model_type_obs, "..."))
                             }
 
                             if (all(checks)) {
@@ -147,6 +159,16 @@ ModelDef <- R6::R6Class("ModelDef",
                                      c1 && c2
                                    })
                           },
+                          check_reg_avail_multn = function(mod, mc, reg_name) {
+                            # same as check_reg_avail_def(), however it has one
+                            # component less than the def()/default version as
+                            # the multinomial has a fewer component due to
+                            # identification
+                            sapply(mod[seq_len(mc - 1)],
+                                   function(x) {
+                                     any(names(x) == reg_name)
+                                   })
+                          },
                           get_reg_mod_raw_all = function(mod_raw,
                                                          Z_AVAIL,
                                                          U_AVAIL,
@@ -156,42 +178,48 @@ ModelDef <- R6::R6Class("ModelDef",
                             if (Z_AVAIL) z_list <- list()
                             if (U_AVAIL) u_list <- list()
 
-                            SPECIAL_TYPE <- check_special_dist_quick(
+                            DIST_SPECIAL <- check_special_dist_quick(
                               mod_raw$model_type_obs)
+                            DIST_SPECIAL_TYPE <- get_dist_special_type(DIST_SPECIAL)
                             CHECK_BR <- TRUE
                             for (i in 1:num_mc) {
                               id <- i + private$.yaml_offset
                               y_list[i] <- mod_raw[[id]][["y_var"]]
                               y_labs[i] <- mod_raw[[id]][["y_lab"]]
 
-                              if (SPECIAL_TYPE && i == num_mc) CHECK_BR <- FALSE
+                              if (DIST_SPECIAL && i == num_mc) CHECK_BR <- FALSE
                               if (Z_AVAIL && CHECK_BR) {
                                 z_list[[i]] <- get_reg_mod_raw_dd(
                                   mod_raw,
                                   "z_reg",
-                                  SPECIAL_TYPE,
+                                  DIST_SPECIAL,
                                   id)
                               }
                               if (U_AVAIL && CHECK_BR) {
                                 u_list[[i]] <- get_reg_mod_raw_dd(
                                   mod_raw,
                                   "u_reg",
-                                  SPECIAL_TYPE,
+                                  DIST_SPECIAL,
                                   id)
                               }
                             }
-                            if (isTRUE(SPECIAL_TYPE)) {
+                            if (isTRUE(DIST_SPECIAL) && DIST_SPECIAL_TYPE == "GEN") {
                               if (Z_AVAIL) z_list <- unlist(z_list,
                                                             recursive = FALSE)
                               if (U_AVAIL) u_list <- unlist(u_list,
                                                             recursive = FALSE)
-                            } else if (isFALSE(SPECIAL_TYPE)) {
+                            } else if (isFALSE(DIST_SPECIAL) || DIST_SPECIAL_TYPE == "MULT") {
                               tmp_names <- private$set_lab_var_name(
                                 private$.yaml_offset,
                                 names(mod_raw)
                               )
+                              if (isTRUE(DIST_SPECIAL) && DIST_SPECIAL_TYPE == "MULT") {
+                                tmp_names <- tmp_names[-num_mc]
+                              }
                               if (Z_AVAIL) names(z_list) <- tmp_names
                               if (U_AVAIL) names(u_list) <- tmp_names
+                            } else {
+                              stop("Cannot set reg-names.")
                             }
                             return(list(y_list = y_list,
                                         y_labs = y_labs,
@@ -200,9 +228,10 @@ ModelDef <- R6::R6Class("ModelDef",
                           },
                           get_reg_mod_raw_dd = function(mod_raw,
                                                         reg_name,
-                                                        SPECIAL_TYPE,
+                                                        DIST_SPECIAL,
                                                         dd) {
-                            if (isTRUE(SPECIAL_TYPE)) {
+                            DIST_SPECIAL_TYPE <- get_dist_special_type(DIST_SPECIAL)
+                            if (isTRUE(DIST_SPECIAL) && DIST_SPECIAL_TYPE == "GEN") {
                               out <- list()
                               tmp_mod_dd <- mod_raw[[dd]]
 
@@ -219,7 +248,12 @@ ModelDef <- R6::R6Class("ModelDef",
                               names(out[[nm_out]]) <- tmp_reg[["lab"]]
 
                               return(out)
-                            } else if (isFALSE(SPECIAL_TYPE)) {
+                            } else if (isTRUE(DIST_SPECIAL) && DIST_SPECIAL_TYPE == "MULT") {
+                              tmp_reg <- mod_raw[[dd]][[reg_name]]
+                              out <- tmp_reg[["var"]]
+                              names(out) <- tmp_reg[["lab"]]
+                              return(out)
+                            } else if (isFALSE(DIST_SPECIAL)) {
                               tmp_reg <- mod_raw[[dd]][[reg_name]]
                               out <- tmp_reg[["var"]]
                               names(out) <- tmp_reg[["lab"]]
