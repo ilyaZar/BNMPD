@@ -4,7 +4,6 @@
 #'
 #' @export
 sample_all_params.auto_lin_re <- function(pe, mm) {
-  # browser()
   order_p <- pe$order_p
   for (d in 1:pe$DD2) {
     id_phi_tmp  <- (pe$id_phi[d] + 1):pe$id_phi[d + 1]
@@ -20,13 +19,40 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
     Ztmp <- pe$Z[(1 + order_p):pe$TT, id_zet_tmp, , drop = FALSE]
     Utmp <- pe$U[(1 + order_p):pe$TT, id_uet_tmp, , drop = FALSE]
 
+    beta_sampled <- sample_bet_z_alr(sig_sq_x = pe$sig_sq_x[d, mm - 1],
+                                     vcm_bet_u = pe$vcm_bet_u[[d]][, , mm - 1],
+                                     X = Xtmp,
+                                     regs_z = pe$regs_z[, id_regs_z_tmp, ,
+                                                        drop = FALSE],
+                                     U = Utmp,
+                                     TT = pe$TT,
+                                     dim_bet_z = pe$dim_bet_z[d],
+                                     prior_vcm_bet_z = pe$prior_vcm_bet_z[[d]],
+                                     iter_range_NN = dd_range_nn,
+                                     order_p = order_p)
+    pe$phi_x[id_phi_tmp, mm] <- beta_sampled[1:order_p]
+    pe$bet_z[id_betz_tmp, mm] <- beta_sampled[-(1:order_p)]
+
+    pe$bet_u[id_betu_tmp, mm,
+             dd_range_nn] <- sample_bet_u_alr(pe$sig_sq_x[d, mm - 1],
+                                              pe$phi_x[id_phi_tmp, mm],
+                                              pe$bet_z[id_betz_tmp,
+                                                       mm,
+                                                       drop = FALSE],
+                                              pe$vcm_bet_u[[d]][, , mm - 1],
+                                              pe$dim_bet_u[d],
+                                              Xtmp, Ztmp, Utmp,
+                                              dd_range_nn,
+                                              pe$TT,
+                                              order_p)
+
     pe$sig_sq_x[d, mm] <- sample_sig_sq_x_alr(phi_x = pe$phi_x[id_phi_tmp,
-                                                               mm - 1],
+                                                               mm],
                                               bet_z = pe$bet_z[id_betz_tmp,
-                                                               mm - 1,
+                                                               mm,
                                                                drop = FALSE],
                                               bet_u = pe$bet_u[id_betu_tmp,
-                                                               mm - 1,,
+                                                               mm,,
                                                                drop = FALSE],
                                               X = Xtmp,
                                               regs_z = Ztmp, regs_u = Utmp,
@@ -37,39 +63,14 @@ sample_all_params.auto_lin_re <- function(pe, mm) {
                                               order_p)
 
     pe$vcm_bet_u[[d]][, , mm] <- sample_vcm_bet_u(pe$bet_u[id_betu_tmp,
-                                                           mm - 1, ,
+                                                           mm, ,
                                                            drop = FALSE],
                                                   pe$dim_bet_u[d],
                                                   pe$dof_vcm_bet_u[d],
                                                   pe$prior_vcm_bet_u2[[d]],
                                                   dd_range_nn)
-    # browser()
-    pe$bet_u[id_betu_tmp, mm,
-             dd_range_nn] <- sample_bet_u_alr(pe$sig_sq_x[d, mm],
-                                              pe$phi_x[id_phi_tmp, mm - 1],
-                                              pe$bet_z[id_betz_tmp,
-                                                       mm - 1,
-                                                       drop = FALSE],
-                                              pe$vcm_bet_u[[d]][, , mm],
-                                              pe$dim_bet_u[d],
-                                              Xtmp, Ztmp, Utmp,
-                                              dd_range_nn,
-                                              pe$TT,
-                                              order_p)
-    beta_sampled <- sample_bet_z_alr(sig_sq_x = pe$sig_sq_x[d, mm],
-                                     vcm_bet_u = pe$vcm_bet_u[[d]][, , mm],
-                                     X = Xtmp,
-                                     regs_z = pe$regs_z[, id_regs_z_tmp, ,
-                                                        drop = FALSE],
-                                     U = Utmp,
-                                     TT = pe$TT,
-                                     dim_bet_z = pe$dim_bet_z[d],
-                                     prior_vcm_bet_z = pe$prior_vcm_bet_z[[d]],
-                                     iter_range_NN = dd_range_nn,
-                                     order_p = order_p)
 
-    pe$phi_x[id_phi_tmp, mm] <- beta_sampled[1:order_p]
-    pe$bet_z[id_betz_tmp, mm] <- beta_sampled[-(1:order_p)]
+
 
     # browser()
     pe$Regs_beta[, d, ] <- get_regs_beta(Z  = pe$Z[, id_zet_tmp, , drop = FALSE],
@@ -242,7 +243,6 @@ sample_bet_u_alr <- function(sig_sq_x,
     Omega_bet_u <- matrix(0, nrow = dim_bet_u, ncol = dim_bet_u)
     mu_bet_u    <- matrix(0, nrow = dim_bet_u, ncol = 1)
 
-    # browser()
     if (isFALSE(CHECK_IS_MAT_Z)) {
       z_rhs_tmp <- as.matrix(regs_z[, , n]) %*% bet_z
     } else {
@@ -257,6 +257,7 @@ sample_bet_u_alr <- function(sig_sq_x,
     out_mat[, nn] <- rnorm_fast_n1(mu = mu_bet_u,
                                    Sigma = Omega_bet_u,
                                    dim_bet_u)
+    if (all(out_mat[, nn] == 0)) browser()
     nn <- nn + 1
   }
   return(out_mat)
