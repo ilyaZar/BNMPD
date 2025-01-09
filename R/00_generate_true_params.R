@@ -97,7 +97,7 @@ new_trueParams <- function(distribution,
   msg_dim_ready(NN, "NN")
   msg_dim_ready(TT, "TT")
   msg_dim_ready(DD, "DD")
-  if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
+  if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult", "multinomial")) {
     DD2 <- get_DD2(distribution = distribution, DD = model_dim[[3]])
     msg_dim_ready(DD2, "DD2")
     model_dim <- c(NN = NN, TT = TT, DD = DD, DD2 = DD2)
@@ -304,7 +304,7 @@ check_true_params_distribution <- function(obj) {
   check_class_true_params(obj)
   densitities_supported <- c("multinomial", "dirichlet_mult",
                              "gen_dirichlet_mult", "gen_dirichlet",
-                             "dirichlet")
+                             "dirichlet", "normal")
   distribution <- get_distribution(obj)
   if (!(distribution %in% densitities_supported)) {
     stop(paste0("Argument to distribution must be one of: ",
@@ -462,6 +462,27 @@ set_params <- function(true_params, name_par, values, DD_TYPE = NULL) {
   }
   return(true_params2)
 }
+#' Method for class 'trueParamsNormal' derived from 'trueParams'
+#'
+#' Used for the Normal distribution.
+#'
+#' @inheritParams get_params
+#'
+#' @return sliced parameters for some cross sectional unit \code{n}
+#' @export
+get_params.trueParamsNormal <- function(true_params,
+                                        n = NULL, DD = NULL,
+                                        name_par = NULL,
+                                        DD_TYPE = NULL,
+                                        drop = FALSE) {
+  if (is.null(n)) n <- seq_len(ncol(true_params$sig_sq))
+  reg_types <- get_modelling_reg_types(true_params)
+  pars_out  <- true_params %>%
+    get_default_pars(n, DD, reg_types) %>%
+    get_par_name(name_par)
+  if (isTRUE(drop)) return(drop(pars_out))
+  return(pars_out)
+}
 #' Method for class 'trueParamsDirichlet' derived from 'trueParams'
 #'
 #' Used for the Dirichlet distribution.
@@ -503,6 +524,35 @@ get_params.trueParamsGenDirichlet <- function(true_params,
   pars_out <- get_special_pars(true_params, n, DD, reg_types, special_type = DD_TYPE)
   pars_out <- get_par_name(pars_out, name_par)
 
+  if (isTRUE(drop)) return(drop(pars_out))
+  return(pars_out)
+}
+#' Method for class 'trueParamsMultinomial' derived from 'trueParams'
+#'
+#' Used for the Multinomial distribution.
+#'
+#' @inheritParams get_params
+#'
+#' @return sliced parameters for some cross sectional unit \code{n}
+#' @export
+get_params.trueParamsMultinomial <- function(true_params,
+                                             n = NULL, DD = NULL,
+                                             name_par = NULL,
+                                             DD_TYPE = NULL,
+                                             drop = FALSE) {
+  if (is.null(DD)) {
+    DD_mult <- NULL
+  } else {
+    # browser()
+    # stop("Not sure if case works.")
+    # DD_mult <- DD - 1
+    DD_mult <- DD
+  }
+  if (is.null(n)) n <- seq_len(ncol(true_params$sig_sq))
+  reg_types <- get_modelling_reg_types(true_params)
+  pars_out  <- true_params %>%
+    get_default_pars(n, DD_mult, reg_types) %>%
+    get_par_name(name_par)
   if (isTRUE(drop)) return(drop(pars_out))
   return(pars_out)
 }
@@ -560,6 +610,7 @@ get_default_pars <- function(true_params, n, DD = NULL, reg_types) {
                                   drop = FALSE)
     pars_out$vcm_u_lin  <- true_params[["vcm_u_lin"]]
   }
+  pars_out[names(pars_out[sapply(pars_out, length)==0])] <- list(NULL)
   if (!is.null(DD)) pars_out <- get_dd_slice(pars_out, DD)
   return(pars_out)
 }
@@ -623,7 +674,9 @@ check_avail_param <- function(true_params, name_par) {
   stopifnot(`Arg. 'name_par' not in the list of available parameter names` =
               isTRUE(name_par %in% c("phi", "beta_z_lin", "beta_u_lin",
                                      "sig_sq", "vcm_u_lin")))
-  isTRUE(name_par %in% names(true_params))
+  CHECK_NAME <- isTRUE(name_par %in% names(true_params))
+  CHECK_NULL <- isTRUE(!is.null(true_params[[name_par]]))
+  return(CHECK_NAME && CHECK_NULL)
 }
 #' Generic methods to extract parameters
 #'

@@ -36,6 +36,7 @@ new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
     }
   } else {
     out_phi <- NULL
+    return(out_phi)
   }
   structure(out_phi, class = c("true_phi"))
 }
@@ -49,28 +50,35 @@ new_phi <- function(SIMUL_PHI, distribution, phi, DD, NN, order_p_vec) {
 get_default_phi <- function(distribution, DD, NN, order_p_vec) {
   DD2 <- get_DD2(distribution, DD)
   DD1 <- get_DD1(distribution, DD)
+  SPECIAL_DIST      <- check_special_dist_quick(distribution)
+  SPECIAL_DIST_TYPE <- get_dist_special_type(SPECIAL_DIST)
 
-  if (any(order_p_vec > 4)) stop("Need more default phis ...")
-  # possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
-  #                           0.25, 0.20, 0.35, 0.25,
-  #                           0.35, 0.20, 0.20, 0.15,
-  #                           0.15, 0.10, 0.10, 0.15),
-  #                         nrow = 4, ncol = 4)
-  possible_phis <- matrix(c(0.50, 0.50, 0.50, 0.50,
-                            0.50, 0.50, 0.50, 0.50,
-                            0.50, 0.50, 0.50, 0.50,
-                            0.50, 0.50, 0.50, 0.50),
-                          nrow = 4, ncol = 4)
-  possible_phis <- rbind(possible_phis, possible_phis, possible_phis)
+  if (any(order_p_vec > 3)) stop("Need more default phis ...")
+
+  if (all(order_p_vec == 1)) {
+    possible_phis <- matrix(c(0.65, 0.55, 0.45, 0.35),
+                            nrow = max(order_p_vec), ncol = 8)
+  }
+  if (all(order_p_vec == 2)) {
+    possible_phis <- matrix(c(0.45, 0.45, 0.25, 0.35,
+                              0.25, 0.20, 0.35, 0.55),
+                            nrow = max(order_p_vec), ncol = 8)
+  }
+  if (all(order_p_vec == 3)) {
+    possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
+                              0.25, 0.20, 0.35, 0.25,
+                              0.35, 0.20, 0.20, 0.15),
+                            nrow = max(order_p_vec), ncol = 8)
+  }
   out_phi <- vector("list", DD1)
   for (d in seq_len(DD1)) {
-    tmp_phis <- possible_phis[d, 1:order_p_vec[d]]
+    tmp_phis <- possible_phis[1:order_p_vec[d], d]
     tmp_phis <- matrix(tmp_phis, nrow = order_p_vec[d], ncol = NN)
     rownames(tmp_phis) <- paste0("p", 1:order_p_vec[d])
     colnames(tmp_phis) <- paste0("NN", 1:NN)
     out_phi[[d]] <- tmp_phis
   }
-  if (DD1 != DD2) out_phi <- list(A = out_phi, B = out_phi)
+  if (isTRUE(SPECIAL_DIST) && SPECIAL_DIST_TYPE == "GEN") out_phi <- list(A = out_phi, B = out_phi)
   return(out_phi)
 }
 #' Use manual user input values for true \code{phi} parameters

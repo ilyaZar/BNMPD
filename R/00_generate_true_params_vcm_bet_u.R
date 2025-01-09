@@ -85,12 +85,17 @@ generate_bet_u <- function(distribution,
                            num_re,
                            vcm_u_scl = 0.03,
                            rel_var_to_cov = 5,
-                           n0u = 50, # n0u <- num_re + 1
+                           # n0u = 50, # n0u <- num_re + 1
+                           # n0u = 10, # n0u <- num_re + 1
+                           n0u = NULL,
                            seed_no = 42) {
+  if (is.null(n0u)) n0u <- num_re[1] + 1
+  # browser()
   DD2 <- get_DD2(distribution, DD)
-  DD1 <- get_DD(distribution, DD)
-  check_dist <- check_special_dist_quick(distribution)
-  if (check_dist) DD1 <- DD2 / 2
+  DD1 <- get_DD1(distribution, DD)
+  DIST_SPECIAL      <- check_special_dist_quick(distribution)
+  DIST_SPECIAL_TYPE <- get_dist_special_type(DIST_SPECIAL)
+  # if (isTRUE(DIST_SPECIAL) && DIST_SPECIAL_TYPE == "GEN") DD1 <- DD2 / 2
   true_bet_u <- vector("list", DD1)
   if (from_IW) {
     stopifnot(is.numeric(num_re) && (length(num_re) == DD1))
@@ -99,6 +104,7 @@ generate_bet_u <- function(distribution,
     for (d in 1:DD1) {
       D0u[[d]] <- get_hyper_prior_vcm(vcm_u_scl, rel_var_to_cov, num_re[d])
       D0u[[d]] <- solveme((stats::rWishart(1, n0u, D0u[[d]]))[, , 1])
+      D0u[[d]] <- correct_cor_elem_vcm_bet_u(D0u[[d]])
       colnames(D0u[[d]]) <- paste0("U", 1:num_re[d])
       rownames(D0u[[d]]) <- paste0("U", 1:num_re[d])
       true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
@@ -106,14 +112,15 @@ generate_bet_u <- function(distribution,
       rownames(true_bet_u[[d]]) <- paste0("U", 1:num_re[d])
       for (n in 1:NN) {
         true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
+                                              mu = rep(0, times = num_re[d]),
                                               # mu = c(2, rep(0.5, times = num_re[d] - 1)),
-                                              mu = c(1.25, rep(0.75, times = num_re[d] - 1)),
+                                              # mu = c(1.25, rep(0.75, times = num_re[d] - 1)),
                                               Sigma = D0u[[d]])
       }
     }
     out <- list(true_bet_u = true_bet_u,
                 true_vcm_u = D0u)
-    if (check_dist) {
+    if (isTRUE(DIST_SPECIAL) && DIST_SPECIAL_TYPE == "GEN") {
       out <- list(true_bet_u = list(A = true_bet_u,
                                     B = true_bet_u),
                   true_vcm_u = list(A = D0u,
@@ -136,18 +143,31 @@ generate_bet_u <- function(distribution,
 }
 get_hyper_prior_vcm <- function(vcm_u_scl, rel_var_to_cov, num_re) {
   # vcm_u_scl_adj <- vcm_u_scl * (1 + 1/num_re)
-  cov_entry <- -1.0
-  var_entry <- abs(cov_entry) * rel_var_to_cov
-  out_mat <- matrix(cov_entry, nrow = num_re, ncol = num_re)
-  diag(out_mat) <- rep(var_entry, times = num_re)
-  out_mat <- out_mat * vcm_u_scl
-  # solveme(out_mat)
+  # cov_entry <- -1.0
+  # var_entry <- abs(cov_entry) * rel_var_to_cov
+  # out_mat <- matrix(cov_entry, nrow = num_re, ncol = num_re)
+  # diag(out_mat) <- rep(var_entry, times = num_re)
+  # out_mat <- out_mat * vcm_u_scl
+  # browser()
+  # out_mat <- t(out_mat) %*% out_mat
+  # solveme
+  # A <- matrix(runif(num_re^2) * 2 - 1, ncol=num_re)
+  A <- matrix(runif(num_re^2) * 2 - 1 , ncol=num_re)
+  out_mat <- t(A) %*% A
   out_mat
+}
+correct_cor_elem_vcm_bet_u <- function(vcm, scale_me = 100) {
+  out_mat <- vcm
+  out_mat[upper.tri(out_mat)] <- out_mat[upper.tri(out_mat)] / scale_me
+  out_mat[lower.tri(out_mat)] <- out_mat[upper.tri(out_mat)]
+  return(out_mat)
 }
 get_class_true_param <- function(distribution) {
   model_dist_names <- c("dirichlet", "gen_dirichlet", "multinomial",
+                        "normal",
                         "dirichlet_mult", "gen_dirichlet_mult")
   class_dist_names <- c("Dirichlet", "GenDirichlet", "Multinomial",
+                        "Normal",
                         "DirichletMult", "GenDirichletMult")
   names(class_dist_names) <- model_dist_names
   name_subclass <- class_dist_names[[distribution]]
