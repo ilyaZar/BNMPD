@@ -94,12 +94,14 @@ get_x_rhs <- function(X, order_p, TT) {
   # }
   return(x_rhs)
 }
-check_stationarity <- function(vals, order) {
+check_stationarity <- function(vals, order, SILENT = FALSE) {
   if (order == 1) {
     check <- all((1 - abs(vals[1])) < 0.01 || abs(vals[1]) > 1)
   } else {
-    check <- all((1 - sum(abs(vals[1:order]))) < 0.01 || sum(abs(vals[1:order])) > 1)
+    check <- !check_stationarity_formal(vals)
+    # check <- all((1 - sum(abs(vals[1:order]))) < 0.01 || sum(abs(vals[1:order])) > 1)
   }
+  if (isFALSE(SILENT) && check) print("Sampled non-stanionary phi(s).")
   return(check)
 }
 compute_vcm_x_errors_inv <- function(sig_sq_x, Umat, vcm_bet_u, TT, type) {
