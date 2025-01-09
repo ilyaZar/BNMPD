@@ -97,11 +97,20 @@ set_class_name <- function(dist) {
 generate_y_x_containter <- function(distribution, NN, TT, DD, type = "x") {
   check_distribution(distribution)
 
-  if (distribution %in% (c("normal", "multinomial",
-                           "dirichlet", "dirichlet_mult"))) {
+  if (distribution %in% (c("normal", "dirichlet", "dirichlet_mult"))) {
     out_cnt <- array(0, c(TT = TT, DD = DD, NN = NN))
     tmp_names <- get_x_y_containter_names(NN = NN, TT = TT,
                                           DD = DD, type = "default-x-y")
+    dimnames(out_cnt) <- tmp_names
+  } else if (distribution == "multinomial") {
+    if (type == "x") {
+      DD_mult <- DD - 1
+    } else if (type == "y") {
+      DD_mult <- DD
+    }
+    out_cnt <- array(0, c(TT = TT, DD = DD_mult, NN = NN))
+    tmp_names <- get_x_y_containter_names(NN = NN, TT = TT,
+                                          DD = DD_mult, type = "default-x-y")
     dimnames(out_cnt) <- tmp_names
   } else if (distribution %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     if (type == "x") {
@@ -175,9 +184,12 @@ generate_z_u_container <- function(true_params, NN, TT, DD, cnt_name) {
 }
 get_dim_names_cnt_z_u <- function(true_params, cnt_name, dim_bet, TT, NN, DD) {
   dist <- get_distribution(true_params)
-  if (dist %in% c("normal", "multinomial", "dirichlet", "dirichlet_mult")) {
+  if (dist %in% c("normal","dirichlet", "dirichlet_mult")) {
     tmp_names <- paste0(paste0(cnt_name, unlist(sapply(dim_bet, seq_len))),
                         "_d", rep(1:DD, unlist(dim_bet)))
+  } else if (dist == "multinomial") {
+    tmp_names <- paste0(paste0(cnt_name, unlist(sapply(dim_bet, seq_len))),
+                        "_d", rep(1:(DD - 1), unlist(dim_bet)))
   } else if (dist %in% c("gen_dirichlet", "gen_dirichlet_mult")) {
     DD1_tmp <- get_DD2(dist, DD) / 2
 

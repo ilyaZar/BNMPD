@@ -32,8 +32,12 @@ generate_setup_init_json <- function(params_used, pth_project) {
       tmp_dd_name <- name_json_dd_elem(type = NULL, d)
       list_json[[tmp_dd_name]] <- c(list_json_A[d], list_json_B[d])
     }
-  } else {
+  } else if(dist == "multinomial") {
+    list_json <- get_list_json_default(params_used, type = NULL, DD - 1)
+  } else if(dist %in% c("normal", "dirichlet", "dirichlet_mult")){
     list_json <- get_list_json_default(params_used, type = NULL, DD)
+  } else {
+    stop("Not yet implemented.")
   }
   jsonlite::write_json(list_json, pth_to_json, digits = 8, pretty = TRUE)
   return(invisible(params_used))

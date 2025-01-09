@@ -41,6 +41,7 @@ generate_measurements <- function(x_states, X_LOG_SCALE, distribution, dims, opt
     "normal" = generate_normal_obs(x, out_data),
     "dirichlet" = generate_dirichlet_obs(x, NN, TT, out_data, options_include),
     "gen_dirichlet" = generate_gen_dirichlet_obs(x, NN, TT, DD, out_data),
+    "multinomial" = generate_multinomial_obs(x, NN, TT, DD, out_data),
     "dirichlet_mult" = generate_dirichlet_mult_obs(x, NN, TT, out_data, options_include),
     "gen_dirichlet_mult" = generate_gen_dirichlet_mult_obs(x, NN, TT, DD, out_data)
   )
@@ -61,7 +62,11 @@ generate_multinomial_obs <- function(x, NN, TT, DD, out_data) {
     }
     num_counts <- sample(x = 80000:120000, size = TT)
     tmp_x <- x[, , n]
-    tmp_x / rowSums(tmp_x)
+    add_col <- tmp_x[, 1, drop = FALSE]
+    add_col[, 1] <- 1
+    tmp_x <- cbind(tmp_x, add_col)
+    tmp_x <- tmp_x / rowSums(tmp_x)
+    stopifnot(`Error in computing mult. probs.` = sum(rowSums(tmp_x)) == TT)
     yraw <- my_r_mult(probs = tmp_x, num_counts = num_counts)
     print(paste0("Simulatiing Multinomial data at cross section: ", n))
     out_data[["part1"]][, , n] <- yraw

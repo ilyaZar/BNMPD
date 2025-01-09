@@ -29,16 +29,17 @@ set_x_levels <- function(true_params, x_levels, X_LOG_SCALE) {
   }
   return(x_levels)
 }
-#' Generate Dirichlet target levels for simulation study
+#' Generate distribution target levels for simulation study
 #'
-#' A sequence of fractions should not be too erratic over time and the different
-#' fractions not too far away from each other. This function achieves the latter
-#' by computing target fractions levels that are neither too small, nor too
-#' large so that fractions are not too far apart.
+#' A sequence of values (e.g. fractions when we consider the Dirichlet) should
+#' not be too erratic over time and the different fractions not too far away
+#' from each other. This function achieves the latter  by computing target
+#' fractions levels that are neither too small, nor too large so that fractions
+#' are not too far apart.
 #'
 #' The tuning parameter list, as given by default values of the argument, works
 #' nicely for DD = 3, see the examples section below. The resulting values - 30,
-#' 30, 40 - are reasonable target parameters for the Dirichlet taken as
+#' 30, 40 - are reasonable target parameters e.g. for the Dirichlet taken as
 #' `alpha_1=30`, `alpha_2=30`, `and alpha_3=40`.
 #'
 #' @inheritParams new_phi
@@ -113,7 +114,7 @@ get_DD <- function(distribution, DD) {
 }
 get_DD1 <- function(distribution, DD) {
   switch(distribution,
-         "multinomial" = DD,
+         "multinomial" = DD - 1,
          "normal" = DD,
          "dirichlet" = DD,
          "dirichlet_mult" = DD,
@@ -288,7 +289,8 @@ get_ic_for_dist <- function(distribution, DD, at_z, at_u) {
   stopifnot(`Length of 'at_z' must be one in current impl.` = length(at_z) == 1)
   stopifnot(`Length of 'at_u' must be one in current impl.` = length(at_u) == 1)
   SPECIAL_DIST  <- check_special_dist_quick(distribution)
-  if (isTRUE(SPECIAL_DIST)) {
+  SPECIAL_DIST_TYPE <- get_dist_special_type(SPECIAL_DIST)
+  if (isTRUE(SPECIAL_DIST) && SPECIAL_DIST_TYPE == "GEN") {
     at_z_use <- rep(at_z, DD - 1)
     at_u_use <- rep(at_u, DD - 1)
     names(at_z_use) <- paste0("d_", formatC(seq_len(DD - 1), width = 2,
@@ -299,6 +301,15 @@ get_ic_for_dist <- function(distribution, DD, at_z, at_u) {
                                 B = at_z_use),
                     at_u = list(A = at_u_use,
                                 B = at_u_use))
+  } else if (isTRUE(SPECIAL_DIST) && SPECIAL_DIST_TYPE == "MULT") {
+    at_z_use <- rep(at_z, DD - 1)
+    at_u_use <- rep(at_u, DD - 1)
+    names(at_z_use) <- paste0("d_",  formatC(seq_len(DD - 1), width = 2,
+                                             format = "d", flag = "0"))
+    names(at_u_use) <- paste0("d_",  formatC(seq_len(DD - 1), width = 2,
+                                             format = "d", flag = "0"))
+    ic_list <- list(at_z = at_z_use,
+                    at_u = at_u_use)
   } else if (isFALSE(SPECIAL_DIST)) {
     at_z_use <- rep(at_z, DD)
     at_u_use <- rep(at_u, DD)
@@ -308,7 +319,10 @@ get_ic_for_dist <- function(distribution, DD, at_z, at_u) {
                                              format = "d", flag = "0"))
     ic_list <- list(at_z = at_z_use,
                     at_u = at_u_use)
+  } else {
+    stop("Unknown distribution cases in intercept generation.")
   }
+  ic_list <- check_ic_to_dist(model_dist, ic_list, model_dim[3])
   return(ic_list)
 }
 #' Checks if intercept settings list matches implied length for distribution
@@ -367,11 +381,15 @@ check_ic_to_dist <- function(distribution, intercepts, DD) {
     stopifnot(`Element 'at_u' of 'intercepts' list must NOT be named` =
                 all(grepl("d_", names(check_at_u))))
 
-
-    stopifnot(`Length of component 'a_z' must be 'DD'` = length(check_at_z) == DD)
-    stopifnot(`Length of component 'u_z' must be 'DD'` = length(check_at_u) == DD)
+    if (!(distribution %in% c("multinomial"))) {
+      DD_to_check <- DD
+    } else if (distribution == "multinomial") {
+      DD_to_check <- DD - 1
+    }
+    stopifnot(`Length of component 'a_z' must be 'DD'` = length(check_at_z) == DD_to_check)
+    stopifnot(`Length of component 'u_z' must be 'DD'` = length(check_at_u) == DD_to_check)
   }
-  return(intercepts)
+  return(invisible(intercepts))
 }
 check_zero_to_dist <- function(distribution, DD, NN, zero_list) {
   check_distribution(distribution, FORCE_SCALAR = TRUE)
