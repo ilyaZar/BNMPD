@@ -377,11 +377,13 @@ subset_outBNMPD <- function(out, num_mult_component, par_qualifier = NULL) {
   type_rgx  <- get_type_rgx(out$sig_sq_x)
   if (type_rgx == "generalized") {
     DD_MAX    <- out$meta_info$dimensions$DD2
+  } else if (out$meta_info$model_meta$mod_type_obs == "MULTINOMIAL") {
+    DD_MAX    <- out$meta_info$dimensions$DD - 1
   } else if (type_rgx == "standard") {
     DD_MAX    <- out$meta_info$dimensions$DD
   }
   if (is.null(DD_MAX)) stop("Can't access DD_MAX from meta_info.")
-  tmp_regex <- get_tmp_regex(type_rgx, num_mult_component,
+  tmp_regex <- get_tmp_regex_out(type_rgx, num_mult_component,
                              DD_MAX, par_qualifier)
 
   tmp_id_grep <- grep(tmp_regex, rownames(out$sig_sq_x))
@@ -409,6 +411,11 @@ subset_outBNMPD <- function(out, num_mult_component, par_qualifier = NULL) {
   if (get_simulation_run_type_outBNMPD(out) == "pmcmc") {
     out_subset$x <- out$x[, num_comp_adj, , ]
   }
+  out_subset$true_vals$sig_sq <-  out_subset$true_vals$sig_sq[num_mult_component, , drop = FALSE]
+  out_subset$true_vals$phi <-  out_subset$true_vals$phi[num_mult_component]
+  out_subset$true_vals$beta_z_lin <-  out_subset$true_vals$beta_z_lin[num_mult_component]
+  out_subset$true_vals$beta_u_lin <-  out_subset$true_vals$beta_u_lin[num_mult_component]
+  out_subset$true_vals$vcm_u_lin <-  out_subset$true_vals$vcm_u_lin[num_mult_component]
   return(out_subset)
 }
 #' Get MCMC subset of full PGAS output instance
@@ -470,7 +477,7 @@ subset2_outBNMPD <- function(out = NULL, pth_to_save = NULL, mcmc_range) {
   }
   return(invisible(out_subset))
 }
-get_tmp_regex <- function(type, num_mult_comp, DD_MAX, par_qualifier) {
+get_tmp_regex_out <- function(type, num_mult_comp, DD_MAX, par_qualifier) {
   if (type == "standard") {
     if (num_mult_comp <= DD_MAX) return(paste0("^d_", num_mult_comp))
     stop("Invalid num_mult_component value; cannot be larger than DD_MAX.")
@@ -490,6 +497,27 @@ get_tmp_regex <- function(type, num_mult_comp, DD_MAX, par_qualifier) {
   }
   return(invisible(type))
 }
+# get_tmp_regex_true <- function(type, num_mult_comp, DD_MAX, par_qualifier) {
+#   if (type == "standard") {
+#     if (num_mult_comp <= DD_MAX) return(paste0("^D", num_mult_comp))
+#     stop("Invalid num_mult_component value; cannot be larger than DD_MAX.")
+#   } else if (type == "generalized") {
+#     stop("Not yet implemented.")
+#     if (num_mult_comp > DD_MAX / 2) stop("Invalid num_mult_component value.")
+#     if (num_mult_comp < 10) {
+#       regexpr_tkn <- paste0("^D", par_qualifier, "_0", num_mult_comp)
+#       return(regexpr_tkn)
+#     } else if (num_mult_comp >= 10) {
+#       regexpr_tkn <- paste0("^D", par_qualifier, num_mult_comp)
+#       return(regexpr_tkn)
+#     } else {
+#       stop("Invalid num_mult_component value")
+#     }
+#   } else {
+#     stop("Unknown type arg.")
+#   }
+#   return(invisible(type))
+# }
 get_type_rgx <- function(tmp_param) {
   tmp_check <- rownames(tmp_param)
   tmp_check <- any(grepl("^DA", tmp_check)) && any(grepl("^DB", tmp_check))
