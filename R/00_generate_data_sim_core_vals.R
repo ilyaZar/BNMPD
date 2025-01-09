@@ -124,6 +124,10 @@ generate_x_z_u <- function(TT,
   } else {
     u <- NULL
   }
+  # kappa_u <- kappa(t(u) %*% u)
+  # kappa_z <- kappa(t(z) %*% z)
+  # if (kappa_z > 10^5) stop("Z regs might be ill-conditioned.")
+  # if (kappa_u > 10^5) stop("U regs might be ill-conditioned.")
   regs_all <- cbind(z, u)
   # END OF REGRESSOR SIMULATION: --------------------------------------------
   out <- list()
