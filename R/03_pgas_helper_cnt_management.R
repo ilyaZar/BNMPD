@@ -11,7 +11,12 @@ get_smc_internal <- function(obs_type, smc_type) {
     GEN_DIRICHLET = paste0(grep_smc, "as_gd_cpp_par"),
     GEN_DIRICHLET_MULT = paste0(grep_smc, "as_gdm_cpp_par")
   )
-  grep_smc <- paste0("BNMPD:::", grep_smc)
+  if (!is.null(grep_smc)) {
+    grep_smc <- paste0("BNMPD:::", grep_smc)
+  } else {
+    return("None")
+    message("CBPF not defined which may be fine if only the Gibbs part is run.")
+  }
   return(eval(parse(text = grep_smc)))
 }
 get_args_list_smc_internal <- function(pe, mm, PARALLEL = TRUE) {
@@ -329,8 +334,14 @@ generate_cnt_z <- function(DIST_SPECIAL, z_null, phi_null, par_init,
       id_regs_z_tmp <- (id_zet[d] + 1 + order_p * d):(id_zet[d + 1] + order_p * d)
       bet_z[id_betz_tmp, 1] <- par_init[["init_beta_z_lin"]][[d]]
       prior_vcm_bet_z[[d]]  <- diag(1 / 1000, dim_bet_z[d] + order_p)
-      names_phi_x_bet_z <- c(paste0("p_" , seq_len(order_p)),
-                             paste0("k_" , seq_len(dim_bet_z[d])))
+      if (order_p > 0) {
+        names_phi_x_bet_z <- c(paste0("p_" , seq_len(order_p)),
+                               paste0("k_" , seq_len(dim_bet_z[d])))
+      } else if (order_p == 0) {
+        names_phi_x_bet_z <- paste0("k_" , seq_len(dim_bet_z[d]))
+      } else {
+        stop("failed in container initialization")
+      }
       rownames(prior_vcm_bet_z[[d]]) <- names_phi_x_bet_z
       colnames(prior_vcm_bet_z[[d]]) <- names_phi_x_bet_z
       for (n in seq_len(NN)) {
@@ -611,6 +622,7 @@ dd_kk_names_formatter2 <- function(DIST_SPECIAL, DD, order_p, num_regs_z,
     times = num_regs_z + order_p
   )
   part_2 <- lapply(order_p_list, function(x) {paste0(prefix_phi, seq_len(x))})
+  part_2[sapply(order_p_list, function(x){x==0})] <- list(NULL)
   part_3 <- lapply(num_regs_z, function(x) {paste0(prefix_regs_z, seq_len(x))})
   jn_part_2_3 <- NULL
   for (d in seq_len(DD)) {
