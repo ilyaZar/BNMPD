@@ -41,7 +41,7 @@ get_ll_values <- function(DD_chosen,
 
   DD       <- nrow(Y)
   n_sims   <- ncol(Y)
-  DD_taken <- ifelse(SPECIAL_DISTRIBUTION, DD - 1, DD)
+  DD_taken <- ifelse(SPECIAL_DISTRIBUTION || isTRUE(distribution == "multinomial"), DD - 1, DD)
 
   stopifnot(`Chosen dimension 'DD_chosen' must be smaller than overall 'DD'` =
              DD_chosen <= DD_taken)
@@ -58,6 +58,7 @@ get_ll_values <- function(DD_chosen,
     }
   }
   DD_taken2 <- ifelse(SPECIAL_DISTRIBUTION, 2 * (DD - 1), DD)
+  if(distribution == "multinomial") DD_taken2 <- DD - 1
   ID_X_ALL  <- compute_id_x_all(DD_taken2, n_grid)
 
   if (component_name == "alpha") {
@@ -86,7 +87,7 @@ get_ll_values <- function(DD_chosen,
   for (j in 1:n_sims) {
     if (grepl("mult", distribution)) {
       arg_list <- list(N = n_grid, num_counts = counts[j],
-                       y = Y[, j], xa = xa,id_x_all = ID_X_ALL)
+                       y = Y[, j], xa = xa, id_x_all = ID_X_ALL)
     } else {
       arg_list <- list(N = n_grid, y = Y[, j], xa = xa, id_x_all = ID_X_ALL)
     }
