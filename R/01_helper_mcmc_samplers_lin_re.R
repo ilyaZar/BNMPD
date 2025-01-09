@@ -93,9 +93,11 @@ sample_sig_sq_x_lr <- function(bet_z,
   err_sig_sq_x_all <- 0
   for(n in iter_range_NN) {
     bet_u_n <- bet_u[ , , n]
+    tmp_bet <- c(bet_z, bet_u_n)
     tmp_regs <- cbind(regs_z[, , n], regs_u[, , n])
-    err_sig_sq_x <- X[, n, drop = FALSE] - regs_z[, , n, drop = FALSE] %*% bet_z -
-      regs_u[, , n] %*% bet_u_n
+    err_sig_sq_x <- X[, n, drop = FALSE] - tmp_regs %*% tmp_bet
+      # regs_z[, , n, drop = FALSE] %*% bet_z -
+      # regs_u[, , n] %*% bet_u_n
     err_sig_sq_x_all <- err_sig_sq_x_all + sum(err_sig_sq_x^2)
   }
   out <- 1/stats::rgamma(n = 1,
