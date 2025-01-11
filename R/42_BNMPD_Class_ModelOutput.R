@@ -339,7 +339,7 @@ ModelOut <- R6::R6Class("ModelOut",
                           get_init_phi = function(phi, num_mcmc, DD) {
                             if (is.null(phi)) return(NA_real_)
                             tmp_vals <- phi[, num_mcmc, drop = FALSE]
-                            out <- matrix(tmp_vals, nrow = DD, ncol = 1)
+                            out <- matrix(tmp_vals, nrow = nrow(tmp_vals), ncol = 1)
                             rownames(out) <- rownames(tmp_vals)
                             colnames(out) <- colnames(tmp_vals)
                             return(out)

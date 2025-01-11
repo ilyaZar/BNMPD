@@ -695,8 +695,10 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                   } else {
                                     rgx_mult_comp <- paste0(num_mult_component)
                                   }
-                                  tmp_regex <- paste0(
+                                  tmp_rgx <- paste0(
                                     "^D", par_qualifier, "_", rgx_mult_comp)
+                                  tmp_rgx_phi <- paste0(
+                                    "D", par_qualifier, "_", rgx_mult_comp, "$")
                                 } else {
                                   stop("This case is not implemented.")
                                 }
@@ -706,25 +708,27 @@ ModelBNMPD <- R6::R6Class(classname = "ModelBNMPD",
                                   } else {
                                     rgx_mult_comp <- paste0(num_mult_component)
                                   }
-                                  tmp_regex <- paste0(
+                                  tmp_rgx <- paste0(
                                     "^D", rgx_mult_comp)
+                                  tmp_rgx_phi <- dd_seq_names[num_comp_adj]
                               }
 
                               lab_names[["sig_sq_x"]] <- lab_names[["sig_sq_x"]][num_comp_adj]
                               par_names[["sig_sq_x"]] <- par_names[["sig_sq_x"]][num_comp_adj]
 
-                              lab_names[["phi_x"]] <- lab_names[["phi_x"]][num_comp_adj]
-                              par_names[["phi_x"]] <- par_names[["phi_x"]][num_comp_adj]
+                              tmp_id_grep <- grep(tmp_rgx_phi, lab_names[["phi_x"]])
+                              lab_names[["phi_x"]] <- lab_names[["phi_x"]][tmp_id_grep]
+                              par_names[["phi_x"]] <- par_names[["phi_x"]][tmp_id_grep]
 
-                              tmp_id_grep <- grep(tmp_regex, lab_names[["bet_z"]])
+                              tmp_id_grep <- grep(tmp_rgx, lab_names[["bet_z"]])
                               lab_names[["bet_z"]] <- lab_names[["bet_z"]][tmp_id_grep]
                               par_names[["bet_z"]] <- par_names[["bet_z"]][tmp_id_grep]
 
-                              tmp_id_grep <- grep(tmp_regex, lab_names[["bet_u"]])
+                              tmp_id_grep <- grep(tmp_rgx, lab_names[["bet_u"]])
                               lab_names[["bet_u"]] <- lab_names[["bet_u"]][tmp_id_grep]
                               par_names[["bet_u"]] <- par_names[["bet_u"]][tmp_id_grep]
 
-                              tmp_id_grep <- grep(tmp_regex, lab_names[["vcm_bet_u"]])
+                              tmp_id_grep <- grep(tmp_rgx, lab_names[["vcm_bet_u"]])
                               lab_names[["vcm_bet_u"]] <- lab_names[["vcm_bet_u"]][tmp_id_grep]
                               par_names[["vcm_bet_u"]] <- par_names[["vcm_bet_u"]][tmp_id_grep]
                               return(list(par_lab_names = lab_names,

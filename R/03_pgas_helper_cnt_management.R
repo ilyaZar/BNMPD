@@ -119,11 +119,16 @@ get_dd_list_nn <- function(dd_list, dist) {
   return(out)
 }
 get_lag_order <- function(x) {
+  DD2 <- x$DD2
   auto_check <- x$model_type_lat
   check <- grepl("auto", auto_check)
   if (check) {
     tmp_orders <- sapply(x$par_init$init_phi, length)
-    order_p <- unique(tmp_orders)
+    if (length(tmp_orders) > DD2) {
+      order_p <- nrow(x$par_init$init_phi) / DD2
+    } else {
+      order_p <- unique(tmp_orders)
+    }
     if (length(order_p) != 1) {
       stop("Different autoregressive orders for d = 1,...,D not yet supported!")
     }
@@ -294,11 +299,24 @@ generate_cnt_phi_x <- function(phi_null, phi_vals, DIST_SPECIAL,
                                id_phi, order_p, DD, MM) {
   if (isTRUE(phi_null)) return(NULL)
   phi_x <- matrix(0, nrow = order_p * DD, ncol = MM)
-  rownames(phi_x) <- dd_names_formatter(DIST_SPECIAL, DD)
+  if (order_p == 1) {
+    rownames(phi_x) <- dd_names_formatter(DIST_SPECIAL, DD)
+  } else {
+    tmp_dd_names_phi <- dd_names_formatter(DIST_SPECIAL, DD)
+    tmp_dd_names_phi <- paste0(rep(tmp_dd_names_phi, each = order_p),
+                               rep("_p_", order_p),
+                               seq_len(order_p))
+    rownames(phi_x) <- tmp_dd_names_phi
+  }
+
   colnames(phi_x) <- paste0("m_", seq_len(ncol(phi_x)))
-  for (d in 1:DD) {
-    id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
-    phi_x[id_phi_tmp, 1] <- phi_vals[[d]]
+  if (is.list(phi_vals) && !is.matrix(phi_vals)) {
+    for (d in 1:DD) {
+      id_phi_tmp  <- (id_phi[d] + 1):id_phi[d + 1]
+      phi_x[id_phi_tmp, 1] <- phi_vals[[d]]
+    }
+  } else if (!is.list(phi_vals) && is.matrix(phi_vals)) {
+    phi_x[, 1] <- phi_vals
   }
   return(phi_x)
 }
