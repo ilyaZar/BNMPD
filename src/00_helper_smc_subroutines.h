@@ -6,7 +6,7 @@
 
 // #include <boost/multiprecision/mpfr.hpp>
 // #include <boost/math/special_functions/gamma.hpp>
-// #include <sstream>
+#include <filesystem>
 
 arma::uvec compute_id_x_all(int DD_all, int N);
 arma::uvec compute_id_x_avl(int N, const arma::uvec& id_x_all,
@@ -31,5 +31,16 @@ double w_as_c(const arma::mat& mean_diff,
               const arma::vec& log_weights,
               const int& N,
               const arma::uvec& id_as_lnspc);
+void save_particle_output(const arma::mat& xa,
+                          const arma::vec& w_log,
+                          const arma::vec& w_norm,
+                          int nn,
+                          int tt,
+                          const std::string& tmp_dir = "./tmp/");
+void save_to_file_mat(
+  const arma::mat& data,
+  const std::string& filename,
+  const std::string& description);
+std::string ensure_directory(const std::string& dir);
 
 #endif

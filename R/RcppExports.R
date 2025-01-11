@@ -346,6 +346,37 @@ w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
     .Call(`_BNMPD_w_as_c`, mean_diff, vcm_diag, log_weights, N, id_as_lnspc)
 }
 
+#' Save particle filter outputs to CSV files
+#'
+#' Saves the particle matrix (`xa`), log-weights vector (`w_log`),
+#' and normalized weights vector (`w_norm`) to CSV files with file names
+#' that include the parallelization ID (`j`) and time period (`t`).
+#'
+#' @param xa The particle matrix of dimensions [DD * N x TT]
+#' @param w_log The vector of log-weights
+#' @param w_norm The vector of normalized weights
+#' @param nn The parallelization ID (integer)
+#' @param tt The time period or total time steps (integer)
+#' @param tmp_dir The temporary directory to save the files (default: `./tmp/`)
+#'
+#' @return None
+#'
+#' @details
+#' This function generates file names dynamically based on the parallelization
+#' ID (`j`, arg name `nn`) and time period (`t`, arg. name `tt`) and saves the
+#' outputs to the specified temporary directory `tmp_dir`.
+#'
+#' Example output file names:
+#'   - xa_NN44_TT10.csv
+#'   - w_log_NN44_TT10.csv
+#'   - w_norm_NN44_TT10.csv
+#'
+#' @export
+#'
+save_particle_output <- function(xa, w_log, w_norm, nn, tt, tmp_dir) {
+    invisible(.Call(`_BNMPD_save_particle_output`, xa, w_log, w_norm, nn, tt, tmp_dir))
+}
+
 #' Runs a parallel version of the conditional SMC (BPF) for the Dirichlet model
 #'
 #' Runs a conditional bootstrap particle filter with ancestor sampling and arma

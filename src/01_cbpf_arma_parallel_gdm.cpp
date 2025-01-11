@@ -120,6 +120,14 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                            xa.submat(id_x_avl, t_word), id_x_all);
     w_norm = w_normalize_cpp(w_log, "particle");
     ////////////////////////////////////////////////////////////////////////////
+    // The following is optional and can be used to save, for a giving cross
+    // section (individual SMC run) at a given time period, the particle, its
+    // weights (logarithmic and normalized) to a temporary directory for later
+    // inspection. This is useful for debugging purposes, see for example the
+    // R function of this package `analyse_particle_weight_output()`.
+    //////////////// OPTIONAL FUNCTION TO SAVE PARTICLE OUTPUT /////////////////
+    // save_particle_output(xa, w_log, w_norm, j, 0, "./tmp/");
+    ////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS ///////////////////
     ////////////////////////////////////////////////////////////////////////////
     for (int t = 1; t < TT; ++t) {
@@ -140,6 +148,14 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
       w_log = w_log_cbpf_gdm(N, num_counts(t), y.submat(t_word, dd_range_y),
                              xa.submat(id_x_avl, t_word), id_x_all);
       w_norm = w_normalize_cpp(w_log, "particle");
+      //////////////////////////////////////////////////////////////////////////
+      // The following is optional and can be used to save, for a giving cross
+      // section (individual SMC run) at a given time period, the particle, its
+      // weights (logarithmic and normalized) to a temporary directory for later
+      // inspection. This is useful for debugging purposes, see for example the
+      // R function of this package `analyse_particle_weight_output()`.
+      /////////////// OPTIONAL FUNCTION TO SAVE PARTICLE OUTPUT ////////////////
+      // save_particle_output(xa, w_log, w_norm, j, t, "./tmp/");
     }
     x_out_list(jj) = draw_trajectory(N, TT, DD2, dd_range_x,
                                      id_x_all, xa, a, w_norm);

@@ -268,3 +268,83 @@ double w_as_c(const arma::mat& mean_diff,
   // 1, true, w_as));
   return(as_draw);
 }
+//' Save particle filter outputs to CSV files
+//'
+//' Saves the particle matrix (`xa`), log-weights vector (`w_log`),
+//' and normalized weights vector (`w_norm`) to CSV files with file names
+//' that include the parallelization ID (`j`) and time period (`t`).
+//'
+//' @param xa The particle matrix of dimensions [DD * N x TT]
+//' @param w_log The vector of log-weights
+//' @param w_norm The vector of normalized weights
+//' @param nn The parallelization ID (integer)
+//' @param tt The time period or total time steps (integer)
+//' @param tmp_dir The temporary directory to save the files (default: `./tmp/`)
+//'
+//' @return None
+//'
+//' @details
+//' This function generates file names dynamically based on the parallelization
+//' ID (`j`, arg name `nn`) and time period (`t`, arg. name `tt`) and saves the
+//' outputs to the specified temporary directory `tmp_dir`.
+//'
+//' Example output file names:
+//'   - xa_NN44_TT10.csv
+//'   - w_log_NN44_TT10.csv
+//'   - w_norm_NN44_TT10.csv
+//'
+//' @export
+//'
+// [[Rcpp::export]]
+void save_particle_output(const arma::mat& xa,
+                          const arma::vec& w_log,
+                          const arma::vec& w_norm,
+                          int nn,
+                          int tt,
+                          const std::string& tmp_dir) {
+  // Ensure the directory exists or use fallback
+  std::string dir_to_use = ensure_directory(tmp_dir);
+
+  // Common filename base: file name prepended i.e. fn_pp
+  std::string fn_pp = dir_to_use;
+  fn_pp = fn_pp + "nn" + std::to_string(nn + 1);  // Adjust for 1-based index
+  fn_pp = fn_pp + "_tt" + std::to_string(tt + 1); // Adjust for 1-based index
+
+  // Save files using the helper lambda and base filename
+  save_to_file_mat(xa, fn_pp + "_xa.csv", "matrix xa");
+  save_to_file_mat(w_log, fn_pp + "_w_log.csv", "vector w_log");
+  save_to_file_mat(w_norm, fn_pp + "_w_norm.csv", "vector w_norm");
+}
+// Utility function for saving Armadillo objects to CSV
+void save_to_file_mat(
+  const arma::mat& data,
+  const std::string& filename,
+  const std::string& description) {
+  if (!data.save(filename, arma::csv_ascii)) {
+    Rcpp::Rcerr << "Error: Could not save " << description << " to " << filename << std::endl;
+  }
+}
+// Utility function to ensure the directory exists or create a fallback
+std::string ensure_directory(const std::string& dir) {
+  namespace fs = std::filesystem;
+
+  // Check if the directory exists
+  if (!fs::exists(dir)) {
+    Rcpp::Rcerr << "Directory '" << dir << "' does not exist. Attempting to create it.\n";
+
+    // Attempt to create the directory
+    if (!fs::create_directory(dir)) {
+      Rcpp::Rcerr << "Failed to create directory '" << dir << "'. Using fallback './tmp_particle_info_stored/'.\n";
+      std::string fallback_dir = "./tmp_particle_info_stored/";
+
+      // Attempt to create the fallback directory
+      if (!fs::create_directory(fallback_dir)) {
+        Rcpp::stop("Failed to create fallback directory './tmp_particle_info_stored/'.");
+      }
+
+      return fallback_dir; // Return fallback directory
+    }
+  }
+
+  return dir; // Return the original directory if it exists or was successfully created
+}

@@ -275,6 +275,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// save_particle_output
+void save_particle_output(const arma::mat& xa, const arma::vec& w_log, const arma::vec& w_norm, int nn, int tt, const std::string& tmp_dir);
+RcppExport SEXP _BNMPD_save_particle_output(SEXP xaSEXP, SEXP w_logSEXP, SEXP w_normSEXP, SEXP nnSEXP, SEXP ttSEXP, SEXP tmp_dirSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type xa(xaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type w_log(w_logSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type w_norm(w_normSEXP);
+    Rcpp::traits::input_parameter< int >::type nn(nnSEXP);
+    Rcpp::traits::input_parameter< int >::type tt(ttSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type tmp_dir(tmp_dirSEXP);
+    save_particle_output(xa, w_log, w_norm, nn, tt, tmp_dir);
+    return R_NilValue;
+END_RCPP
+}
 // cbpf_as_d_cpp_par
 Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
 RcppExport SEXP _BNMPD_cbpf_as_d_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
@@ -638,6 +653,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_compute_id_x_all", (DL_FUNC) &_BNMPD_compute_id_x_all, 2},
     {"_BNMPD_compute_dd_range_x", (DL_FUNC) &_BNMPD_compute_dd_range_x, 2},
     {"_BNMPD_w_as_c", (DL_FUNC) &_BNMPD_w_as_c, 5},
+    {"_BNMPD_save_particle_output", (DL_FUNC) &_BNMPD_save_particle_output, 6},
     {"_BNMPD_cbpf_as_d_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_d_cpp_par, 10},
     {"_BNMPD_cbpf_as_dm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_dm_cpp_par, 11},
     {"_BNMPD_cbpf_as_gd_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_gd_cpp_par, 11},
