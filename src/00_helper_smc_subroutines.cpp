@@ -303,10 +303,11 @@ void save_particle_output(const arma::mat& xa,
                           int tt,
                           const std::string& tmp_dir) {
   // Ensure the directory exists or use fallback
-  std::string dir_to_use = ensure_directory(tmp_dir);
+  // std::string dir_to_use = ensure_directory(tmp_dir);
 
   // Common filename base: file name prepended i.e. fn_pp
-  std::string fn_pp = dir_to_use;
+  // std::string fn_pp = dir_to_use;
+  std::string fn_pp = tmp_dir;
   fn_pp = fn_pp + "nn" + std::to_string(nn + 1);  // Adjust for 1-based index
   fn_pp = fn_pp + "_tt" + std::to_string(tt + 1); // Adjust for 1-based index
 
@@ -325,26 +326,26 @@ void save_to_file_mat(
   }
 }
 // Utility function to ensure the directory exists or create a fallback
-std::string ensure_directory(const std::string& dir) {
-  namespace fs = std::filesystem;
-
-  // Check if the directory exists
-  if (!fs::exists(dir)) {
-    Rcpp::Rcerr << "Directory '" << dir << "' does not exist. Attempting to create it.\n";
-
-    // Attempt to create the directory
-    if (!fs::create_directory(dir)) {
-      Rcpp::Rcerr << "Failed to create directory '" << dir << "'. Using fallback './tmp_particle_info_stored/'.\n";
-      std::string fallback_dir = "./tmp_particle_info_stored/";
-
-      // Attempt to create the fallback directory
-      if (!fs::create_directory(fallback_dir)) {
-        Rcpp::stop("Failed to create fallback directory './tmp_particle_info_stored/'.");
-      }
-
-      return fallback_dir; // Return fallback directory
-    }
-  }
-
-  return dir; // Return the original directory if it exists or was successfully created
-}
+// std::string ensure_directory(const std::string& dir) {
+//   namespace fs = std::filesystem;
+//
+//   // Check if the directory exists
+//   if (!fs::exists(dir)) {
+//     Rcpp::Rcerr << "Directory '" << dir << "' does not exist. Attempting to create it.\n";
+//
+//     // Attempt to create the directory
+//     if (!fs::create_directory(dir)) {
+//       Rcpp::Rcerr << "Failed to create directory '" << dir << "'. Using fallback './tmp_particle_info_stored/'.\n";
+//       std::string fallback_dir = "./tmp_particle_info_stored/";
+//
+//       // Attempt to create the fallback directory
+//       if (!fs::create_directory(fallback_dir)) {
+//         Rcpp::stop("Failed to create fallback directory './tmp_particle_info_stored/'.");
+//       }
+//
+//       return fallback_dir; // Return fallback directory
+//     }
+//   }
+//
+//   return dir; // Return the original directory if it exists or was successfully created
+// }
