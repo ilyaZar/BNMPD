@@ -631,16 +631,18 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_inits_start$traj_init <- state_inits
                           },
                           initialize_data_meta = function() {
+                            # Check if zeros are allowed for mult. type dists.
+                            ZEROS_OK <- grepl("mult", private$.DIST_NAME)
                             # Type of meta data:
                             # availability indices indicate the number of
                             # present components i.e. those that are not
                             # permanently zero
                             tmp_y <- private$.data_internal$data$`y_t`
-                            zero_ind    <- get_ind(tmp_y, "zeros")
+                            zero_ind    <- get_ind(tmp_y, "zeros", ZEROS_OK)
                             zero_ind_nn <- zero_ind[["ind_nn"]]
                             zero_ind_dd <- zero_ind[["ind_dd"]]
 
-                            avail_ind    <- get_ind(tmp_y, "avail")
+                            avail_ind    <- get_ind(tmp_y, "avail", ZEROS_OK)
                             avail_ind_nn <- avail_ind[["ind_nn"]]
                             avail_ind_dd <- avail_ind[["ind_dd"]]
 
@@ -652,7 +654,9 @@ ModelDat <- R6::R6Class("ModelDat",
                             private$.data_meta <- inds
                             invisible(self)
                           },
-                          get_ind = function(y_to_ind, type) {
+                          get_ind = function(y_to_ind, type, ZEROS_OK) {
+                            stopifnot(is.logical(ZEROS_OK))
+                            if (isTRUE(ZEROS_OK)) y_to_ind[y_to_ind == 0] <- 1
                             g <- switch(
                               type,
                               zeros = function(y) {
