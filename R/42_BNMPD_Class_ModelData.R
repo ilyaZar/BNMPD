@@ -404,6 +404,7 @@ ModelDat <- R6::R6Class("ModelDat",
                             init <- array(0, c(private$.TT,
                                                private$.DD2,
                                                private$.NN))
+                            # names(dim(init)) <- c("TT", "DD2", "NN")
                             options(warn = 2)
                             for (i in seq_len(private$.NN)) {
                               init_tmp <- get_init_tmp_y(
@@ -414,9 +415,11 @@ ModelDat <- R6::R6Class("ModelDat",
                                   init[, d, i] <- init_tmp[, d]
                                   # init[, d, i] <- 0.001 # "zero_lower_bound"
                                 } else {
-                                  init[, d, i] <- tryCatch(
+                                  tmp_init <- tryCatch(
                                     log(init_tmp[, d] / scl[d])
                                   )
+                                  tmp_init[tmp_init == -Inf] <- log(0.0001)
+                                  init[, d, i] <- tmp_init
                                 }
                               }
                             }
