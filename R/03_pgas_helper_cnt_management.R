@@ -27,6 +27,7 @@ get_args_list_smc_internal <- function(pe, mm, PARALLEL = TRUE) {
   out <- list(fun = smc_internal,
               nn_list_dd = pe$nn_list_dd,
               N = pe$N, TT = pe$TT, DD = pe$DD,
+              PP = pe$order_p,
               y_all = pe$y,
               num_counts = NULL,
               regs_beta_all = pe$Regs_beta,

@@ -254,6 +254,31 @@ f_cpp <- function(x_tt, phi_x, regs_add) {
     .Call(`_BNMPD_f_cpp`, x_tt, phi_x, regs_add)
 }
 
+#' State transition
+#'
+#' Helper function computing the deterministic state transition, or, to put
+#' differently, the one-period ahead conditional mean of the latent state
+#' process.
+#'
+#' This function is used internally in the SMC procedure when propagating
+#' particles through time: it is applied per state component \code{d=1,...,DD}
+#' on a \code{Nx1}-dimensional state vector where \code{N} is the number of
+#' particles for a particular x_{t} at component \code{d}. This is the reason
+#' for \code{regs_add} to be a scalar as it is the added regressor*beta change
+#' for some \code{t=1,...,T}.
+#'
+#' @param x_tt particle value in t-1, t-2 etc ; \code{Nxp}-dimensional
+#'   matrix (double)
+#' @param phi_x autoregressive parameter vector (double)
+#' @param regs_add result of regressor values i.e. z_{t} (vector) multiplied by
+#'   parameters/coefficients (vector) i.e. a scalar product (double)
+#' @return deterministic state transition (one-period ahead conditional mean)
+#'   as a \code{Nx1}-vector
+#' @export
+f_cpp_ARp <- function(x_tt, phi_x, regs_add) {
+    .Call(`_BNMPD_f_cpp_ARp`, x_tt, phi_x, regs_add)
+}
+
 #' Normalization of log-weights
 #'
 #' Both, SMC weights and ancestor sampling weights possible. The function does
@@ -330,6 +355,8 @@ compute_dd_range_x <- function(dd_range_y, type) {
 #'
 #' @param mean_diff difference matrix of mean values required (see the formal
 #'   derivations of the ancesor weights in the project summary) (arma::mat)
+#' @param  PP number of autoregressive lags (integer)
+#' @param  dd_rng range of the DD components (arma::uvec)
 #' @param vcm_diag the variance-covariance matrix of the \code{DD}-dimensional
 #'   (conditional) state process i.e. the error term variances stacked along
 #'   d=1,...,DD (arma::rowvec)
@@ -342,8 +369,8 @@ compute_dd_range_x <- function(dd_range_y, type) {
 #' @return ancestor index
 #' @export
 #'
-w_as_c <- function(mean_diff, vcm_diag, log_weights, N, id_as_lnspc) {
-    .Call(`_BNMPD_w_as_c`, mean_diff, vcm_diag, log_weights, N, id_as_lnspc)
+w_as_c <- function(mean_diff, PP, dd_rng, vcm_diag, log_weights, N, id_as_lnspc) {
+    .Call(`_BNMPD_w_as_c`, mean_diff, PP, dd_rng, vcm_diag, log_weights, N, id_as_lnspc)
 }
 
 #' Save particle filter outputs to CSV files
@@ -408,8 +435,8 @@ save_particle_output <- function(xa, w_log, w_norm, nn, tt, tmp_dir) {
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_d_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_d_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_d_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_d_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC/BPF for the Dir. Mult. model
@@ -444,8 +471,8 @@ cbpf_as_d_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, regs
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_dm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_dm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_dm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_dm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC (BPF) for the Dirichlet model
@@ -479,8 +506,8 @@ cbpf_as_dm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, num
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_gd_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_gd_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_gd_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_gd_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC/BPF for the Dir. Mult. model
@@ -516,8 +543,8 @@ cbpf_as_gd_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_gdm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_gdm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC/BPF for the Dir. Mult. model
@@ -553,8 +580,8 @@ cbpf_as_gdm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_al
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_m_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_m_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_m_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_m_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Runs a parallel version of the conditional SMC/BPF for the Dir. Mult. model
@@ -589,8 +616,8 @@ cbpf_as_m_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all,
 #'   output per d'th component
 #' @export
 #'
-cbpf_as_ndm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
-    .Call(`_BNMPD_cbpf_as_ndm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
+cbpf_as_ndm_cpp_par <- function(id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all) {
+    .Call(`_BNMPD_cbpf_as_ndm_cpp_par`, id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all)
 }
 
 #' Simple sum

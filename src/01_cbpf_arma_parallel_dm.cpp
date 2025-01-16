@@ -37,6 +37,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                               const int& N,
                               const int& TT,
                               const int& DD,
+                              const int& PP,
                               const arma::cube& y_all,
                               const arma::mat& num_counts_all,
                               const arma::cube& regs_beta_all,
@@ -44,8 +45,8 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                               const arma::vec& phi_x,
                               const arma::cube& x_r_all) {
   // define constants
-  //// 1. adjusting parallelization IDs from 1,...N to 0,...,N - 1
   Rcpp::IntegerVector ID_NN_ITERATE = id_parallelize - 1;
+  //// 1. adjusting parallelization IDs from 1,...N to 0,...,N - 1
   //// 2. define a sequence from 0:(N - 1)
   const arma::uvec ID_AS_LNSPC = arma::linspace<arma::uvec>(0, N - 1, N);
   // final output container
@@ -68,7 +69,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   arma::uvec id_x_avl;
   arma::uvec id_w;
   // some miscellaneous containers
-  arma::mat mean_diff(N, DD, arma::fill::zeros);
+  arma::cube mean_diff(N, DD, PP, arma::fill::zeros);
   arma::uvec t_word(1, arma::fill::zeros);
   int jj = 0;
   // ITERATING OVER CROSS SECTIONS ASSIGNED TO THIS CBPF INSTANCE:
@@ -103,9 +104,12 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     // resampling
     a.col(0) = resample(w_norm, N, ID_AS_LNSPC);
     // propagation
-    mean_diff = bpf_propagate(N, DD, 0, 0, id_x_all, dd_range,
-                              phi_x, sig_sq_x, Regs_beta,
-                              xa, x_r, a.col(0));
+    mean_diff = bpf_propagate(
+      N, DD, 1, // fix PP = 1 as t=1 is the init. period
+      0, 0,
+      id_x_all, dd_range,
+      phi_x, sig_sq_x, Regs_beta,
+      xa, x_r, a.col(0));
     // conditioning
     set_conditional_value(xa, x_r, dd_range, id_x_all, 0);
     // ancestor sampling; not necessary but may improve results
@@ -124,20 +128,52 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     // R function of this package `analyse_particle_weight_output()`.
     //////////////// OPTIONAL FUNCTION TO SAVE PARTICLE OUTPUT /////////////////
     // save_particle_output(xa, w_log, w_norm, j, 0, "./tmp/");
-    ////////////////////////////////////////////////////////////////////////////
-    ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS ///////////////////
-    ////////////////////////////////////////////////////////////////////////////
-    for (int t = 1; t < TT; ++t) {
+    for (int t = 1; t < PP; ++t) {
       // resampling
       a.col(t) = resample(w_norm, N, ID_AS_LNSPC);
       // propagation
-      mean_diff = bpf_propagate(N, DD, t, t - 1, id_x_all, dd_range,
-                                phi_x, sig_sq_x, Regs_beta,
-                                xa, x_r, a.col(t));
+      mean_diff = bpf_propagate(
+        N, DD, PP,
+        t, 0,
+        id_x_all, dd_range,
+        phi_x, sig_sq_x, Regs_beta,
+        xa, x_r, a.col(t));
       // conditioning
       set_conditional_value(xa, x_r, dd_range, id_x_all, t);
       // ancestor sampling
-      a(N - 1, t) = w_as_c(mean_diff.cols(dd_range),
+      a(N - 1, t) = w_as_c(mean_diff, PP, dd_range,
+                           pow(sig_sq_x.elem(dd_range).t(), -1),
+                           w_log, N, ID_AS_LNSPC);
+      // weighting
+      t_word(0) = t;
+      w_log = w_log_cbpf_dm(N, num_counts(t), y.submat(t_word, dd_range),
+                            xa.submat(id_x_avl, t_word), id_x_all);
+      w_norm = w_normalize_cpp(w_log, "particle");
+      //////////////////////////////////////////////////////////////////////////
+      // The following is optional and can be used to save, for a giving cross
+      // section (individual SMC run) at a given time period, the particle, its
+      // weights (logarithmic and normalized) to a temporary directory for later
+      // inspection. This is useful for debugging purposes, see for example the
+      // R function of this package `analyse_particle_weight_output()`.
+      /////////////// OPTIONAL FUNCTION TO SAVE PARTICLE OUTPUT ////////////////
+      // save_particle_output(xa, w_log, w_norm, j, pp, "./tmp/");
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    ///////////////////// III. FOR t = PP,..,T APPROXIMATIONS //////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    for (int t = PP; t < TT; ++t) {
+      // resampling
+      a.col(t) = resample(w_norm, N, ID_AS_LNSPC);
+      // propagation
+      mean_diff = bpf_propagate(
+        N, DD, PP,
+        t, t - 1, id_x_all, dd_range,
+        phi_x, sig_sq_x, Regs_beta,
+        xa, x_r, a.col(t));
+      // conditioning
+      set_conditional_value(xa, x_r, dd_range, id_x_all, t);
+      // ancestor sampling
+      a(N - 1, t) = w_as_c(mean_diff, PP, dd_range,
                            pow(sig_sq_x.elem(dd_range).t(), -1),
                            w_log, N, ID_AS_LNSPC);
       // weighting

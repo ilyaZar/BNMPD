@@ -98,22 +98,37 @@ void sample_init(const arma::uvec& dd_rng, const arma::mat& Xbeta,
   }
   return;
 }
-arma::mat bpf_propagate(int N, int DD, int t, int tmin1, const arma::uvec& id,
-                        const arma::uvec& dd_rng,
-                        const arma::vec& phi, const arma::vec& sig_sq,
-                        const arma::mat& Xbeta,
-                        arma::mat& X, const arma::mat& Xr,
-                        const arma::uvec& A) {
+arma::cube bpf_propagate(int N, int DD, int PP,
+                         int t, int tmin1, const arma::uvec& id,
+                         const arma::uvec& dd_rng,
+                         const arma::vec& phi, const arma::vec& sig_sq,
+                         const arma::mat& Xbeta,
+                         arma::mat& X, const arma::mat& Xr,
+                         const arma::uvec& A) {
   arma::vec eval_f(N, arma::fill::zeros);
-  arma::mat mean_diff(N, DD, arma::fill::zeros);
-  for(auto d : dd_rng) {
-    eval_f = f_cpp(X.submat(id(d), tmin1, id(d + 1) - 1, tmin1),
-                   phi(d), as_scalar(Xbeta.submat(t, d, t, d)));
-    mean_diff.col(d) = eval_f -  Xr(t, d);
-    eval_f = eval_f.elem(A);
-    X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
-             sqrt(sig_sq(d)),
-             N);
+  arma::cube mean_diff(N, DD, PP, arma::fill::zeros);
+  if (PP <= 1) {
+    for(auto d : dd_rng) {
+      eval_f = f_cpp(X.submat(id(d), tmin1, id(d + 1) - 1, tmin1),
+                    phi(d), as_scalar(Xbeta.submat(t, d, t, d)));
+      mean_diff.slice(0).col(d) = eval_f -  Xr(t, d);
+      eval_f = eval_f.elem(A);
+      X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
+              sqrt(sig_sq(d)),
+              N);
+    }
+  } else {
+    arma::uvec tmp_id_phi(PP);
+    for(auto d : dd_rng) {
+      tmp_id_phi = get_phi_range(PP, d);
+      eval_f = f_cpp_ARp(X.submat(id(d), tmin1, id(d + 1) - 1, PP),
+                         phi(tmp_id_phi), as_scalar(Xbeta.submat(t, d, t, d)));
+      // mean_diff.col(d) = eval_f -  Xr(t, d);
+      eval_f = eval_f.elem(A);
+      X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
+              sqrt(sig_sq(d)),
+              N);
+    }
   }
   return(mean_diff);
 }

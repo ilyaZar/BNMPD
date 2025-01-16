@@ -40,6 +40,7 @@ Rcpp::List cbpf_as_d_cpp_par2(const Rcpp::IntegerVector& id_parallelize,
                               const arma::vec& sig_sq_x,
                               const arma::vec& phi_x,
                               const arma::cube& x_r_all) {
+  int PP = 1;
   Rcpp::IntegerVector id_nn_iterate = id_parallelize - 1;
   int len_id_par = id_nn_iterate.size();
   Rcpp::List x_out_list(len_id_par);
@@ -170,9 +171,9 @@ Rcpp::List cbpf_as_d_cpp_par2(const Rcpp::IntegerVector& id_parallelize,
       for(auto d : dd_range) {
         xa(id_x(d + 1) - 1, t) = x_r(t, d);//x_r(TT*d + t);
       }
-      // ancestor sampling
-      a(N - 1, t) = w_as_c(mean_diff.cols(dd_range_uvec),
-        vcm_diag, w_log, N, id_as_lnspc);
+      // ancestor sampling DEACTIVATED
+      // a(N - 1, t) = w_as_c(mean_diff, PP, dd_range_uvec,
+      //   vcm_diag, w_log, N, id_as_lnspc);
       // weighting
       t_word(0) = t;
       w_log = w_log_cbpf_d_old(N, y.submat(t_word, dd_range_uvec),
@@ -250,6 +251,7 @@ Rcpp::List cbpf_as_dm_cpp_par2(const Rcpp::IntegerVector& id_parallelize,
                                const arma::vec& sig_sq_x,
                                const arma::vec& phi_x,
                                const arma::cube& x_r_all) {
+  int PP = 1;
   Rcpp::IntegerVector id_nn_iterate = id_parallelize - 1;
   int len_id_par = id_nn_iterate.size();
   Rcpp::List x_out_list(len_id_par);
@@ -381,9 +383,9 @@ Rcpp::List cbpf_as_dm_cpp_par2(const Rcpp::IntegerVector& id_parallelize,
       for(auto d : dd_range) {
         xa(id_x(d + 1) - 1, t) = x_r(t, d);//x_r(TT*d + t);
       }
-      // ancestor sampling
-      a(N - 1, t) = w_as_c(mean_diff.cols(dd_range_uvec),
-        vcm_diag, w_log, N, id_as_lnspc);
+      // ancestor sampling DEACTIVATATED
+      // a(N - 1, t) = w_as_c(mean_diff, PP, dd_range_uvec,
+      //   vcm_diag, w_log, N, id_as_lnspc);
       // weighting
       t_word(0) = t;
       w_log = w_log_cbpf_dm_old(N, DD2,
@@ -452,6 +454,7 @@ arma::mat cbpf_as_d_cpp(const Rcpp::IntegerVector& dd_range,
                         const arma::vec& sig_sq_x,
                         const arma::vec& phi_x,
                         const arma::vec& x_r) {
+  int PP = 1;
   //////////////////////////////////////////////////////////////////////////////
   ///////////////////////////// 0. DATA CONTAINERS /////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -561,9 +564,9 @@ arma::mat cbpf_as_d_cpp(const Rcpp::IntegerVector& dd_range,
     for(auto d : dd_range) {
       xa(id_x(d + 1) - 1, t) = x_r(TT*d + t);
     }
-    // ancestor sampling
-    a(N - 1, t) = w_as_c(mean_diff.cols(dd_range_uvec),
-                         vcm_diag, w_log, N, id_as_lnspc);
+    // ancestor sampling DEACTIVATED
+    // a(N - 1, t) = w_as_c(mean_diff, PP, dd_range_uvec,
+    //                      vcm_diag, w_log, N, id_as_lnspc);
     // weighting
     t_word(0) = t;
     w_log = w_log_cbpf_d_old(N, y.submat(t_word, dd_range_uvec),
@@ -709,7 +712,7 @@ arma::mat cbpf_as_dm_cpp(const int& N,
       xa(id_x(d + 1) - 1, t) = x_r(TT*d + t);
     }
     // ancestor sampling
-    a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
+    // a(N - 1, t) = w_as_c(mean_diff, PP, vcm_diag, w_log, N, id_as_lnspc);
     // weighting
     w_log = w_log_cbpf_dm_old(N, DD, num_counts(t), y.row(t), xa.col(t), id_x);
     // w.col(t) = w_normalize_cpp(w_log, "particle");
@@ -851,7 +854,7 @@ arma::mat cbpf_as_m_cpp(const int& N,
       xa(id_x(d + 1) - 1, t) = x_r(TT*d + t);
     }
     // ancestor sampling
-    a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
+    // a(N - 1, t) = w_as_c(mean_diff, vcm_diag, w_log, N, id_as_lnspc);
     // weighting
     w_log = w_log_cbpf_m_old(N, DD, y.row(t), xa.col(t), id_x);
     // w.col(t) = w_normalize_cpp(w_log, "particle);

@@ -30,6 +30,36 @@ arma::vec f_cpp(const arma::vec& x_tt,
 
   return(x_t);
 }
+//' State transition
+//'
+//' Helper function computing the deterministic state transition, or, to put
+//' differently, the one-period ahead conditional mean of the latent state
+//' process.
+//'
+//' This function is used internally in the SMC procedure when propagating
+//' particles through time: it is applied per state component \code{d=1,...,DD}
+//' on a \code{Nx1}-dimensional state vector where \code{N} is the number of
+//' particles for a particular x_{t} at component \code{d}. This is the reason
+//' for \code{regs_add} to be a scalar as it is the added regressor*beta change
+//' for some \code{t=1,...,T}.
+//'
+//' @param x_tt particle value in t-1, t-2 etc ; \code{Nxp}-dimensional
+//'   matrix (double)
+//' @param phi_x autoregressive parameter vector (double)
+//' @param regs_add result of regressor values i.e. z_{t} (vector) multiplied by
+//'   parameters/coefficients (vector) i.e. a scalar product (double)
+//' @return deterministic state transition (one-period ahead conditional mean)
+//'   as a \code{Nx1}-vector
+//' @export
+// [[Rcpp::export]]
+arma::vec f_cpp_ARp(const arma::mat& x_tt,
+                    const arma::vec& phi_x,
+                    const double& regs_add) {
+  int n = x_tt.n_rows;
+  arma::vec x_t(n);
+  x_t = x_tt * phi_x + regs_add;
+  return(x_t);
+}
 //' Normalization of log-weights
 //'
 //' Both, SMC weights and ancestor sampling weights possible. The function does
@@ -219,6 +249,8 @@ int compute_DD2(int DD, const std::string& type) {
 //'
 //' @param mean_diff difference matrix of mean values required (see the formal
 //'   derivations of the ancesor weights in the project summary) (arma::mat)
+//' @param  PP number of autoregressive lags (integer)
+//' @param  dd_rng range of the DD components (arma::uvec)
 //' @param vcm_diag the variance-covariance matrix of the \code{DD}-dimensional
 //'   (conditional) state process i.e. the error term variances stacked along
 //'   d=1,...,DD (arma::rowvec)
@@ -232,7 +264,9 @@ int compute_DD2(int DD, const std::string& type) {
 //' @export
 //'
 // [[Rcpp::export]]
-double w_as_c(const arma::mat& mean_diff,
+double w_as_c(const arma::cube& mean_diff,
+              const int PP,
+              const arma::uvec dd_rng,
               const arma::rowvec& vcm_diag,
               const arma::vec& log_weights,
               const int& N,
@@ -240,8 +274,10 @@ double w_as_c(const arma::mat& mean_diff,
   const std::string weight_type1 = "ancestor";
   const std::string weight_type2 = "normalized ancestor";
 
-  int len = mean_diff.n_rows;
-  int len2 = mean_diff.n_cols;
+  arma::mat mean_diff_mat = mean_diff.slice(0).cols(dd_rng);
+
+  int len = mean_diff_mat.n_rows;
+  int len2 = mean_diff_mat.n_cols;
   // double w_log_min = 0;
   double w_as_max = 0;
   double as_draw = 0;
@@ -250,8 +286,8 @@ double w_as_c(const arma::mat& mean_diff,
   arma::mat w_as2(len, len2);
 
   for(int i = 0;  i<len; i++) {
-    w_as(i) =  -0.5*arma::as_scalar(dot(mean_diff.row(i),
-                                    vcm_diag % mean_diff.row(i)));
+    w_as(i) =  -0.5*arma::as_scalar(dot(mean_diff_mat.row(i),
+                                    vcm_diag % mean_diff_mat.row(i)));
   }
 
   // Rcpp::Rcout << "w_as are preliminary" << std::endl << w_as << std::endl;
@@ -267,6 +303,12 @@ double w_as_c(const arma::mat& mean_diff,
   // as_draw = arma::as_scalar(Rcpp::RcppArmadillo::sample(id_as_lnspc,
   // 1, true, w_as));
   return(as_draw);
+}
+arma::uvec get_phi_range(const int PP,  const int d) {
+  int id_start = d * PP;
+  int id_end = d * PP + (PP - 1);
+  arma::uvec dd_rng = arma::regspace<arma::uvec>(id_start, id_end);
+  return(dd_rng);
 }
 //' Save particle filter outputs to CSV files
 //'

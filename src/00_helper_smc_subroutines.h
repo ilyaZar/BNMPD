@@ -16,6 +16,9 @@ int compute_DD2(int DD, const std::string& type);
 arma::vec f_cpp(const arma::vec& x_tt,
                 const double& phi_x,
                 const double& regs_add);
+arma::vec f_cpp_ARp(const arma::mat& x_tt,
+                    const arma::vec& phi_x,
+                    const double& regs_add);
 void set_conditional_value(arma::mat& X, const arma::mat Xr,
                            const arma::uvec& dd_rng,
                            const arma::uvec& id, int t);
@@ -25,7 +28,9 @@ void throw_weight_msg(const std::string w_type,
                       const std::string m_type);
 void check_weights(arma::vec& w_log, const std::string w_type);
 Rcpp::List generate_output_container(const Rcpp::IntegerVector& nn_iterate);
-double w_as_c(const arma::mat& mean_diff,
+double w_as_c(const arma::cube& mean_diff,
+              const int PP,
+              arma::uvec dd_range,
               const arma::rowvec& vcm_diag,
               const arma::vec& log_weights,
               const int& N,
@@ -41,5 +46,6 @@ void save_to_file_mat(
   const std::string& filename,
   const std::string& description);
 // std::string ensure_directory(const std::string& dir);
+arma::uvec get_phi_range(const int PP,  const int d);
 
 #endif

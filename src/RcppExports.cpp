@@ -201,6 +201,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// f_cpp_ARp
+arma::vec f_cpp_ARp(const arma::mat& x_tt, const arma::vec& phi_x, const double& regs_add);
+RcppExport SEXP _BNMPD_f_cpp_ARp(SEXP x_ttSEXP, SEXP phi_xSEXP, SEXP regs_addSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type x_tt(x_ttSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
+    Rcpp::traits::input_parameter< const double& >::type regs_add(regs_addSEXP);
+    rcpp_result_gen = Rcpp::wrap(f_cpp_ARp(x_tt, phi_x, regs_add));
+    return rcpp_result_gen;
+END_RCPP
+}
 // w_normalize_cpp
 arma::vec w_normalize_cpp(const arma::vec& w, std::string w_type);
 RcppExport SEXP _BNMPD_w_normalize_cpp(SEXP wSEXP, SEXP w_typeSEXP) {
@@ -261,17 +274,19 @@ BEGIN_RCPP
 END_RCPP
 }
 // w_as_c
-double w_as_c(const arma::mat& mean_diff, const arma::rowvec& vcm_diag, const arma::vec& log_weights, const int& N, const arma::uvec& id_as_lnspc);
-RcppExport SEXP _BNMPD_w_as_c(SEXP mean_diffSEXP, SEXP vcm_diagSEXP, SEXP log_weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
+double w_as_c(const arma::cube& mean_diff, const int PP, const arma::uvec dd_rng, const arma::rowvec& vcm_diag, const arma::vec& log_weights, const int& N, const arma::uvec& id_as_lnspc);
+RcppExport SEXP _BNMPD_w_as_c(SEXP mean_diffSEXP, SEXP PPSEXP, SEXP dd_rngSEXP, SEXP vcm_diagSEXP, SEXP log_weightsSEXP, SEXP NSEXP, SEXP id_as_lnspcSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type mean_diff(mean_diffSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type mean_diff(mean_diffSEXP);
+    Rcpp::traits::input_parameter< const int >::type PP(PPSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec >::type dd_rng(dd_rngSEXP);
     Rcpp::traits::input_parameter< const arma::rowvec& >::type vcm_diag(vcm_diagSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type log_weights(log_weightsSEXP);
     Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type id_as_lnspc(id_as_lnspcSEXP);
-    rcpp_result_gen = Rcpp::wrap(w_as_c(mean_diff, vcm_diag, log_weights, N, id_as_lnspc));
+    rcpp_result_gen = Rcpp::wrap(w_as_c(mean_diff, PP, dd_rng, vcm_diag, log_weights, N, id_as_lnspc));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -291,8 +306,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // cbpf_as_d_cpp_par
-Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
-RcppExport SEXP _BNMPD_cbpf_as_d_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& PP, const arma::cube& y_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
+RcppExport SEXP _BNMPD_cbpf_as_d_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP PPSEXP, SEXP y_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -301,18 +316,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
     Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const int& >::type PP(PPSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type y_all(y_allSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type regs_beta_all(regs_beta_allSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type x_r_all(x_r_allSEXP);
-    rcpp_result_gen = Rcpp::wrap(cbpf_as_d_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_d_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
     return rcpp_result_gen;
 END_RCPP
 }
 // cbpf_as_dm_cpp_par
-Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
-RcppExport SEXP _BNMPD_cbpf_as_dm_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& PP, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
+RcppExport SEXP _BNMPD_cbpf_as_dm_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP PPSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -321,19 +337,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
     Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const int& >::type PP(PPSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type y_all(y_allSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type num_counts_all(num_counts_allSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type regs_beta_all(regs_beta_allSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type x_r_all(x_r_allSEXP);
-    rcpp_result_gen = Rcpp::wrap(cbpf_as_dm_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_dm_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
     return rcpp_result_gen;
 END_RCPP
 }
 // cbpf_as_gd_cpp_par
-Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& DD2, const arma::cube& y_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
-RcppExport SEXP _BNMPD_cbpf_as_gd_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP DD2SEXP, SEXP y_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& DD2, const int& PP, const arma::cube& y_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
+RcppExport SEXP _BNMPD_cbpf_as_gd_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP DD2SEXP, SEXP PPSEXP, SEXP y_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -343,18 +360,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD2(DD2SEXP);
+    Rcpp::traits::input_parameter< const int& >::type PP(PPSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type y_all(y_allSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type regs_beta_all(regs_beta_allSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type x_r_all(x_r_allSEXP);
-    rcpp_result_gen = Rcpp::wrap(cbpf_as_gd_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_gd_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
     return rcpp_result_gen;
 END_RCPP
 }
 // cbpf_as_gdm_cpp_par
-Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& DD2, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
-RcppExport SEXP _BNMPD_cbpf_as_gdm_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP DD2SEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& DD2, const int& PP, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
+RcppExport SEXP _BNMPD_cbpf_as_gdm_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP DD2SEXP, SEXP PPSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -364,19 +382,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD2(DD2SEXP);
+    Rcpp::traits::input_parameter< const int& >::type PP(PPSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type y_all(y_allSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type num_counts_all(num_counts_allSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type regs_beta_all(regs_beta_allSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type x_r_all(x_r_allSEXP);
-    rcpp_result_gen = Rcpp::wrap(cbpf_as_gdm_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_gdm_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
     return rcpp_result_gen;
 END_RCPP
 }
 // cbpf_as_m_cpp_par
-Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& DD2, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
-RcppExport SEXP _BNMPD_cbpf_as_m_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP DD2SEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+Rcpp::List cbpf_as_m_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& DD2, const int& PP, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
+RcppExport SEXP _BNMPD_cbpf_as_m_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP DD2SEXP, SEXP PPSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -386,19 +405,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD2(DD2SEXP);
+    Rcpp::traits::input_parameter< const int& >::type PP(PPSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type y_all(y_allSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type num_counts_all(num_counts_allSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type regs_beta_all(regs_beta_allSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type x_r_all(x_r_allSEXP);
-    rcpp_result_gen = Rcpp::wrap(cbpf_as_m_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, DD2, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_m_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, DD2, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
     return rcpp_result_gen;
 END_RCPP
 }
 // cbpf_as_ndm_cpp_par
-Rcpp::List cbpf_as_ndm_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
-RcppExport SEXP _BNMPD_cbpf_as_ndm_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
+Rcpp::List cbpf_as_ndm_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& PP, const arma::cube& y_all, const arma::mat& num_counts_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
+RcppExport SEXP _BNMPD_cbpf_as_ndm_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP PPSEXP, SEXP y_allSEXP, SEXP num_counts_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -407,13 +427,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int& >::type N(NSEXP);
     Rcpp::traits::input_parameter< const int& >::type TT(TTSEXP);
     Rcpp::traits::input_parameter< const int& >::type DD(DDSEXP);
+    Rcpp::traits::input_parameter< const int& >::type PP(PPSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type y_all(y_allSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type num_counts_all(num_counts_allSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type regs_beta_all(regs_beta_allSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type sig_sq_x(sig_sq_xSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type phi_x(phi_xSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type x_r_all(x_r_allSEXP);
-    rcpp_result_gen = Rcpp::wrap(cbpf_as_ndm_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
+    rcpp_result_gen = Rcpp::wrap(cbpf_as_ndm_cpp_par(id_parallelize, nn_list_dd, N, TT, DD, PP, y_all, num_counts_all, regs_beta_all, sig_sq_x, phi_x, x_r_all));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -647,19 +668,20 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_sample_init_prtcls", (DL_FUNC) &_BNMPD_sample_init_prtcls, 3},
     {"_BNMPD_propagate_bpf", (DL_FUNC) &_BNMPD_propagate_bpf, 3},
     {"_BNMPD_f_cpp", (DL_FUNC) &_BNMPD_f_cpp, 3},
+    {"_BNMPD_f_cpp_ARp", (DL_FUNC) &_BNMPD_f_cpp_ARp, 3},
     {"_BNMPD_w_normalize_cpp", (DL_FUNC) &_BNMPD_w_normalize_cpp, 2},
     {"_BNMPD_check_weights", (DL_FUNC) &_BNMPD_check_weights, 2},
     {"_BNMPD_throw_weight_msg", (DL_FUNC) &_BNMPD_throw_weight_msg, 3},
     {"_BNMPD_compute_id_x_all", (DL_FUNC) &_BNMPD_compute_id_x_all, 2},
     {"_BNMPD_compute_dd_range_x", (DL_FUNC) &_BNMPD_compute_dd_range_x, 2},
-    {"_BNMPD_w_as_c", (DL_FUNC) &_BNMPD_w_as_c, 5},
+    {"_BNMPD_w_as_c", (DL_FUNC) &_BNMPD_w_as_c, 7},
     {"_BNMPD_save_particle_output", (DL_FUNC) &_BNMPD_save_particle_output, 6},
-    {"_BNMPD_cbpf_as_d_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_d_cpp_par, 10},
-    {"_BNMPD_cbpf_as_dm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_dm_cpp_par, 11},
-    {"_BNMPD_cbpf_as_gd_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_gd_cpp_par, 11},
-    {"_BNMPD_cbpf_as_gdm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_gdm_cpp_par, 12},
-    {"_BNMPD_cbpf_as_m_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_m_cpp_par, 12},
-    {"_BNMPD_cbpf_as_ndm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_ndm_cpp_par, 11},
+    {"_BNMPD_cbpf_as_d_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_d_cpp_par, 11},
+    {"_BNMPD_cbpf_as_dm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_dm_cpp_par, 12},
+    {"_BNMPD_cbpf_as_gd_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_gd_cpp_par, 12},
+    {"_BNMPD_cbpf_as_gdm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_gdm_cpp_par, 13},
+    {"_BNMPD_cbpf_as_m_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_m_cpp_par, 13},
+    {"_BNMPD_cbpf_as_ndm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_ndm_cpp_par, 12},
     {"_BNMPD_calc_sum", (DL_FUNC) &_BNMPD_calc_sum, 1},
     {"_BNMPD_bet_z_components", (DL_FUNC) &_BNMPD_bet_z_components, 11},
     {"_BNMPD_cbpf_as_d_cpp_par2", (DL_FUNC) &_BNMPD_cbpf_as_d_cpp_par2, 10},

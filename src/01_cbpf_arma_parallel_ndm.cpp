@@ -37,6 +37,7 @@ Rcpp::List cbpf_as_ndm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                                const int& N,
                                const int& TT,
                                const int& DD,
+                               const int& PP,
                                const arma::cube& y_all,
                                const arma::mat& num_counts_all,
                                const arma::cube& regs_beta_all,
@@ -68,7 +69,7 @@ Rcpp::List cbpf_as_ndm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   arma::uvec id_x_avl;
   arma::uvec id_w;
   // some miscellaneous containers
-  arma::mat mean_diff(N, DD, arma::fill::zeros);
+  arma::cube mean_diff(N, DD, PP, arma::fill::zeros);
   arma::uvec t_word(1, arma::fill::zeros);
   int jj = 0;
   // ITERATING OVER CROSS SECTIONS ASSIGNED TO THIS CBPF INSTANCE:
@@ -103,7 +104,8 @@ Rcpp::List cbpf_as_ndm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     // resampling
     a.col(0) = resample(w_norm, N, ID_AS_LNSPC);
     // propagation
-    mean_diff = bpf_propagate(N, DD, 0, 0, id_x_all, dd_range,
+    mean_diff = bpf_propagate(N, DD,  1, //fix PP = 1 as t=1 is the init. period
+                              0, 0, id_x_all, dd_range,
                               phi_x, sig_sq_x, Regs_beta,
                               xa, x_r, a.col(0));
     // conditioning
@@ -119,17 +121,18 @@ Rcpp::List cbpf_as_ndm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////// III. FOR t = 2,..,T APPROXIMATIONS ///////////////////
     ////////////////////////////////////////////////////////////////////////////
-    for (int t = 1; t < TT; ++t) {
+    for (int t = PP; t < TT; ++t) {
       // resampling
       a.col(t) = resample(w_norm, N, ID_AS_LNSPC);
       // propagation
-      mean_diff = bpf_propagate(N, DD, t, t - 1, id_x_all, dd_range,
+      mean_diff = bpf_propagate(N, DD, PP,
+                                t, t - 1, id_x_all, dd_range,
                                 phi_x, sig_sq_x, Regs_beta,
                                 xa, x_r, a.col(t));
       // conditioning
       set_conditional_value(xa, x_r, dd_range, id_x_all, t);
       // ancestor sampling
-      a(N - 1, t) = w_as_c(mean_diff.cols(dd_range),
+      a(N - 1, t) = w_as_c(mean_diff, PP, dd_range,
                            pow(sig_sq_x.elem(dd_range).t(), -1),
                            w_log, N, ID_AS_LNSPC);
       // weighting
