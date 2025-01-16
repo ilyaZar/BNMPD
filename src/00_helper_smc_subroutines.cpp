@@ -274,20 +274,31 @@ double w_as_c(const arma::cube& mean_diff,
   const std::string weight_type1 = "ancestor";
   const std::string weight_type2 = "normalized ancestor";
 
-  arma::mat mean_diff_mat = mean_diff.slice(0).cols(dd_rng);
+  arma::mat mean_dff_m = mean_diff.slice(0).cols(dd_rng);
 
-  int len = mean_diff_mat.n_rows;
-  int len2 = mean_diff_mat.n_cols;
+  int len = mean_dff_m.n_rows;
+  int len2 = mean_dff_m.n_cols;
   // double w_log_min = 0;
   double w_as_max = 0;
   double as_draw = 0;
 
   arma::vec w_as(len);
-  arma::mat w_as2(len, len2);
+  // arma::mat w_as2(len, len2);
 
-  for(int i = 0;  i<len; i++) {
-    w_as(i) =  -0.5*arma::as_scalar(dot(mean_diff_mat.row(i),
-                                    vcm_diag % mean_diff_mat.row(i)));
+  for (int i = 0; i < len; i++) {
+    w_as(i) =  -0.5 * arma::as_scalar(
+      arma::dot(mean_dff_m.row(i), vcm_diag % mean_dff_m.row(i))
+    );
+  }
+  if (PP > 1) {
+    for (int p = 1; p < PP; ++p) {
+      mean_dff_m = mean_diff.slice(p).cols(dd_rng);
+      for (int i = 0; i < len; i++) {
+        w_as(i) += -0.5 * arma::as_scalar(
+          arma::dot(mean_dff_m.row(i),vcm_diag % mean_dff_m.row(i))
+        );
+      }
+    }
   }
 
   // Rcpp::Rcout << "w_as are preliminary" << std::endl << w_as << std::endl;
