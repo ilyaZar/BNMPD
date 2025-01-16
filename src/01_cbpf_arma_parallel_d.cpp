@@ -99,7 +99,8 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     // resampling
     a.col(0) = resample(w_norm, N, ID_AS_LNSPC);
     // propagation
-    mean_diff = bpf_propagate(N, DD, 1, // fix PP = 1 as t=1 is the init. period
+    mean_diff = bpf_propagate(N, DD, PP,
+                              PP, // fix PP_use = PP as t=1 is the init. period
                               0, 0, id_x_all, dd_range,
                               phi_x, sig_sq_x, Regs_beta,
                               xa, x_r, a.col(0));
@@ -120,7 +121,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
       // resampling
       a.col(t) = resample(w_norm, N, ID_AS_LNSPC);
       // propagation
-      mean_diff = bpf_propagate(N, DD, PP,
+      mean_diff = bpf_propagate(N, DD, PP, PP,
                                 t, t - 1, id_x_all, dd_range,
                                 phi_x, sig_sq_x, Regs_beta,
                                 xa, x_r, a.col(t));

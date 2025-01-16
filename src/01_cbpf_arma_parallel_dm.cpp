@@ -105,7 +105,8 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     a.col(0) = resample(w_norm, N, ID_AS_LNSPC);
     // propagation
     mean_diff = bpf_propagate(
-      N, DD, 1, // fix PP = 1 as t=1 is the init. period
+      N, DD, PP,
+      1, // fix this argument to 1: pretend to use a single PP=1 for first init
       0, 0,
       id_x_all, dd_range,
       phi_x, sig_sq_x, Regs_beta,
@@ -134,14 +135,17 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
       // propagation
       mean_diff = bpf_propagate(
         N, DD, PP,
-        t, 0,
+        t, //  same as above
+        t, t - 1,
         id_x_all, dd_range,
         phi_x, sig_sq_x, Regs_beta,
         xa, x_r, a.col(t));
       // conditioning
       set_conditional_value(xa, x_r, dd_range, id_x_all, t);
       // ancestor sampling
-      a(N - 1, t) = w_as_c(mean_diff, PP, dd_range,
+      a(N - 1, t) = w_as_c(mean_diff,
+                           t, // again, fix this arg. to iterate up to PP - 1
+                           dd_range,
                            pow(sig_sq_x.elem(dd_range).t(), -1),
                            w_log, N, ID_AS_LNSPC);
       // weighting
@@ -166,7 +170,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
       a.col(t) = resample(w_norm, N, ID_AS_LNSPC);
       // propagation
       mean_diff = bpf_propagate(
-        N, DD, PP,
+        N, DD, PP, PP,
         t, t - 1, id_x_all, dd_range,
         phi_x, sig_sq_x, Regs_beta,
         xa, x_r, a.col(t));
