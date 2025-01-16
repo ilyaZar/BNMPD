@@ -98,7 +98,7 @@ void sample_init(const arma::uvec& dd_rng, const arma::mat& Xbeta,
   }
   return;
 }
-arma::cube bpf_propagate(int N, int DD, int PP,
+arma::cube bpf_propagate(int N, int DD, int PP, int PP_use,
                          int t, int tmin1, const arma::uvec& id,
                          const arma::uvec& dd_rng,
                          const arma::vec& phi, const arma::vec& sig_sq,
@@ -106,11 +106,14 @@ arma::cube bpf_propagate(int N, int DD, int PP,
                          arma::mat& X, const arma::mat& Xr,
                          const arma::uvec& A) {
   arma::vec eval_f(N, arma::fill::zeros);
-  arma::cube mean_diff(N, DD, PP, arma::fill::zeros);
+  arma::cube mean_diff(N, DD, PP_use, arma::fill::zeros);
+  arma::uvec id_phi(PP);
   if (PP <= 1) {
-    for(auto d : dd_rng) {
+    for (auto d : dd_rng) {
+      id_phi = get_phi_range(PP, d);
       eval_f = f_cpp(X.submat(id(d), tmin1, id(d + 1) - 1, tmin1),
-                    phi(d), as_scalar(Xbeta.submat(t, d, t, d)));
+                     arma::as_scalar(phi(id_phi)),
+                     arma::as_scalar(Xbeta.submat(t, d, t, d)));
       mean_diff.slice(0).col(d) = eval_f -  Xr(t, d);
       eval_f = eval_f.elem(A);
       X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
@@ -118,16 +121,41 @@ arma::cube bpf_propagate(int N, int DD, int PP,
               N);
     }
   } else {
-    arma::uvec tmp_id_phi(PP);
-    for(auto d : dd_rng) {
-      tmp_id_phi = get_phi_range(PP, d);
-      eval_f = f_cpp_ARp(X.submat(id(d), tmin1, id(d + 1) - 1, PP),
-                         phi(tmp_id_phi), as_scalar(Xbeta.submat(t, d, t, d)));
-      // mean_diff.col(d) = eval_f -  Xr(t, d);
+    int TT = Xr.n_rows;
+    arma::mat Xr_Xa(N, PP_use, arma::fill::zeros);
+    arma::uvec id_phi_use(PP_use);
+    arma::uvec id_xmt_row(N);
+    arma::uvec id_xmt_col(PP_use);
+    for (auto d : dd_rng) {
+      id_xmt_row = arma::linspace<arma::uvec>(id(d), id(d + 1) - 1, N);
+      id_xmt_col = arma::linspace<arma::uvec>(tmin1, tmin1-(PP_use - 1),PP_use);
+      id_phi = get_phi_range(PP, d);
+      id_phi_use = id_phi.subvec(0, PP_use - 1);
+      eval_f = f_cpp_ARp(X.submat(id_xmt_row, id_xmt_col),
+                         phi(id_phi_use),
+                         arma::as_scalar(Xbeta.submat(t, d, t, d)));
+      mean_diff.slice(0).col(d) = eval_f -  Xr(t, d);
       eval_f = eval_f.elem(A);
       X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
               sqrt(sig_sq(d)),
               N);
+      for (auto pp = 1; pp < PP_use; ++pp) {
+        int t_plus_pp = t + pp;
+        if (t_plus_pp < TT) {
+          for (auto pp_fill = 0; pp_fill < pp; ++pp_fill) {
+            Xr_Xa.col(pp_fill).fill(arma::as_scalar(Xr(t_plus_pp - pp_fill - 1, d)));
+          }
+          id_xmt_row = arma::linspace<arma::uvec>(id(d), id(d + 1) - 1, N);
+          id_xmt_col = arma::linspace<arma::uvec>(
+            tmin1, tmin1 - (PP_use - pp - 1), PP_use - pp);
+          Xr_Xa.cols(pp, PP_use - pp) = X.submat(
+            id_xmt_row, id_xmt_col);
+          eval_f = f_cpp_ARp(Xr_Xa,
+                            phi(id_phi_use),
+                            as_scalar(Xbeta.submat(t_plus_pp, d, t_plus_pp, d)));
+          mean_diff.slice(pp).col(d) = eval_f -  Xr(t_plus_pp, d);
+        }
+      }
     }
   }
   return(mean_diff);

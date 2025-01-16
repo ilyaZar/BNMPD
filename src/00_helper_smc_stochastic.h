@@ -21,7 +21,7 @@ arma::colvec sample_init_prtcls(const double& mmu,
 arma::colvec propagate_bpf(const arma::colvec& mmu,
                            const double& sdd,
                            const int& N);
-arma::cube bpf_propagate(int N, int DD, int PP,
+arma::cube bpf_propagate(int N, int DD, int PP, int PP_use,
                          int t, int tmin1, const arma::uvec& id,
                          const arma::uvec& dd_rng,
                          const arma::vec& phi, const arma::vec& sig_sq,
