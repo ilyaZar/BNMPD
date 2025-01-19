@@ -88,12 +88,17 @@ arma::colvec propagate_bpf(const arma::colvec& mmu,
 }
 void sample_init(const arma::uvec& dd_rng, const arma::mat& Xbeta,
                  const arma::vec& phi, const arma::vec& sig_sq,
-                 int N, const arma::uvec& id, arma::mat& X) {
+                 const int N, const int PP, const int PP_use,
+                 const arma::uvec& id, arma::mat& X) {
   double mu = 0;
   double sd = 0;
+  arma::uvec id_phi(PP);
+  arma::uvec id_phi_use(PP_use);
   for(auto d : dd_rng) {
-    mu = arma::as_scalar(Xbeta.submat(0, d, 0, d)) / (1.0 - phi(d));
-    sd = sqrt(sig_sq(d) / (1.0 - pow(phi(d), 2)));
+    id_phi = get_phi_range(PP, d);
+    id_phi_use = id_phi.subvec(0, PP_use - 1);
+    mu = arma::as_scalar(Xbeta.submat(0, d, 0, d)) / (1.0 - arma::as_scalar(phi(id_phi_use)));
+    sd = sqrt(sig_sq(d) / (1.0 - pow(arma::as_scalar(phi(id_phi_use)), 2)));
     X.submat(id(d), 0, id(d + 1) - 1, 0) = sample_init_prtcls(mu, sd, N);
   }
   return;

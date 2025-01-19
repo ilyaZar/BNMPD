@@ -14,7 +14,8 @@ double sample_final_trajectory(const arma::colvec& weights,
                                // const arma::uvec& id_as_lnspc);
 void sample_init(const arma::uvec& dd_rng, const arma::mat& Xbeta,
                  const arma::vec& phi, const arma::vec& sig_sq,
-                 int N, const arma::uvec& id, arma::mat& X);
+                 const int N, const int PP, const int PP_use,
+                 const arma::uvec& id, arma::mat& X);
 arma::colvec sample_init_prtcls(const double& mmu,
                                 const double& sdd,
                                 const int& N);

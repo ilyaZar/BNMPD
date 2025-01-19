@@ -45,8 +45,8 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                               const arma::vec& phi_x,
                               const arma::cube& x_r_all) {
   // define constants
-  Rcpp::IntegerVector ID_NN_ITERATE = id_parallelize - 1;
   //// 1. adjusting parallelization IDs from 1,...N to 0,...,N - 1
+  Rcpp::IntegerVector ID_NN_ITERATE = id_parallelize - 1;
   //// 2. define a sequence from 0:(N - 1)
   const arma::uvec ID_AS_LNSPC = arma::linspace<arma::uvec>(0, N - 1, N);
   // final output container
@@ -65,9 +65,8 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   arma::umat a(N, TT, arma::fill::zeros);
   // container due to varying component numbers in 1:DD per cross section
   arma::uvec dd_range;
-  arma::uvec id_x_all = compute_id_x_all(DD, N);
+  const arma::uvec id_x_all = compute_id_x_all(DD, N);
   arma::uvec id_x_avl;
-  arma::uvec id_w;
   // some miscellaneous containers
   arma::cube mean_diff(N, DD, PP, arma::fill::zeros);
   arma::uvec t_word(1, arma::fill::zeros);
@@ -96,7 +95,7 @@ Rcpp::List cbpf_as_dm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ///////////////////////// I. INITIALIZATION (t = 0) ////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     // Sample initial particles from prior; weights = 1/N (since y_{t=0} = NA)
-    sample_init(dd_range, Regs_beta, phi_x, sig_sq_x, N, id_x_all, xa);
+    sample_init(dd_range, Regs_beta, phi_x, sig_sq_x, N, PP, 1, id_x_all, xa);
     w_norm.fill(1.0 / N);
     ////////////////////////////////////////////////////////////////////////////
     /////////////////// II. FIRST PERIOD APPROXIMATION (t = 1) /////////////////

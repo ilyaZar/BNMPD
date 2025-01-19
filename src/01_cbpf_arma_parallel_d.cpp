@@ -22,7 +22,7 @@
 //' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 //' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
 //'   latent state process
-//' @param x_r_all reference/conditioning trajectory; smae dimension as `y_all`
+//' @param x_r_all reference/conditioning trajectory; same dimension as `y_all`
 //'    i.e. `TT x DD x NN`
 //'
 //' @return arma::matrix of DD components: DD columns are
@@ -91,7 +91,7 @@ Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ///////////////////////// I. INITIALIZATION (t = 0) ////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     // Sample initial particles from prior; weights = 1/N (since y_{t=0} = NA)
-    sample_init(dd_range, Regs_beta, phi_x, sig_sq_x, N, id_x_all, xa);
+    sample_init(dd_range, Regs_beta, phi_x, sig_sq_x, N, PP, 1, id_x_all, xa);
     w_norm.fill(1.0 / N);
     ////////////////////////////////////////////////////////////////////////////
     /////////////////// II. FIRST PERIOD APPROXIMATION (t = 1) /////////////////

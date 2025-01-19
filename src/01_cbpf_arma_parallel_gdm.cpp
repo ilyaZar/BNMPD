@@ -99,7 +99,7 @@ Rcpp::List cbpf_as_gdm_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     ///////////////////////// I. INITIALIZATION (t = 0) ////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     // Sample initial particles from prior; weights = 1/N (since y_{t=0} = NA)
-    sample_init(dd_range_x, Regs_beta, phi_x, sig_sq_x, N, id_x_all, xa);
+    sample_init(dd_range_x, Regs_beta, phi_x, sig_sq_x, N, PP, 1, id_x_all, xa);
     w_norm.fill(1.0 / N);
     ////////////////////////////////////////////////////////////////////////////
     /////////////////// II. FIRST PERIOD APPROXIMATION (t = 1) /////////////////
