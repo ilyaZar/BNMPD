@@ -290,6 +290,7 @@ double w_as_c(const arma::cube& mean_diff,
       arma::dot(mean_dff_m.row(i), vcm_diag % mean_dff_m.row(i))
     );
   }
+  // Rcpp::Rcout << "w_as are preliminary" << std::endl << w_as << std::endl;
   if (PP > 1) {
     for (int p = 1; p < PP; ++p) {
       mean_dff_m = mean_diff.slice(p).cols(dd_rng);
@@ -315,6 +316,72 @@ double w_as_c(const arma::cube& mean_diff,
   // 1, true, w_as));
   return(as_draw);
 }
+// double w_as_c2(const arma::cube& mean_diff,
+//                const int PP,
+//                int TT,
+//                const arma::uvec dd_rng,
+//                const arma::rowvec& vcm_diag,
+//                const arma::vec& log_weights,
+//                const int& N,
+//                const arma::uvec& id_as_lnspc) {
+//   const std::string weight_type1 = "ancestor";
+//   const std::string weight_type2 = "normalized ancestor";
+
+//   arma::mat mean_dff_m = mean_diff.slice(0).cols(dd_rng);
+
+//   int len = mean_dff_m.n_rows;
+//   int len2 = mean_dff_m.n_cols;
+//   // double w_log_min = 0;
+//   double w_as_max = 0;
+//   double as_draw = 0;
+
+//   arma::vec w_as(len);
+//   // arma::mat w_as2(len, len2);
+
+//   for (int i = 0; i < len; i++) {
+//     w_as(i) =  -0.5 * arma::as_scalar(
+//       arma::dot(mean_dff_m.row(i), vcm_diag % mean_dff_m.row(i))
+//     );
+//   }
+//   if (TT>=48) {
+//     TT = TT;
+//     TT += 1;
+
+//     TT -= 1;
+//   // Rcpp::Rcout << "w_as are preliminary" << std::endl << w_as << std::endl;
+//   }
+//   // Rcpp::Rcout << "w_as are preliminary" << std::endl << w_as << std::endl;
+//   if (PP > 1) {
+//     for (int p = 1; p < PP; ++p) {
+//       mean_dff_m = mean_diff.slice(p).cols(dd_rng);
+//       for (int i = 0; i < len; i++) {
+//         w_as(i) += -0.5 * arma::as_scalar(
+//           arma::dot(mean_dff_m.row(i),vcm_diag % mean_dff_m.row(i))
+//         );
+//       }
+//     }
+//   }
+//   if (TT>=48) {
+//     TT = TT;
+//     TT += 1;
+
+//     TT -= 1;
+//   // Rcpp::Rcout << "w_as are preliminary" << std::endl << w_as << std::endl;
+//   }
+//   // Rcpp::Rcout << "w_as are preliminary" << std::endl << w_as << std::endl;
+//   w_as = w_as + log_weights;
+//   check_weights(w_as, weight_type1);
+
+//   w_as_max = w_as.max();
+//   w_as = exp(w_as - w_as_max);
+//   w_as = w_as/sum(w_as);
+//   check_weights(w_as, weight_type2);
+
+//   as_draw = Rcpp::sample(N, 1, true, Rcpp::as<Rcpp::NumericVector>(Rcpp::wrap(w_as)))[0] - 1;
+//   // as_draw = arma::as_scalar(Rcpp::RcppArmadillo::sample(id_as_lnspc,
+//   // 1, true, w_as));
+//   return(as_draw);
+// }
 arma::uvec get_phi_range(const int PP,  const int d) {
   int id_start = d * PP;
   int id_end = d * PP + (PP - 1);
@@ -377,6 +444,48 @@ void save_to_file_mat(
   if (!data.save(filename, arma::csv_ascii)) {
     Rcpp::Rcerr << "Error: Could not save " << description << " to " << filename << std::endl;
   }
+}
+//' Save three Armadillo matrices to CSV files
+//'
+//' Saves three matrices (`mat1`, `mat2`, `mat3`) to CSV files with file names
+//' that include the parallelization ID (`nn`) and time step (`tt`).
+//'
+//' @param mat1 The first matrix to save
+//' @param mat2 The second matrix to save
+//' @param mat3 The third matrix to save
+//' @param tmp_dir The temporary directory to save the files
+//'
+//' @return None
+//'
+// [[Rcpp::export]]
+void save_three_matrices(const arma::mat& mat1,
+                         const arma::mat& mat2,
+                         const arma::mat& mat3,
+                         const std::string& tmp_dir) {
+  std::string fn_pp = tmp_dir;
+  std::string fn_01 = fn_pp + "X";
+  std::string fn_02 = fn_pp + "Xr";
+  std::string fn_03 = fn_pp + "Xbeta";
+
+  save_to_file_mat(mat1, fn_01 + "_mat1.csv", "matrix mat1");
+  save_to_file_mat(mat2, fn_02 + "_mat2.csv", "matrix mat2");
+  save_to_file_mat(mat3, fn_03 + "_mat3.csv", "matrix mat3");
+}
+//' Save three Armadillo matrices to CSV files
+//'
+//' Saves three matrices (`mat1`, `mat2`, `mat3`) to CSV files with file names
+//' that include the parallelization ID (`nn`) and time step (`tt`).
+//'
+//' @param mat1 The first matrix to save
+//' @param tmp_dir The temporary directory to save the files
+//'
+//' @return None
+//'
+// [[Rcpp::export]]
+void save_one_matrix(const arma::mat& mat1, int d, int pp, const std::string& tmp_dir) {
+  std::string fn_pp = tmp_dir;
+  fn_pp = fn_pp + "mean_diff_" + std::to_string(d + 1) + "_" + std::to_string(pp + 1);
+  save_to_file_mat(mat1, fn_pp + "_mat.csv", "matrix mat1");
 }
 // Utility function to ensure the directory exists or create a fallback
 // std::string ensure_directory(const std::string& dir) {

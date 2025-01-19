@@ -404,6 +404,36 @@ save_particle_output <- function(xa, w_log, w_norm, nn, tt, tmp_dir) {
     invisible(.Call(`_BNMPD_save_particle_output`, xa, w_log, w_norm, nn, tt, tmp_dir))
 }
 
+#' Save three Armadillo matrices to CSV files
+#'
+#' Saves three matrices (`mat1`, `mat2`, `mat3`) to CSV files with file names
+#' that include the parallelization ID (`nn`) and time step (`tt`).
+#'
+#' @param mat1 The first matrix to save
+#' @param mat2 The second matrix to save
+#' @param mat3 The third matrix to save
+#' @param tmp_dir The temporary directory to save the files
+#'
+#' @return None
+#'
+save_three_matrices <- function(mat1, mat2, mat3, tmp_dir) {
+    invisible(.Call(`_BNMPD_save_three_matrices`, mat1, mat2, mat3, tmp_dir))
+}
+
+#' Save three Armadillo matrices to CSV files
+#'
+#' Saves three matrices (`mat1`, `mat2`, `mat3`) to CSV files with file names
+#' that include the parallelization ID (`nn`) and time step (`tt`).
+#'
+#' @param mat1 The first matrix to save
+#' @param tmp_dir The temporary directory to save the files
+#'
+#' @return None
+#'
+save_one_matrix <- function(mat1, d, pp, tmp_dir) {
+    invisible(.Call(`_BNMPD_save_one_matrix`, mat1, d, pp, tmp_dir))
+}
+
 #' Runs a parallel version of the conditional SMC (BPF) for the Dirichlet model
 #'
 #' Runs a conditional bootstrap particle filter with ancestor sampling and arma
@@ -427,7 +457,7 @@ save_particle_output <- function(xa, w_log, w_norm, nn, tt, tmp_dir) {
 #' @param sig_sq_x \code{DD}-dimensional vector of latent state error variance
 #' @param phi_x \code{DD}-dimensional vector of autoregressive parameters of
 #'   latent state process
-#' @param x_r_all reference/conditioning trajectory; smae dimension as `y_all`
+#' @param x_r_all reference/conditioning trajectory; same dimension as `y_all`
 #'    i.e. `TT x DD x NN`
 #'
 #' @return arma::matrix of DD components: DD columns are

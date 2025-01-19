@@ -305,6 +305,32 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// save_three_matrices
+void save_three_matrices(const arma::mat& mat1, const arma::mat& mat2, const arma::mat& mat3, const std::string& tmp_dir);
+RcppExport SEXP _BNMPD_save_three_matrices(SEXP mat1SEXP, SEXP mat2SEXP, SEXP mat3SEXP, SEXP tmp_dirSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type mat1(mat1SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type mat2(mat2SEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type mat3(mat3SEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type tmp_dir(tmp_dirSEXP);
+    save_three_matrices(mat1, mat2, mat3, tmp_dir);
+    return R_NilValue;
+END_RCPP
+}
+// save_one_matrix
+void save_one_matrix(const arma::mat& mat1, int d, int pp, const std::string& tmp_dir);
+RcppExport SEXP _BNMPD_save_one_matrix(SEXP mat1SEXP, SEXP dSEXP, SEXP ppSEXP, SEXP tmp_dirSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type mat1(mat1SEXP);
+    Rcpp::traits::input_parameter< int >::type d(dSEXP);
+    Rcpp::traits::input_parameter< int >::type pp(ppSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type tmp_dir(tmp_dirSEXP);
+    save_one_matrix(mat1, d, pp, tmp_dir);
+    return R_NilValue;
+END_RCPP
+}
 // cbpf_as_d_cpp_par
 Rcpp::List cbpf_as_d_cpp_par(const Rcpp::IntegerVector& id_parallelize, const Rcpp::List& nn_list_dd, const int& N, const int& TT, const int& DD, const int& PP, const arma::cube& y_all, const arma::cube& regs_beta_all, const arma::vec& sig_sq_x, const arma::vec& phi_x, const arma::cube& x_r_all);
 RcppExport SEXP _BNMPD_cbpf_as_d_cpp_par(SEXP id_parallelizeSEXP, SEXP nn_list_ddSEXP, SEXP NSEXP, SEXP TTSEXP, SEXP DDSEXP, SEXP PPSEXP, SEXP y_allSEXP, SEXP regs_beta_allSEXP, SEXP sig_sq_xSEXP, SEXP phi_xSEXP, SEXP x_r_allSEXP) {
@@ -676,6 +702,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BNMPD_compute_dd_range_x", (DL_FUNC) &_BNMPD_compute_dd_range_x, 2},
     {"_BNMPD_w_as_c", (DL_FUNC) &_BNMPD_w_as_c, 7},
     {"_BNMPD_save_particle_output", (DL_FUNC) &_BNMPD_save_particle_output, 6},
+    {"_BNMPD_save_three_matrices", (DL_FUNC) &_BNMPD_save_three_matrices, 4},
+    {"_BNMPD_save_one_matrix", (DL_FUNC) &_BNMPD_save_one_matrix, 4},
     {"_BNMPD_cbpf_as_d_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_d_cpp_par, 11},
     {"_BNMPD_cbpf_as_dm_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_dm_cpp_par, 12},
     {"_BNMPD_cbpf_as_gd_cpp_par", (DL_FUNC) &_BNMPD_cbpf_as_gd_cpp_par, 12},

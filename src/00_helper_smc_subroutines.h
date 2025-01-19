@@ -35,12 +35,25 @@ double w_as_c(const arma::cube& mean_diff,
               const arma::vec& log_weights,
               const int& N,
               const arma::uvec& id_as_lnspc);
+double w_as_c2(const arma::cube& mean_diff,
+               const int PP,
+               int TT,
+               const arma::uvec dd_rng,
+               const arma::rowvec& vcm_diag,
+               const arma::vec& log_weights,
+               const int& N,
+               const arma::uvec& id_as_lnspc);
 void save_particle_output(const arma::mat& xa,
                           const arma::vec& w_log,
                           const arma::vec& w_norm,
                           int nn,
                           int tt,
                           const std::string& tmp_dir = "./tmp/");
+void save_three_matrices(const arma::mat& mat1,
+                         const arma::mat& mat2,
+                         const arma::mat& mat3,
+                         const std::string& tmp_dir);
+void save_one_matrix(const arma::mat& mat1, int d, int pp, const std::string& tmp_dir);
 void save_to_file_mat(
   const arma::mat& data,
   const std::string& filename,

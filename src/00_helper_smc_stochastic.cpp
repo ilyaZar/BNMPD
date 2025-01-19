@@ -114,12 +114,15 @@ arma::cube bpf_propagate(int N, int DD, int PP, int PP_use,
   arma::cube mean_diff(N, DD, PP_use, arma::fill::zeros);
   arma::uvec id_phi(PP);
   if (PP <= 1) {
+    arma::uvec id_phi_use(1); // implicitly setting PP_use = 1; see l.133
     for (auto d : dd_rng) {
       id_phi = get_phi_range(PP, d);
+      id_phi_use = id_phi.subvec(0, 0); //settting PP_use = 1 - 1 = 0; see l.140
       eval_f = f_cpp(X.submat(id(d), tmin1, id(d + 1) - 1, tmin1),
-                     arma::as_scalar(phi(id_phi)),
+                     arma::as_scalar(phi(id_phi_use)),
                      arma::as_scalar(Xbeta.submat(t, d, t, d)));
       mean_diff.slice(0).col(d) = eval_f -  Xr(t, d);
+      // save_one_matrix(mean_diff.slice(0).col(d), d, 0, "./tmp/");
       eval_f = eval_f.elem(A);
       X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
               sqrt(sig_sq(d)),
@@ -127,6 +130,9 @@ arma::cube bpf_propagate(int N, int DD, int PP, int PP_use,
     }
   } else {
     int TT = Xr.n_rows;
+    // if (t >= 48) {
+    //   save_three_matrices(X, Xr, Xbeta, "./tmp/");
+    // }
     arma::mat Xr_Xa(N, PP_use, arma::fill::zeros);
     arma::uvec id_phi_use(PP_use);
     arma::uvec id_xmt_row(N);
@@ -140,6 +146,7 @@ arma::cube bpf_propagate(int N, int DD, int PP, int PP_use,
                          phi(id_phi_use),
                          arma::as_scalar(Xbeta.submat(t, d, t, d)));
       mean_diff.slice(0).col(d) = eval_f -  Xr(t, d);
+      // save_one_matrix(mean_diff.slice(0).col(d), d, 0, "./tmp/");
       eval_f = eval_f.elem(A);
       X.submat(id(d), t, id(d + 1) - 1, t) = propagate_bpf(eval_f,
               sqrt(sig_sq(d)),
@@ -159,6 +166,7 @@ arma::cube bpf_propagate(int N, int DD, int PP, int PP_use,
                             phi(id_phi_use),
                             as_scalar(Xbeta.submat(t_plus_pp, d, t_plus_pp, d)));
           mean_diff.slice(pp).col(d) = eval_f -  Xr(t_plus_pp, d);
+          // save_one_matrix(mean_diff.slice(pp).col(d), d, pp, "./tmp/");
         }
       }
     }
