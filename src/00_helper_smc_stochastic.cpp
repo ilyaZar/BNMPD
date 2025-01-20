@@ -160,7 +160,7 @@ arma::cube bpf_propagate(int N, int DD, int PP, int PP_use,
           id_xmt_row = arma::linspace<arma::uvec>(id(d), id(d + 1) - 1, N);
           id_xmt_col = arma::linspace<arma::uvec>(
             tmin1, tmin1 - (PP_use - pp - 1), PP_use - pp);
-          Xr_Xa.cols(pp, PP_use - pp) = X.submat(
+          Xr_Xa.cols(pp, Xr_Xa.n_cols - 1) = X.submat(
             id_xmt_row, id_xmt_col);
           eval_f = f_cpp_ARp(Xr_Xa,
                             phi(id_phi_use),
