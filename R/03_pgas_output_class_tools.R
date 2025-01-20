@@ -602,11 +602,42 @@ burn_and_thin_outBNMPD <- function(out, mcmc_settings) {
   out <- fix_pmcmc_dims_outBNMPD(out)
   return(out)
 }
-compute_mse_outBNMPD <- function(data_posterior_fit_means,
+#' Computes the In-Sample MSE Based on Posterior Means and Data
+#'
+#' This function calculates the mean squared error (MSE) for in-sample
+#' data based on posterior means and the provided dependent variable data.
+#'
+#' @param data_posterior_fit A list containing the posterior fit data, as
+#'   returned by [BNMPD::compute_outBNMPD_mes()]. This list is expected to
+#'   include a `measurement_fit` element with the posterior means.
+#' @param data_dependent_variable A data frame or matrix of dependent variable
+#'   data, as returned by [BNMPD::data_set_plot_fit()]. The columns must align
+#'   with the posterior fit dimensions after accounting for the offset.
+#' @param offset_dep An integer indicating the number of initial columns in
+#'   `data_dependent_variable` that are not part of the dependent variables.
+#'   Typically, this includes cross-sectional and time-series identifiers
+#'   (default is 2).
+#' @param sttgs_scientific A list of settings for formatting the output in
+#'   scientific notation. The list should include:
+#'   - `scientific`: A logical value indicating whether to use scientific
+#'     notation for the MSE column in the output (default is `FALSE`).
+#'   - `digits`: An integer specifying the number of significant digits to
+#'     display in the MSE column (default is 8).
+#'
+#' @returns A `data.frame` with the following columns:
+#'   - `total_obs`: The total number of non-zero observations per dimension.
+#'   - `MSE`: The mean squared error for each dimension, formatted according
+#'     to `sttgs_scientific`.
+#'
+#' @export
+compute_mse_outBNMPD <- function(data_posterior_fit,
                                  data_dependent_variable,
-                                 offset_dep = 2) {
+                                 offset_dep = 2,
+                                 sttgs_scientific = list(
+                                   scientific = FALSE, digits = 8)) {
   NN_TT  <- nrow(data_dependent_variable)
   DD_dep <- ncol(data_dependent_variable) - offset_dep
+  data_posterior_fit_means <- data_posterior_fit$measurement_fit
   DD_pst <- dim(data_posterior_fit_means)[2]
   if (DD_dep != DD_pst) {
     msg <- "Dep. var. data and post. fit mean have different column numbers."
@@ -621,11 +652,15 @@ compute_mse_outBNMPD <- function(data_posterior_fit_means,
 
   mses <- colSums(quadr_diffs) / div_by
 
-  out <- matrix(c(div_by, mses), byrow = TRUE, nrow = 2)
+  out <- t(matrix(c(div_by, mses), byrow = TRUE, nrow = 2))
   out <- data.frame(out)
-  colnames(out) <- formatC(paste0("DD", seq_len(DD_dep)), digits = 1, flag = 0)
-  rownames(out) <- c("tot.obs", "MSE")
-  out <- format(out, scientific = FALSE, digits = 4)
+  rownames(out) <- formatC(paste0("DD", seq_len(DD_dep)), digits = 1, flag = 0)
+  colnames(out) <- c("total_obs", "MSE")
+  if (!is.null(sttgs_scientific)) {
+    out[["MSE"]] <- format(out[["MSE"]],
+                           scientific = sttgs_scientific$scientific,
+                           digits = sttgs_scientific$digits)
+  }
   return(out)
 }
 fix_pmcmc_dims_outBNMPD <- function(out) {

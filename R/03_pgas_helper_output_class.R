@@ -405,17 +405,35 @@ subset_outBNMPD <- function(out, num_mult_component, par_qualifier = NULL) {
   # } else if (type_rgx == "standard") {
   #   num_comp_adj <- num_mult_component
   # }
-  num_comp_adj <- num_mult_component
-  out_subset$vcm_bet_u <- out$vcm_bet_u[num_comp_adj]
+  num_comp_adj     <- num_mult_component
+  if (type_rgx == "generalized") {
+    if (par_qualifier == "A") {
+      num_comp_adj_vcm <- num_mult_component + (num_mult_component - 1)
+    } else if (par_qualifier == "B") {
+      num_comp_adj_vcm <- num_mult_component * 2
+    }
+  } else {
+    num_comp_adj_vcm   <- num_comp_adj
+  }
+  out_subset$vcm_bet_u <- out$vcm_bet_u[num_comp_adj_vcm]
 
   if (get_simulation_run_type_outBNMPD(out) == "pmcmc") {
     out_subset$x <- out$x[, num_comp_adj, , ]
   }
-  out_subset$true_vals$sig_sq <-  out_subset$true_vals$sig_sq[num_mult_component, , drop = FALSE]
-  out_subset$true_vals$phi <-  out_subset$true_vals$phi[num_mult_component]
-  out_subset$true_vals$beta_z_lin <-  out_subset$true_vals$beta_z_lin[num_mult_component]
-  out_subset$true_vals$beta_u_lin <-  out_subset$true_vals$beta_u_lin[num_mult_component]
-  out_subset$true_vals$vcm_u_lin <-  out_subset$true_vals$vcm_u_lin[num_mult_component]
+
+  if (type_rgx == "standard") {
+    out_subset$true_vals$sig_sq <-  out_subset$true_vals$sig_sq[num_mult_component, , drop = FALSE]
+    out_subset$true_vals$phi <-  out_subset$true_vals$phi[num_mult_component]
+    out_subset$true_vals$beta_z_lin <-  out_subset$true_vals$beta_z_lin[num_mult_component]
+    out_subset$true_vals$beta_u_lin <-  out_subset$true_vals$beta_u_lin[num_mult_component]
+    out_subset$true_vals$vcm_u_lin <-  out_subset$true_vals$vcm_u_lin[num_mult_component]
+  } else if (type_rgx == "generalized") {
+    out_subset$true_vals$sig_sq <-  out_subset$true_vals$sig_sq[num_mult_component, , par_qualifier, drop = FALSE]
+    out_subset$true_vals$phi <-  out_subset$true_vals$phi[[par_qualifier]][num_mult_component]
+    out_subset$true_vals$beta_z_lin <-  out_subset$true_vals$beta_z_lin[[par_qualifier]][num_mult_component]
+    out_subset$true_vals$beta_u_lin <-  out_subset$true_vals$beta_u_lin[[par_qualifier]][num_mult_component]
+    out_subset$true_vals$vcm_u_lin <-  out_subset$true_vals$vcm_u_lin[[par_qualifier]][num_mult_component]
+  }
   return(out_subset)
 }
 #' Get MCMC subset of full PGAS output instance
