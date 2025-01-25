@@ -1,15 +1,23 @@
 #' Adjusted data set for plotting of the model fit
 #'
-#' @param model_BNMPD an instance from [BNMPD::ModelBNMPD$new]
+#' @inheritParams compute_outBNMPD_mes
+#' @param id_exclude_tt optional giving time indices to exclude; defaults to `NULL` where no
+#'   indices are excluded
 #'
 #' @returns internal data (as a `tibble`) to be used for to plot model fit
 #' @export
-data_set_plot_fit <- function(model_BNMPD) {
+data_set_plot_fit <- function(model_BNMPD, id_exclude_tt = NULL) {
   data_model <- model_BNMPD$get_data_set_raw()
   model_meta <- model_BNMPD$get_data_meta()
   other_vars_to_plot <- c(model_meta$CS$cs_name_var, model_meta$TS$ts_name_var)
-  data_model %>%
+  data_out <- data_model %>%
     dplyr::select(tidyselect::all_of(c(other_vars_to_plot, model_meta$Y$var_y)))
+  ts_exclude <- unique(data_model[[model_meta$TS$ts_name_var]])[id_exclude_tt]
+  if (!is.null(ts_exclude)) {
+    data_out <- data_out %>%
+      dplyr::filter(!(.data[[model_meta$TS$ts_name_var]] %in% ts_exclude))
+  }
+  return(data_out)
 }
 #' Function that generates all plots of model fitted values vs. data
 #'
@@ -51,6 +59,7 @@ generate_plot_fit <- function(
       plot_type_summary = "shares",
       plot_type_individual = "lines",
       id_exclude_y_summary = NULL,
+      id_exclude_tt = NULL,
       color_sequence = wesanderson::wes_palette(n = 5, name = "Zissou1"),
       PLOT_SAVE = TRUE,
       grid_dim = c(2, 3),
@@ -60,8 +69,12 @@ generate_plot_fit <- function(
   stopifnot(`Argument 'plot_type_individual' must be "lines" or "area"` =
               settings_plots$plot_type_individual %in% c("lines", "area"))
   cs_names <- model_BNMPD$get_data_meta()$CS$cs_var_val
-  data_plot_fit <- data_set_plot_fit(model_BNMPD)
+  id_no_tt <- settings_plots$id_exclude_tt
+  data_plot_fit <- data_set_plot_fit(model_BNMPD, id_no_tt)
   data_posterior_fit_y <- data_posterior_fit$measurement_fit
+  if (!is.null(id_no_tt)) {
+    data_posterior_fit_y <- data_posterior_fit_y[-c(id_no_tt) , , , ]
+  }
   dep_var_names <- names(data_plot_fit)[-c(1, 2)]
   NN <- length(cs_names)
   plot_out_list  <- vector("list", NN)
