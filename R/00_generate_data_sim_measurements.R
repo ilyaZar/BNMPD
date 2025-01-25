@@ -241,6 +241,24 @@ my_r_generalized_dirichlet <- function(alpha, beta, DD) {
   x[, DD] <- 1 - rowSums(x[, 1:(DD - 1), drop = FALSE])
   return(x)
 }
+my_r_generalized_dirichlet_2 <- function(alpha, beta, DD) {
+  if(!(nrow(alpha) == nrow(beta)) || !(ncol(alpha) == ncol(beta))) {
+    stop("Arguments 'alpha' and 'beta' must have the same number of rows/cols!")
+  }
+  TT <- nrow(alpha)
+  x  <- matrix(0, nrow = TT, ncol = DD)
+  for (t in 1:TT) {
+    tmp_sum <- 0
+    for (k in seq_len(DD - 1)) {
+      x[t, k] <- stats::rbeta(n = 1,
+                              shape1 = alpha[t, k],
+                              shape2 = beta[t, k]) * (1 - tmp_sum)
+      tmp_sum <- tmp_sum + x[t, k]
+    }
+  }
+  x[, DD] <- 1 - rowSums(x[, 1:(DD - 1), drop = FALSE])
+  return(x)
+}
 #' Generates random samples from a mulinomial distribution
 #'
 #' Generates random samples from multinomial distribution; the dimension of the
