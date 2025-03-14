@@ -98,10 +98,10 @@ check_stationarity <- function(vals, order, SILENT = FALSE) {
   if (order == 1) {
     check <- all((1 - abs(vals[1])) < 0.01 || abs(vals[1]) > 1)
   } else if (order <= 3) {
-    check_p1 <- !check_stationarity_formal(vals)
-    check_p2 <- all(any((1 - abs(vals)) < 0.01) || any(abs(vals) > 1))
-    check <- check_p1 || check_p2
-    # check <- all((1 - sum(abs(vals[1:order]))) < 0.01 || sum(abs(vals[1:order])) > 1)
+    # check_p1 <- !check_stationarity_formal(vals)
+    # check_p2 <- all(any((1 - abs(vals)) < 0.01) || any(abs(vals) > 1))
+    # check <- check_p1 || check_p2
+    check <- all((1 - sum(abs(vals[1:order]))) < 0.01 || sum(abs(vals[1:order])) > 1)
   } else {
     check_p1 <- !ARToPacf(vals)
     check_p2 <- all(any((1 - abs(vals)) < 0.01) || any(abs(vals) > 1))
