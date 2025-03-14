@@ -54,6 +54,7 @@ data_set_plot_fit <- function(model_BNMPD, id_exclude_tt = NULL) {
 generate_plot_fit <- function(
     model_BNMPD,
     data_posterior_fit,
+    data_plot_fit = NULL,
     dep_var_names_display,
     settings_plots = list(
       plot_type_summary = "shares",
@@ -70,7 +71,9 @@ generate_plot_fit <- function(
               settings_plots$plot_type_individual %in% c("lines", "area"))
   cs_names <- model_BNMPD$get_data_meta()$CS$cs_var_val
   id_no_tt <- settings_plots$id_exclude_tt
-  data_plot_fit <- data_set_plot_fit(model_BNMPD, id_no_tt)
+  if (is.null(data_plot_fit)) {
+    data_plot_fit <- data_set_plot_fit(model_BNMPD, id_no_tt)
+  }
   data_posterior_fit_y <- data_posterior_fit$measurement_fit
   if (!is.null(id_no_tt)) {
     data_posterior_fit_y <- data_posterior_fit_y[-c(id_no_tt) , , , ]
