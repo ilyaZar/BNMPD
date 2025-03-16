@@ -69,6 +69,32 @@ pgas <- function(pgas_model,
       envir_par$X[, , m, ] <- envir_par$true_states
     }
   }
+  if (sim_type == "smc") {
+    stopifnot(`Mod_type must be a simulation for SMC only runs` = mod_type == "simulation")
+    # 0. run cBPF and use output as first conditioning trajectory
+    pgas_init(pe = envir_par,
+              pc = arg_list_cluster_smc,
+              RUN_PARALLEL = parallel)
+    for (m in 2:envir_par$MM) {
+      # I. Run GIBBS part
+      if (!is.null(envir_par$sig_sq_x)) envir_par$sig_sq_x[, m] <- envir_par$sig_sq_x[, m - 1]
+      if (!is.null(envir_par$phi_x)) envir_par$phi_x[, m] <- envir_par$phi_x[, m - 1]
+      if (!is.null(envir_par$bet_z)) envir_par$bet_z[, m] <- envir_par$bet_z[, m - 1]
+      if (!is.null(envir_par$bet_u)) {
+        envir_par$bet_u[, m, ] <- envir_par$bet_u[, m - 1, ]
+        for (dd in 1:envir_par$DD2) {
+          envir_par$vcm_bet_u[[dd]][, , m] <- envir_par$vcm_bet_u[[dd]][, , m - 1]
+        }
+      }
+      # II. Run cBPF-AS part
+      pgas_run(
+        pe = envir_par,
+        pc = arg_list_cluster_smc,
+        mm = m,
+        RUN_PARALLEL = parallel
+      )
+    }
+  }
   cleanup_cluster(pe = envir_par, close = close_cluster)
   out <- new_outBNMPD(pe = envir_par, mod_type, sim_type)
   return(out)
