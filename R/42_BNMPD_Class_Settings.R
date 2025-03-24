@@ -103,8 +103,9 @@ Settings <- R6::R6Class("Settings",
                                 cat(crayon::magenta("Using devel-rh7...\n"))
                                 private$.pf_sel <- 2
                                 private$.pf_set <- private$.pf_all[2]
-                              } else if (tmp_prt == "mpi-rh7") {
-                                cat(crayon::magenta("Using mpi-rh7...\n"))
+                              } else if (tmp_prt %in% c("mpi-rh7", "mpi")) {
+                                if (tmp_prt == "mpi-rh7") cat(crayon::magenta("Using mpi-rh7 on CHEOPS...\n"))
+                                if (tmp_prt == "mpi") cat(crayon::magenta("Using mpi on RAMSES...\n"))
                                 private$.pf_sel <- 3
                                 private$.pf_set <- private$.pf_all[3]
                               } else if (tmp_prt == "") {
