@@ -216,7 +216,7 @@ Settings <- R6::R6Class("Settings",
                                 out[[3]] <- env_slurm_empty
                                 out[[4]] <- env_slurm_empty
                                 out[[5]] <- env_slurm_empty
-                              } else if (check_prt == "mpi-rh7") {
+                              } else if (check_prt %in% c("mpi-rh7", "mpi")) {
                                 out[[2]] <- env_slurm_empty
                                 out[[3]] <- env_slurm
                                 out[[4]] <- env_slurm_empty
