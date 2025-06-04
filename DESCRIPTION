@@ -31,6 +31,8 @@ Imports:
     tibble,
     yaml,
     jsonlite,
+    colorDF,
+    sjlabelled,
     snow,
     rlecuyer,
     dplyr,
