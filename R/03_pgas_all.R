@@ -42,6 +42,7 @@ pgas <- function(pgas_model,
   load_model(env_model = pgas_model, to_env = envir_par)
   arg_list_cluster_smc <- prepare_cluster(pe = envir_par, PARALLEL = parallel)
   # Run (P)MCMC loop
+  print(arg_list_cluster_smc$nn_list_dd)
   if (sim_type == "pmcmc") {
     # 0. run cBPF and use output as first conditioning trajectory
     pgas_init(pe = envir_par,
