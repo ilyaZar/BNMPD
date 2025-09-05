@@ -108,7 +108,6 @@ pgas_init <- function(pe, pc, mm = 1, RUN_PARALLEL = TRUE) {
   update_states <- update_states(pe, out_cpf, mm,
                                  CLUSTER = RUN_PARALLEL,
                                  CHECK_CL_ORDER = TRUE)
-
   progress_print(mm)
 }
 pgas_run <- function(pe, pc, mm, RUN_PARALLEL = TRUE) {
@@ -121,6 +120,5 @@ pgas_run <- function(pe, pc, mm, RUN_PARALLEL = TRUE) {
   update_states <- update_states(pe, out_cpf, mm,
                                  CLUSTER = RUN_PARALLEL,
                                  CHECK_CL_ORDER = FALSE)
-
   progress_print(mm)
 }

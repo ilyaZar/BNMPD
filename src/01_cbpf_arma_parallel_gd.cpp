@@ -71,6 +71,9 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
   arma::uvec t_word(1, arma::fill::zeros);
   int jj = 0;
   // ITERATING OVER CROSS SECTIONS ASSIGNED TO THIS CBPF INSTANCE:
+  double time_spent = 0;
+  std::cerr<< "Before NN-loop -- worker-ref: " << id_parallelize << std::endl;
+  auto t0 = std::chrono::steady_clock::now();
   for (int j : ID_NN_ITERATE) {
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////////////// 0. DATA CONTAINERS ///////////////////////////
@@ -90,6 +93,7 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     a.fill(0.0);
     // reset garbage containers storing intermediate results
     mean_diff.fill(0);
+    // std::cerr<< "Initialize for t = 0" << std::endl;
     ////////////////////////////////////////////////////////////////////////////
     ///////////////////////// I. INITIALIZATION (t = 0) ////////////////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -127,6 +131,7 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
     // R function of this package `analyse_particle_weight_output()`.
     //////////////// OPTIONAL FUNCTION TO SAVE PARTICLE OUTPUT /////////////////
     // save_particle_output(xa, w_log, w_norm, j, 0, "./tmp/");
+    // std::cerr<< "BEFORE 1:TT-loop" << std::endl;
     for (int t = 1; t < PP; ++t) {
       // resampling
       a.col(t) = resample(w_norm, N, ID_AS_LNSPC);
@@ -184,9 +189,13 @@ Rcpp::List cbpf_as_gd_cpp_par(const Rcpp::IntegerVector& id_parallelize,
                             xa.submat(id_x_avl, t_word), id_x_all);
       w_norm = w_normalize_cpp(w_log, "particle");
     }
+    // std::cerr<< "AFTER 1:TT-loop" << std::endl;
     x_out_list(jj) = draw_trajectory(N, TT, DD2, dd_range_x,
                                      id_x_all, xa, a, w_norm);
     jj++;
   }
+  time_spent = std::chrono::duration<double>(
+    std::chrono::steady_clock::now() - t0).count();
+  std::cerr<< "After NN-loop -- worker-ref: " << id_parallelize << " -- time spent "<< time_spent <<std::endl;
   return (x_out_list);
 }

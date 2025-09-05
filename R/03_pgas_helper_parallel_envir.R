@@ -49,8 +49,10 @@ generate_cluster <- function(envir) {
     } else {
       envir$cl <- snow::makeCluster(cores, type = envir$cluster_type)
     }
+    # fix_MKL_OPENBLAS_oversubscription(envir)
   } else if (ctype %in% c("SOCK", "PSOCK")) {
     envir$cl <- parallel::makeCluster(cores, "PSOCK")
+    # fix_MKL_OPENBLAS_oversubscription(envir)
   } else {
     stop(paste0("Cluster type ", ctype, " not supported or unknown."))
   }
@@ -82,6 +84,27 @@ check_cluster_core_worker <- function(envir) {
   )
   return(invisible(NULL))
 }
+fix_MKL_OPENBLAS_oversubscription <- function(envir) {
+  if (is.null(envir$.__blas_pinned__)) {
+    snow::clusterCall(envir$cl, function() {
+      Sys.setenv(
+        OMP_NUM_THREADS        = "1",
+        OPENBLAS_NUM_THREADS   = "1",
+        MKL_NUM_THREADS        = "1",
+        VECLIB_MAXIMUM_THREADS = "1",
+        BLIS_NUM_THREADS       = "1",
+        MKL_DYNAMIC            = "FALSE"
+      )
+      if (requireNamespace("RhpcBLASctl", quietly = TRUE)) {
+        RhpcBLASctl::blas_set_num_threads(1)
+        RhpcBLASctl::omp_set_num_threads(1)
+      }
+      TRUE
+    })
+    envir$.__blas_pinned__ <- TRUE
+  }
+}
+
 progress_print <- function(iter) {
   cat("cSMC iteration number:", iter, "\n")
 }
