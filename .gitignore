@@ -19,6 +19,7 @@
 *.json
 *.csv
 *.env
+*.rds
 /data/*
 /doc/*
 /simulations/*
