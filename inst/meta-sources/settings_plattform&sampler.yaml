@@ -7,24 +7,24 @@ LOCAL-CGS:
 CHEOPS-DEV:
   num_cores: 24
   cluster_type: MPI
-  num_particles: 2000
-  pmcmc_iterations: 1000
+  num_particles: 1000
+  pmcmc_iterations: 100
   csmc_type: bpf
 CHEOPS-MPI:
-  num_cores: 48
+  num_cores: 21
   cluster_type: MPI
-  num_particles: 2000
-  pmcmc_iterations: 1000
+  num_particles: 1000
+  pmcmc_iterations: 100
   csmc_type: bpf
 CHEOPS-LCL:
   num_cores: 6
   cluster_type: MPI
-  num_particles: 2000
-  pmcmc_iterations: 1000
+  num_particles: 1000
+  pmcmc_iterations: 100
   csmc_type: bpf
 CHEOPS-INT:
   num_cores: 32
   cluster_type: MPI
-  num_particles: 2000
-  pmcmc_iterations: 1000
+  num_particles: 1000
+  pmcmc_iterations: 100
   csmc_type: bpf

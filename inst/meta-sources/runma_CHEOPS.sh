@@ -16,8 +16,8 @@ module load openmpi/4.1.1_mpirun
 module load R/4.3.1_system
 
 export PATH=$PATH:$HOME/R_libs/snow
-dir_top="/home/izarubin/projects"
-dir_project="final_simulations"
+dir_top="/home/izarubin/projects/final_simulations"
+dir_project="smc-evals"
 dir_model="<PATH_TO_MODEL>"
 filenameR="<PATH_TO_SCRIPT.R>"
 

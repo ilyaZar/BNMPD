@@ -7,38 +7,35 @@ pths_in <- get_paths_modelBNMPD_input(pth_mod)
 pths_ou <- get_paths_modelBNMPD_results(pth_mod)
 
 model <- ModelBNMPD$new(path_to_project = pths_in$pth_project,
-                        path_to_states_init = pths_in$pth_states_true,
+                        path_to_states_init = pths_in$pth_states_zero,
                         path_to_states_true = pths_in$pth_states_true,
                         path_to_params_init = pths_in$pth_params_true,
                         path_to_params_true = pths_in$pth_params_true)
 
-# model$set_param_inits(pths_in$pth_params_defl)
-# model$set_param_inits(pths_in$pth_params_true)
-
-################################################################################
-################################## LOCAL CGS ###################################
-################################################################################
-pgas_model <- model$load_modeldata_runtime_pgas()
-out <- pgas(pgas_model,
-            sim_type = "pmcmc",
-            mod_type = "simulation",
-            settings_seed = list(seed_all_init = 123))
-model$save_pgas_model_out(out)
-# out_all <- model$get_model_output()
+# pth_input_start_vals <- file.path(pth_mod, "model/input")
+# true_params <- readRDS(file.path(pth_input_start_vals, "true_params.rds"))
+# defl_params <- readRDS(file.path(pth_input_start_vals, "defl_params_old.rds"))
+# for (dd in seq_len(model$get_modeldata_dimensions("DD2"))) {
+#   defl_params$beta_u_lin[[dd]][] <- 0.1
+#   defl_params$beta_u_lin[[dd]][] <- 0.1
+#   # defl_params$beta_u_lin[[dd]] <- sign(true_params$beta_u_lin[[dd]])/100
+# }
+# defl_params$sig_sq[] <- 0.01
+# saveRDS(defl_params, file.path(pth_input_start_vals, "defl_params.rds"))
 
 ################################################################################
 ################################ CHEOPS CLUSTER ################################
 ################################################################################
-# CLOSE_CL <- FALSE
-# MAX_ITER <- 100
-# for (i in seq_len(MAX_ITER)) {
-#   if (i == MAX_ITER) CLOSE_CL <- TRUE
-#   pgas_model <- model$load_modeldata_runtime_pgas()
-#   out <- pgas(
-#     pgas_model,
-#     sim_type = "pmcmc",
-#     mod_type = "simulation",
-#     settings_seed = list(seed_all_init = 42234),
-#     close_cluster = CLOSE_CL)
-#   model$save_pgas_model_out(out)
-# }
+CLOSE_CL <- FALSE
+MAX_ITER <- 25
+for (i in seq_len(MAX_ITER)) {
+  if (i == MAX_ITER) CLOSE_CL <- TRUE
+  pgas_model <- model$load_modeldata_runtime_pgas()
+  out <- pgas(
+    pgas_model,
+    sim_type = "smc",
+    mod_type = "simulation",
+    settings_seed = list(seed_all_init = 42234),
+    close_cluster = CLOSE_CL)
+  model$save_pgas_model_out(out)
+}
