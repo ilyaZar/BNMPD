@@ -34,10 +34,7 @@ generate_environment_parallel <- function(envir_current,
   return(envir_used)
 }
 prepare_cluster <- function(pe, mm = 1, PARALLEL = TRUE) {
-  if (PARALLEL) {
-    pe$task_indices <- snow::splitIndices(pe$NN, ncl = pe$num_cores)
-    generate_cluster(pe)
-  }
+  if (PARALLEL) generate_cluster(pe)
   get_args_list_smc_internal(pe, mm, PARALLEL = PARALLEL)
 }
 generate_cluster <- function(envir) {
@@ -48,16 +45,42 @@ generate_cluster <- function(envir) {
   if (ctype == "MPI") {
     CL_EXISTS <- isFALSE(is.null(snow::getMPIcluster()))
     if (CL_EXISTS) {
-      envir$cl <- snow::makeCluster()
+      envir$cl <- snow::getMPIcluster()
     } else {
       envir$cl <- snow::makeCluster(cores, type = envir$cluster_type)
     }
   } else if (ctype %in% c("SOCK", "PSOCK")) {
     envir$cl <- parallel::makeCluster(cores, "PSOCK")
+  } else {
+    stop(paste0("Cluster type ", ctype, " not supported or unknown."))
   }
-
-  if (!is.null(cseed)) snow::clusterSetupRNGstream(envir$cl, seed = cseed)
+  check_cluster_core_worker(envir)
+  if (is.null(envir$NN) || envir$NN < 1L) stop("NN >= 1 for clusterSplit")
+  envir$task_indices <- parallel::clusterSplit(envir$cl, seq_len(envir$NN))
+  if (!is.null(cseed)) {
+    cseed <- as.integer(cseed)
+    if (length(cseed) != 1L || is.na(cseed)) stop("Invalid random seed in pgas")
+    parallel::clusterSetRNGStream(envir$cl, iseed = cseed)
+  }
   return(invisible(TRUE))
+}
+check_cluster_core_worker <- function(envir) {
+  json_cores <- envir$num_cores
+  TMP_WORKER_CHECK    <- length(envir$cl)
+  if (!identical(TMP_WORKER_CHECK, as.integer(json_cores))) {
+    stop(
+      sprintf(
+        "workers=%d != num_cores(json)=%d",
+        TMP_WORKER_CHECK, json_cores)
+    )
+  }
+  message(
+    sprintf(
+      "Cluster setup: `cluster_type=%s` with `workers=%d` tasks `NN=%d`",
+      envir$cluster_type, TMP_WORKER_CHECK, envir$NN
+    )
+  )
+  return(invisible(NULL))
 }
 progress_print <- function(iter) {
   cat("cSMC iteration number:", iter, "\n")
