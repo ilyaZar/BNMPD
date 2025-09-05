@@ -45,7 +45,7 @@ new_bet_z <- function(SIMUL_Z_BETA,
 #'   if \code{num} is a vector of length \code{DD}, \code{num[d]}, for
 #'   \code{d=1,...,DD}
 get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
-  SCALE_UP <- 15
+  SCALE_UP <- 10
   DD2 <- get_DD2(distribution, DD)
   DD1 <- get_DD1(distribution, DD)
 
@@ -57,10 +57,14 @@ get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
   # tmp2 <- c(0.327, -0.435) * SCALE_UP # tmp values large, first component positive
   # tmp3 <- c(0.33, -0.43) * SCALE_UP   # tmp values small, first component negative
   # tmp4 <- c(0.332, -0.415) * SCALE_UP # tmp values small, first component positive
-  tmp1 <- c(0.325, -0.24) * SCALE_UP  # tmp values large, first component negative
-  tmp2 <- c(0.327, -0.835) * SCALE_UP # tmp values large, first component positive
-  tmp3 <- c(0.33, -0.83) * SCALE_UP   # tmp values small, first component negative
-  tmp4 <- c(0.332, -0.215) * SCALE_UP # tmp values small, first component positive
+  tmp1 <- c(0.35, -0.24) * SCALE_UP  # tmp values large, first component negative
+  tmp2 <- c(0.35, -0.24) * SCALE_UP  # tmp values large, first component negative
+  tmp3 <- c(0.35, -0.24) * SCALE_UP  # tmp values large, first component negative
+  tmp4 <- c(0.35, -0.24) * SCALE_UP  # tmp values large, first component negative
+  # tmp1 <- c(0.325, -0.24) * SCALE_UP  # tmp values large, first component negative
+  # tmp2 <- c(0.327, -0.835) * SCALE_UP # tmp values large, first component positive
+  # tmp3 <- c(0.33, -0.83) * SCALE_UP   # tmp values small, first component negative
+  # tmp4 <- c(0.332, -0.215) * SCALE_UP # tmp values small, first component positive
   if (num_reg_len == 1) {
     tmp_neg_pos_large <- rep(tmp1, length.out = num)
     tmp_pos_neg_large <- rep(tmp2, length.out = num)
@@ -83,9 +87,9 @@ get_default_beta_z_lin <- function(distribution, DD, num, intercepts) {
   if (isTRUE(SPECIAL_DIST) && SPECIAL_DIST_TYPE == "GEN") {
     list_vals <- list(A = list_vals, B = list_vals)
     list_vals[["A"]] <- scale_up_intercept(list_vals[["A"]],
-                                           100, intercepts[["A"]])
+                                           1, intercepts[["A"]])
     list_vals[["B"]] <- scale_up_intercept(list_vals[["B"]],
-                                           100, intercepts[["B"]])
+                                           1, intercepts[["B"]])
   } else if (isFALSE(SPECIAL_DIST) || SPECIAL_DIST_TYPE == "MULT") {
     # list_vals <- scale_up_intercept(list_vals, 100, intercepts)
     list_vals <- scale_up_intercept(list_vals, 1, intercepts)

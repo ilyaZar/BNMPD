@@ -88,9 +88,10 @@ generate_bet_u <- function(distribution,
                            # n0u = 50, # n0u <- num_re + 1
                            # n0u = 10, # n0u <- num_re + 1
                            n0u = NULL,
-                           seed_no = 42) {
+                           seed_no = 42,
+                           SINGLE_VCM_FORALL_D = TRUE,
+                           SINGLE_BET_U_FORALL_D = FALSE) {
   if (is.null(n0u)) n0u <- num_re[1] + 1
-  # browser()
   DD2 <- get_DD2(distribution, DD)
   DD1 <- get_DD1(distribution, DD)
   DIST_SPECIAL      <- check_special_dist_quick(distribution)
@@ -101,22 +102,51 @@ generate_bet_u <- function(distribution,
     stopifnot(is.numeric(num_re) && (length(num_re) == DD1))
     if (!is.null(seed_no))  set.seed(seed_no)
     D0u <- vector("list", DD1)
-    for (d in 1:DD1) {
-      D0u[[d]] <- get_hyper_prior_vcm(vcm_u_scl, rel_var_to_cov, num_re[d])
-      D0u[[d]] <- solveme((stats::rWishart(1, n0u, D0u[[d]]))[, , 1])
-      D0u[[d]] <- correct_cor_elem_vcm_bet_u(D0u[[d]])
-      colnames(D0u[[d]]) <- paste0("U", 1:num_re[d])
-      rownames(D0u[[d]]) <- paste0("U", 1:num_re[d])
-      true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
-      colnames(true_bet_u[[d]]) <- paste0("N", 1:NN)
-      rownames(true_bet_u[[d]]) <- paste0("U", 1:num_re[d])
+    if (SINGLE_VCM_FORALL_D) {
+      D0u[[1]] <- get_hyper_prior_vcm(vcm_u_scl, rel_var_to_cov, num_re[1])
+      D0u[[1]] <- solveme((stats::rWishart(1, n0u, D0u[[1]]))[, , 1])
+      D0u[[1]] <- correct_cor_elem_vcm_bet_u(D0u[[1]])
+    }
+    if (SINGLE_BET_U_FORALL_D) {
+      for (d in 1:DD1) {
+        true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
+      }
       for (n in 1:NN) {
-        true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
-                                              mu = rep(0, times = num_re[d]),
+        true_bet_u[[1]][, n] <- MASS::mvrnorm(n = 1,
+                                              mu = rep(0, times = num_re[1]),
                                               # mu = c(2, rep(0.5, times = num_re[d] - 1)),
                                               # mu = c(1.25, rep(0.75, times = num_re[d] - 1)),
-                                              Sigma = D0u[[d]])
+                                              Sigma = D0u[[1]])
       }
+    }
+    for (d in 1:DD1) {
+      if (isTRUE(SINGLE_VCM_FORALL_D)) {
+        D0u[[d]] <- D0u[[1]]
+      } else if (isFALSE(SINGLE_VCM_FORALL_D)) {
+        D0u[[d]] <- get_hyper_prior_vcm(vcm_u_scl, rel_var_to_cov, num_re[d])
+        D0u[[d]] <- solveme((stats::rWishart(1, n0u, D0u[[d]]))[, , 1])
+        D0u[[d]] <- correct_cor_elem_vcm_bet_u(D0u[[d]])
+      } else {
+        stop("Must select same or different random effect VCM matrices.")
+      }
+      colnames(D0u[[d]]) <- paste0("U", 1:num_re[d])
+      rownames(D0u[[d]]) <- paste0("U", 1:num_re[d])
+      if (isTRUE(SINGLE_BET_U_FORALL_D)) {
+        for (n in 1:NN) {
+          true_bet_u[[d]][, n] <- true_bet_u[[1]][, n]
+        }
+      } else if (isFALSE(SINGLE_BET_U_FORALL_D)){
+        true_bet_u[[d]] <- matrix(0, nrow = num_re[d], ncol = NN)
+        for (n in 1:NN) {
+          true_bet_u[[d]][, n] <- MASS::mvrnorm(n = 1,
+                                                mu = rep(0, times = num_re[d]),
+                                                # mu = c(2, rep(0.5, times = num_re[d] - 1)),
+                                                # mu = c(1.25, rep(0.75, times = num_re[d] - 1)),
+                                                Sigma = D0u[[d]])
+        }
+      }
+      colnames(true_bet_u[[d]]) <- paste0("N", 1:NN)
+      rownames(true_bet_u[[d]]) <- paste0("U", 1:num_re[d])
     }
     out <- list(true_bet_u = true_bet_u,
                 true_vcm_u = D0u)
@@ -152,7 +182,8 @@ get_hyper_prior_vcm <- function(vcm_u_scl, rel_var_to_cov, num_re) {
   # out_mat <- t(out_mat) %*% out_mat
   # solveme
   # A <- matrix(runif(num_re^2) * 2 - 1, ncol=num_re)
-  A <- matrix(runif(num_re^2) * 2 - 1 , ncol=num_re)
+  A <- matrix(runif(num_re^2) * 2 - 1 , ncol = num_re)
+  diag(A) <- diag(A) * 0.75
   out_mat <- t(A) %*% A
   out_mat
 }

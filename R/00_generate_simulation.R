@@ -323,20 +323,24 @@ copy_meta_files <- function(pth_to_project, project_name, TESTING = FALSE) {
     file.copy(from = file.path(tmp_root,
                                "inst/meta-sources/main_run_T01.R"),
               to = file.path(pth_to_project,
-                             paste0("main_run_", project_name, ".R")))
+                             paste0("main_run.R")))
+                             # paste0("main_run_", project_name, ".R")))
     file.copy(from = file.path(tmp_root,
                                "inst/meta-sources/main_diagnostics_T01.R"),
               to = file.path(pth_to_project,
-                             paste0("main_diagnostics_", project_name, ".R")))
+                             paste0("main_diagnostics.R")))
+                             # paste0("main_diagnostics_", project_name, ".R")))
   } else {
     file.copy(from = file.path(tmp_root,
                                "inst/meta-sources/main_run_T02.R"),
               to = file.path(pth_to_project,
-                             paste0("main_run_", project_name, ".R")))
+                             paste0("main_run.R")))
+                             # paste0("main_run_", project_name, ".R")))
     file.copy(from = file.path(tmp_root,
                                "inst/meta-sources/main_diagnostics_T02.R"),
               to = file.path(pth_to_project,
-                             paste0("main_diagnostics_", project_name, ".R")))
+                             paste0("main_diagnostics.R")))
+                             # paste0("main_diagnostics_", project_name, ".R")))
   }
   file.copy(from = file.path(tmp_root,
                              "inst/meta-sources/setup_priors.json"),
@@ -362,6 +366,7 @@ copy_bash_script_slurm <- function(pth_root, pth_project, nm_project) {
 replace_sh <- function(file, nm_project) {
   out_file <- gsub("<PATH_TO_MODEL>", nm_project, file)
   gsub("<PATH_TO_SCRIPT.R>",
-       paste0("main_run_", nm_project, ".R"),
+       paste0("main_run.R"),
+       # paste0("main_run_", nm_project, ".R"),
        out_file)
 }

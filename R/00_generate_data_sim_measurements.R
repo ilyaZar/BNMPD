@@ -101,6 +101,7 @@ generate_gen_dirichlet_obs <- function(x, NN, TT, DD, out_data) {
       out_data[["part1"]][, , n] <- 0
       return(out_data)
     }
+    browser()
     yraw <- my_r_generalized_dirichlet(alpha = xa[, , n, drop = FALSE],
                                        beta = xb[, , n, drop = FALSE],
                                        DD)
@@ -224,7 +225,7 @@ my_r_dirichlet <- function(alpha) {
 #'
 #' @return a nxD dimensional matrix of generalized Dirichlet draws
 my_r_generalized_dirichlet <- function(alpha, beta, DD) {
-  if(!(nrow(alpha) == nrow(beta)) || !(ncol(alpha) == ncol(beta))) {
+  if (!(nrow(alpha) == nrow(beta)) || !(ncol(alpha) == ncol(beta))) {
     stop("Arguments 'alpha' and 'beta' must have the same number of rows/cols!")
   }
   TT <- nrow(alpha)

@@ -31,13 +31,18 @@ check_sig_sq_user <- function(distribution, sig_sq, DD) {
 get_default_sig_sq <- function(distribution, DD, NN, dwn_scl) { # nolint: object_name_linter.
   DD2 <- get_DD2(distribution, DD)
   DD1 <- get_DD1(distribution, DD)
+   # str_scl <- 5 / dwn_scl
+  # add_scl <- 1.5 / dwn_scl
+  # str_scl <- 2 / dwn_scl
+  # add_scl <- 0 / dwn_scl
+  str_scl <- 5 / dwn_scl
+  add_scl <- 0 / dwn_scl
   # str_scl <- 3.1 / dwn_scl
   # add_scl <- 0.1 / dwn_scl
   # str_scl <- 0.31 / dwn_scl
   # add_scl <- 0.025 / dwn_scl
-
-  str_scl <- 5 / dwn_scl
-  add_scl <- 1.5 / dwn_scl
+  # str_scl <- 0.131 / dwn_scl
+  # add_scl <- 0.085 / dwn_scl
 
   SPECIAL_DIST      <- check_special_dist_quick(distribution)
   SPECIAL_DIST_TYPE <- get_dist_special_type(SPECIAL_DIST)

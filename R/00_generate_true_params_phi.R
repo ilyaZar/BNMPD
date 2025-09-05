@@ -53,21 +53,41 @@ get_default_phi <- function(distribution, DD, NN, order_p_vec) {
   SPECIAL_DIST      <- check_special_dist_quick(distribution)
   SPECIAL_DIST_TYPE <- get_dist_special_type(SPECIAL_DIST)
 
-  if (any(order_p_vec > 3)) stop("Need more default phis ...")
+  if (any(order_p_vec > 5)) stop("Need more default phis ...")
 
+  # if (all(order_p_vec == 1)) {
+  #   possible_phis <- matrix(c(0.65, 0.55, 0.45, 0.35),
+  #                           nrow = max(order_p_vec), ncol = 8)
+  # }
   if (all(order_p_vec == 1)) {
-    possible_phis <- matrix(c(0.65, 0.55, 0.45, 0.35),
-                            nrow = max(order_p_vec), ncol = 8)
+    # possible_phis <- matrix(c(0.35, 0.35, 0.35, 0.35),
+    #                         nrow = max(order_p_vec), ncol = 8)
+    possible_phis <- matrix(c(0.5, 0.5, 0.5, 0.5),
+                            nrow = max(order_p_vec), ncol = 16)
   }
   if (all(order_p_vec == 2)) {
-    possible_phis <- matrix(c(0.45, 0.45, 0.25, 0.35,
-                              0.25, 0.20, 0.35, 0.55),
+    possible_phis <- matrix(c(0.35, 0.25, 0.35, 0.25,
+                              0.15, 0.25, 0.15, 0.25),
                             nrow = max(order_p_vec), ncol = 8)
   }
   if (all(order_p_vec == 3)) {
     possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.35,
                               0.25, 0.20, 0.35, 0.25,
                               0.35, 0.20, 0.20, 0.15),
+                            nrow = max(order_p_vec), ncol = 8)
+  }
+  if (all(order_p_vec == 4)) {
+    possible_phis <- matrix(c(0.15, 0.45, 0.25, 0.1,
+                              0.35, 0.25, 0.20, 0.1,
+                              0.35, 0.25, 0.15, 0.15,
+                              0.35, 0.20, 0.20, 0.15),
+                            nrow = max(order_p_vec), ncol = 8)
+  }
+  if (all(order_p_vec == 5)) {
+    possible_phis <- matrix(c(0.15, 0.45, 0.25, -0.3, -0.1,
+                              0.35, 0.25, 0.20, -0.4, -0.1,
+                              0.35, 0.25, 0.15, -0.15, -0.1,
+                              0.35, 0.20, 0.20, -0.15, -0.1),
                             nrow = max(order_p_vec), ncol = 8)
   }
   out_phi <- vector("list", DD1)
