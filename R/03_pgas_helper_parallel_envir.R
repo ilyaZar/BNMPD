@@ -49,10 +49,10 @@ generate_cluster <- function(envir) {
     } else {
       envir$cl <- snow::makeCluster(cores, type = envir$cluster_type)
     }
-    # fix_MKL_OPENBLAS_oversubscription(envir)
+    fix_MKL_OPENBLAS_oversubscription(envir)
   } else if (ctype %in% c("SOCK", "PSOCK")) {
     envir$cl <- parallel::makeCluster(cores, "PSOCK")
-    # fix_MKL_OPENBLAS_oversubscription(envir)
+    fix_MKL_OPENBLAS_oversubscription(envir)
   } else {
     stop(paste0("Cluster type ", ctype, " not supported or unknown."))
   }
