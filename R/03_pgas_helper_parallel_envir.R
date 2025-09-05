@@ -58,13 +58,11 @@ generate_cluster <- function(envir) {
   # Pin BLAS/OpenMP threads on ALL workers (PSOCK or MPI)
   pin_blas_threads(envir$cl)
 
-
-  # Optional: per-rank diagnostics
-  # envir$mpi_diag <- mpi_diag(envir$cl) # (save into env; don’t spam console)
-  diag <- mpi_diag(envir$cl); str(diag, 1);
+  # Compact per-rank diagnostics
+  print_mpi_diag(mpi_diag(envir$cl)) # short, human-friendly summary
 
   # on cluster workers: CPU info
-  parallel::clusterEvalQ(envir_par$cl, system("lscpu | head -n 20", intern=TRUE))
+  # parallel::clusterEvalQ(envir$cl, system("lscpu | head -n 20", intern=TRUE))
 
   check_cluster_core_worker(envir)
   if (is.null(envir$NN) || envir$NN < 1L) stop("NN >= 1 for clusterSplit")
@@ -123,26 +121,71 @@ pin_blas_threads <- function(cl) {
 }
 mpi_diag <- function(cl) {
   parallel::clusterEvalQ(cl, {
+    get_int_env <- function(keys) {
+      out <- NA_integer_
+      for (k in keys) {
+        val <- Sys.getenv(k, "")
+        if (nzchar(val)) {
+          v <- suppressWarnings(as.integer(val))
+          if (!is.na(v)) { out <- v; break }
+        }
+      }
+      out
+    }
+    # Common providers: OpenMPI/PMIx/Slurm/MVAPICH
+    rank_env <- get_int_env(c("OMPI_COMM_WORLD_RANK","PMIX_RANK","PMI_RANK","SLURM_PROCID","MV2_COMM_WORLD_RANK"))
+    size_env <- get_int_env(c("OMPI_COMM_WORLD_SIZE","PMIX_SIZE","PMI_SIZE","SLURM_NTASKS","MV2_COMM_WORLD_SIZE"))
+
+    rank_rmpi <- NA_integer_
+    if (requireNamespace("Rmpi", quietly = TRUE)) {
+      try({
+        if (Rmpi::mpi.initialized()) rank_rmpi <- Rmpi::mpi.comm.rank()
+      }, silent = TRUE)
+    }
+
     list(
-      host      = Sys.info()[["nodename"]],
-      rank      = if (requireNamespace("Rmpi", quietly=TRUE)) Rmpi::mpi.comm.rank() else NA_integer_,
-      lscpu     = system("lscpu | egrep 'Architecture|Model name|Socket|Core|Thread|CPU\\(s\\)|NUMA'", intern = TRUE),
-      # scheduler hints
-      slurm_cpus= Sys.getenv("SLURM_CPUS_PER_TASK"),
-      # threading envs
-      OMP       = Sys.getenv("OMP_NUM_THREADS"),
-      OMP_BIND  = Sys.getenv("OMP_PROC_BIND"),
-      OMP_PLACES= Sys.getenv("OMP_PLACES"),
-      OPENBLAS  = Sys.getenv("OPENBLAS_NUM_THREADS"),
-      MKL       = Sys.getenv("MKL_NUM_THREADS"),
-      FLEX_NT   = Sys.getenv("FLEXIBLAS_NUM_THREADS"),
-      FLEX_BACK = Sys.getenv("FLEXIBLAS_BACKEND"),
-      # what R thinks
-      blas_vendor  = if (requireNamespace("RhpcBLASctl", quietly=TRUE)) RhpcBLASctl::blas_get_vendor() else NA,
-      blas_threads = if (requireNamespace("RhpcBLASctl", quietly=TRUE)) RhpcBLASctl::blas_get_num_procs() else NA
+      host        = Sys.info()[["nodename"]],
+      rank        = if (!is.na(rank_rmpi)) rank_rmpi else rank_env,
+      size        = size_env,
+      OMP         = Sys.getenv("OMP_NUM_THREADS"),
+      OMP_BIND    = Sys.getenv("OMP_PROC_BIND"),
+      OMP_PLACES  = Sys.getenv("OMP_PLACES"),
+      OPENBLAS    = Sys.getenv("OPENBLAS_NUM_THREADS"),
+      MKL         = Sys.getenv("MKL_NUM_THREADS"),
+      FLEX_NT     = Sys.getenv("FLEXIBLAS_NUM_THREADS"),
+      FLEX_BACK   = Sys.getenv("FLEXIBLAS_BACKEND")
     )
   })
 }
+print_mpi_diag <- function(diag) {
+  n <- length(diag)
+  hosts <- vapply(diag, function(x) if (is.null(x$host)) NA_character_ else as.character(x$host), character(1))
+  ranks <- vapply(diag, function(x) suppressWarnings(as.integer(x$rank)), integer(1))
+  sizes <- vapply(diag, function(x) suppressWarnings(as.integer(x$size)), integer(1))
+
+  cat(sprintf("Cluster diag: %d workers on %d host(s): %s\n",
+              n, length(unique(hosts)), paste(unique(hosts), collapse=", ")))
+
+  if (all(is.na(ranks))) {
+    cat("MPI ranks: NA (could not read rank envs)\n")
+  } else {
+    uniq <- sort(unique(ranks))
+    ok0  <- identical(uniq, 0:(n-1))
+    ok1  <- identical(uniq, 1:n)
+    msg  <- if (ok0) "0..(n-1) OK" else if (ok1) "1..n OK" else paste("non-standard:", paste(uniq, collapse=","))
+    cat("MPI ranks:", msg, "\n")
+  }
+
+  to_int <- function(s) suppressWarnings(if (is.null(s) || s=="" ) NA_integer_ else as.integer(s))
+  omp  <- vapply(diag, function(x) to_int(x$OMP), integer(1))
+  ob   <- vapply(diag, function(x) to_int(x$OPENBLAS), integer(1))
+  mkl  <- vapply(diag, function(x) to_int(x$MKL), integer(1))
+  flex <- vapply(diag, function(x) to_int(x$FLEX_NT), integer(1))
+
+  cat(sprintf("Threads (env): OMP max=%s, OPENBLAS max=%s, MKL max=%s, FLEXIBLAS max=%s\n",
+              max(omp, na.rm=TRUE), max(ob, na.rm=TRUE), max(mkl, na.rm=TRUE), max(flex, na.rm=TRUE)))
+}
+
 progress_print <- function(iter) {
   cat("cSMC iteration number:", iter, "\n")
 }
